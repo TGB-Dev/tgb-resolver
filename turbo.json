@@ -1,21 +1,31 @@
 {
-  "$schema": "https://turborepo.dev/schema.json",
+  "$schema": "https://v2-9-18.turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": ["VITE_SERVER_URL"],
+  "concurrency": "20",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", ".output/**"]
     },
-    "lint": {
-      "dependsOn": ["^lint"]
+    "serve": {
+      "persistent": true,
+      "cache": false
+    },
+    "//#check": {
+      "dependsOn": ["^check"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^build", "^check-types"]
     },
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build", "^test"],
+      "outputs": []
     }
   }
 }
