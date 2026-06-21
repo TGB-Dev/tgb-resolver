@@ -36,3 +36,14 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Logs
+logs/*.log
+
+# Built files
+# We're going full TS, so ignoring *.js files are safe
+*.js
+*.js.map
+
+# Sonda
+.sonda/

@@ -1,0 +1,46 @@
+{
+  "versionGroups": [
+    {
+      "label": "Allow React and TanStack to drift",
+      "dependencies": ["react", "react-dom", "@tanstack/*"],
+      "isIgnored": true
+    },
+    {
+      "label": "Ignore local workspace packages",
+      "dependencies": ["@tgb-resolver/*"],
+      "isIgnored": true
+    },
+    {
+      "label": "Allow latest for specific types",
+      "dependencies": ["elysia"],
+      "isIgnored": true
+    }
+  ],
+  "semverGroups": [
+    {
+      "label": "Prefer explicit versions for core tools",
+      "dependencies": ["typescript", "@biomejs/biome", "vite"],
+      "range": ""
+    }
+  ],
+  "sortAz": [
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+    "scripts"
+  ],
+  "sortFirst": [
+    "name",
+    "version",
+    "private",
+    "type",
+    "module",
+    "main",
+    "types",
+    "exports",
+    "scripts",
+    "dependencies",
+    "devDependencies",
+    "peerDependencies"
+  ]
+}

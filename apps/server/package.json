@@ -1,0 +1,30 @@
+{
+  "name": "@tgb-resolver/server",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown --minify",
+    "dev": "tsx watch src/index.ts",
+    "serve": "dotenv -v NODE_ENV=production -- node dist/index.mjs"
+  },
+  "dependencies": {
+    "@elysia/node": "^1.4.6",
+    "@elysia/static": "^1.4.11",
+    "@sinclair/typebox": "^0.34.49",
+    "elysia": "^1.4.29",
+    "openapi-types": "^12.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "tsdown": "^0.22.3",
+    "tsx": "^4.22.4",
+    "typescript": "6.0.3"
+  },
+  "description": "Server for The Gifted Battlefield OJ resolver",
+  "keywords": [],
+  "license": "ISC"
+}
