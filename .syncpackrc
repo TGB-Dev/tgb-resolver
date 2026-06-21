@@ -32,6 +32,8 @@
   "sortFirst": [
     "name",
     "version",
+    "description",
+    "license",
     "private",
     "type",
     "module",
