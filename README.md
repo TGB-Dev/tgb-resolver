@@ -1,159 +1,76 @@
-# Turborepo starter
+# tgb-resolver
 
-This Turborepo starter is maintained by the Turborepo core team.
+ICPC/DMOJ event feed-compatible contest scoreboard resolver. Animates the progression of XML contest feeds - teams solving problems, leaderboard shifts.
 
-## Using this example
+## Stack
 
-Run the following command:
+| Layer | Tech |
+|---|---|
+| Frontend | React 19, TanStack Start, Chakra UI 3, Zustand, Motion |
+| Server | Elysia (ElysiaJS), TypeBox |
+| Parser | fast-xml-parser (ICPC XML → typed JSON) |
+| Monorepo | pnpm workspaces, Turborepo |
+| Lint/Format | Biome, syncpack |
+| Tests | Vitest, Testing Library |
+
+## Prerequisites
+
+- Node.js >= 24.15.0
+- pnpm >= 11.1.3
+
+## Getting Started
 
 ```sh
-npx create-turbo@latest
+pnpm install
+cp .env.example .env   # VITE_API_URL defaults to http://localhost:5001
 ```
 
-## What's inside?
+### Development
 
-This Turborepo includes the following packages/apps:
+```sh
+pnpm dev
+```
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+Server runs on `:5001`, web on `:3000`.
 
 ### Build
 
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
 ```sh
-cd my-turborepo
-turbo build
+pnpm build
 ```
 
-Without global `turbo`, use your package manager:
+### Test
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+pnpm test
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+### Production Serve
 
 ```sh
-turbo build --filter=docs
+pnpm build && pnpm serve
 ```
 
-Without global `turbo`:
+## Structure
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```
+apps/
+  server/          - Elysia API server
+  web/             - TanStack Start React app
+packages/
+  icpc-xml-parser/ - Contest XML to typed data
 ```
 
-### Develop
+## Scripts
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+| Command | Action |
+|---|---|
+| `pnpm dev` | Dev mode (all apps, watch) |
+| `pnpm build` | Build all packages + apps |
+| `pnpm test` | Run all tests |
+| `pnpm serve` | Production serve |
+| `pnpm lint` | Biome lint --write |
+| `pnpm format` | Biome format --write |
+| `pnpm check` | Biome lint + format + organize imports |
+| `pnpm check-types` | TypeScript type check |
+| `pnpm sync` | syncpack fix + format (dependency sync) |

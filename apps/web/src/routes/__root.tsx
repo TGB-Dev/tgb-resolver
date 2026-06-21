@@ -1,16 +1,11 @@
 import { Container } from "@chakra-ui/react";
-import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import AppDevtools from "@/components/app/devtools";
 import AppProvider from "@/components/app/provider";
 import { Toaster } from "@/components/ui/toaster";
 import appCss from "../styles.css?url";
 
-interface MyRouterContext {
-  queryClient: QueryClient;
-}
-
-export const Route = createRootRouteWithContext<MyRouterContext>()({
+export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
