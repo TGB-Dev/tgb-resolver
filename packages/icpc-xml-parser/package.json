@@ -1,0 +1,32 @@
+{
+  "name": "@tgb-resolver/icpc-xml-parser",
+  "version": "1.0.0",
+  "description": "ICPC resolver XML parser for The Gifted Battlefield resolver",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "prepublishOnly": "pnpm run build",
+    "release": "bumpp",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "bumpp": "^11.1.0",
+    "tsdown": "^0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "files": [
+    "dist"
+  ]
+}
