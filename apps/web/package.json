@@ -11,7 +11,7 @@
     "generate-routes": "tsr generate",
     "preview": "vite preview",
     "serve": "pnpm preview",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.36.0",
@@ -27,7 +27,9 @@
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-start": "latest",
+    "@tanstack/react-virtual": "^3.14.3",
     "@tanstack/router-plugin": "^1.168.18",
+    "@tgb-resolver/contracts": "workspace:*",
     "@tgb-resolver/server": "workspace:*",
     "lucide-react": "^1.21.0",
     "motion": "^12.40.0",
