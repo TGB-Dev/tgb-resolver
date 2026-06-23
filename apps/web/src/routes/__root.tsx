@@ -1,7 +1,7 @@
 import { Container } from "@chakra-ui/react";
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-import AppDevtools from "@/components/app/devtools";
-import AppProvider from "@/components/app/provider";
+import { AppDevtools } from "@/components/app/devtools";
+import { AppProvider } from "@/components/app/provider";
 import { Toaster } from "@/components/ui/toaster";
 import appCss from "../styles.css?url";
 

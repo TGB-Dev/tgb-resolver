@@ -1,10 +1,10 @@
 import { Button, Grid, HStack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { ColorModeButton } from "@/components/ui/color-mode";
-import ControlFullScreenButton from "./control-full-screen-button";
+import { ControlFullScreenButton } from "./control-full-screen-button";
 import { ControlCurrentTime, ControlElapsedTime, useNow } from "./control-time";
 
-export default function AdminStatusBar() {
+export function ControlStatusBar() {
   const now = useNow();
 
   return (

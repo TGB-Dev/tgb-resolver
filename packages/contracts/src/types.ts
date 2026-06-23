@@ -17,7 +17,19 @@ export enum TimelineEventType {
   // TODO: add more kind of supported events here
 }
 
-export interface TimelineEvent {
+/**
+ * Shortened for displaying on the frontend
+ */
+export enum ShortenedTimelineEventType {
+  CR = "CR",
+  PS = "PS",
+  SI = "SI",
+}
+
+/**
+ * Base timeline event
+ */
+export interface BaseTimelineEvent {
   /**
    * The event ID, count from 0
    * To identify in the timeline
@@ -25,21 +37,11 @@ export interface TimelineEvent {
   id: number;
 
   /**
-   * The event type
-   */
-  type: TimelineEventType;
-
-  /**
-   * The event payload
-   */
-  payload: TimelinePayload;
-
-  /**
-   * Trigger this event after `triggerDeltaSeconds` from the previous event.
+   * Trigger this event after `triggerOffsetSeconds` from the previous event.
    * Useful for automating certain reveals.
    * Treated as 0 when not specified.
    */
-  triggerDeltaSeconds?: number;
+  triggerOffsetSeconds?: number;
 
   /**
    * Whether the player should wait for manual interaction or not.
@@ -51,10 +53,27 @@ export interface TimelineEvent {
 }
 
 /**
+ * Unified timeline event type
+ */
+export type TimelineEvent = {
+  [K in TimelineEventType]: BaseTimelineEvent & {
+    /**
+     * The event type
+     */
+    type: K;
+
+    /**
+     * The payload for this event
+     */
+    payload: TimelinePayloadMap[K];
+  };
+}[TimelineEventType];
+
+/**
  * Payload type for {@link TimelineEventType.CONTESTANT_RESOLVE}
  */
 export interface TimelineResolvePayload {
-  username?: string;
+  username: string;
   problem: string;
   newScore: number;
   newRank: number;
@@ -82,3 +101,20 @@ export type TimelinePayload =
   | TimelineResolvePayload
   | TimelinePlaySfxPayload
   | TimelineShowImagePayload;
+
+export type TimelinePayloadMap = {
+  [TimelineEventType.CONTESTANT_RESOLVE]: TimelineResolvePayload;
+  [TimelineEventType.PLAY_SFX]: TimelinePlaySfxPayload;
+  [TimelineEventType.SHOW_IMAGE]: TimelineShowImagePayload;
+};
+
+export type TimelineTableItem = {
+  id: number;
+  type: ShortenedTimelineEventType;
+  name: string;
+  problem?: string;
+  newScore?: number;
+  newRank?: number;
+  triggerOffsetSeconds?: number;
+  requireManualInteraction?: boolean;
+};

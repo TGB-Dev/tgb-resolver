@@ -1,7 +1,7 @@
 import { Button, Dialog, Portal } from "@chakra-ui/react";
 import { resolveConfirmAction, useConfirmActionStore } from "@/stores/control-confirm-action.store";
 
-export default function ControlConfirmDialog() {
+export function ControlConfirmDialog() {
   const { open, title, message, confirmLabel, cancelLabel } = useConfirmActionStore();
 
   return (
