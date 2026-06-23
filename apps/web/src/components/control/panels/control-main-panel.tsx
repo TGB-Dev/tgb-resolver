@@ -1,8 +1,8 @@
-import { Box, Button, Grid, HStack, Show } from "@chakra-ui/react";
+import { Box, Button, Grid, HStack } from "@chakra-ui/react";
 import { Play, TimerReset } from "lucide-react";
 import { useControlElapsedTimeStore } from "@/stores/control-elapsed-time.store";
 
-export default function ControlMainPanel() {
+export function ControlMainPanel() {
   const { startedAt, markStarted, resetStarted } = useControlElapsedTimeStore();
   const isStarted = startedAt !== null;
 
