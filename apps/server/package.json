@@ -12,12 +12,13 @@
     "build": "tsdown --minify",
     "dev": "tsx watch src/index.ts",
     "serve": "dotenv -v NODE_ENV=production -- node dist/index.mjs",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@elysia/cors": "^1.4.2",
     "@elysia/node": "^1.4.6",
     "@sinclair/typebox": "^0.34.49",
+    "@tgb-resolver/contracts": "workspace:*",
     "@tgb-resolver/icpc-xml-parser": "workspace:*",
     "elysia": "^1.4.29",
     "openapi-types": "^12.1.3"

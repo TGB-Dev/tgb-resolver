@@ -1,7 +1,7 @@
 {
-  "name": "@tgb-resolver/icpc-xml-parser",
+  "name": "@tgb-resolver/contracts",
   "version": "1.0.0",
-  "description": "ICPC resolver XML parser for The Gifted Battlefield resolver",
+  "description": "Contracts for The Gifted Battlefield resolver",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -15,9 +15,6 @@
     "release": "bumpp",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "fast-xml-parser": "^5.9.3"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
