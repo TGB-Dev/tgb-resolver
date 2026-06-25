@@ -49,7 +49,7 @@ function findShowEventOrNotFound(service: ShowService, id: number) {
 }
 
 export function createApp(service = new ShowService()) {
-  const app = new Elysia({ adapter: node() })
+  const app = new Elysia({ adapter: node(), normalize: false })
     .use(
       cors({
         origin: true,

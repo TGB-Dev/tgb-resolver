@@ -13,7 +13,10 @@ function RouteComponent() {
   const splitter = useSplitter({
     defaultSize: [55, 45], // percent
 
-    panels: [{ id: "main" }, { id: "timeline", minSize: 45 }],
+    panels: [
+      { id: "main", minSize: 35 },
+      { id: "timeline", minSize: 45 },
+    ],
   });
 
   return (
