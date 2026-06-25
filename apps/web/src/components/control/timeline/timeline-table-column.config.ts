@@ -1,24 +1,19 @@
-import type { TimelineTableItem } from "@tgb-resolver/contracts";
-
 interface TimelineTableColumnConfigItem {
   minW?: string;
   maxW?: string;
 }
 
-export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<
-  keyof TimelineTableItem,
-  TimelineTableColumnConfigItem
-> = {
+export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, TimelineTableColumnConfigItem> = {
   id: {
     minW: "5ch",
     maxW: "5ch",
   },
   type: {
-    minW: "5ch",
-    maxW: "5ch",
+    minW: "4ch",
+    maxW: "4ch",
   },
   name: {
-    minW: "20ch",
+    minW: "25ch",
   },
   problem: {
     minW: "5ch",
@@ -30,6 +25,10 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<
   newRank: {
     minW: "5ch",
     maxW: "5ch",
+  },
+  durationSeconds: {
+    minW: "4ch",
+    maxW: "4ch",
   },
   triggerOffsetSeconds: {
     minW: "4ch",

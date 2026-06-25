@@ -11,8 +11,9 @@ export const Route = createFileRoute("/control/")({
 
 function RouteComponent() {
   const splitter = useSplitter({
-    defaultSize: [60, 40], // percent
-    panels: [{ id: "main" }, { id: "timeline", minSize: 40 }],
+    defaultSize: [55, 45], // percent
+
+    panels: [{ id: "main" }, { id: "timeline", minSize: 45 }],
   });
 
   return (

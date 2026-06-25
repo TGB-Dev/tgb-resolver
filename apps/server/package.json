@@ -20,11 +20,15 @@
     "@sinclair/typebox": "^0.34.49",
     "@tgb-resolver/contracts": "workspace:*",
     "@tgb-resolver/icpc-xml-parser": "workspace:*",
+    "better-sqlite3": "^12.11.1",
     "elysia": "^1.4.29",
-    "openapi-types": "^12.1.3"
+    "openapi-types": "^12.1.3",
+    "tar-stream": "^3.2.0",
+    "xxhash-addon": "^2.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
+    "@types/tar-stream": "^3.1.4",
     "tsdown": "^0.22.3",
     "tsx": "^4.22.4",
     "typescript": "6.0.3",

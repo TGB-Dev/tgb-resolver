@@ -1,9 +1,11 @@
-import { Box, DataList, Grid, type GridProps, useToken } from "@chakra-ui/react";
+import { Box, DataList, Editable, Grid, type GridProps, useToken } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 import type { TimelineTableItem } from "@tgb-resolver/contracts";
 import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
+import { useControlStore } from "@/stores/control.store";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
 
 const SECONDS_BEFORE_WARNING = 2;
@@ -30,15 +32,32 @@ interface ControlTimelineTableItemProps {
   isCurrent?: boolean;
 }
 
-// TODO: make these items editable on some fields
 export function ControlTimelineTableItem({
   payload,
   durationInSeconds,
   isCurrent,
 }: ControlTimelineTableItemProps) {
+  const renameEvent = useControlStore((state) => state.renameEvent);
   const success = useToken("colors", "green.600");
   const errror = useToken("colors", "red.500");
   const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
+  const [draftName, setDraftName] = useState(payload.customName ?? "");
+
+  useEffect(() => {
+    setDraftName(payload.customName ?? "");
+  }, [payload.customName]);
+
+  async function commitName(nextValue: string) {
+    const normalizedNextValue = nextValue.trim();
+    const normalizedCurrentValue = (payload.customName ?? "").trim();
+
+    if (normalizedNextValue === normalizedCurrentValue) {
+      setDraftName(payload.customName ?? "");
+      return;
+    }
+
+    await renameEvent(payload.id, payload.type, normalizedNextValue);
+  }
 
   return (
     <Box
@@ -95,16 +114,37 @@ export function ControlTimelineTableItem({
           openDelay={0}
           positioning={{ placement: "left" }}
         >
-          <Box textAlign="end" fontFamily="mono">
+          <Box textAlign="end" fontFamily="mono" cursor="pointer">
             {payload.id}
           </Box>
         </Tooltip>
         <Box fontFamily="mono">{payload.type}</Box>
-        <Box>
-          {/* TODO: editable, available for the operator to set custom names */}
-          {payload.name}
+        <Box minW={0}>
+          <Editable.Root
+            activationMode="dblclick"
+            submitMode="both"
+            value={draftName}
+            placeholder={payload.placeholderName}
+            onValueChange={({ value }) => setDraftName(value)}
+            onValueCommit={({ value }) => {
+              void commitName(value);
+            }}
+            onValueRevert={() => setDraftName(payload.customName ?? "")}
+          >
+            <Editable.Preview
+              px={1}
+              py={0.5}
+              minH={6}
+              borderRadius="sm"
+              cursor="text"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+            />
+            <Editable.Input px={1} py={0.5} minH={6} borderRadius="sm" bg="bg.panel" autoFocus />
+          </Editable.Root>
         </Box>
-        <Box>{payload.problem}</Box>
+        <Box fontFamily="mono">{payload.problem}</Box>
         <Box textAlign="end" fontFamily="mono">
           {payload.newScore}
         </Box>
@@ -112,7 +152,10 @@ export function ControlTimelineTableItem({
           {payload.newRank}
         </Box>
         <Box textAlign="end" fontFamily="mono">
-          {payload.triggerOffsetSeconds && payload.triggerOffsetSeconds >= 0
+          {payload.durationSeconds}
+        </Box>
+        <Box textAlign="end" fontFamily="mono">
+          {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
             ? `+${payload.triggerOffsetSeconds}`
             : payload.triggerOffsetSeconds}
         </Box>
@@ -133,12 +176,12 @@ export function ControlTimelineTableHeader() {
         <Box>Type</Box>
       </Tooltip>
 
-      <Tooltip content="Name for this event. Can be customized." openDelay={0}>
+      <Tooltip content="Name for this event. Double-click to customize." openDelay={0}>
         <Box>Name</Box>
       </Tooltip>
 
       <Tooltip content="Problem name for this resolve event." openDelay={0}>
-        <Box>Problem</Box>
+        <Box>Prob.</Box>
       </Tooltip>
 
       <Tooltip content="New score after this resolve event." openDelay={0}>
@@ -147,6 +190,10 @@ export function ControlTimelineTableHeader() {
 
       <Tooltip content="New rank after this resolve event." openDelay={0}>
         <Box textAlign="end">NRank</Box>
+      </Tooltip>
+
+      <Tooltip content="Duration in seconds. Cannot be negative." openDelay={0}>
+        <Box textAlign="end">Dur.</Box>
       </Tooltip>
 
       <Tooltip content="Trigger offset in seconds. Can be negative." openDelay={0}>
@@ -189,17 +236,17 @@ function ControlTimelineEventTypeHeaderTooltip() {
   return (
     <DataList.Root>
       <DataList.Item>
-        <DataList.ItemLabel>CR</DataList.ItemLabel>
+        <DataList.ItemLabel>RES</DataList.ItemLabel>
         <DataList.ItemValue>Contestant Resolve</DataList.ItemValue>
       </DataList.Item>
 
       <DataList.Item>
-        <DataList.ItemLabel>PS</DataList.ItemLabel>
+        <DataList.ItemLabel>SFX</DataList.ItemLabel>
         <DataList.ItemValue>Play SFX</DataList.ItemValue>
       </DataList.Item>
 
       <DataList.Item>
-        <DataList.ItemLabel>SI</DataList.ItemLabel>
+        <DataList.ItemLabel>IMG</DataList.ItemLabel>
         <DataList.ItemValue>Show Image</DataList.ItemValue>
       </DataList.Item>
     </DataList.Root>

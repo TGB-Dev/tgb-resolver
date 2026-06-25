@@ -3,10 +3,12 @@ packages:
   - "packages/*"
 
 allowBuilds:
+  better-sqlite3: true
   "@swc/core": true
   core-js: true
   esbuild: true
   msgpackr-extract: true
+  xxhash-addon: true
 
 blockExoticSubdeps: false
 
