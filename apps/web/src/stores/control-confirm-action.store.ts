@@ -23,7 +23,7 @@ const initialState = {
   message: "",
   confirmLabel: "Confirm",
   cancelLabel: "Cancel",
-  resolve: null as ((value: boolean) => void) | null,
+  resolve: null,
 };
 
 export const useConfirmActionStore = create<ConfirmActionStore>((set) => ({
