@@ -10,8 +10,11 @@ function syncIsFullscreen() {
   return document.fullscreenElement != null;
 }
 
+let hasBoundFullscreenListener = false;
+
 export const useFullScreenStore = create<FullScreenStore>((set) => {
-  if (typeof document !== "undefined") {
+  if (typeof document !== "undefined" && !hasBoundFullscreenListener) {
+    hasBoundFullscreenListener = true;
     document.addEventListener("fullscreenchange", () => {
       set({ isFullscreen: syncIsFullscreen() });
     });

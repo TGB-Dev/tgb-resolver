@@ -13,8 +13,9 @@ export const useResolveStore = create<ResolveStore>((set) => ({
   starting: false,
   resetting: false,
   start: async () => {
-    const show = useControlStore.getState().show;
+    const { show, canMutate } = useControlStore.getState();
     if (!show) return;
+    if (!canMutate) throw new Error("Control connection is offline");
 
     set({ starting: true });
     const response = await apiClient.playback.start.post({ showVersion: show.showVersion });
@@ -27,8 +28,9 @@ export const useResolveStore = create<ResolveStore>((set) => ({
     set({ starting: false });
   },
   reset: async () => {
-    const show = useControlStore.getState().show;
+    const { show, canMutate } = useControlStore.getState();
     if (!show) return;
+    if (!canMutate) throw new Error("Control connection is offline");
 
     set({ resetting: true });
     const response = await apiClient.playback.reset.post({ showVersion: show.showVersion });

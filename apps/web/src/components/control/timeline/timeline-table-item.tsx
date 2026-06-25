@@ -37,27 +37,10 @@ export function ControlTimelineTableItem({
   durationInSeconds,
   isCurrent,
 }: ControlTimelineTableItemProps) {
-  const renameEvent = useControlStore((state) => state.renameEvent);
   const success = useToken("colors", "green.600");
   const errror = useToken("colors", "red.500");
   const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
-  const [draftName, setDraftName] = useState(payload.customName ?? "");
-
-  useEffect(() => {
-    setDraftName(payload.customName ?? "");
-  }, [payload.customName]);
-
-  async function commitName(nextValue: string) {
-    const normalizedNextValue = nextValue.trim();
-    const normalizedCurrentValue = (payload.customName ?? "").trim();
-
-    if (normalizedNextValue === normalizedCurrentValue) {
-      setDraftName(payload.customName ?? "");
-      return;
-    }
-
-    await renameEvent(payload.id, payload.type, normalizedNextValue);
-  }
+  const isLive = useControlStore((state) => state.show?.mode === "live");
 
   return (
     <Box
@@ -120,29 +103,11 @@ export function ControlTimelineTableItem({
         </Tooltip>
         <Box fontFamily="mono">{payload.type}</Box>
         <Box minW={0}>
-          <Editable.Root
-            activationMode="dblclick"
-            submitMode="both"
-            value={draftName}
-            placeholder={payload.placeholderName}
-            onValueChange={({ value }) => setDraftName(value)}
-            onValueCommit={({ value }) => {
-              void commitName(value);
-            }}
-            onValueRevert={() => setDraftName(payload.customName ?? "")}
-          >
-            <Editable.Preview
-              px={1}
-              py={0.5}
-              minH={6}
-              borderRadius="sm"
-              cursor="text"
-              overflow="hidden"
-              textOverflow="ellipsis"
-              whiteSpace="nowrap"
-            />
-            <Editable.Input px={1} py={0.5} minH={6} borderRadius="sm" bg="bg.panel" autoFocus />
-          </Editable.Root>
+          {!isLive ? (
+            <ControlTimelineEventCustomNameEditable payload={payload} />
+          ) : (
+            <Box>{payload.customName ?? payload.placeholderName}</Box>
+          )}
         </Box>
         <Box fontFamily="mono">{payload.problem}</Box>
         <Box textAlign="end" fontFamily="mono">
@@ -250,5 +215,59 @@ function ControlTimelineEventTypeHeaderTooltip() {
         <DataList.ItemValue>Show Image</DataList.ItemValue>
       </DataList.Item>
     </DataList.Root>
+  );
+}
+
+interface ControlTimelineEventCustomNameEditableProps {
+  payload: TimelineTableItem;
+}
+
+function ControlTimelineEventCustomNameEditable({
+  payload,
+}: ControlTimelineEventCustomNameEditableProps) {
+  const renameEvent = useControlStore((state) => state.renameEvent);
+
+  useEffect(() => {
+    setDraftName(payload.customName ?? "");
+  }, [payload.customName]);
+
+  const [draftName, setDraftName] = useState(payload.customName ?? "");
+
+  async function commitName(nextValue: string) {
+    const normalizedNextValue = nextValue.trim();
+    const normalizedCurrentValue = (payload.customName ?? "").trim();
+
+    if (normalizedNextValue === normalizedCurrentValue) {
+      setDraftName(payload.customName ?? "");
+      return;
+    }
+
+    await renameEvent(payload.id, payload.type, normalizedNextValue);
+  }
+
+  return (
+    <Editable.Root
+      activationMode="dblclick"
+      submitMode="both"
+      value={draftName}
+      placeholder={payload.placeholderName}
+      onValueChange={({ value }) => setDraftName(value)}
+      onValueCommit={({ value }) => {
+        void commitName(value);
+      }}
+      onValueRevert={() => setDraftName(payload.customName ?? "")}
+    >
+      <Editable.Preview
+        px={1}
+        py={0.5}
+        minH={6}
+        borderRadius="sm"
+        cursor="text"
+        overflow="hidden"
+        textOverflow="ellipsis"
+        whiteSpace="nowrap"
+      />
+      <Editable.Input px={1} py={0.5} minH={6} borderRadius="sm" bg="bg.panel" autoFocus />
+    </Editable.Root>
   );
 }

@@ -6,12 +6,19 @@ import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline
 
 export function ControlTimelineTable() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { rows, loading, error, loadShow, connect, show } = useControlStore();
+  const rows = useControlStore((state) => state.rows);
+  const loading = useControlStore((state) => state.loading);
+  const error = useControlStore((state) => state.error);
+  const connect = useControlStore((state) => state.connect);
+  const disconnect = useControlStore((state) => state.disconnect);
+  const currentEventId = useControlStore((state) => state.show?.playback.currentEventId);
 
   useEffect(() => {
-    void loadShow();
     void connect();
-  }, [loadShow, connect]);
+    return () => {
+      disconnect();
+    };
+  }, [connect, disconnect]);
 
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -21,7 +28,6 @@ export function ControlTimelineTable() {
   });
 
   const virtualRows = rowVirtualizer.getVirtualItems();
-  const currentEventId = show?.playback.currentEventId;
 
   return (
     <Box boxSize="full" display="flex" flexDir="column" minH={0} overflow="hidden">
