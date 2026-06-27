@@ -1,11 +1,15 @@
 import { Box, DataList, Editable, Grid, type GridProps, useToken } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 import type { TimelineTableItem } from "@tgb-resolver/contracts";
+import { useAtomValue, useSetAtom } from "jotai";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
+
 import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useControlStore } from "@/stores/control.store";
+import { controlIsLiveAtom, renameControlEventAtom } from "@/state/control";
+import { CONTROL_TIMELINE_ROW_HEIGHT_PX, pxToChakraSpace } from "@/state/list-metrics";
+
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
 
 const SECONDS_BEFORE_WARNING = 2;
@@ -26,6 +30,12 @@ function fractionalKeyframeForWarning(durationInSeconds?: number) {
     : 0;
 }
 
+function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "placeholderName">) {
+  return payload.customName && payload.customName.trim().length > 0
+    ? payload.customName
+    : payload.placeholderName;
+}
+
 interface ControlTimelineTableItemProps {
   payload: TimelineTableItem;
   durationInSeconds?: number;
@@ -40,12 +50,12 @@ export function ControlTimelineTableItem({
   const success = useToken("colors", "green.600");
   const errror = useToken("colors", "red.500");
   const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
-  const isLive = useControlStore((state) => state.show?.mode === "live");
+  const isLive = useAtomValue(controlIsLiveAtom);
 
   return (
     <Box
       w="full"
-      h={8}
+      h={pxToChakraSpace(CONTROL_TIMELINE_ROW_HEIGHT_PX)}
       position="relative"
       borderWidth={2}
       borderColor={isCurrent ? "border.success" : "transparent"}
@@ -106,7 +116,7 @@ export function ControlTimelineTableItem({
           {!isLive ? (
             <ControlTimelineEventCustomNameEditable payload={payload} />
           ) : (
-            <Box>{payload.customName ?? payload.placeholderName}</Box>
+            <Box>{resolveDisplayName(payload)}</Box>
           )}
         </Box>
         <Box fontFamily="mono">{payload.problem}</Box>
@@ -182,7 +192,7 @@ function ControlTimelineTableGridRow({ children, ...props }: GridProps) {
       w="full"
       templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}
       gapX={2}
-      h={8}
+      h={pxToChakraSpace(CONTROL_TIMELINE_ROW_HEIGHT_PX)}
       alignItems="center"
       css={{
         "& > *": {
@@ -225,7 +235,7 @@ interface ControlTimelineEventCustomNameEditableProps {
 function ControlTimelineEventCustomNameEditable({
   payload,
 }: ControlTimelineEventCustomNameEditableProps) {
-  const renameEvent = useControlStore((state) => state.renameEvent);
+  const renameEvent = useSetAtom(renameControlEventAtom);
 
   useEffect(() => {
     setDraftName(payload.customName ?? "");
@@ -242,7 +252,11 @@ function ControlTimelineEventCustomNameEditable({
       return;
     }
 
-    await renameEvent(payload.id, payload.type, normalizedNextValue);
+    await renameEvent({
+      eventId: payload.id,
+      type: payload.type,
+      customName: normalizedNextValue,
+    });
   }
 
   return (

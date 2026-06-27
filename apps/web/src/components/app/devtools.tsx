@@ -1,6 +1,7 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { hotkeysDevtoolsPlugin } from "@tanstack/react-hotkeys-devtools";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+
 import TanStackQueryDevtools from "@/integrations/tanstack-query/devtools";
 
 export function AppDevtools() {

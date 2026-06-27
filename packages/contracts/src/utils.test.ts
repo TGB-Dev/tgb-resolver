@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+
 import type { ShowFile } from "./types";
 import {
   buildPlaybackSegments,
@@ -154,6 +155,27 @@ describe("contracts utils", () => {
       customName: "B. Bob",
       placeholderName: "Bob Team",
       type: "RES",
+    });
+  });
+
+  test("falls back to placeholder names when customName is an empty string", () => {
+    const show = createSampleShow();
+    const target = show.timeline[3];
+    if (target.type !== "RES") {
+      throw new Error("Expected resolve event at index 3");
+    }
+
+    show.timeline[3] = {
+      ...target,
+      customName: "",
+    };
+
+    const rows = toTimelineTableItems(show);
+    expect(rows[3]).toMatchObject({
+      id: 4,
+      name: "Bob Team",
+      customName: "",
+      placeholderName: "Bob Team",
     });
   });
 

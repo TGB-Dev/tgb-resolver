@@ -1,5 +1,4 @@
 export { parseIcpcXml, parseIcpcXmlFile } from "./parser";
-
 export type {
   RawFeedContest,
   RawFeedFinalized,

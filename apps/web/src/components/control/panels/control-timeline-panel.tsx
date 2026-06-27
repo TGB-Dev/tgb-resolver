@@ -1,4 +1,5 @@
 import { Grid } from "@chakra-ui/react";
+
 import { ControlTimelineTable } from "../timeline/timeline-table";
 import { ControlTimelineControls } from "./timeline/control-timeline-controls";
 

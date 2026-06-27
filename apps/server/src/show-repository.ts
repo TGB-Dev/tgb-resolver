@@ -1,7 +1,8 @@
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { createEmptyShow, type ShowFile } from "@tgb-resolver/contracts";
 import Database from "better-sqlite3";
+
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 const DEFAULT_DATA_DIR = join(process.cwd(), ".data");
 const DEFAULT_DB_PATH = join(DEFAULT_DATA_DIR, "resolver.db");

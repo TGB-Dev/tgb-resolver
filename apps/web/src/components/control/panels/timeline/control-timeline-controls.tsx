@@ -1,17 +1,26 @@
 import { Button, HStack, Show } from "@chakra-ui/react";
 import { FILE_EXTENSION } from "@tgb-resolver/contracts";
+import { useAtomValue, useSetAtom } from "jotai";
 import { Blocks, FileDown, FileUp, Trash2 } from "lucide-react";
 import { useRef } from "react";
-import { useControlStore } from "@/stores/control.store";
+
+import {
+  clearCurrentShowAtom,
+  controlCanMutateAtom,
+  controlIsLiveAtom,
+  exportCurrentShowAtom,
+  importShowFileAtom,
+  optimizeCurrentShowAtom,
+} from "@/state/control";
 
 export function ControlTimelineControls() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const optimizeCurrentShow = useControlStore((state) => state.optimizeCurrentShow);
-  const clearCurrentShow = useControlStore((state) => state.clearCurrentShow);
-  const importShowFile = useControlStore((state) => state.importShowFile);
-  const exportCurrentShow = useControlStore((state) => state.exportCurrentShow);
-  const isLive = useControlStore((state) => state.show?.mode === "live");
-  const canMutate = useControlStore((state) => state.canMutate);
+  const optimizeCurrentShow = useSetAtom(optimizeCurrentShowAtom);
+  const clearCurrentShow = useSetAtom(clearCurrentShowAtom);
+  const importShowFile = useSetAtom(importShowFileAtom);
+  const exportCurrentShow = useSetAtom(exportCurrentShowAtom);
+  const isLive = useAtomValue(controlIsLiveAtom);
+  const canMutate = useAtomValue(controlCanMutateAtom);
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>

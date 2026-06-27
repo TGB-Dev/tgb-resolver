@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { parseIcpcXml, parseIcpcXmlFile } from "../src";
 
 const SAMPLE_PATH = new URL("sample.xml", import.meta.url).pathname;

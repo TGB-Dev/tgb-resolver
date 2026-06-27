@@ -208,6 +208,10 @@ export function optimizeShow(show: ShowFile): ShowFile {
   };
 }
 
+function resolveDisplayName(customName: string | undefined, placeholderName: string) {
+  return customName && customName.trim().length > 0 ? customName : placeholderName;
+}
+
 export function toTimelineTableItem(
   event: TimelineEvent,
   playback?: ShowPlaybackState,
@@ -226,7 +230,7 @@ export function toTimelineTableItem(
       return {
         id: event.id,
         type: event.type,
-        name: event.customName ?? resolvePlaceholderName,
+        name: resolveDisplayName(event.customName, resolvePlaceholderName),
         customName: event.customName,
         placeholderName: resolvePlaceholderName,
         problem: event.payload.problem,
@@ -244,7 +248,7 @@ export function toTimelineTableItem(
       return {
         id: event.id,
         type: event.type,
-        name: event.customName ?? sfxPlaceholderName,
+        name: resolveDisplayName(event.customName, sfxPlaceholderName),
         customName: event.customName,
         placeholderName: sfxPlaceholderName,
         triggerOffsetSeconds: event.triggerOffsetSeconds,
@@ -261,7 +265,7 @@ export function toTimelineTableItem(
       return {
         id: event.id,
         type: event.type,
-        name: event.customName ?? imagePlaceholderName,
+        name: resolveDisplayName(event.customName, imagePlaceholderName),
         customName: event.customName,
         placeholderName: imagePlaceholderName,
         triggerOffsetSeconds: event.triggerOffsetSeconds,

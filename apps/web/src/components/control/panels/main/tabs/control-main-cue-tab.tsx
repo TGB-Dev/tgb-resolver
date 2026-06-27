@@ -1,6 +1,7 @@
 import { Grid, type HeadingProps, HStack, Text, type TextProps, VStack } from "@chakra-ui/react";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
 import { Heading } from "@/components/ui/heading";
 
 enum Cue {

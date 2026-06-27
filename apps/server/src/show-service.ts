@@ -1,6 +1,3 @@
-import { createRequire } from "node:module";
-import { basename, extname } from "node:path";
-import { brotliCompressSync, brotliDecompressSync, constants as zlibConstants } from "node:zlib";
 import {
   buildPlaybackSegments,
   createEmptyShow,
@@ -22,8 +19,12 @@ import {
 } from "@tgb-resolver/contracts";
 import { parseIcpcXml } from "@tgb-resolver/icpc-xml-parser";
 import tar from "tar-stream";
+
 import { ShowRepository } from "./show-repository";
 import { convertIcpcContestToShow } from "./xml-to-show";
+import { createRequire } from "node:module";
+import { basename, extname } from "node:path";
+import { brotliCompressSync, brotliDecompressSync, constants as zlibConstants } from "node:zlib";
 
 const require = createRequire(import.meta.url);
 const { XXHash3 } = require("xxhash-addon"); // This requires a native addon. See https://github.com/ktrongnhan/xxhash-addon/issues/35
@@ -461,7 +462,7 @@ export class ShowService {
     const show = this.getShow();
     this.ensureVersion(show, showVersion);
 
-    const nextShow = {
+    const nextShow: ShowFile = {
       ...show,
       showVersion: this.nextShowVersion(show.showVersion),
       playback: {
@@ -476,7 +477,7 @@ export class ShowService {
     const show = this.getShow();
     this.ensureVersion(show, showVersion);
 
-    const nextShow = {
+    const nextShow: ShowFile = {
       ...show,
       showVersion: this.nextShowVersion(show.showVersion),
       playback: {
@@ -526,7 +527,7 @@ export class ShowService {
 
     const nextInlineEventId = activeSegment.inlineEventIds[activeSegment.currentInlineIndex + 1];
     if (nextInlineEventId === undefined) {
-      const nextShow = {
+      const nextShow: ShowFile = {
         ...show,
         showVersion: this.nextShowVersion(show.showVersion),
         playback: {
@@ -543,7 +544,7 @@ export class ShowService {
       return this.savePlayback(nextShow, "continue-segment");
     }
 
-    const nextShow = {
+    const nextShow: ShowFile = {
       ...show,
       showVersion: this.nextShowVersion(show.showVersion),
       playback: {
@@ -577,7 +578,7 @@ export class ShowService {
     const parentSegment = buildPlaybackSegments(show).find((segment) =>
       segment.inlineEvents.some((event) => event.id === eventId),
     );
-    const nextShow = {
+    const nextShow: ShowFile = {
       ...show,
       showVersion: this.nextShowVersion(show.showVersion),
       playback: {
@@ -672,6 +673,9 @@ export class ShowService {
 
     if (activeSegment.currentInlineIndex < activeSegment.inlineEventIds.length - 1) {
       const nextInlineId = activeSegment.inlineEventIds[activeSegment.currentInlineIndex + 1];
+      if (nextInlineId === undefined) {
+        return;
+      }
       const nextInlineEvent = timelineById.get(nextInlineId);
       if (!nextInlineEvent || !isNonResolveEvent(nextInlineEvent)) {
         return;

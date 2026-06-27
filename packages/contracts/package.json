@@ -11,13 +11,14 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",
+    "check-types": "tsc --noEmit",
     "prepublishOnly": "pnpm run build",
     "release": "bumpp",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm run check-types"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "bumpp": "^11.1.0",
     "tsdown": "^0.22.3",
     "typescript": "6.0.3",

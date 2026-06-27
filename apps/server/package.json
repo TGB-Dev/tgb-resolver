@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsdown --minify",
+    "check-types": "tsc --noEmit",
     "dev": "tsx watch src/index.ts",
     "serve": "dotenv -v NODE_ENV=production -- node dist/index.mjs",
     "test": "vitest run --passWithNoTests"
@@ -27,7 +28,8 @@
     "xxhash-addon": "^2.1.0"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.0.1",
     "@types/tar-stream": "^3.1.4",
     "tsdown": "^0.22.3",
     "tsx": "^4.22.4",
