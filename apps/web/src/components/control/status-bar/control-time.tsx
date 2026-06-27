@@ -1,6 +1,8 @@
 import { Text } from "@chakra-ui/react";
+import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
-import { useControlElapsedTimeStore } from "@/stores/control-elapsed-time.store";
+
+import { controlStartedAtAtom } from "@/state/control-elapsed-time";
 
 export function useNow(interval = 1000) {
   const [now, setNow] = useState(() => Date.now());
@@ -34,7 +36,7 @@ export function ControlCurrentTime({ now }: { now: number }) {
 }
 
 export function ControlElapsedTime({ now }: { now: number }) {
-  const startedAt = useControlElapsedTimeStore((s) => s.startedAt);
+  const startedAt = useAtomValue(controlStartedAtAtom);
   const isStarted = startedAt !== null;
   const elapsedMs = isStarted ? now - startedAt : 0;
 

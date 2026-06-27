@@ -1,17 +1,28 @@
 import { Box, Center, Spinner, Text } from "@chakra-ui/react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useRef } from "react";
-import { useControlStore } from "@/stores/control.store";
+import type { TimelineTableItem } from "@tgb-resolver/contracts";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
+import { List, type RowComponentProps } from "react-window";
+
+import {
+  connectControlAtom,
+  controlCurrentEventIdAtom,
+  controlErrorAtom,
+  controlLoadingAtom,
+  controlRowsAtom,
+  disconnectControlAtom,
+} from "@/state/control";
+import { CONTROL_TIMELINE_ROW_HEIGHT_PX } from "@/state/list-metrics";
+
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
 
 export function ControlTimelineTable() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const rows = useControlStore((state) => state.rows);
-  const loading = useControlStore((state) => state.loading);
-  const error = useControlStore((state) => state.error);
-  const connect = useControlStore((state) => state.connect);
-  const disconnect = useControlStore((state) => state.disconnect);
-  const currentEventId = useControlStore((state) => state.show?.playback.currentEventId);
+  const rows = useAtomValue(controlRowsAtom);
+  const loading = useAtomValue(controlLoadingAtom);
+  const error = useAtomValue(controlErrorAtom);
+  const currentEventId = useAtomValue(controlCurrentEventIdAtom);
+  const connect = useSetAtom(connectControlAtom);
+  const disconnect = useSetAtom(disconnectControlAtom);
 
   useEffect(() => {
     void connect();
@@ -19,15 +30,6 @@ export function ControlTimelineTable() {
       disconnect();
     };
   }, [connect, disconnect]);
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 32,
-    overscan: 10,
-  });
-
-  const virtualRows = rowVirtualizer.getVirtualItems();
 
   return (
     <Box boxSize="full" display="flex" flexDir="column" minH={0} overflow="hidden">
@@ -46,32 +48,36 @@ export function ControlTimelineTable() {
           <Text>No show loaded.</Text>
         </Center>
       ) : (
-        <Box ref={scrollRef} flex={1} minH={0} overflowY="auto">
-          <Box position="relative" h={rowVirtualizer.getTotalSize()} w="full">
-            {virtualRows.map((virtualRow) => {
-              const item = rows[virtualRow.index];
-              const isCurrent = item.id === currentEventId;
-
-              return (
-                <Box
-                  key={item.id}
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  width="full"
-                  transform={`translateY(${virtualRow.start}px)`}
-                >
-                  <ControlTimelineTableItem
-                    payload={item}
-                    isCurrent={isCurrent}
-                    durationInSeconds={item.durationSeconds}
-                  />
-                </Box>
-              );
-            })}
-          </Box>
+        <Box flex={1} minH={0}>
+          <List
+            rowCount={rows.length}
+            rowHeight={CONTROL_TIMELINE_ROW_HEIGHT_PX}
+            rowComponent={TimelineRow}
+            rowProps={{ rows, currentEventId }}
+            overscanCount={10}
+            style={{ height: "100%" }}
+          />
         </Box>
       )}
+    </Box>
+  );
+}
+
+interface TimelineRowProps {
+  rows: TimelineTableItem[];
+  currentEventId?: number;
+}
+
+function TimelineRow({ index, style, rows, currentEventId }: RowComponentProps<TimelineRowProps>) {
+  const item = rows[index];
+
+  return (
+    <Box style={style}>
+      <ControlTimelineTableItem
+        payload={item}
+        isCurrent={item.id === currentEventId}
+        durationInSeconds={item.durationSeconds}
+      />
     </Box>
   );
 }

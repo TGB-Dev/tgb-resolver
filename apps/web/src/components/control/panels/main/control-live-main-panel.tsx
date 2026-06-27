@@ -1,4 +1,5 @@
 import { Box } from "@chakra-ui/react";
+
 import { ControlMainCueTab } from "./tabs/control-main-cue-tab";
 
 /**

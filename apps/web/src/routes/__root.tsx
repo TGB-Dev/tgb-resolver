@@ -1,8 +1,10 @@
 import { Container } from "@chakra-ui/react";
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+
 import { AppDevtools } from "@/components/app/devtools";
 import { AppProvider } from "@/components/app/provider";
 import { Toaster } from "@/components/ui/toaster";
+
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -33,6 +35,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
+        {import.meta.env.DEV && (
+          <script crossOrigin="anonymous" src="https://unpkg.com/react-scan/dist/auto.global.js" />
+        )}
         <HeadContent />
       </head>
       <body>
@@ -43,9 +48,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <AppDevtools />
           </Container>
         </AppProvider>
-        {import.meta.env.DEV && (
-          <script crossOrigin="anonymous" src="https://unpkg.com/react-scan/dist/auto.global" />
-        )}
         <Scripts />
       </body>
     </html>

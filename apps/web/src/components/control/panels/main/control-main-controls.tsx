@@ -1,4 +1,5 @@
 import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
   AlertTriangle,
   Pen,
@@ -9,16 +10,31 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
+
 import { Tooltip } from "@/components/ui/tooltip";
-import { useControlStore } from "@/stores/control.store";
-import { useResolveStore } from "@/stores/resolve.store";
+import type { ShowConnectionStatus } from "@/lib/api";
+import {
+  controlCanMutateAtom,
+  controlConnectionStatusAtom,
+  controlIsLiveAtom,
+  toggleControlLiveModeAtom,
+} from "@/state/control";
+import {
+  resetResolveAtom,
+  resolveResettingAtom,
+  resolveStartingAtom,
+  startResolveAtom,
+} from "@/state/resolve";
 
 export function ControlMainControls() {
-  const { start, reset, starting, resetting } = useResolveStore();
-  const isLive = useControlStore((state) => state.show?.mode === "live");
-  const toggleLiveMode = useControlStore((state) => state.toggleLiveMode);
-  const connectionStatus = useControlStore((state) => state.connectionStatus);
-  const canMutate = useControlStore((state) => state.canMutate);
+  const start = useSetAtom(startResolveAtom);
+  const reset = useSetAtom(resetResolveAtom);
+  const toggleLiveMode = useSetAtom(toggleControlLiveModeAtom);
+  const starting = useAtomValue(resolveStartingAtom);
+  const resetting = useAtomValue(resolveResettingAtom);
+  const isLive = useAtomValue(controlIsLiveAtom);
+  const connectionStatus = useAtomValue(controlConnectionStatusAtom);
+  const canMutate = useAtomValue(controlCanMutateAtom);
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
@@ -54,9 +70,7 @@ export function ControlMainControls() {
   );
 }
 
-function getConnectionStatusLabel(
-  status: ReturnType<typeof useControlStore.getState>["connectionStatus"],
-) {
+function getConnectionStatusLabel(status: ShowConnectionStatus) {
   switch (status) {
     case "connected":
       return "Connected";
@@ -73,9 +87,7 @@ function getConnectionStatusLabel(
   }
 }
 
-function getConnectionStatusIcon(
-  status: ReturnType<typeof useControlStore.getState>["connectionStatus"],
-) {
+function getConnectionStatusIcon(status: ShowConnectionStatus) {
   switch (status) {
     case "connected":
       return <Wifi />;

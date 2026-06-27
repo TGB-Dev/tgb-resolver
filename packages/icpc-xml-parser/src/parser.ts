@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
 import { type X2jOptions, XMLParser } from "fast-xml-parser";
+
 import type { RawFeedContest } from "./types";
+import { readFileSync } from "node:fs";
 
 // For fast regex-less camelize routine
 const upper = {

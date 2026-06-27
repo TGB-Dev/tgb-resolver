@@ -2,6 +2,7 @@ import { Tabs } from "@chakra-ui/react";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { Info, Logs, ScanEye, Settings } from "lucide-react";
 import { useState } from "react";
+
 import { ControlMainCueTab } from "./tabs/control-main-cue-tab";
 import { ControlMainInfoTab } from "./tabs/control-main-info-tab";
 import { ControlMainPreviewTab } from "./tabs/control-main-preview-tab";

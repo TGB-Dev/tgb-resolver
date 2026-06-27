@@ -1,7 +1,20 @@
 import type { ShowFile } from "@tgb-resolver/contracts";
 import { createEmptyShow } from "@tgb-resolver/contracts";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { useControlStore } from "./control.store";
+
+import {
+  applyWebSocketMessageAtom,
+  appStore,
+  connectControlAtom,
+  controlCanMutateAtom,
+  controlConnectionStatusAtom,
+  controlRowsAtom,
+  controlShowAtom,
+  loadControlShowAtom,
+  optimizeCurrentShowAtom,
+  renameControlEventAtom,
+  resetControlStateForTests,
+} from "./control";
 
 const websocketManagerMock = vi.hoisted(() => ({
   connect: vi.fn(),
@@ -97,29 +110,9 @@ function createShow(): ShowFile {
   });
 }
 
-describe("useControlStore", () => {
+describe("control atoms", () => {
   beforeEach(() => {
-    useControlStore.setState({
-      show: null,
-      loading: false,
-      error: null,
-      rows: [],
-      connectionStatus: "idle",
-      canMutate: false,
-      isResyncing: false,
-      lastConnectedAt: undefined,
-      lastDisconnectedAt: undefined,
-      reconnectAttempt: 0,
-      loadShow: useControlStore.getState().loadShow,
-      connect: useControlStore.getState().connect,
-      disconnect: useControlStore.getState().disconnect,
-      reconnectNow: useControlStore.getState().reconnectNow,
-      optimizeCurrentShow: useControlStore.getState().optimizeCurrentShow,
-      clearCurrentShow: useControlStore.getState().clearCurrentShow,
-      renameEvent: useControlStore.getState().renameEvent,
-      applyWebSocketMessage: useControlStore.getState().applyWebSocketMessage,
-      toggleLiveMode: useControlStore.getState().toggleLiveMode,
-    });
+    resetControlStateForTests();
 
     websocketManagerMock.connect.mockResolvedValue(undefined);
     websocketManagerMock.disconnect.mockImplementation(() => undefined);
@@ -139,11 +132,11 @@ describe("useControlStore", () => {
       response: new Response(),
     });
 
-    await useControlStore.getState().loadShow();
+    await appStore.set(loadControlShowAtom);
 
-    const state = useControlStore.getState();
-    expect(state.rows).toHaveLength(3);
-    expect(state.rows[1]).toMatchObject({
+    const rows = appStore.get(controlRowsAtom);
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toMatchObject({
       id: 2,
       assetId: "stinger",
       durationSeconds: 2,
@@ -153,9 +146,9 @@ describe("useControlStore", () => {
 
   test("connect is idempotent and only connects one websocket manager", async () => {
     await Promise.all([
-      useControlStore.getState().connect(),
-      useControlStore.getState().connect(),
-      useControlStore.getState().connect(),
+      appStore.set(connectControlAtom),
+      appStore.set(connectControlAtom),
+      appStore.set(connectControlAtom),
     ]);
 
     expect(websocketManagerMock.connect).toHaveBeenCalledTimes(1);
@@ -170,24 +163,20 @@ describe("useControlStore", () => {
       response: new Response(),
     });
 
-    await useControlStore.getState().connect();
+    await appStore.set(connectControlAtom);
     await websocketCallbacksRef.current?.onOpen(2);
 
-    const state = useControlStore.getState();
     expect(apiClientMock.show.get).toHaveBeenCalledTimes(1);
-    expect(state.connectionStatus).toBe("connected");
-    expect(state.canMutate).toBe(true);
-    expect(state.reconnectAttempt).toBe(0);
+    expect(appStore.get(controlConnectionStatusAtom)).toBe("connected");
+    expect(appStore.get(controlCanMutateAtom)).toBe(true);
   });
 
   test("blocks mutations while reconnecting", async () => {
-    useControlStore.setState({
-      connectionStatus: "reconnecting",
-      canMutate: false,
-      show: createShow(),
-    });
+    appStore.set(controlConnectionStatusAtom, "reconnecting");
+    appStore.set(controlCanMutateAtom, false);
+    appStore.set(controlShowAtom, createShow());
 
-    await expect(useControlStore.getState().optimizeCurrentShow()).rejects.toThrow(
+    await expect(appStore.set(optimizeCurrentShowAtom)).rejects.toThrow(
       "Control connection is offline",
     );
     expect(apiClientMock.show.optimize.post).not.toHaveBeenCalled();
@@ -195,16 +184,13 @@ describe("useControlStore", () => {
 
   test("ignores stale websocket playback updates", async () => {
     const show = createShow();
-    useControlStore.setState({
-      show: {
-        ...show,
-        showVersion: 50,
-      },
-      rows: [],
-      connectionStatus: "connected",
+    appStore.set(controlShowAtom, {
+      ...show,
+      showVersion: 50,
     });
+    appStore.set(controlConnectionStatusAtom, "connected");
 
-    await useControlStore.getState().applyWebSocketMessage({
+    await appStore.set(applyWebSocketMessageAtom, {
       type: "playback-state-changed",
       showVersion: 49,
       playback: {
@@ -212,7 +198,7 @@ describe("useControlStore", () => {
       },
     });
 
-    expect(useControlStore.getState().show?.playback.status).toBe("running");
+    expect(appStore.get(controlShowAtom)?.playback.status).toBe("running");
   });
 
   test("coalesces refetch-triggering websocket messages while a refetch is in flight", async () => {
@@ -224,6 +210,7 @@ describe("useControlStore", () => {
       headers: Record<string, string>;
       response: Response;
     }): void => {};
+
     apiClientMock.show.get.mockReturnValue(
       new Promise((resolve) => {
         hasFetchResolver = true;
@@ -231,30 +218,26 @@ describe("useControlStore", () => {
       }),
     );
 
-    useControlStore.setState({
-      show: {
-        ...createShow(),
-        showVersion: 10,
-      },
-      connectionStatus: "connected",
+    appStore.set(controlShowAtom, {
+      ...createShow(),
+      showVersion: 10,
     });
+    appStore.set(controlConnectionStatusAtom, "connected");
 
-    const firstRefetch = useControlStore.getState().applyWebSocketMessage({
+    const firstRefetch = appStore.set(applyWebSocketMessageAtom, {
       type: "show-refetch-required",
       showVersion: 12,
       reason: "optimized",
     });
-    const secondRefetch = useControlStore.getState().applyWebSocketMessage({
+    const secondRefetch = appStore.set(applyWebSocketMessageAtom, {
       type: "show-replaced",
       showVersion: 13,
       source: "manual",
     });
 
     expect(apiClientMock.show.get).toHaveBeenCalledTimes(1);
+    expect(hasFetchResolver).toBe(true);
 
-    if (!hasFetchResolver) {
-      throw new Error("Expected pending fetch resolver");
-    }
     resolveFetch({
       data: {
         ...createShow(),
@@ -270,6 +253,32 @@ describe("useControlStore", () => {
     await secondRefetch;
 
     expect(apiClientMock.show.get).toHaveBeenCalledTimes(1);
-    expect(useControlStore.getState().show?.showVersion).toBe(13);
+    expect(appStore.get(controlShowAtom)?.showVersion).toBe(13);
+  });
+
+  test("sends an empty customName to reset an event label back to its placeholder", async () => {
+    const resolvePatch = vi.fn().mockResolvedValue({
+      data: createShow(),
+      error: null,
+      status: 200,
+      headers: {},
+      response: new Response(),
+    });
+    apiClientMock.show.events.resolve.mockReturnValue({ patch: resolvePatch });
+
+    appStore.set(controlShowAtom, createShow());
+    appStore.set(controlConnectionStatusAtom, "connected");
+    appStore.set(controlCanMutateAtom, true);
+
+    await appStore.set(renameControlEventAtom, {
+      eventId: 3,
+      type: "RES",
+      customName: "",
+    });
+
+    expect(resolvePatch).toHaveBeenCalledWith({
+      showVersion: createShow().showVersion,
+      customName: "",
+    });
   });
 });

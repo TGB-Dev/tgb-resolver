@@ -1,13 +1,15 @@
 import { Button } from "@chakra-ui/react";
+import { useAtomValue, useSetAtom } from "jotai";
 import { Fullscreen, Minimize } from "lucide-react";
-import { useFullScreenStore } from "@/stores/full-screen.store";
+
+import { isFullscreenAtom, toggleFullscreenAtom } from "@/state/full-screen";
 
 export function ControlFullScreenButton() {
-  const isFullscreen = useFullScreenStore((state) => state.isFullscreen);
-  const toggle = useFullScreenStore((state) => state.toggle);
+  const isFullscreen = useAtomValue(isFullscreenAtom);
+  const toggle = useSetAtom(toggleFullscreenAtom);
 
   return (
-    <Button variant="ghost" onClick={toggle} aspectRatio={1}>
+    <Button variant="ghost" onClick={() => void toggle()} aspectRatio={1}>
       {isFullscreen ? <Minimize size={10} /> : <Fullscreen size={10} />}
     </Button>
   );

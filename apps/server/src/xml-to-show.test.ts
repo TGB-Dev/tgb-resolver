@@ -1,7 +1,8 @@
-import { readFileSync } from "node:fs";
 import { parseIcpcXml } from "@tgb-resolver/icpc-xml-parser";
 import { describe, expect, test } from "vitest";
+
 import { convertIcpcContestToShow } from "./xml-to-show";
+import { readFileSync } from "node:fs";
 
 const SAMPLE_XML_PATH = new URL(
   "../../../packages/icpc-xml-parser/tests/sample.xml",

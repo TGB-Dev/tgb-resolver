@@ -1,12 +1,13 @@
+import { createEmptyShow, type ShowFile } from "@tgb-resolver/contracts";
+import tar from "tar-stream";
+import { describe, expect, test } from "vitest";
+
+import { ShowRepository } from "./show-repository";
+import { ShowService, ShowServiceError } from "./show-service";
 import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { brotliCompressSync } from "node:zlib";
-import { createEmptyShow, type ShowFile } from "@tgb-resolver/contracts";
-import tar from "tar-stream";
-import { describe, expect, test } from "vitest";
-import { ShowRepository } from "./show-repository";
-import { ShowService, ShowServiceError } from "./show-service";
 
 function createService(show?: ShowFile) {
   const dir = mkdtempSync(join(tmpdir(), "tgb-resolver-"));

@@ -1,5 +1,6 @@
 import { Grid, Splitter, useSplitter } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
+
 import { ControlConfirmDialog } from "@/components/control/control-confirm-dialog";
 import { ControlMainPanel } from "@/components/control/panels/control-main-panel";
 import { ControlTimelinePanel } from "@/components/control/panels/control-timeline-panel";

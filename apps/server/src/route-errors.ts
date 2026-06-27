@@ -1,5 +1,6 @@
 import type { ShowServiceErrorReason, ShowServiceErrorResponse } from "@tgb-resolver/contracts";
 import { status } from "elysia";
+
 import { ShowServiceError } from "./show-service";
 
 function toStatusCode(reason: ShowServiceErrorReason) {
