@@ -1,0 +1,37 @@
+{
+  "name": "server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "root": "apps/server",
+  "sourceRoot": "apps/server/TGB.Resolver.Server",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "command": "dotnet build apps/server/TGB.Resolver.Server.slnx",
+      "outputs": [
+        "{projectRoot}/TGB.Resolver.Server/bin/**",
+        "{projectRoot}/TGB.Resolver.Server.Tests/bin/**",
+        "{projectRoot}/TGB.Resolver.IcpcXmlParser/bin/**",
+        "{projectRoot}/TGB.Resolver.IcpcXmlParser.Tests/bin/**",
+        "{projectRoot}/TGB.Resolver.Server/openapi.yaml"
+      ]
+    },
+    "check-types": {
+      "command": "dotnet build apps/server/TGB.Resolver.Server.slnx"
+    },
+    "test": {
+      "command": "MSBUILDDISABLENODEREUSE=1 dotnet test apps/server/TGB.Resolver.Server.slnx --no-restore"
+    },
+    "dev": {
+      "command": "ASPNETCORE_ENVIRONMENT=Development dotnet watch --project apps/server/TGB.Resolver.Server/TGB.Resolver.Server.csproj run --no-launch-profile --urls http://0.0.0.0:5001",
+      "continuous": true
+    },
+    "serve": {
+      "command": "ASPNETCORE_ENVIRONMENT=Development dotnet run --project apps/server/TGB.Resolver.Server/TGB.Resolver.Server.csproj --no-build --no-launch-profile --urls http://0.0.0.0:5001",
+      "continuous": true
+    },
+    "openapi": {
+      "command": "dotnet build apps/server/TGB.Resolver.Server.slnx -p:GenerateOpenApiDocument=true",
+      "outputs": ["{projectRoot}/TGB.Resolver.Server/openapi.yaml"]
+    }
+  }
+}

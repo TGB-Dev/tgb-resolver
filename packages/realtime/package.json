@@ -1,0 +1,28 @@
+{
+  "name": "@tgb-resolver/realtime",
+  "version": "1.0.0",
+  "description": "Realtime and shared client-side domain models for TGB Resolver",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsc --noEmit",
+    "dev": "tsdown --watch --no-clean",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "pnpm run check-types"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsdown": "^0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "files": [
+    "dist"
+  ]
+}
