@@ -1,14 +1,13 @@
 import { Grid } from "@chakra-ui/react";
-import { useAtomValue } from "jotai";
 
-import { controlIsLiveAtom } from "@/state/control";
+import { useControlIsLive } from "@/features/control/hooks";
 
 import { ControlEditMainPanel } from "./main/control-edit-main-panel";
 import { ControlLiveMainPanel } from "./main/control-live-main-panel";
 import { ControlMainControls } from "./main/control-main-controls";
 
 export function ControlMainPanel() {
-  const isLive = useAtomValue(controlIsLiveAtom);
+  const isLive = useControlIsLive();
   return (
     <Grid templateRows="1fr auto" h="full">
       {isLive ? <ControlLiveMainPanel /> : <ControlEditMainPanel />}

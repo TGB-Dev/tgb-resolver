@@ -1,26 +1,25 @@
 import { Button, HStack, Show } from "@chakra-ui/react";
-import { FILE_EXTENSION } from "@tgb-resolver/contracts";
-import { useAtomValue, useSetAtom } from "jotai";
+import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 import { Blocks, FileDown, FileUp, Trash2 } from "lucide-react";
 import { useRef } from "react";
 
 import {
-  clearCurrentShowAtom,
-  controlCanMutateAtom,
-  controlIsLiveAtom,
-  exportCurrentShowAtom,
-  importShowFileAtom,
-  optimizeCurrentShowAtom,
-} from "@/state/control";
+  useClearShowMutation,
+  useControlCanMutate,
+  useControlIsLive,
+  useExportShowAction,
+  useImportShowMutation,
+  useOptimizeShowMutation,
+} from "@/features/control/hooks";
 
 export function ControlTimelineControls() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const optimizeCurrentShow = useSetAtom(optimizeCurrentShowAtom);
-  const clearCurrentShow = useSetAtom(clearCurrentShowAtom);
-  const importShowFile = useSetAtom(importShowFileAtom);
-  const exportCurrentShow = useSetAtom(exportCurrentShowAtom);
-  const isLive = useAtomValue(controlIsLiveAtom);
-  const canMutate = useAtomValue(controlCanMutateAtom);
+  const optimizeCurrentShow = useOptimizeShowMutation();
+  const clearCurrentShow = useClearShowMutation();
+  const importShowFile = useImportShowMutation();
+  const exportCurrentShow = useExportShowAction();
+  const isLive = useControlIsLive();
+  const canMutate = useControlCanMutate();
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
@@ -34,7 +33,7 @@ export function ControlTimelineControls() {
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (file) {
-            void importShowFile(file);
+            importShowFile.mutate(file);
           }
           event.currentTarget.value = "";
         }}
@@ -50,7 +49,7 @@ export function ControlTimelineControls() {
           Load
         </Button>
 
-        <Button onClick={optimizeCurrentShow} disabled={!canMutate}>
+        <Button onClick={() => optimizeCurrentShow.mutate()} disabled={!canMutate}>
           <Blocks />
           Optimize
         </Button>
@@ -58,7 +57,7 @@ export function ControlTimelineControls() {
         <Button
           colorPalette="red"
           variant="outline"
-          onClick={clearCurrentShow}
+          onClick={() => clearCurrentShow.mutate()}
           disabled={!canMutate}
         >
           <Trash2 />

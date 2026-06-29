@@ -1,76 +1,83 @@
 # tgb-resolver
 
-ICPC/DMOJ event feed-compatible contest scoreboard resolver. Animates the progression of XML contest feeds - teams solving problems, leaderboard shifts.
+The Gifted Battlefield resolver for ICPC/DMOJ-style event feeds.
+
+This workspace is centered on a .NET 10 server solution that owns HTTP contracts and realtime signaling, with Nx orchestrating the frontend and TypeScript packages around it.
 
 ## Stack
 
 | Layer | Tech |
-|---|---|
-| Frontend | React 19, TanStack Start, Chakra UI 3, Zustand, Motion |
-| Server | Elysia (ElysiaJS), TypeBox |
-| Parser | fast-xml-parser (ICPC XML → typed JSON) |
-| Monorepo | pnpm workspaces, Turborepo |
+| --- | --- |
+| Workspace | Nx, pnpm workspaces |
+| Frontend | React 19, TanStack Start, Vite 8, Chakra UI 3, Jotai, react-window |
+| Server | .NET 10, FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly |
+| Contracts | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot |
+| Server-side parser | `TGB.Resolver.IcpcXmlParser` |
 | Lint/Format | Biome, syncpack |
-| Tests | Vitest, Testing Library |
+| Tests | Vitest, Testing Library, xUnit |
 
 ## Prerequisites
 
 - Node.js >= 24.15.0
 - pnpm >= 11.1.3
+- .NET SDK 10.0.301
 
 ## Getting Started
 
 ```sh
 pnpm install
-cp .env.example .env   # VITE_API_URL defaults to http://localhost:5001
+pnpm hooks:install
+cp .env.example .env
 ```
 
-### Development
+The frontend reads `VITE_API_URL` and defaults to `http://localhost:5001`.
+
+## Development
 
 ```sh
 pnpm dev
 ```
 
-Server runs on `:5001`, web on `:3000`.
+- Audience UI: `/`
+- Control UI: `/control`
 
-### Build
+The .NET server solution lives under [apps/server](/Volumes/SSDBox/Codes/tgb-resolver/apps/server) and the TanStack Start app lives under [apps/web](/Volumes/SSDBox/Codes/tgb-resolver/apps/web).
+
+## Build and Test
 
 ```sh
 pnpm build
-```
-
-### Test
-
-```sh
+pnpm check-types
 pnpm test
 ```
 
-### Production Serve
+The contracts package generates its TypeScript client from [apps/server/TGB.Resolver.Server/openapi.yaml](/Volumes/SSDBox/Codes/tgb-resolver/apps/server/TGB.Resolver.Server/openapi.yaml) before building.
+
+## Native Git Hooks
+
+This repo uses native Git hooks from [.githooks](/Volumes/SSDBox/Codes/tgb-resolver/.githooks) instead of Husky.
+
+Install them once per clone:
 
 ```sh
-pnpm build && pnpm serve
+pnpm hooks:install
 ```
+
+The pre-commit hook runs:
+
+- `biome check --write --staged`
+- dependency sync checks
+- contracts generation/build
+- web tests
 
 ## Structure
 
-```
+```text
 apps/
-  server/          - Elysia API server
-  web/             - TanStack Start React app
+  server/   .NET 10 server solution and tests
+  web/      TanStack Start frontend
 packages/
-  icpc-xml-parser/ - Contest XML to typed data
+  contracts/         generated HTTP client, query helpers, and valibot schemas
+  realtime/          shared client-side realtime/domain helpers
+  icpc-xml-parser/   legacy TypeScript ICPC XML parser
 ```
-
-## Scripts
-
-| Command | Action |
-|---|---|
-| `pnpm dev` | Dev mode (all apps, watch) |
-| `pnpm build` | Build all packages + apps |
-| `pnpm test` | Run all tests |
-| `pnpm serve` | Production serve |
-| `pnpm lint` | Biome lint --write |
-| `pnpm format` | Biome format --write |
-| `pnpm check` | Biome lint + format + organize imports |
-| `pnpm check-types` | TypeScript type check |
-| `pnpm sync` | syncpack fix + format (dependency sync) |

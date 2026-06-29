@@ -4,17 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "turbo run build",
+    "build": "nx run-many -t build",
     "check": "biome check . --write",
-    "check-types": "turbo run check-types",
-    "dev": "turbo run dev",
+    "check-types": "nx run-many -t check-types",
+    "dev": "nx run-many -t dev --parallel=20",
     "format": "biome format . --write",
+    "hooks:install": "git config core.hooksPath .githooks",
     "lint": "biome lint . --write",
-    "prepare": "husky",
-    "serve": "turbo run serve",
+    "serve": "nx run-many -t serve --parallel=20",
     "sync": "pnpm syncpack fix --dependency-types prod,dev,peer && pnpm syncpack format",
     "sync:check": "pnpm syncpack lint --dependency-types prod,dev,peer",
-    "test": "turbo run test"
+    "test": "nx run-many -t test"
   },
   "dependencies": {
     "dotenv-cli": "^11.0.0"
@@ -22,11 +22,10 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.1",
     "@types/node": "^26.0.1",
-    "husky": "^9.1.7",
+    "nx": "23.0.1",
     "rimraf": "^6.1.3",
     "syncpack": "^15.3.2",
     "tsx": "^4.22.4",
-    "turbo": "^2.10.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.9"
   },

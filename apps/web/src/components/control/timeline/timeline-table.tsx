@@ -1,47 +1,28 @@
 import { Box, Center, Spinner, Text } from "@chakra-ui/react";
-import type { TimelineTableItem } from "@tgb-resolver/contracts";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { List, type RowComponentProps } from "react-window";
 
-import {
-  connectControlAtom,
-  controlCurrentEventIdAtom,
-  controlErrorAtom,
-  controlLoadingAtom,
-  controlRowsAtom,
-  disconnectControlAtom,
-} from "@/state/control";
+import { useControlShowQuery, useControlShowRows } from "@/features/control/hooks";
 import { CONTROL_TIMELINE_ROW_HEIGHT_PX } from "@/state/list-metrics";
 
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
 
 export function ControlTimelineTable() {
-  const rows = useAtomValue(controlRowsAtom);
-  const loading = useAtomValue(controlLoadingAtom);
-  const error = useAtomValue(controlErrorAtom);
-  const currentEventId = useAtomValue(controlCurrentEventIdAtom);
-  const connect = useSetAtom(connectControlAtom);
-  const disconnect = useSetAtom(disconnectControlAtom);
-
-  useEffect(() => {
-    void connect();
-    return () => {
-      disconnect();
-    };
-  }, [connect, disconnect]);
+  const showQuery = useControlShowQuery();
+  const rows = useControlShowRows();
+  const currentEventId = showQuery.data?.playback.currentEventId;
 
   return (
     <Box boxSize="full" display="flex" flexDir="column" minH={0} overflow="hidden">
       <ControlTimelineTableHeader />
 
-      {loading ? (
+      {showQuery.isLoading ? (
         <Center flex={1}>
           <Spinner />
         </Center>
-      ) : error ? (
+      ) : showQuery.error ? (
         <Center flex={1} px={4}>
-          <Text>{error}</Text>
+          <Text>{showQuery.error.message}</Text>
         </Center>
       ) : rows.length === 0 ? (
         <Center flex={1}>

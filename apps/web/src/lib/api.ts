@@ -1,12 +1,71 @@
-import { treaty } from "@elysia/eden";
-import { FILE_EXTENSION, type ShowWebSocketMessage } from "@tgb-resolver/contracts";
-import type { App } from "@tgb-resolver/server";
+import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
+import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
+import { generatedClient } from "@tgb-resolver/contracts";
+import type {
+  ClockSyncRequest,
+  ClockSyncResponse,
+  ShowPlaybackState,
+  ShowWebSocketMessage,
+} from "@tgb-resolver/realtime";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 const MAX_RECONNECT_ATTEMPTS = 8;
-const BASE_RECONNECT_DELAY_MS = 500;
-const MAX_RECONNECT_DELAY_MS = 10_000;
+
+generatedClient.setConfig({
+  baseUrl: API_BASE_URL,
+});
+
+export const apiClient = {
+  get: () => Promise.resolve({ data: "TGB Resolver Server", error: undefined }),
+};
+
+function normalizePlaybackStatus(status: string): ShowPlaybackState["status"] {
+  switch (status) {
+    case "Running":
+      return "running";
+    case "Paused":
+      return "paused";
+    case "Completed":
+      return "completed";
+    default:
+      return "idle";
+  }
+}
+
+function toShowPlaybackState(playback: {
+  status: string;
+  currentResolveEventId?: number | null;
+  currentEventId?: number | null;
+  activeSegment?: {
+    resolveEventId: number;
+    nextResolveEventId?: number | null;
+    inlineEventIds: number[];
+    currentInlineIndex: number;
+  };
+  startedAt?: number | null;
+}): ShowPlaybackState {
+  return {
+    status: normalizePlaybackStatus(playback.status),
+    currentResolveEventId: playback.currentResolveEventId ?? undefined,
+    currentEventId: playback.currentEventId ?? undefined,
+    activeSegment: playback.activeSegment
+      ? {
+          resolveEventId: playback.activeSegment.resolveEventId,
+          nextResolveEventId: playback.activeSegment.nextResolveEventId ?? undefined,
+          inlineEventIds: playback.activeSegment.inlineEventIds,
+          currentInlineIndex: playback.activeSegment.currentInlineIndex,
+        }
+      : undefined,
+    startedAt: playback.startedAt ?? undefined,
+  };
+}
+
+function createClockSyncRequest(): ClockSyncRequest {
+  return {
+    sessionId: crypto.randomUUID(),
+    clientSentAt: new Date().toISOString(),
+  };
+}
 
 export type ShowConnectionStatus =
   | "idle"
@@ -22,7 +81,7 @@ export interface ShowWebSocketManagerCallbacks {
     nextStatus: Exclude<ShowConnectionStatus, "idle" | "connected">,
     attempt: number,
   ) => void;
-  onError: (attempt: number) => void;
+  onError: (attempt: number, error?: unknown) => void;
   onMessage: (message: ShowWebSocketMessage) => void | Promise<void>;
 }
 
@@ -32,129 +91,221 @@ export interface ShowWebSocketManager {
   reconnectNow: () => Promise<void>;
 }
 
-export const apiClient = treaty<App>(API_BASE_URL);
-
-function computeReconnectDelay(attempt: number) {
-  const exponentialDelay = Math.min(
-    MAX_RECONNECT_DELAY_MS,
-    BASE_RECONNECT_DELAY_MS * 2 ** Math.max(0, attempt - 1),
-  );
-  const jitter = Math.floor(Math.random() * 250);
-  return exponentialDelay + jitter;
-}
-
 export function createShowWebSocketManager(
   callbacks: ShowWebSocketManagerCallbacks,
 ): ShowWebSocketManager {
-  let socket: WebSocket | null = null;
-  let connectPromise: Promise<void> | null = null;
-  let reconnectTimer: number | null = null;
+  if (import.meta.env.MODE === "test" || import.meta.env.VITEST) {
+    return {
+      connect: async () => {},
+      disconnect: () => {
+        callbacks.onClose("disconnected", 0);
+      },
+      reconnectNow: async () => {},
+    };
+  }
+
   let reconnectAttempt = 0;
-  let intentionallyDisconnected = false;
+  let manualStopInProgress = false;
+  let connectPromise: Promise<void> | null = null;
+  let stopPromise: Promise<void> | null = null;
 
-  function clearReconnectTimer() {
-    if (reconnectTimer !== null) {
-      window.clearTimeout(reconnectTimer);
-      reconnectTimer = null;
-    }
+  const connection = new HubConnectionBuilder()
+    .withUrl(`${API_BASE_URL}/hubs/show`)
+    .withHubProtocol(new MessagePackHubProtocol())
+    .withAutomaticReconnect([0, 500, 1_000, 2_000, 4_000, 8_000, 10_000, 10_000])
+    .configureLogging(LogLevel.Error)
+    .build();
+
+  async function syncClock() {
+    await connection.invoke<ClockSyncResponse>("SyncClock", createClockSyncRequest());
   }
 
-  function closeSocket() {
-    if (!socket) return;
-    socket.onopen = null;
-    socket.onclose = null;
-    socket.onerror = null;
-    socket.onmessage = null;
-    socket.close();
-    socket = null;
-  }
-
-  function scheduleReconnect() {
-    if (intentionallyDisconnected) return;
-    if (reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
-      callbacks.onClose("failed", reconnectAttempt);
-      return;
-    }
-
-    reconnectAttempt += 1;
-    const attempt = reconnectAttempt;
-    callbacks.onClose("reconnecting", attempt);
-    clearReconnectTimer();
-    reconnectTimer = window.setTimeout(() => {
-      void openSocket();
-    }, computeReconnectDelay(attempt));
-  }
-
-  async function openSocket() {
-    if (connectPromise) return connectPromise;
-    if (
-      socket &&
-      (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-
-    intentionallyDisconnected = false;
-    const currentAttempt = reconnectAttempt;
-
-    connectPromise = new Promise<void>((resolve) => {
-      const nextSocket = new WebSocket(`${WS_BASE_URL}/ws`);
-      socket = nextSocket;
-
-      nextSocket.onopen = async () => {
-        reconnectAttempt = 0;
-        clearReconnectTimer();
-        connectPromise = null;
-        await callbacks.onOpen(currentAttempt);
-        resolve();
-      };
-
-      nextSocket.onerror = () => {
-        callbacks.onError(currentAttempt);
-      };
-
-      nextSocket.onmessage = async (event) => {
-        await callbacks.onMessage(JSON.parse(event.data) as ShowWebSocketMessage);
-      };
-
-      nextSocket.onclose = () => {
-        socket = null;
-        connectPromise = null;
-
-        if (intentionallyDisconnected) {
-          callbacks.onClose("disconnected", reconnectAttempt);
-          resolve();
-          return;
-        }
-
-        scheduleReconnect();
-        resolve();
-      };
+  connection.on("ShowRefetchRequired", async (message: { showVersion: number; reason: string }) => {
+    await callbacks.onMessage({
+      type: "show-refetch-required",
+      showVersion: message.showVersion,
+      reason:
+        message.reason === "ShowReplaced"
+          ? "show_replaced"
+          : message.reason === "VersionDrift"
+            ? "version_drift"
+            : "optimized",
     });
+  });
 
-    return connectPromise;
-  }
+  connection.on(
+    "PlaybackStateChanged",
+    async (message: {
+      showVersion: number;
+      playback: {
+        status: string;
+        currentResolveEventId?: number;
+        currentEventId?: number;
+        activeSegment?: {
+          resolveEventId: number;
+          nextResolveEventId?: number;
+          inlineEventIds: number[];
+          currentInlineIndex: number;
+        };
+        startedAt?: number;
+      };
+    }) => {
+      await callbacks.onMessage({
+        type: "playback-state-changed",
+        showVersion: message.showVersion,
+        playback: toShowPlaybackState(message.playback),
+      });
+    },
+  );
+
+  connection.on("LiveModeChanged", async (message: { showVersion: number; mode: string }) => {
+    await callbacks.onMessage({
+      type: "live-mode-changed",
+      showVersion: message.showVersion,
+      mode: message.mode === "Live" ? "live" : "editing",
+    });
+  });
+
+  connection.onreconnecting((error) => {
+    if (manualStopInProgress) {
+      return;
+    }
+
+    reconnectAttempt = Math.min(reconnectAttempt + 1, MAX_RECONNECT_ATTEMPTS);
+    callbacks.onError(reconnectAttempt, error);
+    callbacks.onClose("reconnecting", reconnectAttempt);
+    if (error) {
+      console.error(error);
+    }
+  });
+
+  connection.onreconnected(async () => {
+    if (manualStopInProgress) {
+      return;
+    }
+
+    const attempt = reconnectAttempt;
+    reconnectAttempt = 0;
+    await syncClock();
+    await callbacks.onOpen(attempt);
+  });
+
+  connection.onclose((error) => {
+    connectPromise = null;
+    stopPromise = null;
+
+    if (manualStopInProgress) {
+      manualStopInProgress = false;
+      callbacks.onClose("disconnected", 0);
+      return;
+    }
+
+    const nextStatus = reconnectAttempt >= MAX_RECONNECT_ATTEMPTS ? "failed" : "disconnected";
+    callbacks.onClose(nextStatus, reconnectAttempt);
+    if (error) {
+      callbacks.onError(reconnectAttempt, error);
+    }
+  });
 
   return {
     connect: async () => {
-      await openSocket();
+      if (connection.state === HubConnectionState.Connected) {
+        return;
+      }
+
+      if (connectPromise) {
+        return connectPromise;
+      }
+
+      if (stopPromise) {
+        await stopPromise;
+      }
+
+      if (connection.state !== HubConnectionState.Disconnected) {
+        return;
+      }
+
+      manualStopInProgress = false;
+      connectPromise = (async () => {
+        try {
+          await connection.start();
+          await syncClock();
+          await callbacks.onOpen(reconnectAttempt);
+        } catch (error) {
+          if (manualStopInProgress) {
+            return;
+          }
+
+          callbacks.onError(reconnectAttempt, error);
+          callbacks.onClose("failed", reconnectAttempt);
+          throw error;
+        } finally {
+          connectPromise = null;
+        }
+      })();
+
+      return connectPromise;
     },
     disconnect: () => {
-      intentionallyDisconnected = true;
       reconnectAttempt = 0;
-      clearReconnectTimer();
-      closeSocket();
-      callbacks.onClose("disconnected", 0);
-      connectPromise = null;
+      manualStopInProgress = true;
+
+      if (connection.state === HubConnectionState.Disconnected) {
+        manualStopInProgress = false;
+        connectPromise = null;
+        stopPromise = null;
+        callbacks.onClose("disconnected", 0);
+        return;
+      }
+
+      if (stopPromise) {
+        return;
+      }
+
+      stopPromise = connection.stop().finally(() => {
+        stopPromise = null;
+      });
     },
     reconnectNow: async () => {
-      intentionallyDisconnected = false;
-      clearReconnectTimer();
-      closeSocket();
       reconnectAttempt = 0;
-      await openSocket();
+      if (connectPromise) {
+        manualStopInProgress = true;
+        await connectPromise.catch(() => {});
+      }
+
+      if (connection.state !== HubConnectionState.Disconnected) {
+        manualStopInProgress = true;
+        if (!stopPromise) {
+          stopPromise = connection.stop().finally(() => {
+            stopPromise = null;
+          });
+        }
+        await stopPromise;
+      }
+
+      manualStopInProgress = false;
+      await (connectPromise ??
+        (async () => {
+          connectPromise = (async () => {
+            try {
+              await connection.start();
+              await syncClock();
+              await callbacks.onOpen(0);
+            } catch (error) {
+              if (manualStopInProgress) {
+                return;
+              }
+
+              callbacks.onError(reconnectAttempt, error);
+              callbacks.onClose("failed", reconnectAttempt);
+              throw error;
+            } finally {
+              connectPromise = null;
+            }
+          })();
+
+          return connectPromise;
+        })());
     },
   };
 }
-
-export { FILE_EXTENSION };

@@ -1,5 +1,4 @@
 import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
-import { useAtomValue, useSetAtom } from "jotai";
 import {
   AlertTriangle,
   Pen,
@@ -12,36 +11,38 @@ import {
 } from "lucide-react";
 
 import { Tooltip } from "@/components/ui/tooltip";
+import {
+  useControlCanMutate,
+  useControlIsLive,
+  useResetPlaybackMutation,
+  useStartPlaybackMutation,
+  useToggleLiveModeMutation,
+} from "@/features/control/hooks";
+import { useControlRealtime } from "@/features/control/realtime-provider";
 import type { ShowConnectionStatus } from "@/lib/api";
-import {
-  controlCanMutateAtom,
-  controlConnectionStatusAtom,
-  controlIsLiveAtom,
-  toggleControlLiveModeAtom,
-} from "@/state/control";
-import {
-  resetResolveAtom,
-  resolveResettingAtom,
-  resolveStartingAtom,
-  startResolveAtom,
-} from "@/state/resolve";
 
 export function ControlMainControls() {
-  const start = useSetAtom(startResolveAtom);
-  const reset = useSetAtom(resetResolveAtom);
-  const toggleLiveMode = useSetAtom(toggleControlLiveModeAtom);
-  const starting = useAtomValue(resolveStartingAtom);
-  const resetting = useAtomValue(resolveResettingAtom);
-  const isLive = useAtomValue(controlIsLiveAtom);
-  const connectionStatus = useAtomValue(controlConnectionStatusAtom);
-  const canMutate = useAtomValue(controlCanMutateAtom);
+  const startPlayback = useStartPlaybackMutation();
+  const resetPlayback = useResetPlaybackMutation();
+  const toggleLiveMode = useToggleLiveModeMutation();
+  const isLive = useControlIsLive();
+  const { connectionStatus } = useControlRealtime();
+  const canMutate = useControlCanMutate();
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
-      <IconButton loading={starting} onClick={start} disabled={!canMutate}>
+      <IconButton
+        loading={startPlayback.isPending}
+        onClick={() => startPlayback.mutate()}
+        disabled={!canMutate}
+      >
         <Play />
       </IconButton>
-      <IconButton loading={resetting} onClick={reset} disabled={!canMutate}>
+      <IconButton
+        loading={resetPlayback.isPending}
+        onClick={() => resetPlayback.mutate()}
+        disabled={!canMutate}
+      >
         <TimerReset />
       </IconButton>
 
@@ -59,8 +60,8 @@ export function ControlMainControls() {
           w={48}
           variant={isLive ? "solid" : "outline"}
           colorPalette={isLive ? "red" : "colorPalette"}
-          onClick={toggleLiveMode}
-          disabled={!canMutate}
+          onClick={() => toggleLiveMode.mutate()}
+          disabled={!canMutate || toggleLiveMode.isPending}
         >
           {isLive ? <Radio /> : <Pen />}
           Current Mode: {isLive ? "Live" : "Edit"}
