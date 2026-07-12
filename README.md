@@ -1,20 +1,21 @@
 # tgb-resolver
 
-The Gifted Battlefield resolver for ICPC/DMOJ-style event feeds.
+The Gifted Battlefield resolver for ICPC/DMOJ-style contest feeds.
 
-This workspace is centered on a .NET 10 server solution that owns HTTP contracts and realtime signaling, with Nx orchestrating the frontend and TypeScript packages around it.
+Server-authoritative event timeline with realtime signaling,
+driving audience and control UIs from a single source of truth.
 
 ## Stack
 
 | Layer | Tech |
-| --- | --- |
+|---|---|
 | Workspace | Nx, pnpm workspaces |
-| Frontend | React 19, TanStack Start, Vite 8, Chakra UI 3, Jotai, react-window |
-| Server | .NET 10, FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly |
+| Frontend | React 19, TanStack Start (SPA), Vite 8, Chakra UI 3, Jotai, react-window |
+| Server | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly |
 | Contracts | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot |
-| Server-side parser | `TGB.Resolver.IcpcXmlParser` |
+| Parsers | .NET `TGB.Resolver.IcpcXmlParser` (server-side) |
 | Lint/Format | Biome, syncpack |
-| Tests | Vitest, Testing Library, xUnit |
+| Tests | Vitest, Testing Library (web), TUnit (.NET) |
 
 ## Prerequisites
 
@@ -27,10 +28,8 @@ This workspace is centered on a .NET 10 server solution that owns HTTP contracts
 ```sh
 pnpm install
 pnpm hooks:install
-cp .env.example .env
+cp .env.example .env    # VITE_API_URL defaults to http://localhost:5001
 ```
-
-The frontend reads `VITE_API_URL` and defaults to `http://localhost:5001`.
 
 ## Development
 
@@ -38,46 +37,46 @@ The frontend reads `VITE_API_URL` and defaults to `http://localhost:5001`.
 pnpm dev
 ```
 
-- Audience UI: `/`
-- Control UI: `/control`
+Runs the server (port 5001) and frontend (port 3000) in parallel.
 
-The .NET server solution lives under [apps/server](/Volumes/SSDBox/Codes/tgb-resolver/apps/server) and the TanStack Start app lives under [apps/web](/Volumes/SSDBox/Codes/tgb-resolver/apps/web).
+| Route | UI |
+|---|---|
+| `/` | Audience |
+| `/control` | Control |
 
-## Build and Test
+Server solution: `apps/server/TGB.Resolver.Server.slnx` (.slnx format).
+Frontend app: `apps/web/` (TanStack Start SPA).
+
+## Build & Test
 
 ```sh
-pnpm build
-pnpm check-types
-pnpm test
+pnpm build          # Nx dependency-order build
+pnpm check-types    # tsc --noEmit for all TS packages
+pnpm test           # vitest (TS) + dotnet test (.NET)
+pnpm serve          # production previews
 ```
 
-The contracts package generates its TypeScript client from [apps/server/TGB.Resolver.Server/openapi.yaml](/Volumes/SSDBox/Codes/tgb-resolver/apps/server/TGB.Resolver.Server/openapi.yaml) before building.
+The `packages/contracts` package generates its TypeScript client from `apps/server/TGB.Resolver.Server/openapi.yaml` before building. Regenerate OpenAPI with:
+
+```sh
+pnpm nx run server:openapi
+```
 
 ## Native Git Hooks
 
-This repo uses native Git hooks from [.githooks](/Volumes/SSDBox/Codes/tgb-resolver/.githooks) instead of Husky.
-
-Install them once per clone:
-
 ```sh
-pnpm hooks:install
+pnpm hooks:install     # one-time, enables .githooks/pre-commit
 ```
 
-The pre-commit hook runs:
-
-- `biome check --write --staged`
-- dependency sync checks
-- contracts generation/build
-- web tests
+Pre-commit runs: `biome check --write --staged` → `sync:check || sync` → `build` → `test`.
 
 ## Structure
 
 ```text
 apps/
-  server/   .NET 10 server solution and tests
-  web/      TanStack Start frontend
+  server/     .NET 10 solution (server + parser + tests)
+  web/        TanStack Start SPA frontend
 packages/
-  contracts/         generated HTTP client, query helpers, and valibot schemas
-  realtime/          shared client-side realtime/domain helpers
-  icpc-xml-parser/   legacy TypeScript ICPC XML parser
+  contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
+  realtime/    Client-side clock sync, timeline and domain helpers
 ```

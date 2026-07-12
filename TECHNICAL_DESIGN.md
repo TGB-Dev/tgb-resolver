@@ -3,42 +3,72 @@
 ## Purpose
 
 TGB Resolver imports ICPC/DMOJ contest feeds, produces an editable event
-timeline, and drives control and audience clients from one authoritative server
+timeline, and drives audience and control UIs from one authoritative server
 state.
 
 The server owns persistence, contest conversion, playback state, versioning,
 and realtime broadcasts. Clients render the state and submit versioned commands.
 
+## Motivation
+
+Unlike the VNOI Resolver (PixiJS + React, single window with keybinding
+toggling between control/audience) and the ICPC Resolver (JVM-based, hardcoded
+ICPC rules, high RAM usage), TGB Resolver decouples the two UIs by URL route
+and replaces XML preprocessing with automatic server-side parsing.
+
+The custom event system treats every action (resolve, image, SFX) as a typed
+cue that can be triggered manually, automatically, or relative to another cue.
+This enables MC-driven shows where cues stay "in the pocket" rather than
+following a fixed NLE-style timeline. The UI is inspired by GrandMA3 —
+a relative timeline with a main panel showing the current, next, and prior cues.
+
 ## System boundaries
 
-- `apps/server`: .NET server, SQLite persistence, FastEndpoints, SignalR.
-- `apps/web`: control and audience React applications.
-- `packages/contracts`: OpenAPI-generated REST client and schemas.
-- `packages/realtime`: client-side timeline and realtime domain helpers.
-- `TGB.Resolver.IcpcXmlParser`: typed parser for ICPC-style XML.
-
-The persisted show is the complete source of truth: metadata, contest snapshot,
-timeline, assets, automation settings, and playback cursor.
+- `apps/server/`: .NET 10 solution — server, parser, and tests.
+  - `TGB.Resolver.Server`: API + SignalR host
+  - `TGB.Resolver.IcpcXmlParser`: server-side ICPC XML parser
+  - `TGB.Resolver.Server.Tests`, `TGB.Resolver.IcpcXmlParser.Tests`
+- `apps/web/`: TanStack Start SPA — audience and control UIs
+- `packages/contracts/`: OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
+- `packages/realtime/`: client-side clock sync, timeline, and domain helpers
 
 ## Engineering conventions
 
-Use string-valued enums for finite domain vocabularies in TypeScript and enums
-in .NET. Do not introduce handwritten string unions for modes, status, event
-types, or asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
+Use string-valued enums for finite domain vocabularies in TypeScript and .NET.
+Do not introduce handwritten string unions for modes, status, event types, or
+asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 `packages/realtime` re-exports those enums; it must not redeclare them.
 
-Run workspace tasks through Nx: `pnpm test`, `pnpm check-types`, and
-`pnpm build`. Contract changes require server OpenAPI generation followed by
-the contracts package build. TUnit uses Microsoft.Testing.Platform filtering:
-`dotnet run --project <test-project> -- --treenode-filter "/*/*/Class/*"`.
-It does not use VSTest's `--filter` syntax.
+### Tech choices
 
-The server has a nested .NET tool manifest at `apps/server/dotnet-tools.json`.
-Run ReSharper from that directory or through `dotnet tool run jb`. The
-inspection script is `apps/server/scripts/run-inspect.py`; its SARIF output is
-generated and must not be treated as source. OpenAPI-generated files may use
-the generator's formatting, so run Biome on handwritten packages separately
-from contract generation or regenerate after formatting.
+| Decision | Rationale |
+|---|---|
+| **Nx monorepo** | Pruned Docker images + caching; handles .NET + TS projects efficiently |
+| **Jotai over Zustand** | Zustand slowed down noticeably on large tables; Jotai kept rendering snappy |
+| **react-window over TanStack Virtual** | TanStack Virtual had perf issues (see linked issue in repo) |
+| **SignalR + MessagePack** | Smaller wire payload than JSON for realtime frames |
+| **Generated JSON serializer** | .NET JIT serialization (not AOT); same approach as TGB Event, kept most endpoints at 8–9 ms |
+| **Feature-based server structure** | Domain-organized endpoints, dtos, and services per feature |
+
+### Tooling
+
+- Run workspace tasks through Nx: `pnpm test`, `pnpm check-types`, `pnpm build`.
+- Contract changes: regenerate `openapi.yaml` (`pnpm nx run server:openapi`),
+  then `packages/contracts` consumes it at build time (`openapi-ts` → `tsdown`).
+- Biome (not ESLint/Prettier) for lint + format. syncpack for dependency consistency.
+- `verbatimModuleSyntax` enabled root-wide — always `import type` for type-only.
+- The server solution uses `.slnx` format (not `.sln`).
+
+### .NET test filter
+
+Tests use TUnit (`[Test]`, `sealed class`, `await Assert.That(...)`) with
+Microsoft.Testing.Platform. Filter by tree node, not VSTest:
+
+```sh
+dotnet run --project <test.csproj> -- --treenode-filter "/*/*/Class/*"
+```
+
+Two test projects: `TGB.Resolver.Server.Tests` and `TGB.Resolver.IcpcXmlParser.Tests`.
 
 ## Timeline
 
@@ -90,36 +120,39 @@ Every mutation includes the snapshot version observed by the caller. The server
 rejects stale versions. A rejected client fetches the latest snapshot; it never
 merges state locally.
 
-## Realtime and playback
+## Realtime and clock sync
 
 The server is authoritative for playback. It assigns each executed cue a
 strictly increasing execution sequence and persists the cursor before
 broadcasting. Clients do not advance the timeline independently.
 
-Playback supports forward seek, backward seek, and jump to any event ID. A
-seek is a versioned server command. The server atomically replaces the cursor,
-cancels the prior schedule, assigns a new execution sequence, and broadcasts
-the resulting durable state. Clients cancel local schedules and render the
-target state; they do not replay skipped transient effects such as SFX.
+### Clock synchronization
 
-Playback messages include the snapshot version, execution sequence, event ID,
-and server execution time. Clients ignore duplicate/older messages. A sequence
-gap requires a full snapshot resync.
+Inspired by NTP/SMPTE-timecode principles, adapted for venue networks that
+cannot reliably carry SMPTE 2110. Timing is anchored to the server clock:
 
-Client connection state is:
+1. Client sends a SignalR request with its `int64` UTC Unix milliseconds.
+2. Server replies with `receivedAt` and `transmittedAt`.
+3. After eight request/response pairs, the client selects the lowest-RTT sample.
+4. That sample is anchored to `performance.now()` for drift-resistant projection.
+5. Resync every 30 seconds and after reconnect.
 
-`Disconnected -> Connecting -> ClockSyncing -> SnapshotSyncing -> Ready`
+Control clients must complete clock sync before issuing playback commands.
+Audience clients hold their last confirmed state while disconnected.
 
-SignalR connection alone is not readiness. On each connection and reconnect,
-the client syncs its clock, fetches the current snapshot/cursor, cancels stale
-local schedules, and rebuilds from the authoritative result. Control clients
-disable commands until ready. Audience clients hold their last confirmed state
-while disconnected and do not autonomously advance cues.
+### Playback
 
-Admin/control clients complete an eight-sample four-timestamp burst before they
-can issue playback commands. The SignalR request/response carries `int64` UTC
-Unix milliseconds. The client retains the lowest-RTT sample, anchors it to
-`performance.now()`, and resynchronizes every 30 seconds and after reconnect.
+- Supports forward seek, backward seek, and jump to any event ID.
+- Server atomically replaces cursor, cancels prior schedule, assigns new
+  execution sequence, and broadcasts durable state.
+- Clients cancel local schedules and render the target state; they do not
+  replay skipped transient effects (e.g. SFX).
+- Playback messages carry snapshot version, execution sequence, event ID, and
+  server execution time. Clients ignore duplicate/older messages.
+- A sequence gap triggers a full snapshot resync.
+
+Client connection lifecycle:
+`Disconnected → Connecting → ClockSyncing → SnapshotSyncing → Ready`
 
 SFX is best-effort: each receiving client plays it on event delivery. Exact
 cross-client audio synchronization and replay of missed audio are out of scope.
