@@ -34,7 +34,7 @@ export function ControlTimelineTable() {
             rowCount={rows.length}
             rowHeight={CONTROL_TIMELINE_ROW_HEIGHT_PX}
             rowComponent={TimelineRow}
-            rowProps={{ rows, currentEventId }}
+            rowProps={{ rows, currentEventId: currentEventId ?? undefined }}
             overscanCount={10}
             style={{ height: "100%" }}
           />

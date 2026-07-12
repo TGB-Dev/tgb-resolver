@@ -8,6 +8,7 @@ import {
   type ShowImageEvent,
   ShowMode,
   type ShowPlaybackState,
+  ShowSource,
   type TimelineEvent,
   TimelineEventType,
   TimelineMode,
@@ -38,7 +39,7 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
     timelineMode: TimelineMode.RW,
     meta: {
       title: "Untitled show",
-      source: "manual",
+      source: ShowSource.MANUAL,
     },
     contest: {
       durationSeconds: 0,
@@ -78,10 +79,10 @@ export function normalizeShow(show: ShowFile): ShowFile {
   };
 }
 
-export function getAssetCollections(show: ShowFile): Record<ShowAsset["kind"], ShowAsset[]> {
+export function getAssetCollections(show: ShowFile): Record<string, ShowAsset[]> {
   return {
-    image: show.assets.images,
-    sfx: show.assets.sfx,
+    image: show.assets.images ?? [],
+    sfx: show.assets.sfx ?? [],
   };
 }
 
@@ -124,7 +125,7 @@ export function toTimelineTableItem(
   const isCurrentInlineEvent = playback?.currentEventId === event.id && !isCurrentResolve;
   const isInActiveSegment =
     activeSegment?.resolveEventId === event.id ||
-    activeSegment?.inlineEventIds.includes(event.id) ||
+    activeSegment?.inlineEventIds?.includes(event.id) ||
     false;
 
   switch (event.type) {
@@ -184,5 +185,34 @@ export function toTimelineTableItem(
 }
 
 export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
-  return sortTimeline(show.timeline).map((event) => toTimelineTableItem(event, show.playback));
+  const initialFromSnapshot = new Map<string, { score: number; rank: number }>();
+  for (const team of show.contest.preFreezeSnapshot ?? []) {
+    if (team.username && !initialFromSnapshot.has(team.username)) {
+      initialFromSnapshot.set(team.username, {
+        score: team.score ?? 0,
+        rank: team.rank ?? 0,
+      });
+    }
+  }
+
+  const teamStates = new Map(initialFromSnapshot);
+
+  return sortTimeline(show.timeline).map((event) => {
+    const item = toTimelineTableItem(event, show.playback);
+
+    if (event.type === TimelineEventType.RES) {
+      const username = event.payload.username;
+      const previous = teamStates.get(username);
+      if (previous) {
+        item.oldScore = previous.score;
+        item.oldRank = previous.rank;
+      }
+      teamStates.set(username, {
+        score: event.payload.newScore,
+        rank: event.payload.newRank,
+      });
+    }
+
+    return item;
+  });
 }

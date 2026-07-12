@@ -8,7 +8,7 @@ export enum FloatingPanelType {
   ImportShow = "import-show",
 }
 
-export interface FloatingPanelRequest {
+interface FloatingPanelRequest {
   type: FloatingPanelType;
   title: string;
   content: ReactNode;

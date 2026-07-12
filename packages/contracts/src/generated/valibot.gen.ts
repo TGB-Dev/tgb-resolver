@@ -132,21 +132,35 @@ export const vShowStateSnapshot = v.strictObject({
 });
 
 export const vVersionedCommandRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+});
+
+/**
+ * the dto used to send an error response to the client
+ */
+export const vErrorResponse = v.strictObject({
+    statusCode: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')), 400),
+    message: v.optional(v.string(), 'One or more errors occurred!'),
+    errors: v.optional(v.record(v.string(), v.array(v.string())))
+});
+
+export const vSeekPlaybackRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    eventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
 export const vImportXmlRequest = v.strictObject({
-    xml: v.optional(v.string()),
+    xml: v.pipe(v.string(), v.minLength(1), v.maxLength(10485760)),
     excludedUsernames: v.nullish(v.array(v.string()))
 });
 
 export const vImportBundleRequest = v.strictObject({
-    bytes: v.optional(v.string())
+    bytes: v.pipe(v.string(), v.minLength(1))
 });
 
 export const vResolveEventRenameRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    customName: v.optional(v.string())
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    customName: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(100)))
 });
 
 export const vMediaEventPatchPayload = v.strictObject({
@@ -165,19 +179,19 @@ export const vNonResolveEventPatchRequest = v.strictObject({
 });
 
 export const vCreateTimelineEventRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     type: v.optional(vTimelineEventType),
-    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     before: v.optional(v.boolean()),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
-    customName: v.nullish(v.string()),
+    customName: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(100))),
     payload: v.nullish(vMediaEventPatchPayload)
 });
 
 export const vMoveTimelineEventRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     before: v.optional(v.boolean())
 });
 
@@ -191,22 +205,38 @@ export const vPatchTimelineEventRequest = v.strictObject({
 });
 
 export const vSetTimelineModeRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     timelineMode: v.optional(vTimelineMode)
 });
 
-export const vSeekPlaybackRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    eventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+export const vUpsertAssetRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    kind: v.optional(v.string()),
+    fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+    contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+    bytes: v.pipe(v.string(), v.minLength(1))
 });
 
-export const vUpsertAssetRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    kind: v.optional(v.string()),
-    fileName: v.optional(v.string()),
-    contentType: v.optional(v.string()),
-    bytes: v.optional(v.string())
-});
+export const vTgbResolverServerFeaturesShowStartPlaybackEndpointBody = vVersionedCommandRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowStartPlaybackEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowResetPlaybackEndpointBody = vVersionedCommandRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowResetPlaybackEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointBody = vSeekPlaybackRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = vShowStateSnapshot;
 
 /**
  * Success
@@ -324,27 +354,6 @@ export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointBody = vSetTim
  * Success
  */
 export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesPlaybackStartPlaybackEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesPlaybackResetPlaybackEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesPlaybackSeekPlaybackEndpointBody = vSeekPlaybackRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponse = vShowStateSnapshot;
 
 export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointBody = vVersionedCommandRequest;
 

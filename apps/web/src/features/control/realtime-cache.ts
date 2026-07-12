@@ -17,7 +17,7 @@ export async function applyControlRealtimeMessage(
   if (message.type === "playback-state-changed") {
     const current = queryClient.getQueryData<ShowStateSnapshot>(controlShowQueryKey());
     const currentSequence = current?.playback?.executionSequence ?? 0;
-    if (message.playback.executionSequence > currentSequence + 1) {
+    if ((message.playback.executionSequence ?? 0) > currentSequence + 1) {
       await queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
       return;
     }
@@ -26,7 +26,7 @@ export async function applyControlRealtimeMessage(
       if (
         !current ||
         message.showVersion <= (current.showVersion ?? 0) ||
-        message.playback.executionSequence <= (current.playback?.executionSequence ?? 0)
+        (message.playback.executionSequence ?? 0) <= (current.playback?.executionSequence ?? 0)
       ) {
         return current;
       }

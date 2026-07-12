@@ -92,14 +92,14 @@ describe("mapShowStateSnapshotToShowFile", () => {
 
     expect(show).toMatchObject({
       showVersion: 3,
-      mode: "Live",
+      mode: ShowMode.LIVE,
       meta: {
         title: "Demo Show",
         contestId: "demo-1",
-        source: "xml",
+        source: ShowSource.XML,
       },
       playback: {
-        status: "Running",
+        status: PlaybackStatus.RUNNING,
         currentResolveEventId: 10,
         currentEventId: 11,
       },
@@ -107,12 +107,12 @@ describe("mapShowStateSnapshotToShowFile", () => {
     expect(show.timeline).toEqual([
       expect.objectContaining({
         id: 10,
-        type: "Res",
+        type: TimelineEventType.RES,
         customName: "A. Alice",
       }),
       expect.objectContaining({
         id: 11,
-        type: "Sfx",
+        type: TimelineEventType.SFX,
         payload: expect.objectContaining({
           sfxId: "sting",
           durationSeconds: 2,

@@ -1,8 +1,7 @@
 using FastEndpoints;
-using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Dto;
 
-namespace TGB.Resolver.Server.Features.Playback;
+namespace TGB.Resolver.Server.Features.Show;
 
 public sealed class StartPlaybackEndpoint(ShowStateService showStateService)
   : Endpoint<VersionedCommandRequest, ShowStateSnapshot>

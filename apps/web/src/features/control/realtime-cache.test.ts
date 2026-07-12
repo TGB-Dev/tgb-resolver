@@ -27,7 +27,7 @@ describe("applyControlRealtimeMessage", () => {
     expect(queryClient.getQueryData(controlShowQueryKey())).toMatchObject({
       showVersion: 2,
       playback: {
-        status: "Running",
+        status: PlaybackStatus.RUNNING,
         currentResolveEventId: 4,
       },
     });

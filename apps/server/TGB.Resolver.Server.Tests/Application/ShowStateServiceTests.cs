@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TGB.Resolver.Server.Commons.Data;
+using TGB.Resolver.Server.Commons.Exceptions;
 using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
+using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
 
 namespace TGB.Resolver.Server.Tests.Application;
@@ -20,9 +22,11 @@ public sealed class ShowStateServiceTests
     await dbContext.Database.OpenConnectionAsync();
     await dbContext.Database.EnsureCreatedAsync();
 
+    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
+    var repository = new ShowRawRepository(dbContext, serializer, TimeProvider.System);
     var service = new ShowStateService(
-      dbContext,
-      new AppJsonSerializer(AppJsonSerializerContext.Default),
+      repository,
+      serializer,
       new StubHubContext(),
       TimeProvider.System);
 
@@ -63,9 +67,11 @@ public sealed class ShowStateServiceTests
     var dbContext = new ResolverDbContext(options);
     await dbContext.Database.OpenConnectionAsync();
     await dbContext.Database.EnsureCreatedAsync();
+    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
+    var repository = new ShowRawRepository(dbContext, serializer, TimeProvider.System);
     var service = new ShowStateService(
-      dbContext,
-      new AppJsonSerializer(AppJsonSerializerContext.Default),
+      repository,
+      serializer,
       new StubHubContext(),
       TimeProvider.System);
     await service.EnsureSeededAsync();

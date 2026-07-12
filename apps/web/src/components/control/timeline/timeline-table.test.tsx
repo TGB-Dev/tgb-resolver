@@ -12,6 +12,9 @@ const hooksMock = vi.hoisted(() => ({
   useRenameControlEventMutation: vi.fn(() => ({
     mutateAsync: vi.fn(),
   })),
+  useSeekPlaybackMutation: vi.fn(() => ({
+    mutate: vi.fn(),
+  })),
 }));
 
 vi.mock("@/features/control/hooks", () => hooksMock);

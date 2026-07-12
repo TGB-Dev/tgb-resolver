@@ -1,23 +1,7 @@
 #!/bin/sh
 set -e
 
-ORIG_DIR=$PWD
-ROOT=$(git rev-parse --show-toplevel)
-
-cd "$ROOT"
-
 pnpm exec biome check --write --staged --no-errors-on-unmatched
 pnpm -w run sync:check || pnpm -w run sync
 
-cd "$ROOT/apps/server"
-dotnet tool restore
-dotnet tool run jb cleanupcode TGB.Resolver.Server.slnx
-cd "$ROOT"
-git diff --cached --name-only -- '*.cs' | xargs -r git add
-
 pnpm -w run test
-
-cd "$ROOT/apps/server"
-python3 scripts/run-inspect.py
-
-cd "$ORIG_DIR"

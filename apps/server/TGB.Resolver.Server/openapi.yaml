@@ -10,6 +10,87 @@ paths:
       responses:
         200:
           description: ''
+  /api/playback/start:
+    post:
+      tags:
+      - Api
+      operationId: TGBResolverServerFeaturesShowStartPlaybackEndpoint
+      requestBody:
+        x-name: VersionedCommandRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/playback/reset:
+    post:
+      tags:
+      - Api
+      operationId: TGBResolverServerFeaturesShowResetPlaybackEndpoint
+      requestBody:
+        x-name: VersionedCommandRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /playback/seek:
+    post:
+      tags:
+      - Playback
+      operationId: TGBResolverServerFeaturesShowSeekPlaybackEndpoint
+      requestBody:
+        x-name: SeekPlaybackRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeekPlaybackRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /timeline:
     get:
       tags:
@@ -43,6 +124,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/show/clear:
     post:
       tags:
@@ -64,6 +151,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /import/xml:
     post:
       tags:
@@ -85,6 +178,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /import/bundle:
     post:
       tags:
@@ -106,6 +205,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /export/bundle:
     get:
       tags:
@@ -142,6 +247,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/show/events/non-resolve/{id}:
     patch:
       tags:
@@ -214,6 +325,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /timeline/event/{id}/position:
     patch:
       tags:
@@ -242,6 +359,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /timeline/event/{id}:
     patch:
       tags:
@@ -300,6 +423,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /timeline/mode:
     patch:
       tags:
@@ -321,69 +450,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/playback/start:
-    post:
-      tags:
-      - Api
-      operationId: TGBResolverServerFeaturesPlaybackStartPlaybackEndpoint
-      requestBody:
-        x-name: VersionedCommandRequest
-        description: ''
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionedCommandRequest'
-        required: true
-        x-position: 1
-      responses:
-        200:
-          description: Success
+        400:
+          description: Bad Request
           content:
-            application/json:
+            application/problem+json:
               schema:
-                $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/playback/reset:
-    post:
-      tags:
-      - Api
-      operationId: TGBResolverServerFeaturesPlaybackResetPlaybackEndpoint
-      requestBody:
-        x-name: VersionedCommandRequest
-        description: ''
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionedCommandRequest'
-        required: true
-        x-position: 1
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShowStateSnapshot'
-  /playback/seek:
-    post:
-      tags:
-      - Playback
-      operationId: TGBResolverServerFeaturesPlaybackSeekPlaybackEndpoint
-      requestBody:
-        x-name: SeekPlaybackRequest
-        description: ''
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SeekPlaybackRequest'
-        required: true
-        x-position: 1
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShowStateSnapshot'
+                $ref: '#/components/schemas/ErrorResponse'
   /assets/{id}:
     get:
       tags:
@@ -424,6 +496,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags:
       - Assets
@@ -453,6 +531,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     ShowStateSnapshot:
@@ -729,12 +813,52 @@ components:
         showVersion:
           type: integer
           format: int32
-    ImportXmlRequest:
+          minimum: 0
+    ErrorResponse:
+      type: object
+      description: the dto used to send an error response to the client
+      additionalProperties: false
+      properties:
+        statusCode:
+          type: integer
+          description: the http status code sent to the client. default is 400.
+          format: int32
+          default: 400
+        message:
+          type: string
+          description: the message for the error response
+          default: One or more errors occurred!
+        errors:
+          type: object
+          description: the collection of errors for the current context
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    SeekPlaybackRequest:
       type: object
       additionalProperties: false
       properties:
+        showVersion:
+          type: integer
+          format: int32
+          minimum: 0
+        eventId:
+          type: integer
+          format: int32
+          minimum: 0
+          exclusiveMinimum: true
+    ImportXmlRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - xml
+      properties:
         xml:
           type: string
+          maxLength: 10485760
+          minLength: 1
+          nullable: false
         excludedUsernames:
           type: array
           nullable: true
@@ -743,9 +867,13 @@ components:
     ImportBundleRequest:
       type: object
       additionalProperties: false
+      required:
+      - bytes
       properties:
         bytes:
           type: string
+          minLength: 1
+          nullable: false
     ResolveEventRenameRequest:
       type: object
       additionalProperties: false
@@ -753,8 +881,11 @@ components:
         showVersion:
           type: integer
           format: int32
+          minimum: 0
         customName:
           type: string
+          maxLength: 100
+          minLength: 0
     NonResolveEventPatchRequest:
       type: object
       additionalProperties: false
@@ -801,11 +932,14 @@ components:
         showVersion:
           type: integer
           format: int32
+          minimum: 0
         type:
           $ref: '#/components/schemas/TimelineEventType'
         relativeToEventId:
           type: integer
           format: int32
+          minimum: 0
+          exclusiveMinimum: true
         before:
           type: boolean
         triggerOffsetSeconds:
@@ -817,6 +951,8 @@ components:
           nullable: true
         customName:
           type: string
+          maxLength: 100
+          minLength: 0
           nullable: true
         payload:
           nullable: true
@@ -829,9 +965,12 @@ components:
         showVersion:
           type: integer
           format: int32
+          minimum: 0
         relativeToEventId:
           type: integer
           format: int32
+          minimum: 0
+          exclusiveMinimum: true
         before:
           type: boolean
     PatchTimelineEventRequest:
@@ -866,33 +1005,37 @@ components:
         showVersion:
           type: integer
           format: int32
+          minimum: 0
         timelineMode:
           $ref: '#/components/schemas/TimelineMode'
-    SeekPlaybackRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        showVersion:
-          type: integer
-          format: int32
-        eventId:
-          type: integer
-          format: int32
     UpsertAssetRequest:
       type: object
       additionalProperties: false
+      required:
+      - fileName
+      - contentType
+      - bytes
       properties:
         showVersion:
           type: integer
           format: int32
+          minimum: 0
         kind:
           type: string
         fileName:
           type: string
+          maxLength: 255
+          minLength: 1
+          nullable: false
         contentType:
           type: string
+          maxLength: 100
+          minLength: 1
+          nullable: false
         bytes:
           type: string
+          minLength: 1
+          nullable: false
   securitySchemes:
     JWTBearerAuth:
       type: http

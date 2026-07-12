@@ -33,14 +33,9 @@ export const apiClient = {
 };
 
 function normalizePlaybackStatus(status: string): ShowPlaybackState["status"] {
-  switch (status) {
-    case "Running":
-      return PlaybackStatus.RUNNING;
-    case "Paused":
-      return PlaybackStatus.PAUSED;
-    default:
-      return PlaybackStatus.IDLE;
-  }
+  if (status === PlaybackStatus.RUNNING) return PlaybackStatus.RUNNING;
+  if (status === PlaybackStatus.PAUSED) return PlaybackStatus.PAUSED;
+  return PlaybackStatus.IDLE;
 }
 
 function toShowPlaybackState(playback: {
@@ -212,7 +207,7 @@ export function createShowWebSocketManager(
     await callbacks.onMessage({
       type: "live-mode-changed",
       showVersion: message.showVersion,
-      mode: message.mode === "Live" ? ShowMode.LIVE : ShowMode.EDITING,
+      mode: message.mode === ShowMode.LIVE ? ShowMode.LIVE : ShowMode.EDITING,
     });
   });
 

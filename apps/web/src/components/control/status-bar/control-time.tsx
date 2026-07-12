@@ -1,20 +1,6 @@
 import { Text } from "@chakra-ui/react";
-import { useAtomValue } from "jotai";
-import { useEffect, useState } from "react";
 
-import { getServerNow } from "@/lib/api";
-import { controlStartedAtAtom } from "@/state/control-elapsed-time";
-
-export function useNow(interval = 1000) {
-  const [now, setNow] = useState(getServerNow);
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(getServerNow()), interval);
-    return () => clearInterval(id);
-  }, [interval]);
-
-  return now;
-}
+import { useControlShowQuery } from "@/features/control/hooks";
 
 function formatHms(date: Date): string {
   return date.toLocaleTimeString("en-GB", { hour12: false });
@@ -37,8 +23,8 @@ export function ControlCurrentTime({ now }: { now: number }) {
 }
 
 export function ControlElapsedTime({ now }: { now: number }) {
-  const startedAt = useAtomValue(controlStartedAtAtom);
-  const isStarted = startedAt !== null;
+  const startedAt = useControlShowQuery().data?.playback.startedAt;
+  const isStarted = startedAt != null;
   const elapsedMs = isStarted ? now - startedAt : 0;
 
   return (

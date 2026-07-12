@@ -1,55 +1,36 @@
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
-using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Commons.Types;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
-using TGB.Resolver.Server.Importing;
 
 namespace TGB.Resolver.Server.Features.Show;
 
 public sealed class ShowStateService(
-  ResolverDbContext dbContext,
+  ShowRawRepository repository,
   AppJsonSerializer serializer,
   IHubContext<ShowHub, IShowHubClient> hubContext,
   TimeProvider timeProvider)
 {
-  private const string LocalShowId = "local-show";
-  private const int CurrentSchemaVersion = 1;
-
   public async Task EnsureSeededAsync(CancellationToken cancellationToken = default)
   {
-    if (await dbContext.ShowStates.AnyAsync(cancellationToken)) return;
-
-    var seeded = CreateSeededShow();
-    var entity = new StoredShowState
-    {
-      Id = LocalShowId,
-      ShowVersion = seeded.ShowVersion,
-      PayloadJson = serializer.Serialize(seeded),
-      UpdatedAtUtc = timeProvider.GetUtcNow()
-    };
-
-    dbContext.ShowStates.Add(entity);
-    await dbContext.SaveChangesAsync(cancellationToken);
+    await repository.EnsureSeededAsync(cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> GetSnapshotAsync(
     CancellationToken cancellationToken = default)
   {
-    var state = await LoadStateAsync(cancellationToken);
+    var state = await repository.GetStateAsync(cancellationToken);
     return ShowContractMapper.ToContract(state);
   }
 
   public async Task<ShowStateSnapshot> OptimizeAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.Optimized,
       state =>
       {
         var normalized = state.Timeline
@@ -65,25 +46,30 @@ public sealed class ShowStateService(
         };
       },
       cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> ClearAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.ShowReplaced,
-      state => CreateEmptyShow(state.ShowVersion + 1, ShowSource.Manual),
+      state => ShowRawRepository.CreateEmptyShow(state.ShowVersion + 1, ShowSource.Manual),
       cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> ImportXmlAsync(ImportXmlRequest request,
     CancellationToken cancellationToken = default)
   {
-    var current = await LoadStateAsync(cancellationToken);
+    var current = await repository.GetStateAsync(cancellationToken);
     EnsureTimelineWritable(current);
-    var next = BuildShowFromXml(request.Xml, request.ExcludedUsernames, current.ShowVersion + 1);
-    return await ReplaceAsync(next, ShowRefetchReason.ShowReplaced, cancellationToken);
+    var next = ShowRawRepository.BuildShowFromXml(
+      request.Xml, request.ExcludedUsernames, current.ShowVersion + 1);
+    var updated = await repository.ReplaceAsync(next, cancellationToken);
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> ImportBundleAsync(ImportBundleRequest request,
@@ -92,16 +78,17 @@ public sealed class ShowStateService(
     var json = Encoding.UTF8.GetString(Convert.FromBase64String(request.Bytes));
     var imported = serializer.Deserialize<ShowState>(json) with
     {
-      ShowVersion = (await LoadStateAsync(cancellationToken)).ShowVersion + 1,
+      ShowVersion = (await repository.GetStateAsync(cancellationToken)).ShowVersion + 1,
       Meta = serializer.Deserialize<ShowState>(json).Meta with { Source = ShowSource.Bundle }
     };
 
-    return await ReplaceAsync(imported, ShowRefetchReason.ShowReplaced, cancellationToken);
+    var updated = await repository.ReplaceAsync(imported, cancellationToken);
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
   }
 
   public async Task<byte[]> ExportBundleAsync(CancellationToken cancellationToken = default)
   {
-    var state = await LoadStateAsync(cancellationToken);
+    var state = await repository.GetStateAsync(cancellationToken);
     return Encoding.UTF8.GetBytes(serializer.Serialize(state));
   }
 
@@ -110,9 +97,8 @@ public sealed class ShowStateService(
     ResolveEventRenameRequest request,
     CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.Optimized,
       state =>
       {
         EnsureTimelineWritable(state);
@@ -129,6 +115,8 @@ public sealed class ShowStateService(
         };
       },
       cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> PatchNonResolveEventAsync(
@@ -136,9 +124,8 @@ public sealed class ShowStateService(
     NonResolveEventPatchRequest request,
     CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.Optimized,
       state =>
       {
         EnsureTimelineWritable(state);
@@ -183,6 +170,8 @@ public sealed class ShowStateService(
         };
       },
       cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
@@ -191,7 +180,7 @@ public sealed class ShowStateService(
     if (request.Type == TimelineEventType.Res)
       throw new InvalidOperationException("Resolve events are created only by XML import.");
 
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state =>
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var target = state.Timeline.Single(eventItem => eventItem.Id == request.RelativeToEventId);
@@ -223,12 +212,14 @@ public sealed class ShowStateService(
         Timeline = shifted.Append(created).OrderBy(eventItem => eventItem.Position).ToArray()
       };
     }, cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> PatchTimelineEventAsync(int eventId,
     PatchTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state =>
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var current = state.Timeline.Single(eventItem => eventItem.Id == eventId);
@@ -270,12 +261,14 @@ public sealed class ShowStateService(
           : eventItem).ToArray()
       };
     }, cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> MoveNonResolveEventAsync(int eventId,
     MoveTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state =>
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(eventItem => eventItem.Id == eventId);
@@ -294,12 +287,14 @@ public sealed class ShowStateService(
           .ToArray()
       };
     }, cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> DeleteNonResolveEventAsync(int eventId,
     VersionedCommandRequest request, CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state =>
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(eventItem => eventItem.Id == eventId);
@@ -313,22 +308,29 @@ public sealed class ShowStateService(
           .Select((eventItem, index) => eventItem with { Position = index + 1 }).ToArray()
       };
     }, cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> SetTimelineModeAsync(SetTimelineModeRequest request,
     CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state => state with
-    {
-      ShowVersion = state.ShowVersion + 1,
-      TimelineMode = request.TimelineMode
-    }, cancellationToken);
+    var updated = await repository.MutateAsync(
+      request.ShowVersion,
+      state => state with
+      {
+        ShowVersion = state.ShowVersion + 1,
+        TimelineMode = request.TimelineMode
+      },
+      cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> UpsertAssetAsync(string assetId, UpsertAssetRequest request,
     CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state =>
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var asset = new ShowAsset(assetId, request.Kind, request.FileName, request.FileName,
@@ -347,12 +349,14 @@ public sealed class ShowStateService(
         ShowVersion = state.ShowVersion + 1, Assets = new AssetCollection(images, sfx)
       };
     }, cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> DeleteAssetAsync(string assetId,
     VersionedCommandRequest request, CancellationToken cancellationToken = default)
   {
-    return await MutateAsync(request.ShowVersion, ShowRefetchReason.Optimized, state =>
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       return state with
@@ -363,12 +367,14 @@ public sealed class ShowStateService(
           state.Assets.Sfx.Where(asset => asset.Id != assetId).ToArray())
       };
     }, cancellationToken);
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> SetLiveModeAsync(bool enabled,
     CancellationToken cancellationToken = default)
   {
-    var result = await MutateWithoutVersionAsync(
+    var updated = await repository.MutateWithoutVersionAsync(
       state => state with
       {
         ShowVersion = state.ShowVersion + 1,
@@ -376,17 +382,17 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
+    var snapshot = ShowContractMapper.ToContract(updated);
     await hubContext.Clients.All.LiveModeChanged(
-      new LiveModeChangedMessage(result.ShowVersion, result.Mode));
-    return result;
+      new LiveModeChangedMessage(snapshot.ShowVersion, snapshot.Mode));
+    return snapshot;
   }
 
   public async Task<ShowStateSnapshot> StartPlaybackAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var result = await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.Optimized,
       state =>
       {
         var firstResolve =
@@ -422,18 +428,17 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
+    var snapshot = ShowContractMapper.ToContract(updated);
     await hubContext.Clients.All.PlaybackStateChanged(
-      new PlaybackStateChangedMessage(result.ShowVersion, result.Playback));
-
-    return result;
+      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
+    return snapshot;
   }
 
   public async Task<ShowStateSnapshot> ResetPlaybackAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var result = await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.Optimized,
       state => state with
       {
         ShowVersion = state.ShowVersion + 1,
@@ -442,18 +447,17 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
+    var snapshot = ShowContractMapper.ToContract(updated);
     await hubContext.Clients.All.PlaybackStateChanged(
-      new PlaybackStateChangedMessage(result.ShowVersion, result.Playback));
-
-    return result;
+      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
+    return snapshot;
   }
 
   public async Task<ShowStateSnapshot> SeekPlaybackAsync(SeekPlaybackRequest request,
     CancellationToken cancellationToken = default)
   {
-    var result = await MutateAsync(
+    var updated = await repository.MutateAsync(
       request.ShowVersion,
-      ShowRefetchReason.Optimized,
       state =>
       {
         var ordered = state.Timeline.OrderBy(eventItem => eventItem.Position).ToArray();
@@ -477,25 +481,9 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
+    var snapshot = ShowContractMapper.ToContract(updated);
     await hubContext.Clients.All.PlaybackStateChanged(
-      new PlaybackStateChangedMessage(result.ShowVersion, result.Playback));
-    return result;
-  }
-
-  private async Task<ShowStateSnapshot> ReplaceAsync(
-    ShowState nextState,
-    ShowRefetchReason reason,
-    CancellationToken cancellationToken)
-  {
-    var entity = await LoadEntityAsync(cancellationToken);
-    entity.ShowVersion = nextState.ShowVersion;
-    entity.PayloadJson = serializer.Serialize(nextState);
-    entity.UpdatedAtUtc = timeProvider.GetUtcNow();
-    await dbContext.SaveChangesAsync(cancellationToken);
-
-    var snapshot = ShowContractMapper.ToContract(nextState);
-    await hubContext.Clients.All.ShowRefetchRequired(
-      new ShowRefetchRequiredMessage(snapshot.ShowVersion, reason));
+      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
     return snapshot;
   }
 
@@ -505,171 +493,19 @@ public sealed class ShowStateService(
       throw new InvalidOperationException("Timeline is read-only.");
   }
 
-  private async Task<ShowStateSnapshot> MutateWithoutVersionAsync(
-    Func<ShowState, ShowState> mutation,
-    CancellationToken cancellationToken)
-  {
-    var entity = await LoadEntityAsync(cancellationToken);
-    var current = serializer.Deserialize<ShowState>(entity.PayloadJson);
-    var updated = mutation(current);
-
-    entity.ShowVersion = updated.ShowVersion;
-    entity.PayloadJson = serializer.Serialize(updated);
-    entity.UpdatedAtUtc = timeProvider.GetUtcNow();
-
-    await dbContext.SaveChangesAsync(cancellationToken);
-    return ShowContractMapper.ToContract(updated);
-  }
-
-  private async Task<ShowStateSnapshot> MutateAsync(
-    int expectedShowVersion,
+  private async Task<ShowStateSnapshot> BroadcastRefetchAsync(
+    ShowState updated,
     ShowRefetchReason reason,
-    Func<ShowState, ShowState> mutation,
     CancellationToken cancellationToken)
   {
-    var entity = await LoadEntityAsync(cancellationToken);
-    var current = serializer.Deserialize<ShowState>(entity.PayloadJson);
-
-    if (current.ShowVersion != expectedShowVersion)
-      throw new VersionDriftException(expectedShowVersion, current.ShowVersion);
-
-    var updated = mutation(current);
-    entity.ShowVersion = updated.ShowVersion;
-    entity.PayloadJson = serializer.Serialize(updated);
-    entity.UpdatedAtUtc = timeProvider.GetUtcNow();
-
-    await dbContext.SaveChangesAsync(cancellationToken);
-
     var snapshot = ShowContractMapper.ToContract(updated);
     await hubContext.Clients.All.ShowRefetchRequired(
       new ShowRefetchRequiredMessage(snapshot.ShowVersion, reason));
     return snapshot;
   }
 
-  private async Task<ShowState> LoadStateAsync(CancellationToken cancellationToken)
-  {
-    var entity = await LoadEntityAsync(cancellationToken);
-    return serializer.Deserialize<ShowState>(entity.PayloadJson);
-  }
-
-  private async Task<StoredShowState> LoadEntityAsync(CancellationToken cancellationToken)
-  {
-    await EnsureSeededAsync(cancellationToken);
-    var entity =
-      await dbContext.ShowStates.SingleAsync(row => row.Id == LocalShowId, cancellationToken);
-    return entity;
-  }
-
-  private static ShowState BuildShowFromXml(string xml, IReadOnlyList<string>? excludedUsernames,
-    int showVersion)
-  {
-    var resolution = IcpcResolverEngine.Convert(xml, excludedUsernames);
-    var runs = resolution.ResolveEvents
-      .Select((resolve, index) => new TimelineEvent(
-        index + 1,
-        index + 1,
-        TimelineEventType.Res,
-        0,
-        false,
-        null,
-        new ResolveEventPayload(
-          resolve.RealName,
-          resolve.Username,
-          resolve.Problem,
-          resolve.NewScore,
-          resolve.NewRank),
-        null,
-        null))
-      .ToArray();
-
-    return CreateEmptyShow(showVersion, ShowSource.Xml) with
-    {
-      Meta = new ShowMeta(resolution.Title, resolution.ContestId, ShowSource.Xml),
-      Contest = new ContestState(
-        resolution.DurationSeconds,
-        resolution.FreezeDurationSeconds,
-        resolution.PreFreezeSnapshot),
-      Timeline = runs
-    };
-  }
-
-  private static ShowState CreateSeededShow()
-  {
-    return CreateEmptyShow(1, ShowSource.Manual) with
-    {
-      Meta = new ShowMeta("Local Show", "local-show", ShowSource.Manual),
-      Contest = new ContestState(
-        18_000,
-        3_600,
-        [
-          new ContestTeam(1, "Alice Team", "alice", 100, 1),
-          new ContestTeam(2, "Bob Team", "bob", 80, 2)
-        ]),
-      Timeline =
-      [
-        new TimelineEvent(
-          1,
-          1,
-          TimelineEventType.Res,
-          0,
-          false,
-          null,
-          new ResolveEventPayload("Alice Team", "alice", "A", 100, 1),
-          null,
-          null),
-        new TimelineEvent(
-          2,
-          2,
-          TimelineEventType.Sfx,
-          0.5,
-          false,
-          "Opening Sting",
-          null,
-          null,
-          new MediaEventPayload("sting", 2.5)),
-        new TimelineEvent(
-          3,
-          3,
-          TimelineEventType.Img,
-          1,
-          false,
-          "Title Board",
-          null,
-          new MediaEventPayload("award-board", 5),
-          null),
-        new TimelineEvent(
-          4,
-          4,
-          TimelineEventType.Res,
-          0,
-          false,
-          "Bob Reveal",
-          new ResolveEventPayload("Bob Team", "bob", "B", 180, 2),
-          null,
-          null)
-      ]
-    };
-  }
-
   private static ShowState CreateEmptyShow(int showVersion, ShowSource source)
   {
-    return new ShowState(
-      CurrentSchemaVersion,
-      showVersion,
-      ShowMode.Editing,
-      TimelineMode.Rw,
-      new ShowMeta("Untitled show", null, source),
-      new ContestState(0, 0, []),
-      new AutomationState(false, 3_000, false),
-      new PlaybackState(PlaybackStatus.Idle, null, null, null, null, 0),
-      new AssetCollection(
-        [
-          new ShowAsset("award-board", "image", "award-board.png", "award-board.png", "image/png",
-            0, "award-board")
-        ],
-        [
-          new ShowAsset("sting", "sfx", "sting.mp3", "sting.mp3", "audio/mpeg", 0, "sting")
-        ]),
-      []);
+    return ShowRawRepository.CreateEmptyShow(showVersion, source);
   }
 }

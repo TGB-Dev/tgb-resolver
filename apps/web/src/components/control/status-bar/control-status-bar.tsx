@@ -1,13 +1,15 @@
 import { Button, Grid, HStack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
+import { useAtomValue } from "jotai";
 
 import { ColorModeButton } from "@/components/ui/color-mode";
+import { controlNowAtom } from "@/state/control-now";
 
 import { ControlFullScreenButton } from "./control-full-screen-button";
-import { ControlCurrentTime, ControlElapsedTime, useNow } from "./control-time";
+import { ControlCurrentTime, ControlElapsedTime } from "./control-time";
 
 export function ControlStatusBar() {
-  const now = useNow(250);
+  const now = useAtomValue(controlNowAtom);
 
   return (
     <Grid templateColumns="1fr auto 1fr" h={16} px={2} borderBottomWidth={1} alignItems="center">

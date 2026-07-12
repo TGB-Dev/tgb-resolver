@@ -2,7 +2,7 @@ import { atom } from "jotai";
 
 import { appStore } from "./control";
 
-export interface ConfirmActionPayload {
+interface ConfirmActionPayload {
   title: string;
   message: string;
   confirmLabel?: string;
@@ -28,10 +28,6 @@ const initialState: ConfirmActionState = {
 };
 
 export const confirmActionStateAtom = atom<ConfirmActionState>(initialState);
-
-export const resetConfirmActionAtom = atom(null, (_get, set) => {
-  set(confirmActionStateAtom, initialState);
-});
 
 export function confirmAction(payload: ConfirmActionPayload): Promise<boolean> {
   return new Promise((resolve) => {

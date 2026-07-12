@@ -6,7 +6,11 @@ import { useEffect, useState } from "react";
 
 import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useControlIsLive, useRenameControlEventMutation } from "@/features/control/hooks";
+import {
+  useControlIsLive,
+  useRenameControlEventMutation,
+  useSeekPlaybackMutation,
+} from "@/features/control/hooks";
 import { CONTROL_TIMELINE_ROW_HEIGHT_PX, pxToChakraSpace } from "@/state/list-metrics";
 
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
@@ -50,6 +54,7 @@ export function ControlTimelineTableItem({
   const errror = useToken("colors", "red.500");
   const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
   const isLive = useControlIsLive();
+  const seekPlayback = useSeekPlaybackMutation();
 
   return (
     <Box
@@ -84,18 +89,16 @@ export function ControlTimelineTableItem({
         }
         transition={{
           width: {
-            duration: durationInSeconds,
+            duration: isCurrent ? durationInSeconds : 0,
             ease: "linear",
           },
-          backgroundColor: {
-            duration: durationInSeconds,
-            times: [
-              0,
-              warningKeyframe,
-              warningKeyframe, // immediate jump
-            ],
-            ease: "linear",
-          },
+          backgroundColor: isCurrent
+            ? {
+                duration: durationInSeconds,
+                times: [0, warningKeyframe, warningKeyframe],
+                ease: "linear",
+              }
+            : { duration: 0 },
         }}
         pointerEvents="none"
       />
@@ -106,7 +109,12 @@ export function ControlTimelineTableItem({
           openDelay={0}
           positioning={{ placement: "left" }}
         >
-          <Box textAlign="end" fontFamily="mono" cursor="pointer">
+          <Box
+            textAlign="end"
+            fontFamily="mono"
+            cursor="pointer"
+            onClick={() => seekPlayback.mutate(payload.id)}
+          >
             {payload.id}
           </Box>
         </Tooltip>
@@ -181,10 +189,6 @@ export function ControlTimelineTableHeader() {
       </Tooltip>
     </ControlTimelineTableGridRow>
   );
-}
-
-export function ControlTimelineTableBlankItem() {
-  return <ControlTimelineTableGridRow>{/* blank */}</ControlTimelineTableGridRow>;
 }
 
 function ControlTimelineTableGridRow({ children, ...props }: GridProps) {

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetData, GetResponses, TgbResolverServerFeaturesAssetsDeleteAssetEndpointData, TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses, TgbResolverServerFeaturesAssetsGetAssetEndpointData, TgbResolverServerFeaturesAssetsGetAssetEndpointResponses, TgbResolverServerFeaturesAssetsPutAssetEndpointData, TgbResolverServerFeaturesAssetsPutAssetEndpointResponses, TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData, TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponses, TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData, TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponses, TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData, TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponses, TgbResolverServerFeaturesShowClearShowEndpointData, TgbResolverServerFeaturesShowClearShowEndpointResponses, TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses, TgbResolverServerFeaturesShowDisableLiveModeEndpointData, TgbResolverServerFeaturesShowDisableLiveModeEndpointResponses, TgbResolverServerFeaturesShowEnableLiveModeEndpointData, TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses, TgbResolverServerFeaturesShowExportBundleEndpointData, TgbResolverServerFeaturesShowExportBundleEndpointResponses, TgbResolverServerFeaturesShowGetShowEndpointData, TgbResolverServerFeaturesShowGetShowEndpointResponses, TgbResolverServerFeaturesShowImportBundleEndpointData, TgbResolverServerFeaturesShowImportBundleEndpointResponses, TgbResolverServerFeaturesShowImportXmlEndpointData, TgbResolverServerFeaturesShowImportXmlEndpointResponses, TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses, TgbResolverServerFeaturesShowOptimizeShowEndpointData, TgbResolverServerFeaturesShowOptimizeShowEndpointResponses, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses, TgbResolverServerFeaturesShowPatchTimelineEventEndpointData, TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses, TgbResolverServerFeaturesShowRenameResolveEventEndpointData, TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses, TgbResolverServerFeaturesShowSetTimelineModeEndpointData, TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses } from './types.gen';
+import type { GetData, GetResponses, TgbResolverServerFeaturesAssetsDeleteAssetEndpointData, TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors, TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses, TgbResolverServerFeaturesAssetsGetAssetEndpointData, TgbResolverServerFeaturesAssetsGetAssetEndpointResponses, TgbResolverServerFeaturesAssetsPutAssetEndpointData, TgbResolverServerFeaturesAssetsPutAssetEndpointErrors, TgbResolverServerFeaturesAssetsPutAssetEndpointResponses, TgbResolverServerFeaturesShowClearShowEndpointData, TgbResolverServerFeaturesShowClearShowEndpointErrors, TgbResolverServerFeaturesShowClearShowEndpointResponses, TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors, TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses, TgbResolverServerFeaturesShowDisableLiveModeEndpointData, TgbResolverServerFeaturesShowDisableLiveModeEndpointResponses, TgbResolverServerFeaturesShowEnableLiveModeEndpointData, TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses, TgbResolverServerFeaturesShowExportBundleEndpointData, TgbResolverServerFeaturesShowExportBundleEndpointResponses, TgbResolverServerFeaturesShowGetShowEndpointData, TgbResolverServerFeaturesShowGetShowEndpointResponses, TgbResolverServerFeaturesShowImportBundleEndpointData, TgbResolverServerFeaturesShowImportBundleEndpointErrors, TgbResolverServerFeaturesShowImportBundleEndpointResponses, TgbResolverServerFeaturesShowImportXmlEndpointData, TgbResolverServerFeaturesShowImportXmlEndpointErrors, TgbResolverServerFeaturesShowImportXmlEndpointResponses, TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors, TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses, TgbResolverServerFeaturesShowOptimizeShowEndpointData, TgbResolverServerFeaturesShowOptimizeShowEndpointErrors, TgbResolverServerFeaturesShowOptimizeShowEndpointResponses, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses, TgbResolverServerFeaturesShowPatchTimelineEventEndpointData, TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses, TgbResolverServerFeaturesShowRenameResolveEventEndpointData, TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors, TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses, TgbResolverServerFeaturesShowResetPlaybackEndpointData, TgbResolverServerFeaturesShowResetPlaybackEndpointErrors, TgbResolverServerFeaturesShowResetPlaybackEndpointResponses, TgbResolverServerFeaturesShowSeekPlaybackEndpointData, TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors, TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses, TgbResolverServerFeaturesShowSetTimelineModeEndpointData, TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors, TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses, TgbResolverServerFeaturesShowStartPlaybackEndpointData, TgbResolverServerFeaturesShowStartPlaybackEndpointErrors, TgbResolverServerFeaturesShowStartPlaybackEndpointResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -20,9 +20,36 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 
 export const get = <ThrowOnError extends boolean = false>(options?: Options<GetData, ThrowOnError>): RequestResult<GetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetResponses, unknown, ThrowOnError>({ url: '/', ...options });
 
+export const tgbResolverServerFeaturesShowStartPlaybackEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowStartPlaybackEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowStartPlaybackEndpointResponses, TgbResolverServerFeaturesShowStartPlaybackEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowStartPlaybackEndpointResponses, TgbResolverServerFeaturesShowStartPlaybackEndpointErrors, ThrowOnError>({
+    url: '/api/playback/start',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const tgbResolverServerFeaturesShowResetPlaybackEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowResetPlaybackEndpointResponses, TgbResolverServerFeaturesShowResetPlaybackEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowResetPlaybackEndpointResponses, TgbResolverServerFeaturesShowResetPlaybackEndpointErrors, ThrowOnError>({
+    url: '/api/playback/reset',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const tgbResolverServerFeaturesShowSeekPlaybackEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowSeekPlaybackEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses, TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses, TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors, ThrowOnError>({
+    url: '/playback/seek',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const tgbResolverServerFeaturesShowGetShowEndpoint = <ThrowOnError extends boolean = false>(options?: Options<TgbResolverServerFeaturesShowGetShowEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowGetShowEndpointResponses, unknown, ThrowOnError> => (options?.client ?? client).get<TgbResolverServerFeaturesShowGetShowEndpointResponses, unknown, ThrowOnError>({ url: '/timeline', ...options });
 
-export const tgbResolverServerFeaturesShowOptimizeShowEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowOptimizeShowEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowOptimizeShowEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowOptimizeShowEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowOptimizeShowEndpointResponses, TgbResolverServerFeaturesShowOptimizeShowEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowOptimizeShowEndpointResponses, TgbResolverServerFeaturesShowOptimizeShowEndpointErrors, ThrowOnError>({
     url: '/api/show/optimize',
     ...options,
     headers: {
@@ -31,7 +58,7 @@ export const tgbResolverServerFeaturesShowOptimizeShowEndpoint = <ThrowOnError e
     }
 });
 
-export const tgbResolverServerFeaturesShowClearShowEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowClearShowEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowClearShowEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowClearShowEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowClearShowEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowClearShowEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowClearShowEndpointResponses, TgbResolverServerFeaturesShowClearShowEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowClearShowEndpointResponses, TgbResolverServerFeaturesShowClearShowEndpointErrors, ThrowOnError>({
     url: '/api/show/clear',
     ...options,
     headers: {
@@ -40,7 +67,7 @@ export const tgbResolverServerFeaturesShowClearShowEndpoint = <ThrowOnError exte
     }
 });
 
-export const tgbResolverServerFeaturesShowImportXmlEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowImportXmlEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowImportXmlEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowImportXmlEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowImportXmlEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowImportXmlEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowImportXmlEndpointResponses, TgbResolverServerFeaturesShowImportXmlEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowImportXmlEndpointResponses, TgbResolverServerFeaturesShowImportXmlEndpointErrors, ThrowOnError>({
     url: '/import/xml',
     ...options,
     headers: {
@@ -49,7 +76,7 @@ export const tgbResolverServerFeaturesShowImportXmlEndpoint = <ThrowOnError exte
     }
 });
 
-export const tgbResolverServerFeaturesShowImportBundleEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowImportBundleEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowImportBundleEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowImportBundleEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowImportBundleEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowImportBundleEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowImportBundleEndpointResponses, TgbResolverServerFeaturesShowImportBundleEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowImportBundleEndpointResponses, TgbResolverServerFeaturesShowImportBundleEndpointErrors, ThrowOnError>({
     url: '/import/bundle',
     ...options,
     headers: {
@@ -60,7 +87,7 @@ export const tgbResolverServerFeaturesShowImportBundleEndpoint = <ThrowOnError e
 
 export const tgbResolverServerFeaturesShowExportBundleEndpoint = <ThrowOnError extends boolean = false>(options?: Options<TgbResolverServerFeaturesShowExportBundleEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowExportBundleEndpointResponses, unknown, ThrowOnError> => (options?.client ?? client).get<TgbResolverServerFeaturesShowExportBundleEndpointResponses, unknown, ThrowOnError>({ url: '/export/bundle', ...options });
 
-export const tgbResolverServerFeaturesShowRenameResolveEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).patch<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowRenameResolveEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses, TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors, ThrowOnError> => (options.client ?? client).patch<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses, TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors, ThrowOnError>({
     url: '/api/show/events/resolve/{id}',
     ...options,
     headers: {
@@ -82,7 +109,7 @@ export const tgbResolverServerFeaturesShowDisableLiveModeEndpoint = <ThrowOnErro
 
 export const tgbResolverServerFeaturesShowEnableLiveModeEndpoint = <ThrowOnError extends boolean = false>(options?: Options<TgbResolverServerFeaturesShowEnableLiveModeEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses, unknown, ThrowOnError> => (options?.client ?? client).post<TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses, unknown, ThrowOnError>({ url: '/api/show/live', ...options });
 
-export const tgbResolverServerFeaturesShowCreateTimelineEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowCreateTimelineEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses, TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses, TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors, ThrowOnError>({
     url: '/timeline/event',
     ...options,
     headers: {
@@ -91,7 +118,7 @@ export const tgbResolverServerFeaturesShowCreateTimelineEventEndpoint = <ThrowOn
     }
 });
 
-export const tgbResolverServerFeaturesShowMoveTimelineEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).patch<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowMoveTimelineEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses, TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors, ThrowOnError> => (options.client ?? client).patch<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses, TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors, ThrowOnError>({
     url: '/timeline/event/{id}/position',
     ...options,
     headers: {
@@ -100,7 +127,7 @@ export const tgbResolverServerFeaturesShowMoveTimelineEventEndpoint = <ThrowOnEr
     }
 });
 
-export const tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).delete<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors, ThrowOnError> => (options.client ?? client).delete<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors, ThrowOnError>({
     url: '/timeline/event/{id}',
     ...options,
     headers: {
@@ -118,7 +145,7 @@ export const tgbResolverServerFeaturesShowPatchTimelineEventEndpoint = <ThrowOnE
     }
 });
 
-export const tgbResolverServerFeaturesShowSetTimelineModeEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).patch<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesShowSetTimelineModeEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses, TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors, ThrowOnError> => (options.client ?? client).patch<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses, TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors, ThrowOnError>({
     url: '/timeline/mode',
     ...options,
     headers: {
@@ -127,34 +154,7 @@ export const tgbResolverServerFeaturesShowSetTimelineModeEndpoint = <ThrowOnErro
     }
 });
 
-export const tgbResolverServerFeaturesPlaybackStartPlaybackEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponses, unknown, ThrowOnError>({
-    url: '/api/playback/start',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const tgbResolverServerFeaturesPlaybackResetPlaybackEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponses, unknown, ThrowOnError>({
-    url: '/api/playback/reset',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const tgbResolverServerFeaturesPlaybackSeekPlaybackEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponses, unknown, ThrowOnError>({
-    url: '/playback/seek',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const tgbResolverServerFeaturesAssetsDeleteAssetEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).delete<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesAssetsDeleteAssetEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses, TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors, ThrowOnError> => (options.client ?? client).delete<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses, TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors, ThrowOnError>({
     url: '/assets/{id}',
     ...options,
     headers: {
@@ -165,7 +165,7 @@ export const tgbResolverServerFeaturesAssetsDeleteAssetEndpoint = <ThrowOnError 
 
 export const tgbResolverServerFeaturesAssetsGetAssetEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesAssetsGetAssetEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesAssetsGetAssetEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).get<TgbResolverServerFeaturesAssetsGetAssetEndpointResponses, unknown, ThrowOnError>({ url: '/assets/{id}', ...options });
 
-export const tgbResolverServerFeaturesAssetsPutAssetEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesAssetsPutAssetEndpointResponses, unknown, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesAssetsPutAssetEndpointResponses, unknown, ThrowOnError>({
+export const tgbResolverServerFeaturesAssetsPutAssetEndpoint = <ThrowOnError extends boolean = false>(options: Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData, ThrowOnError>): RequestResult<TgbResolverServerFeaturesAssetsPutAssetEndpointResponses, TgbResolverServerFeaturesAssetsPutAssetEndpointErrors, ThrowOnError> => (options.client ?? client).post<TgbResolverServerFeaturesAssetsPutAssetEndpointResponses, TgbResolverServerFeaturesAssetsPutAssetEndpointErrors, ThrowOnError>({
     url: '/assets/{id}',
     ...options,
     headers: {

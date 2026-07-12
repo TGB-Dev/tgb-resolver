@@ -170,13 +170,38 @@ export type VersionedCommandRequest = {
     showVersion?: number;
 };
 
+/**
+ * the dto used to send an error response to the client
+ */
+export type ErrorResponse = {
+    /**
+     * the http status code sent to the client. default is 400.
+     */
+    statusCode?: number;
+    /**
+     * the message for the error response
+     */
+    message?: string;
+    /**
+     * the collection of errors for the current context
+     */
+    errors?: {
+        [key: string]: Array<string>;
+    };
+};
+
+export type SeekPlaybackRequest = {
+    showVersion?: number;
+    eventId?: number;
+};
+
 export type ImportXmlRequest = {
-    xml?: string;
+    xml: string;
     excludedUsernames?: Array<string> | null;
 };
 
 export type ImportBundleRequest = {
-    bytes?: string;
+    bytes: string;
 };
 
 export type ResolveEventRenameRequest = {
@@ -230,17 +255,12 @@ export type SetTimelineModeRequest = {
     timelineMode?: TimelineMode;
 };
 
-export type SeekPlaybackRequest = {
-    showVersion?: number;
-    eventId?: number;
-};
-
 export type UpsertAssetRequest = {
     showVersion?: number;
     kind?: string;
-    fileName?: string;
-    contentType?: string;
-    bytes?: string;
+    fileName: string;
+    contentType: string;
+    bytes: string;
 };
 
 export type GetData = {
@@ -253,6 +273,81 @@ export type GetData = {
 export type GetResponses = {
     200: unknown;
 };
+
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointData = {
+    body: VersionedCommandRequest;
+    path?: never;
+    query?: never;
+    url: '/api/playback/start';
+};
+
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointError = TgbResolverServerFeaturesShowStartPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowStartPlaybackEndpointErrors];
+
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointResponse = TgbResolverServerFeaturesShowStartPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowStartPlaybackEndpointResponses];
+
+export type TgbResolverServerFeaturesShowResetPlaybackEndpointData = {
+    body: VersionedCommandRequest;
+    path?: never;
+    query?: never;
+    url: '/api/playback/reset';
+};
+
+export type TgbResolverServerFeaturesShowResetPlaybackEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowResetPlaybackEndpointError = TgbResolverServerFeaturesShowResetPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowResetPlaybackEndpointErrors];
+
+export type TgbResolverServerFeaturesShowResetPlaybackEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesShowResetPlaybackEndpointResponse = TgbResolverServerFeaturesShowResetPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowResetPlaybackEndpointResponses];
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointData = {
+    body: SeekPlaybackRequest;
+    path?: never;
+    query?: never;
+    url: '/playback/seek';
+};
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointError = TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors];
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses];
 
 export type TgbResolverServerFeaturesShowGetShowEndpointData = {
     body?: never;
@@ -277,6 +372,15 @@ export type TgbResolverServerFeaturesShowOptimizeShowEndpointData = {
     url: '/api/show/optimize';
 };
 
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointError = TgbResolverServerFeaturesShowOptimizeShowEndpointErrors[keyof TgbResolverServerFeaturesShowOptimizeShowEndpointErrors];
+
 export type TgbResolverServerFeaturesShowOptimizeShowEndpointResponses = {
     /**
      * Success
@@ -292,6 +396,15 @@ export type TgbResolverServerFeaturesShowClearShowEndpointData = {
     query?: never;
     url: '/api/show/clear';
 };
+
+export type TgbResolverServerFeaturesShowClearShowEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowClearShowEndpointError = TgbResolverServerFeaturesShowClearShowEndpointErrors[keyof TgbResolverServerFeaturesShowClearShowEndpointErrors];
 
 export type TgbResolverServerFeaturesShowClearShowEndpointResponses = {
     /**
@@ -309,6 +422,15 @@ export type TgbResolverServerFeaturesShowImportXmlEndpointData = {
     url: '/import/xml';
 };
 
+export type TgbResolverServerFeaturesShowImportXmlEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowImportXmlEndpointError = TgbResolverServerFeaturesShowImportXmlEndpointErrors[keyof TgbResolverServerFeaturesShowImportXmlEndpointErrors];
+
 export type TgbResolverServerFeaturesShowImportXmlEndpointResponses = {
     /**
      * Success
@@ -324,6 +446,15 @@ export type TgbResolverServerFeaturesShowImportBundleEndpointData = {
     query?: never;
     url: '/import/bundle';
 };
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointError = TgbResolverServerFeaturesShowImportBundleEndpointErrors[keyof TgbResolverServerFeaturesShowImportBundleEndpointErrors];
 
 export type TgbResolverServerFeaturesShowImportBundleEndpointResponses = {
     /**
@@ -358,6 +489,15 @@ export type TgbResolverServerFeaturesShowRenameResolveEventEndpointData = {
     query?: never;
     url: '/api/show/events/resolve/{id}';
 };
+
+export type TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowRenameResolveEventEndpointError = TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors[keyof TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors];
 
 export type TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses = {
     /**
@@ -425,6 +565,15 @@ export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointData = {
     url: '/timeline/event';
 };
 
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointError = TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors];
+
 export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses = {
     /**
      * Success
@@ -443,6 +592,15 @@ export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointData = {
     url: '/timeline/event/{id}/position';
 };
 
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointError = TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors];
+
 export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses = {
     /**
      * Success
@@ -460,6 +618,15 @@ export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData = {
     query?: never;
     url: '/timeline/event/{id}';
 };
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError = TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors];
 
 export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses = {
     /**
@@ -495,6 +662,15 @@ export type TgbResolverServerFeaturesShowSetTimelineModeEndpointData = {
     url: '/timeline/mode';
 };
 
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointError = TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors];
+
 export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses = {
     /**
      * Success
@@ -504,54 +680,6 @@ export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses = {
 
 export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses];
 
-export type TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData = {
-    body: VersionedCommandRequest;
-    path?: never;
-    query?: never;
-    url: '/api/playback/start';
-};
-
-export type TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponse = TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponses[keyof TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponses];
-
-export type TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData = {
-    body: VersionedCommandRequest;
-    path?: never;
-    query?: never;
-    url: '/api/playback/reset';
-};
-
-export type TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponse = TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponses[keyof TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponses];
-
-export type TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData = {
-    body: SeekPlaybackRequest;
-    path?: never;
-    query?: never;
-    url: '/playback/seek';
-};
-
-export type TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponse = TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponses[keyof TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponses];
-
 export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointData = {
     body: VersionedCommandRequest;
     path: {
@@ -560,6 +688,15 @@ export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointData = {
     query?: never;
     url: '/assets/{id}';
 };
+
+export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointError = TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors];
 
 export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses = {
     /**
@@ -596,6 +733,15 @@ export type TgbResolverServerFeaturesAssetsPutAssetEndpointData = {
     query?: never;
     url: '/assets/{id}';
 };
+
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointError = TgbResolverServerFeaturesAssetsPutAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsPutAssetEndpointErrors];
 
 export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponses = {
     /**

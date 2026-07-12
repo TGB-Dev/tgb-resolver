@@ -31,10 +31,3 @@ export const toggleFullscreenAtom = atom(null, async () => {
     await document.documentElement.requestFullscreen();
   }
 });
-
-export const enterFullscreenAtom = atom(null, async () => {
-  ensureFullscreenListener();
-  if (!document.fullscreenElement) {
-    await document.documentElement.requestFullscreen();
-  }
-});

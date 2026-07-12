@@ -10,6 +10,7 @@ using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Features.Assets;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
+using TGB.Resolver.Server.Features.Show.Data;
 
 const string frontendCorsPolicy = "Frontend";
 
@@ -57,6 +58,7 @@ builder.Services.SwaggerDocument(options =>
   options.ShortSchemaNames = true;
 });
 builder.Services.AddSignalR().AddMessagePackProtocol();
+builder.Services.AddScoped<ShowRawRepository>();
 builder.Services.AddScoped<ShowStateService>();
 
 var app = builder.Build();

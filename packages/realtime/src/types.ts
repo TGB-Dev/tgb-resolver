@@ -1,6 +1,29 @@
-import { PlaybackStatus, ShowMode, TimelineEventType, TimelineMode } from "@tgb-resolver/contracts";
+import {
+  type ActivePlaybackSegmentSnapshot,
+  type AssetCollectionSnapshot,
+  type AutomationSnapshot,
+  type ContestSnapshot,
+  type ContestTeamSnapshot,
+  type PlaybackStateSnapshot,
+  PlaybackStatus,
+  type ShowAssetSnapshot,
+  type ShowMetaSnapshot,
+  ShowMode,
+  ShowSource,
+  TimelineEventType,
+  TimelineMode,
+} from "@tgb-resolver/contracts";
 
-export { PlaybackStatus, ShowMode, TimelineEventType, TimelineMode };
+export type ShowPlaybackState = PlaybackStateSnapshot;
+export type ActivePlaybackSegment = ActivePlaybackSegmentSnapshot;
+export type ShowContestData = ContestSnapshot;
+export type ShowContestSnapshotTeam = ContestTeamSnapshot;
+export type ShowMeta = ShowMetaSnapshot;
+export type ShowAutomation = AutomationSnapshot;
+export type ShowAssets = AssetCollectionSnapshot;
+export type ShowAsset = ShowAssetSnapshot;
+
+export { PlaybackStatus, ShowMode, ShowSource, TimelineEventType, TimelineMode };
 
 export const SHOW_SCHEMA_VERSION = 1;
 export const FILE_EXTENSION = ".tgbresolver";
@@ -59,63 +82,6 @@ export interface PlaySfxEvent extends EventBase {
 
 export type TimelineEvent = ResolveEvent | ShowImageEvent | PlaySfxEvent;
 
-export interface ShowAsset {
-  id: string;
-  kind: AssetKind;
-  fileName: string;
-  originalName: string;
-  contentType: string;
-  sizeBytes: number;
-  xxh364: string;
-}
-
-export interface ShowAssets {
-  images: ShowAsset[];
-  sfx: ShowAsset[];
-}
-
-export interface ShowAutomation {
-  autoResolveEnabled: boolean;
-  autoResolveSpeedMs: number;
-  fullAutoEnabled: boolean;
-}
-
-export interface ActivePlaybackSegment {
-  resolveEventId: number;
-  nextResolveEventId?: number;
-  inlineEventIds: number[];
-  currentInlineIndex: number;
-}
-
-export interface ShowPlaybackState {
-  status: PlaybackStatus;
-  executionSequence: number;
-  currentResolveEventId?: number;
-  currentEventId?: number;
-  activeSegment?: ActivePlaybackSegment;
-  startedAt?: number;
-}
-
-export interface ShowMeta {
-  title: string;
-  contestId?: string;
-  source?: "xml" | "bundle" | "manual";
-}
-
-export interface ShowContestSnapshotTeam {
-  teamId: number;
-  realName: string;
-  username: string;
-  score: number;
-  rank: number;
-}
-
-export interface ShowContestData {
-  durationSeconds: number;
-  freezeDurationSeconds: number;
-  preFreezeSnapshot: ShowContestSnapshotTeam[];
-}
-
 export interface ShowFile {
   schemaVersion: typeof SHOW_SCHEMA_VERSION;
   showVersion: number;
@@ -158,6 +124,8 @@ export interface TimelineTableItem {
   customName?: string;
   placeholderName: string;
   problem?: string;
+  oldScore?: number;
+  oldRank?: number;
   newScore?: number;
   newRank?: number;
   triggerOffsetSeconds?: number;

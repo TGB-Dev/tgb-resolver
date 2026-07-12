@@ -1,21 +1,17 @@
 import {
   PlaybackStatus,
   ShowMode,
+  ShowSource,
   type ShowStateSnapshot,
   TimelineEventType,
   TimelineMode,
 } from "@tgb-resolver/contracts";
 import { AssetKind, createEmptyShow, normalizeShow, type ShowFile } from "@tgb-resolver/realtime";
 
-function normalizePlaybackStatus(status?: string): ShowFile["playback"]["status"] {
-  switch (status) {
-    case "Running":
-      return PlaybackStatus.RUNNING;
-    case "Paused":
-      return PlaybackStatus.PAUSED;
-    default:
-      return PlaybackStatus.IDLE;
-  }
+function normalizePlaybackStatus(status?: string): PlaybackStatus {
+  if (status === PlaybackStatus.RUNNING) return PlaybackStatus.RUNNING;
+  if (status === PlaybackStatus.PAUSED) return PlaybackStatus.PAUSED;
+  return PlaybackStatus.IDLE;
 }
 
 export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): ShowFile {
@@ -30,7 +26,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       customName: event.customName ?? undefined,
     };
 
-    if (event.type === "Res" && event.resolve) {
+    if (event.type === TimelineEventType.RES && event.resolve) {
       timeline.push({
         ...base,
         type: TimelineEventType.RES,
@@ -45,7 +41,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       continue;
     }
 
-    if (event.type === "Img" && event.image) {
+    if (event.type === TimelineEventType.IMG && event.image) {
       timeline.push({
         ...base,
         type: TimelineEventType.IMG,
@@ -57,7 +53,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       continue;
     }
 
-    if (event.type === "Sfx" && event.sfx) {
+    if (event.type === TimelineEventType.SFX && event.sfx) {
       timeline.push({
         ...base,
         type: TimelineEventType.SFX,
@@ -73,19 +69,17 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
     createEmptyShow({
       schemaVersion: 1,
       showVersion: snapshot.showVersion ?? 0,
-      mode: snapshot.mode === "Live" ? ShowMode.LIVE : ShowMode.EDITING,
-      timelineMode: snapshot.timelineMode === "Ro" ? TimelineMode.RO : TimelineMode.RW,
+      mode: snapshot.mode === ShowMode.LIVE ? ShowMode.LIVE : ShowMode.EDITING,
+      timelineMode: snapshot.timelineMode === TimelineMode.RO ? TimelineMode.RO : TimelineMode.RW,
       meta: {
         title: snapshot.meta?.title ?? "Untitled show",
         contestId: snapshot.meta?.contestId ?? undefined,
         source:
-          snapshot.meta?.source === "Xml"
-            ? "xml"
-            : snapshot.meta?.source === "Bundle"
-              ? "bundle"
-              : snapshot.meta?.source === "Manual"
-                ? "manual"
-                : "manual",
+          snapshot.meta?.source === ShowSource.XML
+            ? ShowSource.XML
+            : snapshot.meta?.source === ShowSource.BUNDLE
+              ? ShowSource.BUNDLE
+              : ShowSource.MANUAL,
       },
       contest: {
         durationSeconds: snapshot.contest?.durationSeconds ?? 0,

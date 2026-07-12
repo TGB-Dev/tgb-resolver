@@ -13,6 +13,7 @@ import {
   resetPlayback,
   ShowMode,
   type ShowStateSnapshot,
+  seekPlayback,
   startPlayback,
   TimelineEventType,
   tgbResolverServerFeaturesShowGetShowEndpointOptions,
@@ -97,6 +98,26 @@ export function useResetPlaybackMutation() {
       const { data } = await resetPlayback({
         client: generatedClient,
         body: { showVersion: show.showVersion },
+      });
+
+      return data as ShowStateSnapshot;
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function useSeekPlaybackMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (eventId: number) => {
+      const show = requireShow(showQuery.data);
+      const { data } = await seekPlayback({
+        client: generatedClient,
+        body: { showVersion: show.showVersion, eventId },
       });
 
       return data as ShowStateSnapshot;

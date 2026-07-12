@@ -1,5 +1,7 @@
 import { Grid, Splitter, useSplitter } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useSetAtom } from "jotai";
+import { useEffect } from "react";
 
 import { ControlConfirmDialog } from "@/components/control/control-confirm-dialog";
 import { FloatingPanelHost } from "@/components/control/floating-panel-host";
@@ -7,6 +9,8 @@ import { ControlMainPanel } from "@/components/control/panels/control-main-panel
 import { ControlTimelinePanel } from "@/components/control/panels/control-timeline-panel";
 import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
+import { getServerNow } from "@/lib/api";
+import { controlNowAtom } from "@/state/control-now";
 
 export const Route = createFileRoute("/control/")({
   component: RouteComponent,
@@ -21,6 +25,13 @@ function RouteComponent() {
       { id: "timeline", minSize: 45 },
     ],
   });
+
+  const setNow = useSetAtom(controlNowAtom);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(getServerNow()), 200);
+    return () => clearInterval(id);
+  }, [setNow]);
 
   return (
     <ControlRealtimeProvider>

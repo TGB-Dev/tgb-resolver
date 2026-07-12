@@ -1,6 +1,8 @@
 import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
 import {
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
   Pen,
   Play,
   Radio,
@@ -14,7 +16,9 @@ import { Tooltip } from "@/components/ui/tooltip";
 import {
   useControlCanMutate,
   useControlIsLive,
+  useControlShowRows,
   useResetPlaybackMutation,
+  useSeekPlaybackMutation,
   useStartPlaybackMutation,
   useToggleLiveModeMutation,
 } from "@/features/control/hooks";
@@ -24,10 +28,27 @@ import type { ShowConnectionStatus } from "@/lib/api";
 export function ControlMainControls() {
   const startPlayback = useStartPlaybackMutation();
   const resetPlayback = useResetPlaybackMutation();
+  const seekPlayback = useSeekPlaybackMutation();
   const toggleLiveMode = useToggleLiveModeMutation();
   const isLive = useControlIsLive();
+  const rows = useControlShowRows();
   const { connectionStatus } = useControlRealtime();
   const canMutate = useControlCanMutate();
+  const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
+
+  function goPrevious() {
+    if (currentIndex > 0) {
+      const prev = rows[currentIndex - 1];
+      if (prev) seekPlayback.mutate(prev.id);
+    }
+  }
+
+  function goNext() {
+    if (currentIndex >= 0 && currentIndex < rows.length - 1) {
+      const next = rows[currentIndex + 1];
+      if (next) seekPlayback.mutate(next.id);
+    }
+  }
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
@@ -47,6 +68,27 @@ export function ControlMainControls() {
       </IconButton>
 
       <Box flex={1} />
+
+      <IconButton
+        onClick={goPrevious}
+        disabled={!canMutate || currentIndex <= 0 || seekPlayback.isPending}
+        variant="ghost"
+      >
+        <ChevronLeft />
+      </IconButton>
+
+      <IconButton
+        onClick={goNext}
+        disabled={
+          !canMutate ||
+          currentIndex < 0 ||
+          currentIndex >= rows.length - 1 ||
+          seekPlayback.isPending
+        }
+        variant="ghost"
+      >
+        <ChevronRight />
+      </IconButton>
 
       <Tooltip content={getConnectionStatusLabel(connectionStatus)}>
         <Button variant="ghost" disabled>

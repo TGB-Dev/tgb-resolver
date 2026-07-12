@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { get, type Options, tgbResolverServerFeaturesAssetsDeleteAssetEndpoint, tgbResolverServerFeaturesAssetsGetAssetEndpoint, tgbResolverServerFeaturesAssetsPutAssetEndpoint, tgbResolverServerFeaturesPlaybackResetPlaybackEndpoint, tgbResolverServerFeaturesPlaybackSeekPlaybackEndpoint, tgbResolverServerFeaturesPlaybackStartPlaybackEndpoint, tgbResolverServerFeaturesShowClearShowEndpoint, tgbResolverServerFeaturesShowCreateTimelineEventEndpoint, tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint, tgbResolverServerFeaturesShowDisableLiveModeEndpoint, tgbResolverServerFeaturesShowEnableLiveModeEndpoint, tgbResolverServerFeaturesShowExportBundleEndpoint, tgbResolverServerFeaturesShowGetShowEndpoint, tgbResolverServerFeaturesShowImportBundleEndpoint, tgbResolverServerFeaturesShowImportXmlEndpoint, tgbResolverServerFeaturesShowMoveTimelineEventEndpoint, tgbResolverServerFeaturesShowOptimizeShowEndpoint, tgbResolverServerFeaturesShowPatchNonResolveEventEndpoint, tgbResolverServerFeaturesShowPatchTimelineEventEndpoint, tgbResolverServerFeaturesShowRenameResolveEventEndpoint, tgbResolverServerFeaturesShowSetTimelineModeEndpoint } from '../sdk.gen';
-import type { GetData, TgbResolverServerFeaturesAssetsDeleteAssetEndpointData, TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse, TgbResolverServerFeaturesAssetsGetAssetEndpointData, TgbResolverServerFeaturesAssetsGetAssetEndpointResponse, TgbResolverServerFeaturesAssetsPutAssetEndpointData, TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData, TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponse, TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData, TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponse, TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData, TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponse, TgbResolverServerFeaturesShowClearShowEndpointData, TgbResolverServerFeaturesShowClearShowEndpointResponse, TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDisableLiveModeEndpointData, TgbResolverServerFeaturesShowDisableLiveModeEndpointResponse, TgbResolverServerFeaturesShowEnableLiveModeEndpointData, TgbResolverServerFeaturesShowEnableLiveModeEndpointResponse, TgbResolverServerFeaturesShowExportBundleEndpointData, TgbResolverServerFeaturesShowExportBundleEndpointResponse, TgbResolverServerFeaturesShowGetShowEndpointData, TgbResolverServerFeaturesShowGetShowEndpointResponse, TgbResolverServerFeaturesShowImportBundleEndpointData, TgbResolverServerFeaturesShowImportBundleEndpointResponse, TgbResolverServerFeaturesShowImportXmlEndpointData, TgbResolverServerFeaturesShowImportXmlEndpointResponse, TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, TgbResolverServerFeaturesShowOptimizeShowEndpointData, TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse, TgbResolverServerFeaturesShowPatchTimelineEventEndpointData, TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse, TgbResolverServerFeaturesShowRenameResolveEventEndpointData, TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, TgbResolverServerFeaturesShowSetTimelineModeEndpointData, TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse } from '../types.gen';
+import { get, type Options, tgbResolverServerFeaturesAssetsDeleteAssetEndpoint, tgbResolverServerFeaturesAssetsGetAssetEndpoint, tgbResolverServerFeaturesAssetsPutAssetEndpoint, tgbResolverServerFeaturesShowClearShowEndpoint, tgbResolverServerFeaturesShowCreateTimelineEventEndpoint, tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint, tgbResolverServerFeaturesShowDisableLiveModeEndpoint, tgbResolverServerFeaturesShowEnableLiveModeEndpoint, tgbResolverServerFeaturesShowExportBundleEndpoint, tgbResolverServerFeaturesShowGetShowEndpoint, tgbResolverServerFeaturesShowImportBundleEndpoint, tgbResolverServerFeaturesShowImportXmlEndpoint, tgbResolverServerFeaturesShowMoveTimelineEventEndpoint, tgbResolverServerFeaturesShowOptimizeShowEndpoint, tgbResolverServerFeaturesShowPatchNonResolveEventEndpoint, tgbResolverServerFeaturesShowPatchTimelineEventEndpoint, tgbResolverServerFeaturesShowRenameResolveEventEndpoint, tgbResolverServerFeaturesShowResetPlaybackEndpoint, tgbResolverServerFeaturesShowSeekPlaybackEndpoint, tgbResolverServerFeaturesShowSetTimelineModeEndpoint, tgbResolverServerFeaturesShowStartPlaybackEndpoint } from '../sdk.gen';
+import type { GetData, TgbResolverServerFeaturesAssetsDeleteAssetEndpointData, TgbResolverServerFeaturesAssetsDeleteAssetEndpointError, TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse, TgbResolverServerFeaturesAssetsGetAssetEndpointData, TgbResolverServerFeaturesAssetsGetAssetEndpointResponse, TgbResolverServerFeaturesAssetsPutAssetEndpointData, TgbResolverServerFeaturesAssetsPutAssetEndpointError, TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, TgbResolverServerFeaturesShowClearShowEndpointData, TgbResolverServerFeaturesShowClearShowEndpointError, TgbResolverServerFeaturesShowClearShowEndpointResponse, TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, TgbResolverServerFeaturesShowCreateTimelineEventEndpointError, TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDisableLiveModeEndpointData, TgbResolverServerFeaturesShowDisableLiveModeEndpointResponse, TgbResolverServerFeaturesShowEnableLiveModeEndpointData, TgbResolverServerFeaturesShowEnableLiveModeEndpointResponse, TgbResolverServerFeaturesShowExportBundleEndpointData, TgbResolverServerFeaturesShowExportBundleEndpointResponse, TgbResolverServerFeaturesShowGetShowEndpointData, TgbResolverServerFeaturesShowGetShowEndpointResponse, TgbResolverServerFeaturesShowImportBundleEndpointData, TgbResolverServerFeaturesShowImportBundleEndpointError, TgbResolverServerFeaturesShowImportBundleEndpointResponse, TgbResolverServerFeaturesShowImportXmlEndpointData, TgbResolverServerFeaturesShowImportXmlEndpointError, TgbResolverServerFeaturesShowImportXmlEndpointResponse, TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, TgbResolverServerFeaturesShowMoveTimelineEventEndpointError, TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, TgbResolverServerFeaturesShowOptimizeShowEndpointData, TgbResolverServerFeaturesShowOptimizeShowEndpointError, TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse, TgbResolverServerFeaturesShowPatchTimelineEventEndpointData, TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse, TgbResolverServerFeaturesShowRenameResolveEventEndpointData, TgbResolverServerFeaturesShowRenameResolveEventEndpointError, TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointData, TgbResolverServerFeaturesShowResetPlaybackEndpointError, TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowSeekPlaybackEndpointData, TgbResolverServerFeaturesShowSeekPlaybackEndpointError, TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse, TgbResolverServerFeaturesShowSetTimelineModeEndpointData, TgbResolverServerFeaturesShowSetTimelineModeEndpointError, TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, TgbResolverServerFeaturesShowStartPlaybackEndpointData, TgbResolverServerFeaturesShowStartPlaybackEndpointError, TgbResolverServerFeaturesShowStartPlaybackEndpointResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -54,6 +54,48 @@ export const getOptions = (options?: Options<GetData>) => queryOptions<unknown, 
     queryKey: getQueryKey(options)
 });
 
+export const tgbResolverServerFeaturesShowStartPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowStartPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowStartPlaybackEndpointResponse, TgbResolverServerFeaturesShowStartPlaybackEndpointError, Options<TgbResolverServerFeaturesShowStartPlaybackEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowStartPlaybackEndpointResponse, TgbResolverServerFeaturesShowStartPlaybackEndpointError, Options<TgbResolverServerFeaturesShowStartPlaybackEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await tgbResolverServerFeaturesShowStartPlaybackEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const tgbResolverServerFeaturesShowResetPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointError, Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointError, Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await tgbResolverServerFeaturesShowResetPlaybackEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const tgbResolverServerFeaturesShowSeekPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowSeekPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse, TgbResolverServerFeaturesShowSeekPlaybackEndpointError, Options<TgbResolverServerFeaturesShowSeekPlaybackEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse, TgbResolverServerFeaturesShowSeekPlaybackEndpointError, Options<TgbResolverServerFeaturesShowSeekPlaybackEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await tgbResolverServerFeaturesShowSeekPlaybackEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const tgbResolverServerFeaturesShowGetShowEndpointQueryKey = (options?: Options<TgbResolverServerFeaturesShowGetShowEndpointData>) => createQueryKey('tgbResolverServerFeaturesShowGetShowEndpoint', options);
 
 export const tgbResolverServerFeaturesShowGetShowEndpointOptions = (options?: Options<TgbResolverServerFeaturesShowGetShowEndpointData>) => queryOptions<TgbResolverServerFeaturesShowGetShowEndpointResponse, DefaultError, TgbResolverServerFeaturesShowGetShowEndpointResponse, ReturnType<typeof tgbResolverServerFeaturesShowGetShowEndpointQueryKey>>({
@@ -69,8 +111,8 @@ export const tgbResolverServerFeaturesShowGetShowEndpointOptions = (options?: Op
     queryKey: tgbResolverServerFeaturesShowGetShowEndpointQueryKey(options)
 });
 
-export const tgbResolverServerFeaturesShowOptimizeShowEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData>> = {
+export const tgbResolverServerFeaturesShowOptimizeShowEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, TgbResolverServerFeaturesShowOptimizeShowEndpointError, Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, TgbResolverServerFeaturesShowOptimizeShowEndpointError, Options<TgbResolverServerFeaturesShowOptimizeShowEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowOptimizeShowEndpoint({
                 ...options,
@@ -83,8 +125,8 @@ export const tgbResolverServerFeaturesShowOptimizeShowEndpointMutation = (option
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowClearShowEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowClearShowEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowClearShowEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowClearShowEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowClearShowEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowClearShowEndpointData>> = {
+export const tgbResolverServerFeaturesShowClearShowEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowClearShowEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowClearShowEndpointResponse, TgbResolverServerFeaturesShowClearShowEndpointError, Options<TgbResolverServerFeaturesShowClearShowEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowClearShowEndpointResponse, TgbResolverServerFeaturesShowClearShowEndpointError, Options<TgbResolverServerFeaturesShowClearShowEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowClearShowEndpoint({
                 ...options,
@@ -97,8 +139,8 @@ export const tgbResolverServerFeaturesShowClearShowEndpointMutation = (options?:
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowImportXmlEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowImportXmlEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowImportXmlEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowImportXmlEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowImportXmlEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowImportXmlEndpointData>> = {
+export const tgbResolverServerFeaturesShowImportXmlEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowImportXmlEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowImportXmlEndpointResponse, TgbResolverServerFeaturesShowImportXmlEndpointError, Options<TgbResolverServerFeaturesShowImportXmlEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowImportXmlEndpointResponse, TgbResolverServerFeaturesShowImportXmlEndpointError, Options<TgbResolverServerFeaturesShowImportXmlEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowImportXmlEndpoint({
                 ...options,
@@ -111,8 +153,8 @@ export const tgbResolverServerFeaturesShowImportXmlEndpointMutation = (options?:
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowImportBundleEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowImportBundleEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowImportBundleEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowImportBundleEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowImportBundleEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowImportBundleEndpointData>> = {
+export const tgbResolverServerFeaturesShowImportBundleEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowImportBundleEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowImportBundleEndpointResponse, TgbResolverServerFeaturesShowImportBundleEndpointError, Options<TgbResolverServerFeaturesShowImportBundleEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowImportBundleEndpointResponse, TgbResolverServerFeaturesShowImportBundleEndpointError, Options<TgbResolverServerFeaturesShowImportBundleEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowImportBundleEndpoint({
                 ...options,
@@ -140,8 +182,8 @@ export const tgbResolverServerFeaturesShowExportBundleEndpointOptions = (options
     queryKey: tgbResolverServerFeaturesShowExportBundleEndpointQueryKey(options)
 });
 
-export const tgbResolverServerFeaturesShowRenameResolveEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData>> = {
+export const tgbResolverServerFeaturesShowRenameResolveEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, TgbResolverServerFeaturesShowRenameResolveEventEndpointError, Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, TgbResolverServerFeaturesShowRenameResolveEventEndpointError, Options<TgbResolverServerFeaturesShowRenameResolveEventEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowRenameResolveEventEndpoint({
                 ...options,
@@ -196,8 +238,8 @@ export const tgbResolverServerFeaturesShowEnableLiveModeEndpointMutation = (opti
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowCreateTimelineEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData>> = {
+export const tgbResolverServerFeaturesShowCreateTimelineEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, TgbResolverServerFeaturesShowCreateTimelineEventEndpointError, Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, TgbResolverServerFeaturesShowCreateTimelineEventEndpointError, Options<TgbResolverServerFeaturesShowCreateTimelineEventEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowCreateTimelineEventEndpoint({
                 ...options,
@@ -210,8 +252,8 @@ export const tgbResolverServerFeaturesShowCreateTimelineEventEndpointMutation = 
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowMoveTimelineEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData>> = {
+export const tgbResolverServerFeaturesShowMoveTimelineEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, TgbResolverServerFeaturesShowMoveTimelineEventEndpointError, Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, TgbResolverServerFeaturesShowMoveTimelineEventEndpointError, Options<TgbResolverServerFeaturesShowMoveTimelineEventEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowMoveTimelineEventEndpoint({
                 ...options,
@@ -224,8 +266,8 @@ export const tgbResolverServerFeaturesShowMoveTimelineEventEndpointMutation = (o
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowDeleteTimelineEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData>> = {
+export const tgbResolverServerFeaturesShowDeleteTimelineEventEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError, Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError, Options<TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint({
                 ...options,
@@ -252,8 +294,8 @@ export const tgbResolverServerFeaturesShowPatchTimelineEventEndpointMutation = (
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesShowSetTimelineModeEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData>> = {
+export const tgbResolverServerFeaturesShowSetTimelineModeEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, TgbResolverServerFeaturesShowSetTimelineModeEndpointError, Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, TgbResolverServerFeaturesShowSetTimelineModeEndpointError, Options<TgbResolverServerFeaturesShowSetTimelineModeEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesShowSetTimelineModeEndpoint({
                 ...options,
@@ -266,50 +308,8 @@ export const tgbResolverServerFeaturesShowSetTimelineModeEndpointMutation = (opt
     return mutationOptions;
 };
 
-export const tgbResolverServerFeaturesPlaybackStartPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesPlaybackStartPlaybackEndpointData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await tgbResolverServerFeaturesPlaybackStartPlaybackEndpoint({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const tgbResolverServerFeaturesPlaybackResetPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesPlaybackResetPlaybackEndpointData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await tgbResolverServerFeaturesPlaybackResetPlaybackEndpoint({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const tgbResolverServerFeaturesPlaybackSeekPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesPlaybackSeekPlaybackEndpointData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await tgbResolverServerFeaturesPlaybackSeekPlaybackEndpoint({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const tgbResolverServerFeaturesAssetsDeleteAssetEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData>> = {
+export const tgbResolverServerFeaturesAssetsDeleteAssetEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse, TgbResolverServerFeaturesAssetsDeleteAssetEndpointError, Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse, TgbResolverServerFeaturesAssetsDeleteAssetEndpointError, Options<TgbResolverServerFeaturesAssetsDeleteAssetEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesAssetsDeleteAssetEndpoint({
                 ...options,
@@ -337,8 +337,8 @@ export const tgbResolverServerFeaturesAssetsGetAssetEndpointOptions = (options: 
     queryKey: tgbResolverServerFeaturesAssetsGetAssetEndpointQueryKey(options)
 });
 
-export const tgbResolverServerFeaturesAssetsPutAssetEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData>> => {
-    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, DefaultError, Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData>> = {
+export const tgbResolverServerFeaturesAssetsPutAssetEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, TgbResolverServerFeaturesAssetsPutAssetEndpointError, Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, TgbResolverServerFeaturesAssetsPutAssetEndpointError, Options<TgbResolverServerFeaturesAssetsPutAssetEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await tgbResolverServerFeaturesAssetsPutAssetEndpoint({
                 ...options,
