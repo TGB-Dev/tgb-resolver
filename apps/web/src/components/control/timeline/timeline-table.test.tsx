@@ -1,46 +1,57 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { createEmptyShow } from "@tgb-resolver/contracts";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { AppProvider } from "@/components/app/provider";
-import { appStore, controlShowAtom, resetControlStateForTests } from "@/state/control";
 
 import { ControlTimelineTable } from "./timeline-table";
 
+const hooksMock = vi.hoisted(() => ({
+  useControlShowRows: vi.fn(),
+  useControlShowQuery: vi.fn(),
+  useControlIsLive: vi.fn(),
+  useRenameControlEventMutation: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+  })),
+}));
+
+vi.mock("@/features/control/hooks", () => hooksMock);
+
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
 });
 
 describe("ControlTimelineTable", () => {
-  test("renders timeline rows from the shared Jotai store", async () => {
-    resetControlStateForTests();
-    appStore.set(
-      controlShowAtom,
-      createEmptyShow({
-        mode: "live",
-        timeline: [
-          {
-            id: 1,
-            type: "RES",
-            payload: {
-              realName: "Alice Team",
-              username: "alice",
-              problem: "A",
-              newScore: 100,
-              newRank: 1,
-            },
-          },
-          {
-            id: 2,
-            type: "SFX",
-            payload: {
-              sfxId: "sting",
-              durationSeconds: 3,
-            },
-          },
-        ],
-      }),
-    );
+  test("renders timeline rows from the shared query layer", async () => {
+    hooksMock.useControlShowQuery.mockReturnValue({
+      data: {
+        playback: {
+          currentEventId: 2,
+        },
+      },
+      isLoading: false,
+      error: null,
+    });
+    hooksMock.useControlShowRows.mockReturnValue([
+      {
+        id: 1,
+        type: "RES",
+        name: "Alice Team",
+        placeholderName: "Alice Team",
+        problem: "A",
+        newScore: 100,
+        newRank: 1,
+      },
+      {
+        id: 2,
+        type: "SFX",
+        name: "Play SFX: sting",
+        placeholderName: "Play SFX: sting",
+        durationSeconds: 3,
+        assetId: "sting",
+      },
+    ]);
+    hooksMock.useControlIsLive.mockReturnValue(true);
 
     render(
       <AppProvider>
@@ -52,27 +63,16 @@ describe("ControlTimelineTable", () => {
     expect(screen.getByText(/sting/)).toBeInTheDocument();
   });
 
-  test("falls back to the placeholder name when customName is cleared", async () => {
-    resetControlStateForTests();
-    appStore.set(
-      controlShowAtom,
-      createEmptyShow({
-        timeline: [
-          {
-            id: 1,
-            type: "RES",
-            customName: "",
-            payload: {
-              realName: "Alice Team",
-              username: "alice",
-              problem: "A",
-              newScore: 100,
-              newRank: 1,
-            },
-          },
-        ],
-      }),
-    );
+  test("falls back to empty state when no rows exist", async () => {
+    hooksMock.useControlShowQuery.mockReturnValue({
+      data: {
+        playback: {},
+      },
+      isLoading: false,
+      error: null,
+    });
+    hooksMock.useControlShowRows.mockReturnValue([]);
+    hooksMock.useControlIsLive.mockReturnValue(false);
 
     render(
       <AppProvider>
@@ -80,6 +80,6 @@ describe("ControlTimelineTable", () => {
       </AppProvider>,
     );
 
-    expect(await screen.findByText("Alice Team")).toBeInTheDocument();
+    expect(await screen.findByText("No show loaded.")).toBeInTheDocument();
   });
 });

@@ -9,15 +9,22 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch --no-clean",
+    "build": "pnpm run generate && tsdown",
     "check-types": "tsc --noEmit",
+    "dev": "tsdown --watch --no-clean",
+    "generate": "openapi-ts",
     "prepublishOnly": "pnpm run build",
     "release": "bumpp",
     "test": "vitest run --passWithNoTests",
     "typecheck": "pnpm run check-types"
   },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.2",
+    "ofetch": "^1.5.1",
+    "valibot": "^1.4.1"
+  },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
     "@types/node": "^26.0.1",
     "bumpp": "^11.1.0",
     "tsdown": "^0.22.3",

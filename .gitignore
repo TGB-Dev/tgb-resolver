@@ -26,6 +26,8 @@ coverage
 out/
 build
 dist
+bin/
+obj/
 
 
 # Debug
@@ -50,3 +52,9 @@ logs/*.log
 
 # Server data
 .data/
+.local/
+apps/server/inspect.sarif.json
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs

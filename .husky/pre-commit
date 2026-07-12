@@ -1,6 +1,0 @@
-set -e
-
-pnpm exec biome check --write --staged --no-errors-on-unmatched
-pnpm -w run sync:check || pnpm -w run sync
-pnpm -w test
-git add -u

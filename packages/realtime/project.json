@@ -1,0 +1,8 @@
+{
+  "name": "@tgb-resolver/realtime",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "root": "packages/realtime",
+  "sourceRoot": "packages/realtime/src",
+  "projectType": "library",
+  "implicitDependencies": ["server"]
+}

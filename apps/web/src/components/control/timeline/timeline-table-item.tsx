@@ -1,13 +1,12 @@
 import { Box, DataList, Editable, Grid, type GridProps, useToken } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
-import type { TimelineTableItem } from "@tgb-resolver/contracts";
-import { useAtomValue, useSetAtom } from "jotai";
+import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
-import { controlIsLiveAtom, renameControlEventAtom } from "@/state/control";
+import { useControlIsLive, useRenameControlEventMutation } from "@/features/control/hooks";
 import { CONTROL_TIMELINE_ROW_HEIGHT_PX, pxToChakraSpace } from "@/state/list-metrics";
 
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
@@ -50,7 +49,7 @@ export function ControlTimelineTableItem({
   const success = useToken("colors", "green.600");
   const errror = useToken("colors", "red.500");
   const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
-  const isLive = useAtomValue(controlIsLiveAtom);
+  const isLive = useControlIsLive();
 
   return (
     <Box
@@ -111,7 +110,9 @@ export function ControlTimelineTableItem({
             {payload.id}
           </Box>
         </Tooltip>
-        <Box fontFamily="mono">{payload.type}</Box>
+        <Box fontFamily="mono" textTransform="uppercase">
+          {payload.type}
+        </Box>
         <Box minW={0}>
           {!isLive ? (
             <ControlTimelineEventCustomNameEditable payload={payload} />
@@ -235,7 +236,7 @@ interface ControlTimelineEventCustomNameEditableProps {
 function ControlTimelineEventCustomNameEditable({
   payload,
 }: ControlTimelineEventCustomNameEditableProps) {
-  const renameEvent = useSetAtom(renameControlEventAtom);
+  const renameEvent = useRenameControlEventMutation();
 
   useEffect(() => {
     setDraftName(payload.customName ?? "");
@@ -252,7 +253,7 @@ function ControlTimelineEventCustomNameEditable({
       return;
     }
 
-    await renameEvent({
+    await renameEvent.mutateAsync({
       eventId: payload.id,
       type: payload.type,
       customName: normalizedNextValue,
