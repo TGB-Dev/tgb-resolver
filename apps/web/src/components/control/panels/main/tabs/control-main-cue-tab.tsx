@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Heading } from "@/components/ui/heading";
+import { useControlShowRows } from "@/features/control/hooks";
 
 enum Cue {
   CURRENT,
@@ -50,14 +51,28 @@ function getCueContentSize(cue: Cue): TextProps["fontSize"] {
 }
 
 export function ControlMainCueTab() {
+  const rows = useControlShowRows();
+  const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
+  const current = currentIndex >= 0 ? rows[currentIndex] : undefined;
+  const next = rows[currentIndex >= 0 ? currentIndex + 1 : 0];
+  const previous = currentIndex > 0 ? rows[currentIndex - 1] : undefined;
+
   return (
     <Grid boxSize="full" templateRows="1fr auto repeat(2, 1fr)" p={4}>
-      <CueItem cue={Cue.CURRENT}>This is the current cue content.</CueItem>
+      <CueItem cue={Cue.CURRENT}>{formatCue(current)}</CueItem>
       <NextCueTimer />
-      <CueItem cue={Cue.NEXT}>This is the next cue content.</CueItem>
-      <CueItem cue={Cue.PREVIOUS}>This is the previous cue content.</CueItem>
+      <CueItem cue={Cue.NEXT}>{formatCue(next)}</CueItem>
+      <CueItem cue={Cue.PREVIOUS}>{formatCue(previous)}</CueItem>
     </Grid>
   );
+}
+
+function formatCue(cue: ReturnType<typeof useControlShowRows>[number] | undefined) {
+  if (!cue) {
+    return "-";
+  }
+
+  return `${cue.id}. ${cue.name}${cue.problem ? ` / ${cue.problem}` : ""}`;
 }
 
 interface CueItemProps {

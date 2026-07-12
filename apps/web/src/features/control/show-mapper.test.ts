@@ -1,4 +1,10 @@
-import type { ShowStateSnapshot } from "@tgb-resolver/contracts";
+import {
+  PlaybackStatus,
+  ShowMode,
+  ShowSource,
+  type ShowStateSnapshot,
+  TimelineEventType,
+} from "@tgb-resolver/contracts";
 import { describe, expect, test } from "vitest";
 
 import { mapShowStateSnapshotToShowFile } from "./show-mapper";
@@ -8,11 +14,11 @@ describe("mapShowStateSnapshotToShowFile", () => {
     const snapshot: ShowStateSnapshot = {
       schemaVersion: 1,
       showVersion: 3,
-      mode: "Live",
+      mode: ShowMode.LIVE,
       meta: {
         title: "Demo Show",
         contestId: "demo-1",
-        source: "Xml",
+        source: ShowSource.XML,
       },
       contest: {
         durationSeconds: 18_000,
@@ -33,7 +39,7 @@ describe("mapShowStateSnapshotToShowFile", () => {
         fullAutoEnabled: false,
       },
       playback: {
-        status: "Running",
+        status: PlaybackStatus.RUNNING,
         currentResolveEventId: 10,
         currentEventId: 11,
         activeSegment: {
@@ -61,7 +67,7 @@ describe("mapShowStateSnapshotToShowFile", () => {
       timeline: [
         {
           id: 10,
-          type: "Res",
+          type: TimelineEventType.RES,
           customName: "A. Alice",
           resolve: {
             realName: "Alice Team",
@@ -73,7 +79,7 @@ describe("mapShowStateSnapshotToShowFile", () => {
         },
         {
           id: 11,
-          type: "Sfx",
+          type: TimelineEventType.SFX,
           sfx: {
             assetId: "sting",
             durationSeconds: 2,
@@ -86,14 +92,14 @@ describe("mapShowStateSnapshotToShowFile", () => {
 
     expect(show).toMatchObject({
       showVersion: 3,
-      mode: "live",
+      mode: "Live",
       meta: {
         title: "Demo Show",
         contestId: "demo-1",
         source: "xml",
       },
       playback: {
-        status: "running",
+        status: "Running",
         currentResolveEventId: 10,
         currentEventId: 11,
       },
@@ -101,12 +107,12 @@ describe("mapShowStateSnapshotToShowFile", () => {
     expect(show.timeline).toEqual([
       expect.objectContaining({
         id: 10,
-        type: "RES",
+        type: "Res",
         customName: "A. Alice",
       }),
       expect.objectContaining({
         id: 11,
-        type: "SFX",
+        type: "Sfx",
         payload: expect.objectContaining({
           sfxId: "sting",
           durationSeconds: 2,

@@ -11,9 +11,11 @@ import {
   patchNonResolveEvent,
   renameResolveEvent,
   resetPlayback,
+  ShowMode,
   type ShowStateSnapshot,
   startPlayback,
-  tgbResolverServerEndpointsGetShowEndpointOptions,
+  TimelineEventType,
+  tgbResolverServerFeaturesShowGetShowEndpointOptions,
 } from "@tgb-resolver/contracts";
 import { FILE_EXTENSION, toTimelineTableItems } from "@tgb-resolver/realtime";
 import { useMemo } from "react";
@@ -39,7 +41,7 @@ function requireShow(show: ReturnType<typeof useControlShowQuery>["data"]) {
 
 export function useControlShowQuery() {
   return useQuery({
-    ...tgbResolverServerEndpointsGetShowEndpointOptions({ client: generatedClient }),
+    ...tgbResolverServerFeaturesShowGetShowEndpointOptions({ client: generatedClient }),
     queryKey: controlShowQueryKey(),
     select: mapShowStateSnapshotToShowFile,
   });
@@ -55,7 +57,7 @@ export function useControlShowRows() {
 }
 
 export function useControlIsLive() {
-  return useControlShowQuery().data?.mode === "live";
+  return useControlShowQuery().data?.mode === ShowMode.LIVE;
 }
 
 export function useControlCanMutate() {
@@ -153,7 +155,7 @@ export function useToggleLiveModeMutation() {
     mutationFn: async () => {
       const show = requireShow(showQuery.data);
 
-      if (show.mode === "live") {
+      if (show.mode === ShowMode.LIVE) {
         const { data } = await disableLiveMode({
           client: generatedClient,
         });
@@ -179,7 +181,7 @@ export function useRenameControlEventMutation() {
     mutationFn: async (payload: { eventId: number; type: string; customName: string }) => {
       const show = requireShow(showQuery.data);
 
-      if (payload.type === "RES") {
+      if (payload.type === TimelineEventType.RES) {
         const { data } = await renameResolveEvent({
           client: generatedClient,
           path: { id: payload.eventId },
@@ -191,7 +193,8 @@ export function useRenameControlEventMutation() {
         return data as ShowStateSnapshot;
       }
 
-      const eventType = payload.type === "IMG" ? "Img" : "Sfx";
+      const eventType =
+        payload.type === TimelineEventType.IMG ? TimelineEventType.IMG : TimelineEventType.SFX;
       const { data } = await patchNonResolveEvent({
         client: generatedClient,
         path: { id: payload.eventId },
@@ -213,13 +216,19 @@ export function useImportShowMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({
+      file,
+      excludedUsernames = [],
+    }: {
+      file: File;
+      excludedUsernames?: string[];
+    }) => {
       const fileName = file.name.toLowerCase();
 
       if (fileName.endsWith(".xml")) {
         const { data } = await importShowXml({
           client: generatedClient,
-          body: { xml: await file.text() },
+          body: { xml: await file.text(), excludedUsernames },
         });
         return data as ShowStateSnapshot;
       }

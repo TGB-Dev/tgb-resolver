@@ -4,6 +4,8 @@ import * as v from 'valibot';
 
 export const vShowMode = v.picklist(['Editing', 'Live']);
 
+export const vTimelineMode = v.picklist(['Rw', 'Ro']);
+
 export const vShowSource = v.picklist([
     'Xml',
     'Bundle',
@@ -20,7 +22,7 @@ export const vContestTeamSnapshot = v.strictObject({
     teamId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     realName: v.optional(v.string()),
     username: v.optional(v.string()),
-    score: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    score: v.optional(v.number()),
     rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
@@ -39,8 +41,7 @@ export const vAutomationSnapshot = v.strictObject({
 export const vPlaybackStatus = v.picklist([
     'Idle',
     'Running',
-    'Paused',
-    'Completed'
+    'Paused'
 ]);
 
 export const vActivePlaybackSegmentSnapshot = v.strictObject({
@@ -56,6 +57,11 @@ export const vPlaybackStateSnapshot = v.strictObject({
     currentEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     activeSegment: v.nullish(vActivePlaybackSegmentSnapshot),
     startedAt: v.nullish(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    executionSequence: v.optional(v.pipe(v.union([
         v.number(),
         v.string(),
         v.bigint()
@@ -91,7 +97,7 @@ export const vResolveEventPayloadSnapshot = v.strictObject({
     realName: v.optional(v.string()),
     username: v.optional(v.string()),
     problem: v.optional(v.string()),
-    newScore: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    newScore: v.optional(v.number()),
     newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
@@ -102,6 +108,7 @@ export const vMediaEventPayloadSnapshot = v.strictObject({
 
 export const vTimelineEventSnapshot = v.strictObject({
     id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    position: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     type: v.optional(vTimelineEventType),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
@@ -115,6 +122,7 @@ export const vShowStateSnapshot = v.strictObject({
     schemaVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     mode: v.optional(vShowMode),
+    timelineMode: v.optional(vTimelineMode),
     meta: v.optional(vShowMetaSnapshot),
     contest: v.optional(vContestSnapshot),
     automation: v.optional(vAutomationSnapshot),
@@ -128,7 +136,8 @@ export const vVersionedCommandRequest = v.strictObject({
 });
 
 export const vImportXmlRequest = v.strictObject({
-    xml: v.optional(v.string())
+    xml: v.optional(v.string()),
+    excludedUsernames: v.nullish(v.array(v.string()))
 });
 
 export const vImportBundleRequest = v.strictObject({
@@ -155,86 +164,215 @@ export const vNonResolveEventPatchRequest = v.strictObject({
     payload: v.nullish(vMediaEventPatchPayload)
 });
 
-export const vTgbResolverServerEndpointsStartPlaybackEndpointBody = vVersionedCommandRequest;
+export const vCreateTimelineEventRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    type: v.optional(vTimelineEventType),
+    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    before: v.optional(v.boolean()),
+    triggerOffsetSeconds: v.nullish(v.number()),
+    requireManualInteraction: v.nullish(v.boolean()),
+    customName: v.nullish(v.string()),
+    payload: v.nullish(vMediaEventPatchPayload)
+});
+
+export const vMoveTimelineEventRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    before: v.optional(v.boolean())
+});
+
+export const vPatchTimelineEventRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    customName: v.nullish(v.string()),
+    type: v.nullish(vTimelineEventType),
+    triggerOffsetSeconds: v.nullish(v.number()),
+    requireManualInteraction: v.nullish(v.boolean()),
+    payload: v.nullish(vMediaEventPatchPayload)
+});
+
+export const vSetTimelineModeRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    timelineMode: v.optional(vTimelineMode)
+});
+
+export const vSeekPlaybackRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    eventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+});
+
+export const vUpsertAssetRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    kind: v.optional(v.string()),
+    fileName: v.optional(v.string()),
+    contentType: v.optional(v.string()),
+    bytes: v.optional(v.string())
+});
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsStartPlaybackEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowGetShowEndpointResponse = vShowStateSnapshot;
 
-export const vTgbResolverServerEndpointsResetPlaybackEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerEndpointsResetPlaybackEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowOptimizeShowEndpointBody = vVersionedCommandRequest;
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsGetShowEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowOptimizeShowEndpointResponse = vShowStateSnapshot;
 
-export const vTgbResolverServerEndpointsOptimizeShowEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerEndpointsOptimizeShowEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerEndpointsClearShowEndpointBody = vVersionedCommandRequest;
+export const vTgbResolverServerFeaturesShowClearShowEndpointBody = vVersionedCommandRequest;
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsClearShowEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowClearShowEndpointResponse = vShowStateSnapshot;
 
-export const vTgbResolverServerEndpointsImportXmlEndpointBody = vImportXmlRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerEndpointsImportXmlEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerEndpointsImportBundleEndpointBody = vImportBundleRequest;
+export const vTgbResolverServerFeaturesShowImportXmlEndpointBody = vImportXmlRequest;
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsImportBundleEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowImportXmlEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowImportBundleEndpointBody = vImportBundleRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowImportBundleEndpointResponse = vShowStateSnapshot;
 
 /**
  * No Content
  */
-export const vTgbResolverServerEndpointsExportBundleEndpointResponse = v.void();
+export const vTgbResolverServerFeaturesShowExportBundleEndpointResponse = v.void();
 
-export const vTgbResolverServerEndpointsRenameResolveEventEndpointBody = vResolveEventRenameRequest;
+export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointBody = vResolveEventRenameRequest;
 
-export const vTgbResolverServerEndpointsRenameResolveEventEndpointPath = v.object({
+export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointPath = v.object({
     id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsRenameResolveEventEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointResponse = vShowStateSnapshot;
 
-export const vTgbResolverServerEndpointsPatchNonResolveEventEndpointBody = vNonResolveEventPatchRequest;
+export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointBody = vNonResolveEventPatchRequest;
 
-export const vTgbResolverServerEndpointsPatchNonResolveEventEndpointPath = v.object({
+export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointPath = v.object({
     id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsPatchNonResolveEventEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse = vShowStateSnapshot;
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsDisableLiveModeEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowDisableLiveModeEndpointResponse = vShowStateSnapshot;
 
 /**
  * Success
  */
-export const vTgbResolverServerEndpointsEnableLiveModeEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowEnableLiveModeEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointBody = vCreateTimelineEventRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointBody = vMoveTimelineEventRequest;
+
+export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointPath = v.object({
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointBody = vVersionedCommandRequest;
+
+export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointPath = v.object({
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointBody = vPatchTimelineEventRequest;
+
+export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointPath = v.object({
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointBody = vSetTimelineModeRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesPlaybackStartPlaybackEndpointBody = vVersionedCommandRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesPlaybackStartPlaybackEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesPlaybackResetPlaybackEndpointBody = vVersionedCommandRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesPlaybackResetPlaybackEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesPlaybackSeekPlaybackEndpointBody = vSeekPlaybackRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesPlaybackSeekPlaybackEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointBody = vVersionedCommandRequest;
+
+export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsGetAssetEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * No Content
+ */
+export const vTgbResolverServerFeaturesAssetsGetAssetEndpointResponse = v.void();
+
+export const vTgbResolverServerFeaturesAssetsPutAssetEndpointBody = vUpsertAssetRequest;
+
+export const vTgbResolverServerFeaturesAssetsPutAssetEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsPutAssetEndpointResponse = vShowStateSnapshot;

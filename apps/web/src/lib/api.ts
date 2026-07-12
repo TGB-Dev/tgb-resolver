@@ -1,15 +1,28 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
-import { generatedClient } from "@tgb-resolver/contracts";
+import { generatedClient, PlaybackStatus, ShowMode } from "@tgb-resolver/contracts";
 import type {
   ClockSyncRequest,
   ClockSyncResponse,
   ShowPlaybackState,
   ShowWebSocketMessage,
 } from "@tgb-resolver/realtime";
+import {
+  calculateClockSample,
+  projectServerNow,
+  selectClockEstimate,
+} from "@tgb-resolver/realtime";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 const MAX_RECONNECT_ATTEMPTS = 8;
+const CLOCK_SYNC_INTERVAL_MS = 30_000;
+
+let serverClockAtSyncMs = Date.now();
+let monotonicAtSyncMs = performance.now();
+
+export function getServerNow(): number {
+  return projectServerNow(serverClockAtSyncMs, monotonicAtSyncMs, performance.now());
+}
 
 generatedClient.setConfig({
   baseUrl: API_BASE_URL,
@@ -22,18 +35,17 @@ export const apiClient = {
 function normalizePlaybackStatus(status: string): ShowPlaybackState["status"] {
   switch (status) {
     case "Running":
-      return "running";
+      return PlaybackStatus.RUNNING;
     case "Paused":
-      return "paused";
-    case "Completed":
-      return "completed";
+      return PlaybackStatus.PAUSED;
     default:
-      return "idle";
+      return PlaybackStatus.IDLE;
   }
 }
 
 function toShowPlaybackState(playback: {
   status: string;
+  executionSequence?: number | null;
   currentResolveEventId?: number | null;
   currentEventId?: number | null;
   activeSegment?: {
@@ -46,6 +58,7 @@ function toShowPlaybackState(playback: {
 }): ShowPlaybackState {
   return {
     status: normalizePlaybackStatus(playback.status),
+    executionSequence: playback.executionSequence ?? 0,
     currentResolveEventId: playback.currentResolveEventId ?? undefined,
     currentEventId: playback.currentEventId ?? undefined,
     activeSegment: playback.activeSegment
@@ -63,7 +76,7 @@ function toShowPlaybackState(playback: {
 function createClockSyncRequest(): ClockSyncRequest {
   return {
     sessionId: crypto.randomUUID(),
-    clientSentAt: new Date().toISOString(),
+    clientSentAtUnixMs: Date.now(),
   };
 }
 
@@ -108,6 +121,7 @@ export function createShowWebSocketManager(
   let manualStopInProgress = false;
   let connectPromise: Promise<void> | null = null;
   let stopPromise: Promise<void> | null = null;
+  let clockSyncTimer: ReturnType<typeof setInterval> | null = null;
 
   const connection = new HubConnectionBuilder()
     .withUrl(`${API_BASE_URL}/hubs/show`)
@@ -117,7 +131,42 @@ export function createShowWebSocketManager(
     .build();
 
   async function syncClock() {
-    await connection.invoke<ClockSyncResponse>("SyncClock", createClockSyncRequest());
+    const samples = [];
+    for (let index = 0; index < 8; index += 1) {
+      const clientSentAtMonotonicMs = performance.now();
+      const response = await connection.invoke<ClockSyncResponse>(
+        "SyncClock",
+        createClockSyncRequest(),
+      );
+      samples.push(calculateClockSample(response, clientSentAtMonotonicMs, performance.now()));
+    }
+
+    const estimate = selectClockEstimate(samples, performance.now());
+    if (estimate) {
+      // Use the best RTT sample directly. Smoothing a large correction leaves
+      // controllers visibly desynchronized for several sync intervals.
+      serverClockAtSyncMs = estimate.serverNowMs;
+      monotonicAtSyncMs = estimate.clientReceivedAtMonotonicMs;
+    }
+
+    return estimate;
+  }
+
+  function startClockSync() {
+    if (clockSyncTimer) {
+      clearInterval(clockSyncTimer);
+    }
+
+    clockSyncTimer = setInterval(() => {
+      void syncClock().catch((error) => callbacks.onError(reconnectAttempt, error));
+    }, CLOCK_SYNC_INTERVAL_MS);
+  }
+
+  function stopClockSync() {
+    if (clockSyncTimer) {
+      clearInterval(clockSyncTimer);
+      clockSyncTimer = null;
+    }
   }
 
   connection.on("ShowRefetchRequired", async (message: { showVersion: number; reason: string }) => {
@@ -139,6 +188,7 @@ export function createShowWebSocketManager(
       showVersion: number;
       playback: {
         status: string;
+        executionSequence?: number;
         currentResolveEventId?: number;
         currentEventId?: number;
         activeSegment?: {
@@ -162,7 +212,7 @@ export function createShowWebSocketManager(
     await callbacks.onMessage({
       type: "live-mode-changed",
       showVersion: message.showVersion,
-      mode: message.mode === "Live" ? "live" : "editing",
+      mode: message.mode === "Live" ? ShowMode.LIVE : ShowMode.EDITING,
     });
   });
 
@@ -187,10 +237,12 @@ export function createShowWebSocketManager(
     const attempt = reconnectAttempt;
     reconnectAttempt = 0;
     await syncClock();
+    startClockSync();
     await callbacks.onOpen(attempt);
   });
 
   connection.onclose((error) => {
+    stopClockSync();
     connectPromise = null;
     stopPromise = null;
 
@@ -230,6 +282,7 @@ export function createShowWebSocketManager(
         try {
           await connection.start();
           await syncClock();
+          startClockSync();
           await callbacks.onOpen(reconnectAttempt);
         } catch (error) {
           if (manualStopInProgress) {
@@ -290,6 +343,7 @@ export function createShowWebSocketManager(
             try {
               await connection.start();
               await syncClock();
+              startClockSync();
               await callbacks.onOpen(0);
             } catch (error) {
               if (manualStopInProgress) {
