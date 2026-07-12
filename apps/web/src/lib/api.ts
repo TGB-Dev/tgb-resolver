@@ -1,21 +1,18 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import { generatedClient, PlaybackStatus, ShowMode } from "@tgb-resolver/contracts";
-import type {
-  ClockSyncRequest,
-  ClockSyncResponse,
-  ShowPlaybackState,
-  ShowWebSocketMessage,
-} from "@tgb-resolver/realtime";
+import type { ShowPlaybackState, ShowWebSocketMessage } from "@tgb-resolver/realtime";
 import {
   calculateClockSample,
   projectServerNow,
   selectClockEstimate,
 } from "@tgb-resolver/realtime";
+import type { ClockSyncRequest, IShowHubClient } from "@tgb-resolver/realtime/signalr";
+import { getHubProxyFactory, getReceiverRegister } from "@tgb-resolver/realtime/signalr";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 const MAX_RECONNECT_ATTEMPTS = 8;
-const CLOCK_SYNC_INTERVAL_MS = 30_000;
+const CLOCK_SYNC_INTERVAL_MS = 10_000;
 
 let serverClockAtSyncMs = Date.now();
 let monotonicAtSyncMs = performance.now();
@@ -32,46 +29,47 @@ export const apiClient = {
   get: () => Promise.resolve({ data: "TGB Resolver Server", error: undefined }),
 };
 
-function normalizePlaybackStatus(status: string): ShowPlaybackState["status"] {
-  if (status === PlaybackStatus.RUNNING) return PlaybackStatus.RUNNING;
-  if (status === PlaybackStatus.PAUSED) return PlaybackStatus.PAUSED;
-  return PlaybackStatus.IDLE;
-}
-
-function toShowPlaybackState(playback: {
-  status: string;
-  executionSequence?: number | null;
-  currentResolveEventId?: number | null;
-  currentEventId?: number | null;
-  activeSegment?: {
-    resolveEventId: number;
-    nextResolveEventId?: number | null;
-    inlineEventIds: number[];
-    currentInlineIndex: number;
-  };
-  startedAt?: number | null;
-}): ShowPlaybackState {
+function toShowPlaybackState(
+  status: string,
+  executionSequence: number,
+  currentResolveEventId: number | undefined,
+  currentEventId: number | undefined,
+  activeSegment:
+    | {
+        ResolveEventId: number;
+        NextResolveEventId?: number;
+        InlineEventIds: number[];
+        CurrentInlineIndex: number;
+      }
+    | undefined,
+  startedAt: number | undefined,
+): ShowPlaybackState {
   return {
-    status: normalizePlaybackStatus(playback.status),
-    executionSequence: playback.executionSequence ?? 0,
-    currentResolveEventId: playback.currentResolveEventId ?? undefined,
-    currentEventId: playback.currentEventId ?? undefined,
-    activeSegment: playback.activeSegment
+    status:
+      status === PlaybackStatus.RUNNING
+        ? PlaybackStatus.RUNNING
+        : status === PlaybackStatus.PAUSED
+          ? PlaybackStatus.PAUSED
+          : PlaybackStatus.IDLE,
+    executionSequence,
+    currentResolveEventId: currentResolveEventId ?? undefined,
+    currentEventId: currentEventId ?? undefined,
+    activeSegment: activeSegment
       ? {
-          resolveEventId: playback.activeSegment.resolveEventId,
-          nextResolveEventId: playback.activeSegment.nextResolveEventId ?? undefined,
-          inlineEventIds: playback.activeSegment.inlineEventIds,
-          currentInlineIndex: playback.activeSegment.currentInlineIndex,
+          resolveEventId: activeSegment.ResolveEventId,
+          nextResolveEventId: activeSegment.NextResolveEventId ?? undefined,
+          inlineEventIds: activeSegment.InlineEventIds,
+          currentInlineIndex: activeSegment.CurrentInlineIndex,
         }
       : undefined,
-    startedAt: playback.startedAt ?? undefined,
+    startedAt: startedAt ?? undefined,
   };
 }
 
 function createClockSyncRequest(): ClockSyncRequest {
   return {
-    sessionId: crypto.randomUUID(),
-    clientSentAtUnixMs: Date.now(),
+    SessionId: crypto.randomUUID(),
+    ClientSentAtUnixMs: Date.now(),
   };
 }
 
@@ -125,21 +123,60 @@ export function createShowWebSocketManager(
     .configureLogging(LogLevel.Error)
     .build();
 
+  const hubProxy = getHubProxyFactory("IShowHub").createHubProxy(connection);
+
+  getReceiverRegister("IShowHubClient").register(connection, {
+    showRefetchRequired: async (message) => {
+      await callbacks.onMessage({
+        type: "show-refetch-required",
+        showVersion: message.ShowVersion,
+        reason: message.Reason,
+      });
+    },
+    playbackStateChanged: async (message) => {
+      await callbacks.onMessage({
+        type: "playback-state-changed",
+        showVersion: message.ShowVersion,
+        playback: toShowPlaybackState(
+          message.Playback.Status,
+          message.Playback.ExecutionSequence,
+          message.Playback.CurrentResolveEventId,
+          message.Playback.CurrentEventId,
+          message.Playback.ActiveSegment,
+          message.Playback.StartedAt,
+        ),
+      });
+    },
+    liveModeChanged: async (message) => {
+      await callbacks.onMessage({
+        type: "live-mode-changed",
+        showVersion: message.ShowVersion,
+        mode: String(message.Mode) === "Live" ? ShowMode.LIVE : ShowMode.EDITING,
+      });
+    },
+  } satisfies IShowHubClient);
+
   async function syncClock() {
     const samples = [];
     for (let index = 0; index < 8; index += 1) {
       const clientSentAtMonotonicMs = performance.now();
-      const response = await connection.invoke<ClockSyncResponse>(
-        "SyncClock",
-        createClockSyncRequest(),
+      const response = await hubProxy.syncClock(createClockSyncRequest());
+      samples.push(
+        calculateClockSample(
+          {
+            sessionId: response.SessionId,
+            clientSentAtUnixMs: response.ClientSentAtUnixMs,
+            serverReceivedAtUnixMs: response.ServerReceivedAtUnixMs,
+            serverTransmittedAtUnixMs: response.ServerTransmittedAtUnixMs,
+          },
+          clientSentAtMonotonicMs,
+          performance.now(),
+        ),
       );
-      samples.push(calculateClockSample(response, clientSentAtMonotonicMs, performance.now()));
     }
 
     const estimate = selectClockEstimate(samples, performance.now());
     if (estimate) {
-      // Use the best RTT sample directly. Smoothing a large correction leaves
-      // controllers visibly desynchronized for several sync intervals.
       serverClockAtSyncMs = estimate.serverNowMs;
       monotonicAtSyncMs = estimate.clientReceivedAtMonotonicMs;
     }
@@ -163,53 +200,6 @@ export function createShowWebSocketManager(
       clockSyncTimer = null;
     }
   }
-
-  connection.on("ShowRefetchRequired", async (message: { showVersion: number; reason: string }) => {
-    await callbacks.onMessage({
-      type: "show-refetch-required",
-      showVersion: message.showVersion,
-      reason:
-        message.reason === "ShowReplaced"
-          ? "show_replaced"
-          : message.reason === "VersionDrift"
-            ? "version_drift"
-            : "optimized",
-    });
-  });
-
-  connection.on(
-    "PlaybackStateChanged",
-    async (message: {
-      showVersion: number;
-      playback: {
-        status: string;
-        executionSequence?: number;
-        currentResolveEventId?: number;
-        currentEventId?: number;
-        activeSegment?: {
-          resolveEventId: number;
-          nextResolveEventId?: number;
-          inlineEventIds: number[];
-          currentInlineIndex: number;
-        };
-        startedAt?: number;
-      };
-    }) => {
-      await callbacks.onMessage({
-        type: "playback-state-changed",
-        showVersion: message.showVersion,
-        playback: toShowPlaybackState(message.playback),
-      });
-    },
-  );
-
-  connection.on("LiveModeChanged", async (message: { showVersion: number; mode: string }) => {
-    await callbacks.onMessage({
-      type: "live-mode-changed",
-      showVersion: message.showVersion,
-      mode: message.mode === ShowMode.LIVE ? ShowMode.LIVE : ShowMode.EDITING,
-    });
-  });
 
   connection.onreconnecting((error) => {
     if (manualStopInProgress) {

@@ -36,8 +36,12 @@
     "includes": [
       "**",
       "!!**/dist",
+      "!!**/.nx",
       "!!**/.output",
       "!!**/node_modules",
+      "!!**/bin",
+      "!!**/obj",
+      "!!**/TypedSignalR.Client",
       "!**/*.gen.ts",
       "vite.config.ts"
     ]

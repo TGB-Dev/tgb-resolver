@@ -8,5 +8,5 @@ public sealed class StoredShowState
 
   public string PayloadJson { get; set; } = string.Empty;
 
-  public DateTimeOffset UpdatedAtUtc { get; set; }
+  public long UpdatedAtUnixMs { get; set; }
 }

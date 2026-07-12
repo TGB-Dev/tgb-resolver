@@ -12,7 +12,10 @@ import {
   ShowSource,
   TimelineEventType,
   TimelineMode,
+  VerdictRunResult,
 } from "@tgb-resolver/contracts";
+
+import { ShowRefetchReason } from "./signalr";
 
 export type ShowPlaybackState = PlaybackStateSnapshot;
 export type ActivePlaybackSegment = ActivePlaybackSegmentSnapshot;
@@ -23,7 +26,15 @@ export type ShowAutomation = AutomationSnapshot;
 export type ShowAssets = AssetCollectionSnapshot;
 export type ShowAsset = ShowAssetSnapshot;
 
-export { PlaybackStatus, ShowMode, ShowSource, TimelineEventType, TimelineMode };
+export {
+  PlaybackStatus,
+  ShowMode,
+  ShowRefetchReason,
+  ShowSource,
+  TimelineEventType,
+  TimelineMode,
+  VerdictRunResult,
+};
 
 export const SHOW_SCHEMA_VERSION = 1;
 export const FILE_EXTENSION = ".tgbresolver";
@@ -59,8 +70,11 @@ export interface ResolveEvent extends EventBase {
     realName: string;
     username: string;
     problem: string;
-    newScore: number;
+    newTotalScore: number;
     newRank: number;
+    newProblemScore: number;
+    problemDisplayName: string;
+    verdict: VerdictRunResult;
   };
 }
 
@@ -99,7 +113,7 @@ export type ShowWebSocketMessage =
   | {
       type: "show-refetch-required";
       showVersion: number;
-      reason: "version_drift" | "show_replaced" | "optimized";
+      reason: ShowRefetchReason;
     }
   | {
       type: "playback-state-changed";
@@ -110,11 +124,6 @@ export type ShowWebSocketMessage =
       type: "live-mode-changed";
       showVersion: number;
       mode: ShowMode;
-    }
-  | {
-      type: "show-replaced";
-      showVersion: number;
-      source: ShowMeta["source"];
     };
 
 export interface TimelineTableItem {
@@ -124,10 +133,13 @@ export interface TimelineTableItem {
   customName?: string;
   placeholderName: string;
   problem?: string;
+  problemDisplayName?: string;
+  newProblemScore?: number;
   oldScore?: number;
   oldRank?: number;
-  newScore?: number;
+  newTotalScore?: number;
   newRank?: number;
+  verdict?: VerdictRunResult;
   triggerOffsetSeconds?: number;
   requireManualInteraction?: boolean;
   durationSeconds?: number;

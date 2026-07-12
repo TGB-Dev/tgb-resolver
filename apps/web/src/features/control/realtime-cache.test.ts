@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { PlaybackStatus, type ShowStateSnapshot } from "@tgb-resolver/contracts";
+import { ShowRefetchReason } from "@tgb-resolver/realtime";
 import { describe, expect, test, vi } from "vitest";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-cache";
@@ -40,7 +41,7 @@ describe("applyControlRealtimeMessage", () => {
     await applyControlRealtimeMessage(queryClient, {
       type: "show-refetch-required",
       showVersion: 3,
-      reason: "optimized",
+      reason: ShowRefetchReason.Optimized,
     });
 
     expect(invalidateSpy).toHaveBeenCalled();

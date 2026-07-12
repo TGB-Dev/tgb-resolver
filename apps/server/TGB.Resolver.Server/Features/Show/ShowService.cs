@@ -1,5 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
+using NodaTime;
+using NodaTime.HighPerformance;
 using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Commons.Types;
 using TGB.Resolver.Server.Features.Realtime;
@@ -12,8 +14,19 @@ public sealed class ShowStateService(
   ShowRawRepository repository,
   AppJsonSerializer serializer,
   IHubContext<ShowHub, IShowHubClient> hubContext,
-  TimeProvider timeProvider)
+  TimelineOrchestrator orchestrator,
+  IClock clock)
 {
+  private Instant64 Now()
+  {
+    return Instant64.FromInstant(clock.GetCurrentInstant());
+  }
+
+  private long NowMs()
+  {
+    return Now().ToUnixTimeMilliseconds();
+  }
+
   public async Task EnsureSeededAsync(CancellationToken cancellationToken = default)
   {
     await repository.EnsureSeededAsync(cancellationToken);
@@ -34,9 +47,8 @@ public sealed class ShowStateService(
       state =>
       {
         var normalized = state.Timeline
-          .Where(eventItem => eventItem.Type == TimelineEventType.Res ||
-                              eventItem.Image is not null || eventItem.Sfx is not null)
-          .Select((eventItem, index) => eventItem with { Position = index + 1 })
+          .Where(e => e.Type == TimelineEventType.Res || e.Image is not null || e.Sfx is not null)
+          .Select((e, i) => e with { Position = i + 1 })
           .ToArray();
 
         return state with
@@ -76,13 +88,15 @@ public sealed class ShowStateService(
     CancellationToken cancellationToken = default)
   {
     var json = Encoding.UTF8.GetString(Convert.FromBase64String(request.Bytes));
-    var imported = serializer.Deserialize<ShowState>(json) with
-    {
-      ShowVersion = (await repository.GetStateAsync(cancellationToken)).ShowVersion + 1,
-      Meta = serializer.Deserialize<ShowState>(json).Meta with { Source = ShowSource.Bundle }
-    };
-
-    var updated = await repository.ReplaceAsync(imported, cancellationToken);
+    var imported = serializer.Deserialize<ShowState>(json);
+    var nextVersion = (await repository.GetStateAsync(cancellationToken)).ShowVersion + 1;
+    var updated = await repository.ReplaceAsync(
+      imported with
+      {
+        ShowVersion = nextVersion,
+        Meta = imported.Meta with { Source = ShowSource.Bundle }
+      },
+      cancellationToken);
     return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
   }
 
@@ -102,16 +116,14 @@ public sealed class ShowStateService(
       state =>
       {
         EnsureTimelineWritable(state);
-        var updatedTimeline = state.Timeline
-          .Select(eventItem => eventItem.Id == eventId && eventItem.Type == TimelineEventType.Res
-            ? eventItem with { CustomName = request.CustomName }
-            : eventItem)
-          .ToArray();
-
         return state with
         {
           ShowVersion = state.ShowVersion + 1,
-          Timeline = updatedTimeline
+          Timeline = state.Timeline
+            .Select(e => e.Id == eventId && e.Type == TimelineEventType.Res
+              ? e with { CustomName = request.CustomName }
+              : e)
+            .ToArray()
         };
       },
       cancellationToken);
@@ -129,44 +141,37 @@ public sealed class ShowStateService(
       state =>
       {
         EnsureTimelineWritable(state);
-        var updatedTimeline = state.Timeline.Select(eventItem =>
-        {
-          if (eventItem.Id != eventId || eventItem.Type == TimelineEventType.Res) return eventItem;
-
-          return request.Type switch
-          {
-            TimelineEventType.Img => eventItem with
-            {
-              Type = TimelineEventType.Img,
-              TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? eventItem.TriggerOffsetSeconds,
-              RequireManualInteraction = request.RequireManualInteraction ??
-                                         eventItem.RequireManualInteraction,
-              CustomName = request.CustomName ?? eventItem.CustomName,
-              Image = new MediaEventPayload(
-                request.Payload?.ImageId ?? eventItem.Image?.AssetId ?? string.Empty,
-                request.Payload?.DurationSeconds ?? eventItem.Image?.DurationSeconds),
-              Sfx = null
-            },
-            TimelineEventType.Sfx => eventItem with
-            {
-              Type = TimelineEventType.Sfx,
-              TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? eventItem.TriggerOffsetSeconds,
-              RequireManualInteraction = request.RequireManualInteraction ??
-                                         eventItem.RequireManualInteraction,
-              CustomName = request.CustomName ?? eventItem.CustomName,
-              Sfx = new MediaEventPayload(
-                request.Payload?.SfxId ?? eventItem.Sfx?.AssetId ?? string.Empty,
-                request.Payload?.DurationSeconds ?? eventItem.Sfx?.DurationSeconds),
-              Image = null
-            },
-            _ => eventItem
-          };
-        }).ToArray();
-
         return state with
         {
           ShowVersion = state.ShowVersion + 1,
-          Timeline = updatedTimeline
+          Timeline = state.Timeline.Select(e =>
+          {
+            if (e.Id != eventId || e.Type == TimelineEventType.Res) return e;
+
+            var (type, target, opposite) = request.Type switch
+            {
+              TimelineEventType.Img => (TimelineEventType.Img, e.Image, e.Sfx),
+              TimelineEventType.Sfx => (TimelineEventType.Sfx, e.Sfx, e.Image),
+              _ => (e.Type, null, null)
+            };
+            var assetId = request.Type == TimelineEventType.Img
+              ? request.Payload?.ImageId ?? target?.AssetId ?? string.Empty
+              : request.Payload?.SfxId ?? target?.AssetId ?? string.Empty;
+            var media = new MediaEventPayload(
+              assetId,
+              request.Payload?.DurationSeconds ?? target?.DurationSeconds);
+
+            return e with
+            {
+              Type = type,
+              TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
+              RequireManualInteraction =
+              request.RequireManualInteraction ?? e.RequireManualInteraction,
+              CustomName = request.CustomName ?? e.CustomName,
+              Image = type == TimelineEventType.Img ? media : null,
+              Sfx = type == TimelineEventType.Sfx ? media : null
+            };
+          }).ToArray()
         };
       },
       cancellationToken);
@@ -183,33 +188,30 @@ public sealed class ShowStateService(
     var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
-      var target = state.Timeline.Single(eventItem => eventItem.Id == request.RelativeToEventId);
+      var target = state.Timeline.Single(e => e.Id == request.RelativeToEventId);
       var position = request.Before ? target.Position : target.Position + 1;
       var nextId = state.Timeline.Count == 0
         ? 1
-        : state.Timeline.Max(eventItem => eventItem.Id) + 1;
-      var shifted = state.Timeline.Select(eventItem => eventItem.Position >= position
-        ? eventItem with { Position = eventItem.Position + 1 }
-        : eventItem);
-      var media = new MediaEventPayload(
-        request.Type == TimelineEventType.Img
-          ? request.Payload?.ImageId ?? string.Empty
-          : request.Payload?.SfxId ?? string.Empty,
-        request.Payload?.DurationSeconds);
+        : state.Timeline.Max(e => e.Id) + 1;
+
+      var shifted = state.Timeline.Select(e => e.Position >= position
+        ? e with { Position = e.Position + 1 }
+        : e);
+
+      var isImg = request.Type == TimelineEventType.Img;
+      var assetId = isImg
+        ? request.Payload?.ImageId ?? string.Empty
+        : request.Payload?.SfxId ?? string.Empty;
+      var media = new MediaEventPayload(assetId, request.Payload?.DurationSeconds);
       var created = new TimelineEvent(
-        nextId,
-        position,
-        request.Type == TimelineEventType.Img ? TimelineEventType.Img : TimelineEventType.Sfx,
-        request.TriggerOffsetSeconds ?? 0,
-        request.RequireManualInteraction ?? false,
-        request.CustomName,
-        null,
-        request.Type == TimelineEventType.Img ? media : null,
-        request.Type == TimelineEventType.Sfx ? media : null);
+        nextId, position, isImg ? TimelineEventType.Img : TimelineEventType.Sfx,
+        request.TriggerOffsetSeconds ?? 0, request.RequireManualInteraction ?? false,
+        request.CustomName, null, isImg ? media : null, isImg ? null : media);
+
       return state with
       {
         ShowVersion = state.ShowVersion + 1,
-        Timeline = shifted.Append(created).OrderBy(eventItem => eventItem.Position).ToArray()
+        Timeline = shifted.Append(created).OrderBy(e => e.Position).ToArray()
       };
     }, cancellationToken);
 
@@ -222,14 +224,17 @@ public sealed class ShowStateService(
     var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
-      var current = state.Timeline.Single(eventItem => eventItem.Id == eventId);
+      var current = state.Timeline.Single(e => e.Id == eventId);
+
       if (current.Type == TimelineEventType.Res)
         return state with
         {
           ShowVersion = state.ShowVersion + 1,
-          Timeline = state.Timeline.Select(eventItem => eventItem.Id == eventId
-            ? eventItem with { CustomName = request.CustomName ?? eventItem.CustomName }
-            : eventItem).ToArray()
+          Timeline = state.Timeline
+            .Select(e => e.Id == eventId
+              ? e with { CustomName = request.CustomName ?? e.CustomName }
+              : e)
+            .ToArray()
         };
 
       var type = request.Type switch
@@ -238,27 +243,33 @@ public sealed class ShowStateService(
         TimelineEventType.Sfx => TimelineEventType.Sfx,
         _ => current.Type
       };
-      var assetId = type == TimelineEventType.Img
+      var isImg = type == TimelineEventType.Img;
+      var assetId = isImg
         ? request.Payload?.ImageId ?? current.Image?.AssetId ?? string.Empty
         : request.Payload?.SfxId ?? current.Sfx?.AssetId ?? string.Empty;
-      var media = new MediaEventPayload(assetId,
-        request.Payload?.DurationSeconds ??
-        current.Image?.DurationSeconds ?? current.Sfx?.DurationSeconds);
+      var media = new MediaEventPayload(
+        assetId,
+        request.Payload?.DurationSeconds
+        ?? current.Image?.DurationSeconds
+        ?? current.Sfx?.DurationSeconds);
+
       return state with
       {
         ShowVersion = state.ShowVersion + 1,
-        Timeline = state.Timeline.Select(eventItem => eventItem.Id == eventId
-          ? eventItem with
-          {
-            Type = type,
-            CustomName = request.CustomName ?? eventItem.CustomName,
-            TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? eventItem.TriggerOffsetSeconds,
-            RequireManualInteraction =
-            request.RequireManualInteraction ?? eventItem.RequireManualInteraction,
-            Image = type == TimelineEventType.Img ? media : null,
-            Sfx = type == TimelineEventType.Sfx ? media : null
-          }
-          : eventItem).ToArray()
+        Timeline = state.Timeline
+          .Select(e => e.Id == eventId
+            ? e with
+            {
+              Type = type,
+              CustomName = request.CustomName ?? e.CustomName,
+              TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
+              RequireManualInteraction =
+              request.RequireManualInteraction ?? e.RequireManualInteraction,
+              Image = isImg ? media : null,
+              Sfx = isImg ? null : media
+            }
+            : e)
+          .ToArray()
       };
     }, cancellationToken);
 
@@ -271,20 +282,20 @@ public sealed class ShowStateService(
     var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
-      var item = state.Timeline.Single(eventItem => eventItem.Id == eventId);
+      var item = state.Timeline.Single(e => e.Id == eventId);
       if (item.Type == TimelineEventType.Res)
         throw new InvalidOperationException("Resolve events cannot be reordered.");
 
-      var target = state.Timeline.Single(eventItem => eventItem.Id == request.RelativeToEventId);
-      var without = state.Timeline.Where(eventItem => eventItem.Id != eventId)
-        .OrderBy(eventItem => eventItem.Position).ToList();
-      var targetIndex = without.FindIndex(eventItem => eventItem.Id == target.Id);
+      var target = state.Timeline.Single(e => e.Id == request.RelativeToEventId);
+      var without = state.Timeline.Where(e => e.Id != eventId)
+        .OrderBy(e => e.Position).ToList();
+      var targetIndex = without.FindIndex(e => e.Id == target.Id);
       without.Insert(request.Before ? targetIndex : targetIndex + 1, item);
+
       return state with
       {
         ShowVersion = state.ShowVersion + 1,
-        Timeline = without.Select((eventItem, index) => eventItem with { Position = index + 1 })
-          .ToArray()
+        Timeline = without.Select((e, i) => e with { Position = i + 1 }).ToArray()
       };
     }, cancellationToken);
 
@@ -297,15 +308,15 @@ public sealed class ShowStateService(
     var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
-      var item = state.Timeline.Single(eventItem => eventItem.Id == eventId);
+      var item = state.Timeline.Single(e => e.Id == eventId);
       if (item.Type == TimelineEventType.Res)
         throw new InvalidOperationException("Resolve events cannot be deleted.");
 
       return state with
       {
         ShowVersion = state.ShowVersion + 1,
-        Timeline = state.Timeline.Where(eventItem => eventItem.Id != eventId)
-          .Select((eventItem, index) => eventItem with { Position = index + 1 }).ToArray()
+        Timeline = state.Timeline.Where(e => e.Id != eventId)
+          .Select((e, i) => e with { Position = i + 1 }).ToArray()
       };
     }, cancellationToken);
 
@@ -335,8 +346,9 @@ public sealed class ShowStateService(
       EnsureTimelineWritable(state);
       var asset = new ShowAsset(assetId, request.Kind, request.FileName, request.FileName,
         request.ContentType, Convert.FromBase64String(request.Bytes).LongLength, assetId);
-      var images = state.Assets.Images.Where(existing => existing.Id != assetId).ToList();
-      var sfx = state.Assets.Sfx.Where(existing => existing.Id != assetId).ToList();
+      var images = state.Assets.Images.Where(a => a.Id != assetId).ToList();
+      var sfx = state.Assets.Sfx.Where(a => a.Id != assetId).ToList();
+
       if (string.Equals(request.Kind, "image", StringComparison.OrdinalIgnoreCase))
         images.Add(asset);
       else if (string.Equals(request.Kind, "sfx", StringComparison.OrdinalIgnoreCase))
@@ -346,7 +358,8 @@ public sealed class ShowStateService(
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1, Assets = new AssetCollection(images, sfx)
+        ShowVersion = state.ShowVersion + 1,
+        Assets = new AssetCollection(images, sfx)
       };
     }, cancellationToken);
 
@@ -363,8 +376,8 @@ public sealed class ShowStateService(
       {
         ShowVersion = state.ShowVersion + 1,
         Assets = new AssetCollection(
-          state.Assets.Images.Where(asset => asset.Id != assetId).ToArray(),
-          state.Assets.Sfx.Where(asset => asset.Id != assetId).ToArray())
+          state.Assets.Images.Where(a => a.Id != assetId).ToArray(),
+          state.Assets.Sfx.Where(a => a.Id != assetId).ToArray())
       };
     }, cancellationToken);
 
@@ -395,43 +408,34 @@ public sealed class ShowStateService(
       request.ShowVersion,
       state =>
       {
-        var firstResolve =
-          state.Timeline.FirstOrDefault(eventItem => eventItem.Type == TimelineEventType.Res);
-        var nextResolve = state.Timeline
-          .SkipWhile(eventItem => eventItem.Id != firstResolve?.Id)
-          .Skip(1)
-          .FirstOrDefault(eventItem => eventItem.Type == TimelineEventType.Res);
-        var inlineIds = state.Timeline
-          .Where(eventItem => firstResolve is not null && eventItem.Id > firstResolve.Id &&
-                              eventItem.Id < (nextResolve?.Id ?? int.MaxValue) &&
-                              eventItem.Type != TimelineEventType.Res)
-          .Select(eventItem => eventItem.Id)
-          .ToArray();
+        var ordered = state.Ordered();
+        var firstResolve = ordered.FirstOrDefault(e => e.Type == TimelineEventType.Res);
+        var nextResolve = firstResolve is not null
+          ? ordered.NextResolveAfter(firstResolve.Id)
+          : null;
+        var inlineIds = firstResolve is not null
+          ? ordered.InlineIdsBetween(firstResolve.Id, nextResolve?.Id)
+          : [];
 
         return state with
         {
           ShowVersion = state.ShowVersion + 1,
-          Playback = new PlaybackState(
+          Playback = NewPlayback(
             PlaybackStatus.Running,
             firstResolve?.Id,
             inlineIds.Length > 0 ? inlineIds[0] : firstResolve?.Id,
             firstResolve is null
               ? null
-              : new ActivePlaybackSegment(
-                firstResolve.Id,
-                nextResolve?.Id,
-                inlineIds,
-                0),
-            timeProvider.GetUtcNow().ToUnixTimeMilliseconds(),
-            state.Playback.ExecutionSequence + 1)
+              : new ActivePlaybackSegment(firstResolve.Id, nextResolve?.Id, inlineIds, 0),
+            NowMs(),
+            state.Playback.ExecutionSequence)
         };
       },
       cancellationToken);
 
-    var snapshot = ShowContractMapper.ToContract(updated);
-    await hubContext.Clients.All.PlaybackStateChanged(
-      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
-    return snapshot;
+    await BroadcastPlaybackAsync(updated);
+    ScheduleNextAdvanceAsync(updated);
+    return ShowContractMapper.ToContract(updated);
   }
 
   public async Task<ShowStateSnapshot> ResetPlaybackAsync(VersionedCommandRequest request,
@@ -442,15 +446,14 @@ public sealed class ShowStateService(
       state => state with
       {
         ShowVersion = state.ShowVersion + 1,
-        Playback = new PlaybackState(PlaybackStatus.Idle, null, null, null, null,
-          state.Playback.ExecutionSequence + 1)
+        Playback = NewPlayback(PlaybackStatus.Idle, null, null, null, null,
+          state.Playback.ExecutionSequence)
       },
       cancellationToken);
 
-    var snapshot = ShowContractMapper.ToContract(updated);
-    await hubContext.Clients.All.PlaybackStateChanged(
-      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
-    return snapshot;
+    await BroadcastPlaybackAsync(updated);
+    orchestrator.CancelAdvance();
+    return ShowContractMapper.ToContract(updated);
   }
 
   public async Task<ShowStateSnapshot> SeekPlaybackAsync(SeekPlaybackRequest request,
@@ -460,37 +463,191 @@ public sealed class ShowStateService(
       request.ShowVersion,
       state =>
       {
-        var ordered = state.Timeline.OrderBy(eventItem => eventItem.Position).ToArray();
-        var targetIndex = Array.FindIndex(ordered, eventItem => eventItem.Id == request.EventId);
+        var ordered = state.Ordered();
+        var targetIndex = ordered.IndexOfEvent(request.EventId);
         if (targetIndex < 0)
           throw new InvalidOperationException($"Timeline event {request.EventId} does not exist.");
 
-        var currentResolve = ordered.Take(targetIndex + 1)
-          .LastOrDefault(eventItem => eventItem.Type == TimelineEventType.Res);
+        var resolve = ordered.ResolveBefore(request.EventId);
         return state with
         {
           ShowVersion = state.ShowVersion + 1,
-          Playback = new PlaybackState(
+          Playback = NewPlayback(
             PlaybackStatus.Paused,
-            currentResolve?.Id,
+            resolve?.Id,
             request.EventId,
             null,
-            timeProvider.GetUtcNow().ToUnixTimeMilliseconds(),
-            state.Playback.ExecutionSequence + 1)
+            state.Playback.StartedAt,
+            state.Playback.ExecutionSequence)
         };
       },
       cancellationToken);
 
-    var snapshot = ShowContractMapper.ToContract(updated);
-    await hubContext.Clients.All.PlaybackStateChanged(
-      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
-    return snapshot;
+    await BroadcastPlaybackAsync(updated);
+    if (updated.Playback.Status == PlaybackStatus.Running)
+      ScheduleNextAdvanceAsync(updated);
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  public async Task AdvancePlaybackAsync(CancellationToken cancellationToken)
+  {
+    var state = await repository.GetStateAsync(cancellationToken);
+    if (state.Playback.Status != PlaybackStatus.Running)
+      return;
+
+    var ordered = state.Ordered();
+    var currentIndex = ordered.IndexOfEvent(state.Playback.CurrentEventId!.Value);
+    if (currentIndex < 0)
+      return;
+
+    if (currentIndex >= ordered.Length - 1)
+    {
+      await StopPlaybackAsync(state, cancellationToken);
+      return;
+    }
+
+    var nextEvent = ordered[currentIndex + 1];
+    var startedAt = state.Playback.StartedAt ?? NowMs();
+    var resolve = ordered.ResolveBefore(nextEvent.Id);
+
+    var updated = await repository.MutateAsync(
+      state.ShowVersion,
+      s => s with
+      {
+        ShowVersion = s.ShowVersion + 1,
+        Playback = NewPlayback(
+          PlaybackStatus.Running,
+          resolve?.Id,
+          nextEvent.Id,
+          BuildActiveSegment(ordered, resolve?.Id, nextEvent.Id),
+          startedAt,
+          s.Playback.ExecutionSequence)
+      },
+      cancellationToken);
+
+    await BroadcastPlaybackAsync(updated);
+    ScheduleNextAdvanceAsync(updated);
+  }
+
+  private async Task StopPlaybackAsync(ShowState state, CancellationToken cancellationToken)
+  {
+    var updated = await repository.MutateAsync(
+      state.ShowVersion,
+      s => s with
+      {
+        ShowVersion = s.ShowVersion + 1,
+        Playback = NewPlayback(PlaybackStatus.Idle, null, null, null, null,
+          s.Playback.ExecutionSequence)
+      },
+      cancellationToken);
+
+    await BroadcastPlaybackAsync(updated);
+    orchestrator.CancelAdvance();
+  }
+
+  private static ActivePlaybackSegment? BuildActiveSegment(
+    TimelineEvent[] ordered, int? resolveId, int currentEventId)
+  {
+    if (resolveId is null) return null;
+    var resolveIdx = ordered.IndexOfEvent(resolveId.Value);
+    if (resolveIdx < 0) return null;
+
+    var nextResolve = ordered.NextResolveAfter(resolveId.Value);
+    var inlineIds = ordered.InlineIdsBetween(resolveId.Value, nextResolve?.Id);
+    var currentInlineIndex = inlineIds.Length > 0
+      ? Math.Clamp(Array.IndexOf(inlineIds, currentEventId), 0, inlineIds.Length - 1)
+      : 0;
+
+    return new ActivePlaybackSegment(resolveId.Value, nextResolve?.Id, inlineIds,
+      currentInlineIndex);
+  }
+
+  private void ScheduleNextAdvanceAsync(ShowState state)
+  {
+    if (state.Playback.Status != PlaybackStatus.Running)
+      return;
+
+    var ordered = state.Ordered();
+    var currentIndex = ordered.IndexOfEvent(state.Playback.CurrentEventId!.Value);
+
+    if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
+      return;
+
+    var nextEvent = ordered[currentIndex + 1];
+
+    if (!state.Automation.FullAutoEnabled)
+    {
+      if (nextEvent.RequireManualInteraction == true)
+        return;
+      if (nextEvent.Type == TimelineEventType.Res && !state.Automation.AutoResolveEnabled)
+        return;
+    }
+
+    // Use the current event's media duration for inline events, falling back to
+    // trigger-offset-based timing for events without explicit duration.
+    var currentEvent = ordered[currentIndex];
+    var currentDurationSeconds = currentEvent.Type != TimelineEventType.Res
+      ? currentEvent.Image?.DurationSeconds ?? currentEvent.Sfx?.DurationSeconds
+      : null;
+
+    long delayMs;
+    if (currentDurationSeconds is > 0)
+    {
+      delayMs = Math.Max(1, (long)(currentDurationSeconds.Value * 1000));
+    }
+    else if (nextEvent.Type == TimelineEventType.Res)
+    {
+      if (!state.Automation.FullAutoEnabled && !state.Automation.AutoResolveEnabled)
+        return;
+      delayMs = state.Automation.AutoResolveSpeedMs;
+    }
+    else
+    {
+      delayMs = Math.Max(1,
+        (state.Playback.StartedAt ?? NowMs())
+        + (long)(ordered.CumulativeOffsetUpTo(currentIndex + 1) * 1000)
+        - NowMs());
+    }
+
+    orchestrator.ScheduleAdvance(delayMs);
+  }
+
+  public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    {
+      var a = state.Automation;
+      return state with
+      {
+        ShowVersion = state.ShowVersion + 1,
+        Automation = new AutomationState(
+          request.AutoResolveEnabled ?? a.AutoResolveEnabled,
+          request.AutoResolveSpeedMs ?? a.AutoResolveSpeedMs,
+          request.FullAutoEnabled ?? a.FullAutoEnabled)
+      };
+    }, cancellationToken);
+
+    if (updated.Playback.Status == PlaybackStatus.Running)
+    {
+      orchestrator.CancelAdvance();
+      ScheduleNextAdvanceAsync(updated);
+    }
+
+    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
   }
 
   private static void EnsureTimelineWritable(ShowState state)
   {
     if (state.TimelineMode == TimelineMode.Ro)
       throw new InvalidOperationException("Timeline is read-only.");
+  }
+
+  private async Task BroadcastPlaybackAsync(ShowState state)
+  {
+    var snapshot = ShowContractMapper.ToContract(state);
+    await hubContext.Clients.All.PlaybackStateChanged(
+      new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
   }
 
   private async Task<ShowStateSnapshot> BroadcastRefetchAsync(
@@ -504,8 +661,15 @@ public sealed class ShowStateService(
     return snapshot;
   }
 
-  private static ShowState CreateEmptyShow(int showVersion, ShowSource source)
+  private static PlaybackState NewPlayback(
+    PlaybackStatus status,
+    int? resolveEventId,
+    int? currentEventId,
+    ActivePlaybackSegment? segment,
+    long? startedAt,
+    long executionSequence)
   {
-    return ShowRawRepository.CreateEmptyShow(showVersion, source);
+    return new PlaybackState(status, resolveEventId, currentEventId, segment, startedAt,
+      executionSequence + 1);
   }
 }

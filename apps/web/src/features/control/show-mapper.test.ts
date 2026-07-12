@@ -73,8 +73,10 @@ describe("mapShowStateSnapshotToShowFile", () => {
             realName: "Alice Team",
             username: "alice",
             problem: "A",
-            newScore: 100,
+            newTotalScore: 100,
             newRank: 1,
+            newProblemScore: 100,
+            problemDisplayName: "Thế Giới Âm Nhạc",
           },
         },
         {

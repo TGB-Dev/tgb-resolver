@@ -5,6 +5,7 @@ import {
   type ShowStateSnapshot,
   TimelineEventType,
   TimelineMode,
+  VerdictRunResult,
 } from "@tgb-resolver/contracts";
 import { AssetKind, createEmptyShow, normalizeShow, type ShowFile } from "@tgb-resolver/realtime";
 
@@ -34,8 +35,11 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
           realName: event.resolve.realName ?? "",
           username: event.resolve.username ?? "",
           problem: event.resolve.problem ?? "",
-          newScore: event.resolve.newScore ?? 0,
+          newTotalScore: event.resolve.newTotalScore ?? 0,
           newRank: event.resolve.newRank ?? 0,
+          newProblemScore: event.resolve.newProblemScore ?? 0,
+          problemDisplayName: event.resolve.problemDisplayName ?? "",
+          verdict: (event.resolve.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
         },
       });
       continue;

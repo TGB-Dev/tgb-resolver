@@ -4,5 +4,22 @@
   "root": "packages/realtime",
   "sourceRoot": "packages/realtime/src",
   "projectType": "library",
-  "implicitDependencies": ["server"]
+  "implicitDependencies": ["server"],
+  "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotnet tool run dotnet-tsrts --project TGB.Resolver.Server/TGB.Resolver.Server.csproj --output ../../packages/realtime/src/gen --serializer MessagePack --naming-style none --enum name",
+        "cwd": "apps/server"
+      },
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/apps/server/TGB.Resolver.Server/**/*.cs",
+        "{workspaceRoot}/apps/server/TGB.Resolver.Server/*.csproj",
+        "{workspaceRoot}/apps/server/dotnet-tools.json"
+      ],
+      "outputs": ["{projectRoot}/src/gen"]
+    }
+  }
 }

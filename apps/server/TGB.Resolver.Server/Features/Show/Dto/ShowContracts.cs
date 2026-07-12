@@ -1,3 +1,5 @@
+using Tapper;
+using TGB.Resolver.IcpcXmlParser;
 using TGB.Resolver.Server.Commons.Types;
 
 namespace TGB.Resolver.Server.Features.Show.Dto;
@@ -36,6 +38,7 @@ public sealed record AutomationSnapshot(
   int AutoResolveSpeedMs,
   bool FullAutoEnabled);
 
+[TranspilationSource]
 public sealed record PlaybackStateSnapshot(
   PlaybackStatus Status,
   int? CurrentResolveEventId,
@@ -44,6 +47,7 @@ public sealed record PlaybackStateSnapshot(
   long? StartedAt,
   long ExecutionSequence);
 
+[TranspilationSource]
 public sealed record ActivePlaybackSegmentSnapshot(
   int ResolveEventId,
   int? NextResolveEventId,
@@ -78,8 +82,11 @@ public sealed record ResolveEventPayloadSnapshot(
   string RealName,
   string Username,
   string Problem,
-  double NewScore,
-  int NewRank);
+  double NewTotalScore,
+  int NewRank,
+  double NewProblemScore,
+  string ProblemDisplayName,
+  VerdictRunResult Verdict);
 
 public sealed record MediaEventPayloadSnapshot(
   string AssetId,

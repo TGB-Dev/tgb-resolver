@@ -93,12 +93,30 @@ export const vTimelineEventType = v.picklist([
     'Sfx'
 ]);
 
+export const vVerdictRunResult = v.picklist([
+    'Unknown',
+    'Accepted',
+    'WrongAnswer',
+    'TimeLimitExceeded',
+    'MemoryLimitExceeded',
+    'OutputLimitExceeded',
+    'InvalidReturn',
+    'RuntimeError',
+    'CompileError',
+    'InternalError',
+    'ShortCircuited',
+    'Aborted'
+]);
+
 export const vResolveEventPayloadSnapshot = v.strictObject({
     realName: v.optional(v.string()),
     username: v.optional(v.string()),
     problem: v.optional(v.string()),
-    newScore: v.optional(v.number()),
-    newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+    newTotalScore: v.optional(v.number()),
+    newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    newProblemScore: v.optional(v.number()),
+    problemDisplayName: v.optional(v.string()),
+    verdict: v.optional(vVerdictRunResult)
 });
 
 export const vMediaEventPayloadSnapshot = v.strictObject({
@@ -129,6 +147,13 @@ export const vShowStateSnapshot = v.strictObject({
     playback: v.optional(vPlaybackStateSnapshot),
     assets: v.optional(vAssetCollectionSnapshot),
     timeline: v.optional(v.array(vTimelineEventSnapshot))
+});
+
+export const vSetAutomationRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    autoResolveEnabled: v.nullish(v.boolean()),
+    autoResolveSpeedMs: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    fullAutoEnabled: v.nullish(v.boolean())
 });
 
 export const vVersionedCommandRequest = v.strictObject({
@@ -216,6 +241,13 @@ export const vUpsertAssetRequest = v.strictObject({
     contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
     bytes: v.pipe(v.string(), v.minLength(1))
 });
+
+export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowSetAutomationEndpointResponse = vShowStateSnapshot;
 
 export const vTgbResolverServerFeaturesShowStartPlaybackEndpointBody = vVersionedCommandRequest;
 

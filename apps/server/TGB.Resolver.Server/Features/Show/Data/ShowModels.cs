@@ -1,3 +1,4 @@
+using TGB.Resolver.IcpcXmlParser;
 using TGB.Resolver.Server.Commons.Types;
 
 namespace TGB.Resolver.Server.Features.Show.Data;
@@ -78,8 +79,11 @@ public sealed record ResolveEventPayload(
   string RealName,
   string Username,
   string Problem,
-  double NewScore,
-  int NewRank);
+  double NewTotalScore,
+  int NewRank,
+  double NewProblemScore,
+  string ProblemDisplayName,
+  VerdictRunResult Verdict);
 
 public sealed record MediaEventPayload(
   string AssetId,

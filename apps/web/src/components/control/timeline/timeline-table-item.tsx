@@ -2,7 +2,7 @@ import { Box, DataList, Editable, Grid, type GridProps, useToken } from "@chakra
 import { keyframes } from "@emotion/react";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -45,109 +45,110 @@ interface ControlTimelineTableItemProps {
   isCurrent?: boolean;
 }
 
-export function ControlTimelineTableItem({
-  payload,
-  durationInSeconds,
-  isCurrent,
-}: ControlTimelineTableItemProps) {
-  const success = useToken("colors", "green.600");
-  const errror = useToken("colors", "red.500");
-  const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
-  const isLive = useControlIsLive();
-  const seekPlayback = useSeekPlaybackMutation();
+export const ControlTimelineTableItem = memo(
+  ({ payload, durationInSeconds, isCurrent }: ControlTimelineTableItemProps) => {
+    const success = useToken("colors", "green.600");
+    const errror = useToken("colors", "red.500");
+    const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
+    const isLive = useControlIsLive();
+    const seekPlayback = useSeekPlaybackMutation();
 
-  return (
-    <Box
-      w="full"
-      h={pxToChakraSpace(CONTROL_TIMELINE_ROW_HEIGHT_PX)}
-      position="relative"
-      borderWidth={2}
-      borderColor={isCurrent ? "border.success" : "transparent"}
-      borderBottomColor="border"
-      animation={isCurrent ? `${pulseBorder} 1s infinite` : undefined}
-    >
-      <MotionBox
-        position="absolute"
-        zIndex={0}
-        top={0}
-        left={0}
-        h="full"
-        initial={{
-          width: "0%",
-          backgroundColor: success,
-        }}
-        animate={
-          isCurrent
-            ? {
-                width: "100%",
-                backgroundColor: [success[0], success[0], errror[0]],
-              }
-            : {
-                width: "0%",
-                backgroundColor: success,
-              }
-        }
-        transition={{
-          width: {
-            duration: isCurrent ? durationInSeconds : 0,
-            ease: "linear",
-          },
-          backgroundColor: isCurrent
-            ? {
-                duration: durationInSeconds,
-                times: [0, warningKeyframe, warningKeyframe],
-                ease: "linear",
-              }
-            : { duration: 0 },
-        }}
-        pointerEvents="none"
-      />
+    return (
+      <Box
+        w="full"
+        h={pxToChakraSpace(CONTROL_TIMELINE_ROW_HEIGHT_PX)}
+        position="relative"
+        borderWidth={2}
+        borderColor={isCurrent ? "border.success" : "transparent"}
+        borderBottomColor="border"
+        animation={isCurrent ? `${pulseBorder} 1s infinite` : undefined}
+      >
+        <MotionBox
+          position="absolute"
+          zIndex={0}
+          top={0}
+          left={0}
+          h="full"
+          initial={{
+            width: "0%",
+            backgroundColor: success,
+          }}
+          animate={
+            isCurrent
+              ? {
+                  width: "100%",
+                  backgroundColor: [success[0], success[0], errror[0]],
+                }
+              : {
+                  width: "0%",
+                  backgroundColor: success,
+                }
+          }
+          transition={{
+            width: {
+              duration: isCurrent ? durationInSeconds : 0,
+              ease: "linear",
+            },
+            backgroundColor: isCurrent
+              ? {
+                  duration: durationInSeconds,
+                  times: [0, warningKeyframe, warningKeyframe],
+                  ease: "linear",
+                }
+              : { duration: 0 },
+          }}
+          pointerEvents="none"
+        />
 
-      <ControlTimelineTableGridRow>
-        <Tooltip
-          content={`Seek to #${payload.id}`}
-          openDelay={0}
-          positioning={{ placement: "left" }}
-        >
-          <Box
-            textAlign="end"
-            fontFamily="mono"
-            cursor="pointer"
-            onClick={() => seekPlayback.mutate(payload.id)}
+        <ControlTimelineTableGridRow>
+          <Tooltip
+            content={`Seek to #${payload.id}`}
+            openDelay={0}
+            positioning={{ placement: "left" }}
           >
-            {payload.id}
+            <Box
+              textAlign="end"
+              fontFamily="mono"
+              cursor="pointer"
+              onClick={() => seekPlayback.mutate(payload.id)}
+            >
+              {payload.id}
+            </Box>
+          </Tooltip>
+          <Box fontFamily="mono" textTransform="uppercase">
+            {payload.type}
           </Box>
-        </Tooltip>
-        <Box fontFamily="mono" textTransform="uppercase">
-          {payload.type}
-        </Box>
-        <Box minW={0}>
-          {!isLive ? (
-            <ControlTimelineEventCustomNameEditable payload={payload} />
-          ) : (
-            <Box>{resolveDisplayName(payload)}</Box>
-          )}
-        </Box>
-        <Box fontFamily="mono">{payload.problem}</Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.newScore}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.newRank}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.durationSeconds}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
-            ? `+${payload.triggerOffsetSeconds}`
-            : payload.triggerOffsetSeconds}
-        </Box>
-        <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
-      </ControlTimelineTableGridRow>
-    </Box>
-  );
-}
+          <Box minW={0}>
+            {!isLive ? (
+              <ControlTimelineEventCustomNameEditable payload={payload} />
+            ) : (
+              <Box>{resolveDisplayName(payload)}</Box>
+            )}
+          </Box>
+          <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis">
+            {payload.problem ? `${payload.problem}` : ""}
+            {payload.newProblemScore !== undefined ? ` (${payload.newProblemScore})` : ""}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.newTotalScore}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.newRank}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.durationSeconds}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
+              ? `+${payload.triggerOffsetSeconds}`
+              : payload.triggerOffsetSeconds}
+          </Box>
+          <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
+        </ControlTimelineTableGridRow>
+      </Box>
+    );
+  },
+);
 
 export function ControlTimelineTableHeader() {
   return (
@@ -164,11 +165,11 @@ export function ControlTimelineTableHeader() {
         <Box>Name</Box>
       </Tooltip>
 
-      <Tooltip content="Problem name for this resolve event." openDelay={0}>
+      <Tooltip content="Problem name and score for this resolve event." openDelay={0}>
         <Box>Prob.</Box>
       </Tooltip>
 
-      <Tooltip content="New score after this resolve event." openDelay={0}>
+      <Tooltip content="New total team score after this resolve event." openDelay={0}>
         <Box textAlign="end">NScore</Box>
       </Tooltip>
 
@@ -180,7 +181,10 @@ export function ControlTimelineTableHeader() {
         <Box textAlign="end">Dur.</Box>
       </Tooltip>
 
-      <Tooltip content="Trigger offset in seconds. Can be negative." openDelay={0}>
+      <Tooltip
+        content="Trigger offset from the start of previous event in seconds. Can be negative."
+        openDelay={0}
+      >
         <Box textAlign="end">Trig. Off.</Box>
       </Tooltip>
 

@@ -19,7 +19,7 @@ Pre-commit hook runs: `biome check --write --staged` → `sync:check || sync` �
 | Path | Role |
 |---|---|
 | `apps/server/` | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format |
-| `apps/web/` | TanStack Start SPA (React 19, Vite, Chakra UI 3, Jotai, react-window). Dev port 3000 |
+| `apps/web/` | TanStack Start SPA (React 19, Vite, Chakra UI 3, Zustand, @tanstack/react-virtual). Dev port 3000 |
 | `packages/contracts/` | OpenAPI-generated TS HTTP client + TanStack Query + Valibot schemas. Generated from `apps/server/.../openapi.yaml` |
 | `packages/realtime/` | Client-side clock sync, timeline and domain helpers. Re-exports contracts enums; must not redeclare them |
 
@@ -77,3 +77,56 @@ Workspace packages: `@tgb-resolver/*`.
 
 
 <!-- nx configuration end-->
+
+## Realtime Contracts
+
+The server `IShowHubClient` interface in `Features/Realtime/RealtimeContracts.cs` is the **single source of truth** for all hub messages. Every server-to-client SignalR message MUST be declared as a method on that interface.
+
+### Adding a new realtime message
+
+Adding a new realtime message requires touching exactly five places, in order:
+
+1. **Server — `IShowHubClient`** (`Features/Realtime/RealtimeContracts.cs`)
+   Add the method signature, e.g.:
+   ```csharp
+   Task MyNewMessage(MyNewMessageMessage message);
+   ```
+   Add the message record, e.g.:
+   ```csharp
+   public sealed record MyNewMessageMessage(int ShowVersion, string SomeData);
+   ```
+
+2. **Server — `ShowService.cs`** (or wherever you broadcast)
+   Call the method:
+   ```csharp
+   await hubContext.Clients.All.MyNewMessage(new MyNewMessageMessage(...));
+   ```
+
+3. **Client — `api.ts`** (register the SignalR handler)
+   Add a `connection.on("MyNewMessage", ...)` block that deserializes the raw message and calls `callbacks.onMessage(...)`.
+
+4. **Client — `types.ts` (`packages/realtime/src/types.ts`)**
+   Add the variant to the `ShowWebSocketMessage` discriminated union:
+   ```typescript
+   | { type: "my-new-message"; showVersion: number; someData: string }
+   ```
+
+5. **Client — `realtime-cache.ts`**
+   Handle the new message type in the `if` chain inside `applyControlRealtimeMessage`.
+
+### Message type naming
+
+| Layer | Convention | Example |
+|---|---|---|
+| C# interface method | PascalCase, verb-noun | `PlaybackStateChanged` |
+| C# message record | `{Noun}Message` suffix | `PlaybackStateChangedMessage` |
+| SignalR wire event name | Exact C# method name | `"PlaybackStateChanged"` |
+| TypeScript message type | kebab-case of the C# name | `"playback-state-changed"` |
+
+### Verification rules
+
+- Every `IShowHubClient` method MUST have a corresponding `connection.on(...)` in `api.ts`.
+- Every `connection.on(...)` handler MUST produce a `ShowWebSocketMessage` variant.
+- Every `ShowWebSocketMessage` variant MUST be handled in `applyControlRealtimeMessage`.
+- The `ShowWebSocketMessage` union type MUST NOT contain variants with no server counterpart.
+- The server `ShowRefetchReason` enum and client `reason` field MUST stay in sync.

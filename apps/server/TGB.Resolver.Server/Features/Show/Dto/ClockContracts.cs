@@ -1,7 +1,12 @@
+using NodaTime;
+using Tapper;
+
 namespace TGB.Resolver.Server.Features.Show.Dto;
 
+[TranspilationSource]
 public sealed record ClockSyncRequest(string SessionId, long ClientSentAtUnixMs);
 
+[TranspilationSource]
 public sealed record ClockSyncResponse(
   string SessionId,
   long ClientSentAtUnixMs,
@@ -10,8 +15,8 @@ public sealed record ClockSyncResponse(
 {
   public static ClockSyncResponse Create(
     ClockSyncRequest request,
-    DateTimeOffset serverReceivedAt,
-    DateTimeOffset serverTransmittedAt)
+    Instant serverReceivedAt,
+    Instant serverTransmittedAt)
   {
     return new ClockSyncResponse(
       request.SessionId,

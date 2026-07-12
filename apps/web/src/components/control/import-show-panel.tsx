@@ -1,15 +1,15 @@
 import { Button, Field, FileUpload, HStack, Input, Stack, Text } from "@chakra-ui/react";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
-import { useSetAtom } from "jotai";
 import { useState } from "react";
 
 import { useImportShowMutation } from "@/features/control/hooks";
-import { closeFloatingPanel, setFloatingPanelDirtyAtom } from "@/state/floating-panel";
+import { useFloatingPanelStore } from "@/store/floating-panel";
 
 export function ImportShowPanel() {
   const [file, setFile] = useState<File | null>(null);
   const [excludedUsernames, setExcludedUsernames] = useState("");
-  const setDirty = useSetAtom(setFloatingPanelDirtyAtom);
+  const setDirty = useFloatingPanelStore((s) => s.setDirty);
+  const closeFloatingPanel = useFloatingPanelStore((s) => s.closeFloatingPanel);
   const importShow = useImportShowMutation();
 
   const accept = async () => {

@@ -44,8 +44,8 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 | Decision | Rationale |
 |---|---|
 | **Nx monorepo** | Pruned Docker images + caching; handles .NET + TS projects efficiently |
-| **Jotai over Zustand** | Zustand slowed down noticeably on large tables; Jotai kept rendering snappy |
-| **react-window over TanStack Virtual** | TanStack Virtual had perf issues (see linked issue in repo) |
+| **Zustand** | Zustand with selector-based subscriptions avoids re-render overhead on large tables |
+| **TanStack Virtual** | TanStack Virtual had perf issues (but it's fixable) |
 | **SignalR + MessagePack** | Smaller wire payload than JSON for realtime frames |
 | **Generated JSON serializer** | .NET JIT serialization (not AOT); same approach as TGB Event, kept most endpoints at 8–9 ms |
 | **Feature-based server structure** | Domain-organized endpoints, dtos, and services per feature |

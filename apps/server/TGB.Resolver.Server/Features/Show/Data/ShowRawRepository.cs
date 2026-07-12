@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
+using TGB.Resolver.IcpcXmlParser;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Exceptions;
 using TGB.Resolver.Server.Commons.Serialization;
@@ -10,7 +12,7 @@ namespace TGB.Resolver.Server.Features.Show.Data;
 public sealed class ShowRawRepository(
   ResolverDbContext dbContext,
   AppJsonSerializer serializer,
-  TimeProvider timeProvider)
+  IClock clock)
 {
   private const string LocalShowId = "local-show";
   private const int CurrentSchemaVersion = 1;
@@ -25,7 +27,7 @@ public sealed class ShowRawRepository(
       Id = LocalShowId,
       ShowVersion = seeded.ShowVersion,
       PayloadJson = serializer.Serialize(seeded),
-      UpdatedAtUtc = timeProvider.GetUtcNow()
+      UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds()
     };
 
     dbContext.ShowStates.Add(entity);
@@ -52,7 +54,7 @@ public sealed class ShowRawRepository(
     var updated = mutation(current);
     entity.ShowVersion = updated.ShowVersion;
     entity.PayloadJson = serializer.Serialize(updated);
-    entity.UpdatedAtUtc = timeProvider.GetUtcNow();
+    entity.UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds();
 
     await dbContext.SaveChangesAsync(cancellationToken);
     return updated;
@@ -68,7 +70,7 @@ public sealed class ShowRawRepository(
 
     entity.ShowVersion = updated.ShowVersion;
     entity.PayloadJson = serializer.Serialize(updated);
-    entity.UpdatedAtUtc = timeProvider.GetUtcNow();
+    entity.UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds();
 
     await dbContext.SaveChangesAsync(cancellationToken);
     return updated;
@@ -81,7 +83,7 @@ public sealed class ShowRawRepository(
     var entity = await GetEntityAsync(cancellationToken);
     entity.ShowVersion = nextState.ShowVersion;
     entity.PayloadJson = serializer.Serialize(nextState);
-    entity.UpdatedAtUtc = timeProvider.GetUtcNow();
+    entity.UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds();
     await dbContext.SaveChangesAsync(cancellationToken);
     return nextState;
   }
@@ -103,7 +105,8 @@ public sealed class ShowRawRepository(
         index + 1, index + 1, TimelineEventType.Res, 0, false, null,
         new ResolveEventPayload(
           resolve.RealName, resolve.Username, resolve.Problem,
-          resolve.NewScore, resolve.NewRank),
+          resolve.NewTotalScore, resolve.NewRank, resolve.NewProblemScore,
+          resolve.ProblemDisplayName, resolve.Verdict),
         null, null))
       .ToArray();
 
@@ -131,13 +134,15 @@ public sealed class ShowRawRepository(
       Timeline =
       [
         new TimelineEvent(1, 1, TimelineEventType.Res, 0, false, null,
-          new ResolveEventPayload("Alice Team", "alice", "A", 100, 1), null, null),
+          new ResolveEventPayload("Alice Team", "alice", "A", 100, 1, 0, "",
+            VerdictRunResult.Accepted), null, null),
         new TimelineEvent(2, 2, TimelineEventType.Sfx, 0.5, false, "Opening Sting",
           null, null, new MediaEventPayload("sting", 2.5)),
         new TimelineEvent(3, 3, TimelineEventType.Img, 1, false, "Title Board",
           null, new MediaEventPayload("award-board", 5), null),
         new TimelineEvent(4, 4, TimelineEventType.Res, 0, false, "Bob Reveal",
-          new ResolveEventPayload("Bob Team", "bob", "B", 180, 2), null, null)
+          new ResolveEventPayload("Bob Team", "bob", "B", 180, 2, 0, "", VerdictRunResult.Accepted),
+          null, null)
       ]
     };
   }

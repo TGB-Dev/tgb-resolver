@@ -1,11 +1,13 @@
 import { HStack, Text } from "@chakra-ui/react";
-import { PlaybackStatus } from "@tgb-resolver/contracts";
-import { useAtomValue } from "jotai";
 import { ChevronDown } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { useControlShowQuery, useControlShowRows } from "@/features/control/hooks";
-import { controlNowAtom } from "@/state/control-now";
+import {
+  useControlAutoResolveEnabled,
+  useControlShowQuery,
+  useControlShowRows,
+} from "@/features/control/hooks";
+import { useControlNowStore } from "@/store/control-now";
 
 function formatRemaining(ms: number) {
   const clamped = Math.max(0, ms);
@@ -22,26 +24,42 @@ export function NextCueTimer() {
   const rows = useControlShowRows();
   const playback = showQuery.data?.playback;
   const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
-  const nextEvent = currentIndex >= 0 ? rows[currentIndex + 1] : undefined;
-  const durationSeconds = nextEvent?.durationSeconds;
-  const startedAt = playback?.startedAt ?? undefined;
-  const isRunning = playback?.status === PlaybackStatus.RUNNING;
-  const now = useAtomValue(controlNowAtom);
+  const currentEvent = currentIndex >= 0 ? rows[currentIndex] : undefined;
+  const durationSeconds = currentEvent?.durationSeconds;
+  const isRunning = playback?.status === "Running";
+  const autoResolveEnabled = useControlAutoResolveEnabled();
+  const now = useControlNowStore((s) => s.now);
+
+  const currentEventId = currentEvent?.id;
+  const prevEventIdRef = useRef<number | undefined>(undefined);
+  const [eventStartedAt, setEventStartedAt] = useState(now);
+
+  useEffect(() => {
+    if (currentEventId !== undefined && currentEventId !== prevEventIdRef.current) {
+      setEventStartedAt(now);
+      prevEventIdRef.current = currentEventId;
+    }
+  }, [currentEventId, now]);
 
   const remainingMs = useMemo(() => {
     if (
       !isRunning ||
-      startedAt === undefined ||
+      !autoResolveEnabled ||
       durationSeconds === undefined ||
       durationSeconds <= 0
     ) {
       return 0;
     }
 
-    return Math.max(0, durationSeconds * 1000 - (now - startedAt));
-  }, [isRunning, startedAt, durationSeconds, now]);
+    return Math.max(0, eventStartedAt + durationSeconds * 1000 - now);
+  }, [isRunning, autoResolveEnabled, durationSeconds, eventStartedAt, now]);
 
-  if (!nextEvent || durationSeconds === undefined || durationSeconds <= 0) {
+  if (
+    !currentEvent ||
+    !autoResolveEnabled ||
+    durationSeconds === undefined ||
+    durationSeconds <= 0
+  ) {
     return (
       <HStack gap={2} alignItems="center" py={4} fontSize="lg" fontFamily="mono">
         <ChevronDown />

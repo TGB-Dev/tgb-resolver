@@ -157,13 +157,74 @@ export type ResolveEventPayloadSnapshot = {
     realName?: string;
     username?: string;
     problem?: string;
-    newScore?: number;
+    newTotalScore?: number;
     newRank?: number;
+    newProblemScore?: number;
+    problemDisplayName?: string;
+    verdict?: VerdictRunResult;
 };
+
+export enum VerdictRunResult {
+    /**
+     * Unknown
+     */
+    UNKNOWN = 'Unknown',
+    /**
+     * Accepted
+     */
+    ACCEPTED = 'Accepted',
+    /**
+     * WrongAnswer
+     */
+    WRONG_ANSWER = 'WrongAnswer',
+    /**
+     * TimeLimitExceeded
+     */
+    TIME_LIMIT_EXCEEDED = 'TimeLimitExceeded',
+    /**
+     * MemoryLimitExceeded
+     */
+    MEMORY_LIMIT_EXCEEDED = 'MemoryLimitExceeded',
+    /**
+     * OutputLimitExceeded
+     */
+    OUTPUT_LIMIT_EXCEEDED = 'OutputLimitExceeded',
+    /**
+     * InvalidReturn
+     */
+    INVALID_RETURN = 'InvalidReturn',
+    /**
+     * RuntimeError
+     */
+    RUNTIME_ERROR = 'RuntimeError',
+    /**
+     * CompileError
+     */
+    COMPILE_ERROR = 'CompileError',
+    /**
+     * InternalError
+     */
+    INTERNAL_ERROR = 'InternalError',
+    /**
+     * ShortCircuited
+     */
+    SHORT_CIRCUITED = 'ShortCircuited',
+    /**
+     * Aborted
+     */
+    ABORTED = 'Aborted'
+}
 
 export type MediaEventPayloadSnapshot = {
     assetId?: string;
     durationSeconds?: number | null;
+};
+
+export type SetAutomationRequest = {
+    showVersion?: number;
+    autoResolveEnabled?: boolean | null;
+    autoResolveSpeedMs?: number | null;
+    fullAutoEnabled?: boolean | null;
 };
 
 export type VersionedCommandRequest = {
@@ -273,6 +334,22 @@ export type GetData = {
 export type GetResponses = {
     200: unknown;
 };
+
+export type TgbResolverServerFeaturesShowSetAutomationEndpointData = {
+    body: SetAutomationRequest;
+    path?: never;
+    query?: never;
+    url: '/api/show/automation';
+};
+
+export type TgbResolverServerFeaturesShowSetAutomationEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesShowSetAutomationEndpointResponse = TgbResolverServerFeaturesShowSetAutomationEndpointResponses[keyof TgbResolverServerFeaturesShowSetAutomationEndpointResponses];
 
 export type TgbResolverServerFeaturesShowStartPlaybackEndpointData = {
     body: VersionedCommandRequest;

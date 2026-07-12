@@ -25,7 +25,7 @@ public static class IcpcResolverEngine
       durationSeconds - ParseDurationSeconds(contest.Info.ScoreboardFreezeLength);
     var problems = contest.Problem
       .Select((problem, index) =>
-        new ProblemDefinition(problem.Id, problem.Label, problem.Score, index))
+        new ProblemDefinition(problem.Id, problem.Label, problem.Name, problem.Score, index))
       .ToArray();
     var problemsById = problems.ToDictionary(problem => problem.Id);
     var runs = contest.Run
@@ -61,12 +61,17 @@ public static class IcpcResolverEngine
       pending.Remove(pendingProblem);
 
       var after = resolving.SnapshotFor(team.TeamId);
+      var problemScore = resolving.ResultFor(run.Team, run.Problem).Points;
+      var problemDef = problemsById[pendingProblem.ProblemId];
       events.Add(new IcpcResolveEvent(
         after.RealName,
         after.Username,
-        problemsById[pendingProblem.ProblemId].Label,
+        problemDef.Label,
         after.Score,
-        after.Rank));
+        after.Rank,
+        problemScore,
+        problemDef.Name,
+        run.Verdict));
     }
 
     return new IcpcResolution(
@@ -243,7 +248,12 @@ public static class IcpcResolverEngine
 
   private readonly record struct ProblemResult(double Points, int? LastAlteringRunId);
 
-  private sealed record ProblemDefinition(int Id, string Label, double MaxPoints, int Order);
+  private sealed record ProblemDefinition(
+    int Id,
+    string Label,
+    string Name,
+    double MaxPoints,
+    int Order);
 
   private sealed record ScoreboardTeam(
     int TeamId,
@@ -265,5 +275,8 @@ public sealed record IcpcResolveEvent(
   string RealName,
   string Username,
   string Problem,
-  double NewScore,
-  int NewRank);
+  double NewTotalScore,
+  int NewRank,
+  double NewProblemScore,
+  string ProblemDisplayName,
+  VerdictRunResult Verdict);

@@ -7,7 +7,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@tgb-resolver/contracts": ["../../packages/contracts/src/index.ts"],
-      "@tgb-resolver/realtime": ["../../packages/realtime/src/index.ts"]
+      "@tgb-resolver/realtime": ["../../packages/realtime/src/index.ts"],
+      "@tgb-resolver/realtime/signalr": ["../../packages/realtime/src/signalr.ts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],

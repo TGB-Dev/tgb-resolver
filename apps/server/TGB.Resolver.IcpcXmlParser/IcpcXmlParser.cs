@@ -54,6 +54,7 @@ public static class IcpcXmlParser
     return new IcpcXmlProblem(
       (int)Math.Truncate(GetDouble(element, "id")),
       GetString(element, "label"),
+      element.Element("name")?.Value.Trim() ?? string.Empty,
       GetDouble(element, "score", 100));
   }
 
@@ -67,14 +68,37 @@ public static class IcpcXmlParser
 
   private static IcpcXmlRun ParseRun(XElement element)
   {
+    var time = GetDouble(element, "time");
     return new IcpcXmlRun(
       (int)Math.Truncate(GetDouble(element, "id")),
       (int)Math.Truncate(GetDouble(element, "problem")),
       (int)Math.Truncate(GetDouble(element, "team")),
-      Math.Floor(GetDouble(element, "time")),
+      Math.Floor(time),
       GetString(element, "solved"),
-      GetString(element, "penalty"),
-      GetDouble(element, "score", 0));
+      string.Equals(GetString(element, "penalty"), "true", StringComparison.OrdinalIgnoreCase),
+      GetDouble(element, "score", 0),
+      ParseVerdict(element),
+      time);
+  }
+
+  private static VerdictRunResult ParseVerdict(XElement element)
+  {
+    var result = element.Element("result")?.Value.Trim();
+    return result?.ToUpperInvariant() switch
+    {
+      "AC" => VerdictRunResult.Accepted,
+      "WA" => VerdictRunResult.WrongAnswer,
+      "TLE" => VerdictRunResult.TimeLimitExceeded,
+      "MLE" => VerdictRunResult.MemoryLimitExceeded,
+      "OLE" => VerdictRunResult.OutputLimitExceeded,
+      "IR" => VerdictRunResult.InvalidReturn,
+      "RTE" => VerdictRunResult.RuntimeError,
+      "CE" => VerdictRunResult.CompileError,
+      "IE" => VerdictRunResult.InternalError,
+      "SC" => VerdictRunResult.ShortCircuited,
+      "AB" => VerdictRunResult.Aborted,
+      _ => VerdictRunResult.Unknown
+    };
   }
 
   private static string GetString(XElement element, string name)
@@ -113,7 +137,7 @@ public sealed record IcpcXmlInfo(
   int Penalty,
   string ScoreboardFreezeLength);
 
-public sealed record IcpcXmlProblem(int Id, string Label, double Score);
+public sealed record IcpcXmlProblem(int Id, string Label, string Name, double Score);
 
 public sealed record IcpcXmlTeam(
   int Id,
@@ -126,6 +150,24 @@ public sealed record IcpcXmlRun(
   int Team,
   double Time,
   string Solved,
+  bool Penalized,
+  double Score,
   // ReSharper disable once NotAccessedPositionalProperty.Global
-  string Penalty,
-  double Score);
+  VerdictRunResult Verdict,
+  double SubmissionSecondsSinceStart);
+
+public enum VerdictRunResult
+{
+  Unknown,
+  Accepted,
+  WrongAnswer,
+  TimeLimitExceeded,
+  MemoryLimitExceeded,
+  OutputLimitExceeded,
+  InvalidReturn,
+  RuntimeError,
+  CompileError,
+  InternalError,
+  ShortCircuited,
+  Aborted
+}

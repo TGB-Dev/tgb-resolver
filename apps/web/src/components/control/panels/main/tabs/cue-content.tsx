@@ -3,6 +3,8 @@ import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import type { ReactNode } from "react";
 
+import { verdictColorCode, verdictShortCode } from "@/lib/verdict";
+
 interface CueContentProps {
   cue: TimelineTableItem | undefined;
   contentSize: TextProps["fontSize"];
@@ -56,28 +58,34 @@ function ResolveContent({ cue, textProps }: ResolveContentProps): ReactNode {
 
   const oldScore = cue.oldScore;
   const oldRank = cue.oldRank;
-  const newScore = cue.newScore;
+  const newTotalScore = cue.newTotalScore;
   const newRank = cue.newRank;
+  const newProblemScore = cue.newProblemScore;
   const hasOld =
     oldScore !== undefined &&
     oldRank !== undefined &&
-    newScore !== undefined &&
+    newTotalScore !== undefined &&
     newRank !== undefined;
 
   return (
     <Text as="span">
-      {resolvedName},{" "}
+      {resolvedName} |{" "}
+      <Text {...textProps} color={verdictColorCode(cue.verdict)}>
+        {verdictShortCode(cue.verdict)}
+      </Text>{" "}
+      |{" "}
       <Text {...textProps} color="fg.success">
-        {cue.problem}
+        {cue.problem}. {cue.problemDisplayName}
+        {newProblemScore !== undefined ? ` (${newProblemScore} PTS)` : ""}
       </Text>
       {hasOld ? (
         <>
           {" "}
-          | Score <Text {...textProps}>{oldScore}</Text> to{" "}
+          | Total <Text {...textProps}>{oldScore}</Text> to{" "}
           <Text {...textProps} color="fg.success">
-            {newScore}
+            {newTotalScore}
           </Text>{" "}
-          (+{newScore - oldScore}) | Rank <Text {...textProps}>{oldRank}</Text> to{" "}
+          | Rank <Text {...textProps}>{oldRank}</Text> to{" "}
           <Text {...textProps} color="fg.success">
             {newRank}
           </Text>

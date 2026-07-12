@@ -19,9 +19,14 @@ public sealed class IcpcXmlParserTests
     await Assert.That(result.Info.ScoreboardFreezeLength).IsEqualTo("0:15:00");
     await Assert.That(result.Problem.Count).IsEqualTo(6);
     await Assert.That(result.Problem[1].Score).IsEqualTo(125d);
+    await Assert.That(result.Problem[0].Label).IsEqualTo("A");
+    await Assert.That(result.Problem[0].Name).IsEqualTo("Thế Giới Âm Nhạc");
     await Assert.That(result.Team.Count).IsEqualTo(54);
     await Assert.That(result.Run.Count).IsEqualTo(809);
     await Assert.That((int)result.Run[0].Time).IsEqualTo(86);
+    await Assert.That(result.Run[0].SubmissionSecondsSinceStart).IsEqualTo(86.632682);
+    await Assert.That(result.Run[0].Penalized).IsTrue();
+    await Assert.That(result.Run[0].Verdict).IsEqualTo(VerdictRunResult.WrongAnswer);
     await Assert.That(result.Run.Any(run => Math.Abs(run.Score - 23d) < 1e-9)).IsTrue();
   }
 

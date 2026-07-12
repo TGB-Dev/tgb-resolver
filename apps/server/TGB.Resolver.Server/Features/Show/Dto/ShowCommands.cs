@@ -44,6 +44,12 @@ public sealed record PatchTimelineEventRequest(
 
 public sealed record SetTimelineModeRequest(int ShowVersion, TimelineMode TimelineMode);
 
+public sealed record SetAutomationRequest(
+  int ShowVersion,
+  bool? AutoResolveEnabled,
+  int? AutoResolveSpeedMs,
+  bool? FullAutoEnabled);
+
 public sealed record UpsertAssetRequest(
   int ShowVersion,
   string Kind,

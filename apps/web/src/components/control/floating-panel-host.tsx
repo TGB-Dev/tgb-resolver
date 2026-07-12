@@ -1,11 +1,13 @@
 import { FloatingPanel, IconButton, Portal } from "@chakra-ui/react";
-import { useAtomValue } from "jotai";
 import { GripHorizontal, X } from "lucide-react";
 
-import { floatingPanelStateAtom, requestFloatingPanelClose } from "@/state/floating-panel";
+import { useFloatingPanelStore } from "@/store/floating-panel";
+import { floatingPanelComponents } from "@/store/floating-panel-types";
 
 export function FloatingPanelHost() {
-  const { active } = useAtomValue(floatingPanelStateAtom);
+  const active = useFloatingPanelStore((s) => s.active);
+  const requestClose = useFloatingPanelStore((s) => s.requestFloatingPanelClose);
+  const PanelComponent = active ? floatingPanelComponents[active.type] : null;
 
   return (
     <FloatingPanel.Root
@@ -15,7 +17,7 @@ export function FloatingPanelHost() {
       size={{ width: 560, height: 360 }}
       onOpenChange={(details) => {
         if (!details.open) {
-          void requestFloatingPanelClose();
+          void requestClose();
         }
       }}
     >
@@ -32,13 +34,17 @@ export function FloatingPanelHost() {
                   aria-label="Close panel"
                   size="2xs"
                   variant="ghost"
-                  onClick={() => void requestFloatingPanelClose()}
+                  onClick={() => void requestClose()}
                 >
                   <X size={14} />
                 </IconButton>
               </FloatingPanel.Control>
             </FloatingPanel.Header>
-            <FloatingPanel.Body p={4}>{active?.content}</FloatingPanel.Body>
+            <FloatingPanel.Body p={4}>
+              {active && PanelComponent ? (
+                <PanelComponent {...(active.props as Record<string, unknown>)} />
+              ) : null}
+            </FloatingPanel.Body>
           </FloatingPanel.Content>
         </FloatingPanel.Positioner>
       </Portal>

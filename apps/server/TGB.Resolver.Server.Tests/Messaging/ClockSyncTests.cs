@@ -1,3 +1,4 @@
+using NodaTime;
 using TGB.Resolver.Server.Features.Show.Dto;
 
 namespace TGB.Resolver.Server.Tests.Messaging;
@@ -10,8 +11,8 @@ public sealed class ClockSyncTests
     var request = new ClockSyncRequest(
       "session-1",
       1_782_734_400_000);
-    var receivedAt = DateTimeOffset.Parse("2026-06-29T12:00:00.050Z");
-    var transmittedAt = DateTimeOffset.Parse("2026-06-29T12:00:00.075Z");
+    var receivedAt = Instant.FromUnixTimeMilliseconds(1_782_734_400_050);
+    var transmittedAt = Instant.FromUnixTimeMilliseconds(1_782_734_400_075);
 
     var response = ClockSyncResponse.Create(request, receivedAt, transmittedAt);
 

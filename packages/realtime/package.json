@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
+    "./signalr": "./dist/signalr.mjs",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -19,7 +20,11 @@
   "dependencies": {
     "@tgb-resolver/contracts": "workspace:*"
   },
+  "peerDependencies": {
+    "@microsoft/signalr": "^10.0.0"
+  },
   "devDependencies": {
+    "@microsoft/signalr": "^10.0.0",
     "@types/node": "^26.0.1",
     "tsdown": "^0.22.3",
     "typescript": "6.0.3",

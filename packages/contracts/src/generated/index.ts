@@ -22,6 +22,7 @@ export {
   tgbResolverServerFeaturesShowRenameResolveEventEndpoint,
   tgbResolverServerFeaturesShowResetPlaybackEndpoint,
   tgbResolverServerFeaturesShowSeekPlaybackEndpoint,
+  tgbResolverServerFeaturesShowSetAutomationEndpoint,
   tgbResolverServerFeaturesShowSetTimelineModeEndpoint,
   tgbResolverServerFeaturesShowStartPlaybackEndpoint,
 } from "./sdk.gen";
@@ -48,6 +49,7 @@ export {
   type ResolveEventPayloadSnapshot,
   type ResolveEventRenameRequest,
   type SeekPlaybackRequest,
+  type SetAutomationRequest,
   type SetTimelineModeRequest,
   type ShowAssetSnapshot,
   type ShowMetaSnapshot,
@@ -135,6 +137,9 @@ export {
   type TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors,
   type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse,
   type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses,
+  type TgbResolverServerFeaturesShowSetAutomationEndpointData,
+  type TgbResolverServerFeaturesShowSetAutomationEndpointResponse,
+  type TgbResolverServerFeaturesShowSetAutomationEndpointResponses,
   type TgbResolverServerFeaturesShowSetTimelineModeEndpointData,
   type TgbResolverServerFeaturesShowSetTimelineModeEndpointError,
   type TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors,
@@ -149,5 +154,6 @@ export {
   TimelineEventType,
   TimelineMode,
   type UpsertAssetRequest,
+  VerdictRunResult,
   type VersionedCommandRequest,
 } from "./types.gen";

@@ -1,7 +1,6 @@
 import { Button, HStack, Show } from "@chakra-ui/react";
-import { Blocks, FileDown, FileUp, Trash2 } from "lucide-react";
+import { Blocks, Crosshair, FileDown, FileUp, Trash2 } from "lucide-react";
 
-import { ImportShowPanel } from "@/components/control/import-show-panel";
 import {
   useClearShowMutation,
   useControlCanMutate,
@@ -9,19 +8,30 @@ import {
   useExportShowAction,
   useOptimizeShowMutation,
 } from "@/features/control/hooks";
-import { FloatingPanelType, openFloatingPanel } from "@/state/floating-panel";
+import { useFloatingPanelStore } from "@/store/floating-panel";
+import { FloatingPanelType } from "@/store/floating-panel-types";
 
-export function ControlTimelineControls() {
+interface ControlTimelineControlsProps {
+  onJumpToCurrent?: () => void;
+}
+
+export function ControlTimelineControls({ onJumpToCurrent }: ControlTimelineControlsProps) {
   const optimizeCurrentShow = useOptimizeShowMutation();
   const clearCurrentShow = useClearShowMutation();
   const exportCurrentShow = useExportShowAction();
   const isLive = useControlIsLive();
   const canMutate = useControlCanMutate();
+  const openFloatingPanel = useFloatingPanelStore((s) => s.openFloatingPanel);
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
-      {/* TODO: add a "jump to current" button, and don't automatically jump on scrolled away */}
-      {/* Unless the current cell is in view (manually or automatically */}
+      <Show when={onJumpToCurrent !== undefined}>
+        <Button onClick={onJumpToCurrent}>
+          <Crosshair />
+          To Current
+        </Button>
+      </Show>
+
       <Show when={!isLive}>
         <Button onClick={() => void exportCurrentShow()} disabled={!canMutate}>
           <FileDown />
@@ -29,9 +39,7 @@ export function ControlTimelineControls() {
         </Button>
 
         <Button
-          onClick={() =>
-            void openFloatingPanel(FloatingPanelType.ImportShow, "Import show", <ImportShowPanel />)
-          }
+          onClick={() => void openFloatingPanel(FloatingPanelType.ImportShow, "Import show")}
           disabled={!canMutate}
         >
           <FileUp />

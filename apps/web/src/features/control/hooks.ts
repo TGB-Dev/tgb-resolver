@@ -11,9 +11,11 @@ import {
   patchNonResolveEvent,
   renameResolveEvent,
   resetPlayback,
+  type SetAutomationRequest,
   ShowMode,
   type ShowStateSnapshot,
   seekPlayback,
+  setAutomation,
   startPlayback,
   TimelineEventType,
   tgbResolverServerFeaturesShowGetShowEndpointOptions,
@@ -265,6 +267,40 @@ export function useImportShowMutation() {
       }
 
       throw new Error(`Unsupported file format: ${file.name}`);
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function useControlAutoResolveEnabled() {
+  return useControlShowQuery().data?.automation?.autoResolveEnabled ?? false;
+}
+
+export function useControlAutoResolveSpeedMs() {
+  return useControlShowQuery().data?.automation?.autoResolveSpeedMs ?? 3000;
+}
+
+export function useUpdateAutomationMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (
+      patch: Partial<
+        Pick<SetAutomationRequest, "autoResolveEnabled" | "autoResolveSpeedMs" | "fullAutoEnabled">
+      >,
+    ) => {
+      const show = requireShow(showQuery.data);
+      const { data } = await setAutomation({
+        client: generatedClient,
+        body: {
+          showVersion: show.showVersion,
+          ...patch,
+        },
+      });
+      return data as ShowStateSnapshot;
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);

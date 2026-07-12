@@ -1,6 +1,5 @@
 import { Grid, Splitter, useSplitter } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useSetAtom } from "jotai";
 import { useEffect } from "react";
 
 import { ControlConfirmDialog } from "@/components/control/control-confirm-dialog";
@@ -10,7 +9,7 @@ import { ControlTimelinePanel } from "@/components/control/panels/control-timeli
 import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
 import { getServerNow } from "@/lib/api";
-import { controlNowAtom } from "@/state/control-now";
+import { useControlNowStore } from "@/store/control-now";
 
 export const Route = createFileRoute("/control/")({
   component: RouteComponent,
@@ -18,15 +17,13 @@ export const Route = createFileRoute("/control/")({
 
 function RouteComponent() {
   const splitter = useSplitter({
-    defaultSize: [55, 45], // percent
-
+    defaultSize: [55, 45],
     panels: [
       { id: "main", minSize: 35 },
       { id: "timeline", minSize: 45 },
     ],
   });
-
-  const setNow = useSetAtom(controlNowAtom);
+  const setNow = useControlNowStore((s) => s.setNow);
 
   useEffect(() => {
     const id = setInterval(() => setNow(getServerNow()), 200);

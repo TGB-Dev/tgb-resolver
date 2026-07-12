@@ -10,6 +10,27 @@ paths:
       responses:
         200:
           description: ''
+  /api/show/automation:
+    patch:
+      tags:
+      - Api
+      operationId: TGBResolverServerFeaturesShowSetAutomationEndpoint
+      requestBody:
+        x-name: SetAutomationRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetAutomationRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
   /api/playback/start:
     post:
       tags:
@@ -790,12 +811,48 @@ components:
           type: string
         problem:
           type: string
-        newScore:
+        newTotalScore:
           type: number
           format: double
         newRank:
           type: integer
           format: int32
+        newProblemScore:
+          type: number
+          format: double
+        problemDisplayName:
+          type: string
+        verdict:
+          $ref: '#/components/schemas/VerdictRunResult'
+    VerdictRunResult:
+      type: string
+      description: ''
+      x-enumNames:
+      - Unknown
+      - Accepted
+      - WrongAnswer
+      - TimeLimitExceeded
+      - MemoryLimitExceeded
+      - OutputLimitExceeded
+      - InvalidReturn
+      - RuntimeError
+      - CompileError
+      - InternalError
+      - ShortCircuited
+      - Aborted
+      enum:
+      - Unknown
+      - Accepted
+      - WrongAnswer
+      - TimeLimitExceeded
+      - MemoryLimitExceeded
+      - OutputLimitExceeded
+      - InvalidReturn
+      - RuntimeError
+      - CompileError
+      - InternalError
+      - ShortCircuited
+      - Aborted
     MediaEventPayloadSnapshot:
       type: object
       additionalProperties: false
@@ -805,6 +862,23 @@ components:
         durationSeconds:
           type: number
           format: double
+          nullable: true
+    SetAutomationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        autoResolveEnabled:
+          type: boolean
+          nullable: true
+        autoResolveSpeedMs:
+          type: integer
+          format: int32
+          nullable: true
+        fullAutoEnabled:
+          type: boolean
           nullable: true
     VersionedCommandRequest:
       type: object

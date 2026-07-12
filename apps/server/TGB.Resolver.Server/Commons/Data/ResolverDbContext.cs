@@ -15,7 +15,7 @@ public sealed class ResolverDbContext(DbContextOptions<ResolverDbContext> option
       entity.HasKey(row => row.Id);
       entity.Property(row => row.Id).HasMaxLength(64);
       entity.Property(row => row.PayloadJson).IsRequired();
-      entity.Property(row => row.UpdatedAtUtc).IsRequired();
+      entity.Property(row => row.UpdatedAtUnixMs).IsRequired();
     });
   }
 }

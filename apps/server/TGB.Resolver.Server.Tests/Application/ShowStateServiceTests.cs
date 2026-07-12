@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
+using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Exceptions;
 using TGB.Resolver.Server.Commons.Serialization;
@@ -23,12 +25,14 @@ public sealed class ShowStateServiceTests
     await dbContext.Database.EnsureCreatedAsync();
 
     var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
-    var repository = new ShowRawRepository(dbContext, serializer, TimeProvider.System);
+    var repository = new ShowRawRepository(dbContext, serializer, SystemClock.Instance);
+    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
+    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
+    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
+    var orchestrator = new TimelineOrchestrator(null!);
+
     var service = new ShowStateService(
-      repository,
-      serializer,
-      new StubHubContext(),
-      TimeProvider.System);
+      repository, serializer, hubContext, orchestrator, SystemClock.Instance);
 
     await service.EnsureSeededAsync();
 
@@ -68,98 +72,14 @@ public sealed class ShowStateServiceTests
     await dbContext.Database.OpenConnectionAsync();
     await dbContext.Database.EnsureCreatedAsync();
     var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
-    var repository = new ShowRawRepository(dbContext, serializer, TimeProvider.System);
+    var repository = new ShowRawRepository(dbContext, serializer, SystemClock.Instance);
+    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
+    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
+    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
+    var orchestrator = new TimelineOrchestrator(null!);
     var service = new ShowStateService(
-      repository,
-      serializer,
-      new StubHubContext(),
-      TimeProvider.System);
+      repository, serializer, hubContext, orchestrator, SystemClock.Instance);
     await service.EnsureSeededAsync();
     return service;
-  }
-
-  private sealed class StubHubContext : IHubContext<ShowHub, IShowHubClient>
-  {
-    public IHubClients<IShowHubClient> Clients { get; } = new StubHubClients();
-
-    public IGroupManager Groups { get; } = new StubGroupManager();
-  }
-
-  private sealed class StubHubClients : IHubClients<IShowHubClient>
-  {
-    public IShowHubClient All { get; } = new StubShowHubClient();
-
-    public IShowHubClient AllExcept(IReadOnlyList<string> excludedConnectionIds)
-    {
-      return All;
-    }
-
-    public IShowHubClient Client(string connectionId)
-    {
-      return All;
-    }
-
-    public IShowHubClient Clients(IReadOnlyList<string> connectionIds)
-    {
-      return All;
-    }
-
-    public IShowHubClient Group(string groupName)
-    {
-      return All;
-    }
-
-    public IShowHubClient GroupExcept(string groupName, IReadOnlyList<string> excludedConnectionIds)
-    {
-      return All;
-    }
-
-    public IShowHubClient Groups(IReadOnlyList<string> groupNames)
-    {
-      return All;
-    }
-
-    public IShowHubClient User(string userId)
-    {
-      return All;
-    }
-
-    public IShowHubClient Users(IReadOnlyList<string> userIds)
-    {
-      return All;
-    }
-  }
-
-  private sealed class StubShowHubClient : IShowHubClient
-  {
-    public Task LiveModeChanged(LiveModeChangedMessage message)
-    {
-      return Task.CompletedTask;
-    }
-
-    public Task PlaybackStateChanged(PlaybackStateChangedMessage message)
-    {
-      return Task.CompletedTask;
-    }
-
-    public Task ShowRefetchRequired(ShowRefetchRequiredMessage message)
-    {
-      return Task.CompletedTask;
-    }
-  }
-
-  private sealed class StubGroupManager : IGroupManager
-  {
-    public Task AddToGroupAsync(string connectionId, string groupName,
-      CancellationToken cancellationToken = default)
-    {
-      return Task.CompletedTask;
-    }
-
-    public Task RemoveFromGroupAsync(string connectionId, string groupName,
-      CancellationToken cancellationToken = default)
-    {
-      return Task.CompletedTask;
-    }
   }
 }

@@ -4,6 +4,7 @@ using FastEndpoints;
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 using Scalar.AspNetCore;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Serialization;
@@ -36,7 +37,7 @@ builder.Services.Configure<JsonOptions>(options =>
     new DefaultJsonTypeInfoResolver());
 });
 
-builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(AppJsonSerializerContext.Default);
 builder.Services.AddSingleton<AppJsonSerializer>();
 builder.Services.AddSingleton<AssetStore>();
@@ -60,6 +61,7 @@ builder.Services.SwaggerDocument(options =>
 builder.Services.AddSignalR().AddMessagePackProtocol();
 builder.Services.AddScoped<ShowRawRepository>();
 builder.Services.AddScoped<ShowStateService>();
+builder.Services.AddSingleton<TimelineOrchestrator>();
 
 var app = builder.Build();
 

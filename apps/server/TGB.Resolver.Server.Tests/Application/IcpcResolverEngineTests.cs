@@ -1,3 +1,4 @@
+using TGB.Resolver.IcpcXmlParser;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Importing;
 
@@ -40,26 +41,45 @@ public sealed class IcpcResolverEngineTests
 
   private static readonly ExpectedResolveEvent[] ExpectedResolveEvents =
   [
-    new("CONTEST_42", "F", 0, 53), new("CONTEST_46", "A", 32, 50),
-    new("CONTEST_20", "B", 21, 51), new("CONTEST_32", "F", 41, 49),
-    new("CONTEST_17", "F", 100, 47), new("CONTEST_3", "F", 100, 44),
-    new("CONTEST_9", "B", 118.75, 39), new("CONTEST_11", "C", 100, 41),
-    new("CONTEST_23", "B", 118.75, 40), new("CONTEST_23", "F", 118.75, 40),
-    new("CONTEST_9", "D", 118.75, 39), new("CONTEST_45", "F", 118.75, 38),
-    new("CONTEST_6", "F", 118.75, 37), new("CONTEST_33", "F", 118.75, 36),
-    new("CONTEST_38", "F", 118.75, 35), new("CONTEST_13", "C", 118.75, 33),
-    new("CONTEST_30", "C", 126.25, 30), new("CONTEST_40", "C", 126.25, 29),
-    new("CONTEST_39", "F", 126.25, 28), new("CONTEST_8", "F", 145, 26),
-    new("CONTEST_18", "C", 145, 25), new("CONTEST_18", "F", 145, 25),
-    new("CONTEST_21", "C", 145, 24), new("CONTEST_26", "B", 156.25, 23),
-    new("CONTEST_26", "C", 216.25, 18), new("CONTEST_12", "F", 175, 22),
-    new("CONTEST_50", "C", 200, 20), new("CONTEST_28", "D", 208.75, 19),
-    new("CONTEST_26", "F", 216.25, 18), new("CONTEST_14", "F", 216.25, 17),
-    new("CONTEST_53", "D", 255, 11), new("CONTEST_7", "C", 226.25, 16),
-    new("CONTEST_7", "F", 226.25, 16), new("CONTEST_34", "F", 235, 12),
-    new("CONTEST_44", "D", 350, 6), new("CONTEST_44", "F", 350, 6),
-    new("CONTEST_27", "D", 437.5, 3), new("CONTEST_4", "D", 427.5, 5),
-    new("CONTEST_35", "D", 506.25, 2)
+    new("CONTEST_42", "F", 0, 53, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_46", "A", 32, 50, "Thế Giới Âm Nhạc", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_20", "B", 21, 51, "Kỳ thi tranh tài", VerdictRunResult.WrongAnswer),
+    new("CONTEST_32", "F", 41, 49, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_17", "F", 100, 47, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_3", "F", 100, 44, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_9", "B", 118.75, 39, "Kỳ thi tranh tài", VerdictRunResult.WrongAnswer),
+    new("CONTEST_11", "C", 100, 41, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_23", "B", 118.75, 40, "Kỳ thi tranh tài", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_23", "F", 118.75, 40, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_9", "D", 118.75, 39, "AND Table", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_45", "F", 118.75, 38, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_6", "F", 118.75, 37, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_33", "F", 118.75, 36, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_38", "F", 118.75, 35, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_13", "C", 118.75, 33, "Ghép cây", VerdictRunResult.RuntimeError),
+    new("CONTEST_30", "C", 126.25, 30, "Ghép cây", VerdictRunResult.RuntimeError),
+    new("CONTEST_40", "C", 126.25, 29, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_39", "F", 126.25, 28, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_8", "F", 145, 26, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_18", "C", 145, 25, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_18", "F", 145, 25, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_21", "C", 145, 24, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_26", "B", 156.25, 23, "Kỳ thi tranh tài", VerdictRunResult.WrongAnswer),
+    new("CONTEST_26", "C", 216.25, 18, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_12", "F", 175, 22, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_50", "C", 200, 20, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_28", "D", 208.75, 19, "AND Table", VerdictRunResult.WrongAnswer),
+    new("CONTEST_26", "F", 216.25, 18, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_14", "F", 216.25, 17, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_53", "D", 255, 11, "AND Table", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_7", "C", 226.25, 16, "Ghép cây", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_7", "F", 226.25, 16, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_34", "F", 235, 12, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_44", "D", 350, 6, "AND Table", VerdictRunResult.WrongAnswer),
+    new("CONTEST_44", "F", 350, 6, "Hồi kết", VerdictRunResult.WrongAnswer),
+    new("CONTEST_27", "D", 437.5, 3, "AND Table", VerdictRunResult.TimeLimitExceeded),
+    new("CONTEST_4", "D", 427.5, 5, "AND Table", VerdictRunResult.RuntimeError),
+    new("CONTEST_35", "D", 506.25, 2, "AND Table", VerdictRunResult.Accepted)
   ];
 
   [Test]
@@ -99,8 +119,10 @@ public sealed class IcpcResolverEngineTests
       var expectedEvent = expected[index];
       await Assert.That(actualEvent.Username).IsEqualTo(expectedEvent.Username);
       await Assert.That(actualEvent.Problem).IsEqualTo(expectedEvent.Problem);
-      await Assert.That(actualEvent.NewScore).IsEqualTo(expectedEvent.NewScore);
+      await Assert.That(actualEvent.NewTotalScore).IsEqualTo(expectedEvent.NewScore);
       await Assert.That(actualEvent.NewRank).IsEqualTo(expectedEvent.NewRank);
+      await Assert.That(actualEvent.ProblemDisplayName).IsEqualTo(expectedEvent.ProblemDisplayName);
+      await Assert.That(actualEvent.Verdict).IsEqualTo(expectedEvent.Verdict);
     }
   }
 
@@ -110,5 +132,7 @@ public sealed class IcpcResolverEngineTests
     string Username,
     string Problem,
     double NewScore,
-    int NewRank);
+    int NewRank,
+    string ProblemDisplayName,
+    VerdictRunResult Verdict);
 }

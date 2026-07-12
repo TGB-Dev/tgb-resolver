@@ -1,4 +1,4 @@
-import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
+import { Box, Button, HStack, IconButton, Separator, Slider, Switch } from "@chakra-ui/react";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -11,9 +11,12 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
+import { useState } from "react";
 
 import { Tooltip } from "@/components/ui/tooltip";
 import {
+  useControlAutoResolveEnabled,
+  useControlAutoResolveSpeedMs,
   useControlCanMutate,
   useControlIsLive,
   useControlShowRows,
@@ -21,6 +24,7 @@ import {
   useSeekPlaybackMutation,
   useStartPlaybackMutation,
   useToggleLiveModeMutation,
+  useUpdateAutomationMutation,
 } from "@/features/control/hooks";
 import { useControlRealtime } from "@/features/control/realtime-provider";
 import { useAction } from "@/lib/actions";
@@ -36,6 +40,19 @@ export function ControlMainControls() {
   const { connectionStatus } = useControlRealtime();
   const canMutate = useControlCanMutate();
   const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
+
+  const autoResolveEnabled = useControlAutoResolveEnabled();
+  const autoResolveSpeedMs = useControlAutoResolveSpeedMs();
+  const updateAutomation = useUpdateAutomationMutation();
+
+  const RATES = [0.2, 0.5, 1, 2, 5];
+  const rateIndex = (() => {
+    const idx = RATES.findIndex((r) => 3000 / r <= autoResolveSpeedMs);
+    return idx >= 0 ? idx : RATES.length - 1;
+  })();
+  const isAutoplayAllowed = currentIndex >= 0;
+
+  const [dragValue, setDragValue] = useState<number[]>([]);
 
   const prevAction = useAction({
     handler: () => {
@@ -84,6 +101,47 @@ export function ControlMainControls() {
       <IconButton {...nextAction.buttonProps}>
         <ChevronRight />
       </IconButton>
+
+      <Separator orientation="vertical" size="sm" />
+
+      <Switch.Root
+        checked={autoResolveEnabled}
+        onCheckedChange={({ checked }) => updateAutomation.mutate({ autoResolveEnabled: checked })}
+        disabled={!canMutate || !isAutoplayAllowed || updateAutomation.isPending}
+      >
+        <Switch.Label>Autoplay</Switch.Label>
+        <Switch.Control>
+          <Switch.Thumb />
+          <Switch.HiddenInput />
+        </Switch.Control>
+      </Switch.Root>
+
+      <Slider.Root
+        value={dragValue.length > 0 ? dragValue : [rateIndex]}
+        min={0}
+        max={4}
+        step={1}
+        onValueChange={(details) => setDragValue(details.value)}
+        onValueChangeEnd={({ value }) => {
+          setDragValue([]);
+          updateAutomation.mutate({
+            autoResolveSpeedMs: Math.round(3000 / RATES[value[0]]),
+          });
+        }}
+        disabled={!canMutate || !isAutoplayAllowed || updateAutomation.isPending}
+        width={32}
+      >
+        <HStack gap={4}>
+          <Slider.Control>
+            <Slider.Track>
+              <Slider.Range />
+            </Slider.Track>
+            <Slider.Thumb index={0} />
+          </Slider.Control>
+
+          <Slider.ValueText>{RATES[rateIndex]}x</Slider.ValueText>
+        </HStack>
+      </Slider.Root>
 
       <Box flex={1} />
 

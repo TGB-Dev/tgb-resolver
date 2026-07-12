@@ -17,6 +17,7 @@
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
+    <PackageReference Include="NodaTime" Version="3.3.3" />
    	<!-- Temporary workaround until vulnerability fixed: https://github.com/dotnet/efcore/issues/38257 -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" VersionOverride="3.0.3" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
@@ -26,6 +27,7 @@
     </PackageReference>
     <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.11" />
+    <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" Version="1.17.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,3 +1,5 @@
+using Tapper;
+
 namespace TGB.Resolver.Server.Commons.Types;
 
 public enum TimelineMode
@@ -13,6 +15,7 @@ public enum ShowSource
   Manual
 }
 
+[TranspilationSource]
 public enum PlaybackStatus
 {
   Idle,
@@ -27,12 +30,14 @@ public enum TimelineEventType
   Sfx
 }
 
+[TranspilationSource]
 public enum ShowMode
 {
   Editing,
   Live
 }
 
+[TranspilationSource]
 public enum ShowRefetchReason
 {
   ShowReplaced,

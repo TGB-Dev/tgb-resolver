@@ -1,10 +1,10 @@
 import { Button, Dialog, Portal } from "@chakra-ui/react";
-import { useAtomValue } from "jotai";
 
-import { confirmActionStateAtom, resolveConfirmAction } from "@/state/control-confirm-action";
+import { useConfirmActionStore } from "@/store/control-confirm-action";
 
 export function ControlConfirmDialog() {
-  const { open, title, message, confirmLabel, cancelLabel } = useAtomValue(confirmActionStateAtom);
+  const { open, title, message, confirmLabel, cancelLabel } = useConfirmActionStore();
+  const resolveConfirmAction = useConfirmActionStore((s) => s.resolveConfirmAction);
 
   return (
     <Dialog.Root size="sm" open={open} role="alertdialog">

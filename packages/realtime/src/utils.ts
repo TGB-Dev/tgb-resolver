@@ -119,6 +119,7 @@ function resolveDisplayName(customName: string | undefined, placeholderName: str
 export function toTimelineTableItem(
   event: TimelineEvent,
   playback?: ShowPlaybackState,
+  autoResolveSpeedMs?: number,
 ): TimelineTableItem {
   const activeSegment = playback?.activeSegment;
   const isCurrentResolve = playback?.currentResolveEventId === event.id;
@@ -138,10 +139,14 @@ export function toTimelineTableItem(
         customName: event.customName,
         placeholderName: resolvePlaceholderName,
         problem: event.payload.problem,
-        newScore: event.payload.newScore,
+        problemDisplayName: event.payload.problemDisplayName,
+        newProblemScore: event.payload.newProblemScore,
+        newTotalScore: event.payload.newTotalScore,
         newRank: event.payload.newRank,
+        verdict: event.payload.verdict,
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
+        durationSeconds: autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined,
         isCurrentResolve,
         isCurrentInlineEvent,
         isInActiveSegment,
@@ -198,7 +203,7 @@ export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
   const teamStates = new Map(initialFromSnapshot);
 
   return sortTimeline(show.timeline).map((event) => {
-    const item = toTimelineTableItem(event, show.playback);
+    const item = toTimelineTableItem(event, show.playback, show.automation.autoResolveSpeedMs);
 
     if (event.type === TimelineEventType.RES) {
       const username = event.payload.username;
@@ -208,7 +213,7 @@ export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
         item.oldRank = previous.rank;
       }
       teamStates.set(username, {
-        score: event.payload.newScore,
+        score: event.payload.newTotalScore,
         rank: event.payload.newRank,
       });
     }

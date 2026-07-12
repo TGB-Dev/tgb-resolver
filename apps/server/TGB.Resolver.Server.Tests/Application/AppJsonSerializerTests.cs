@@ -1,4 +1,5 @@
 using System.Text.Json;
+using TGB.Resolver.IcpcXmlParser;
 using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Commons.Types;
 using TGB.Resolver.Server.Features.Show.Dto;
@@ -23,7 +24,8 @@ public sealed class AppJsonSerializerTests
       new AssetCollectionSnapshot([], []),
       [
         new TimelineEventSnapshot(1, 1, TimelineEventType.Res, 0, false, "Intro",
-          new ResolveEventPayloadSnapshot("Alice", "alice", "A", 100, 1), null, null)
+          new ResolveEventPayloadSnapshot("Alice", "alice", "A", 100, 1, 0, "",
+            VerdictRunResult.Accepted), null, null)
       ]);
 
     var json = serializer.Serialize(payload);

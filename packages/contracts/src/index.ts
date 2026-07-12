@@ -14,6 +14,7 @@ export {
   tgbResolverServerFeaturesShowRenameResolveEventEndpoint as renameResolveEvent,
   tgbResolverServerFeaturesShowResetPlaybackEndpoint as resetPlayback,
   tgbResolverServerFeaturesShowSeekPlaybackEndpoint as seekPlayback,
+  tgbResolverServerFeaturesShowSetAutomationEndpoint as setAutomation,
   tgbResolverServerFeaturesShowStartPlaybackEndpoint as startPlayback,
 } from "./generated/sdk.gen";
 export type {
@@ -35,6 +36,7 @@ export type {
   ResolveEventPayloadSnapshot,
   ResolveEventRenameRequest,
   SeekPlaybackRequest,
+  SetAutomationRequest,
   SetTimelineModeRequest,
   ShowAssetSnapshot,
   ShowMetaSnapshot,
@@ -49,5 +51,6 @@ export {
   ShowSource,
   TimelineEventType,
   TimelineMode,
+  VerdictRunResult,
 } from "./generated/types.gen";
 export * from "./generated/valibot.gen";

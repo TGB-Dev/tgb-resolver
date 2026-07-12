@@ -13,3 +13,10 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+code,
+pre {
+  /* Tailwind "subpixel-antialiased" */
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
