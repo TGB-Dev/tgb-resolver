@@ -1,36 +1,41 @@
 import {
   type PlaybackSegment,
+  PlaybackStatus,
   type PlaySfxEvent,
   SHOW_SCHEMA_VERSION,
   type ShowAsset,
   type ShowFile,
   type ShowImageEvent,
+  ShowMode,
   type ShowPlaybackState,
   type TimelineEvent,
+  TimelineEventType,
+  TimelineMode,
   type TimelineTableItem,
 } from "./types";
 
 export function isResolveEvent(event: TimelineEvent): boolean {
-  return event.type === "RES";
+  return event.type === TimelineEventType.RES;
 }
 
 export function isShowImageEvent(event: TimelineEvent): event is ShowImageEvent {
-  return event.type === "IMG";
+  return event.type === TimelineEventType.IMG;
 }
 
 export function isPlaySfxEvent(event: TimelineEvent): event is PlaySfxEvent {
-  return event.type === "SFX";
+  return event.type === TimelineEventType.SFX;
 }
 
 export function isNonResolveEvent(event: TimelineEvent): event is ShowImageEvent | PlaySfxEvent {
-  return event.type !== "RES";
+  return event.type !== TimelineEventType.RES;
 }
 
 export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
   return {
     schemaVersion: SHOW_SCHEMA_VERSION,
     showVersion: 0,
-    mode: "editing",
+    mode: ShowMode.EDITING,
+    timelineMode: TimelineMode.RW,
     meta: {
       title: "Untitled show",
       source: "manual",
@@ -46,7 +51,8 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
       fullAutoEnabled: false,
     },
     playback: {
-      status: "idle",
+      status: PlaybackStatus.IDLE,
+      executionSequence: 0,
     },
     assets: {
       images: [],
@@ -58,7 +64,7 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
 }
 
 export function sortTimeline(timeline: TimelineEvent[]): TimelineEvent[] {
-  return [...timeline].sort((a, b) => a.id - b.id);
+  return [...timeline].sort((a, b) => a.position - b.position || a.id - b.id);
 }
 
 export function normalizeShow(show: ShowFile): ShowFile {
@@ -82,7 +88,7 @@ export function getAssetCollections(show: ShowFile): Record<ShowAsset["kind"], S
 export function buildPlaybackSegments(show: ShowFile): PlaybackSegment[] {
   const timeline = sortTimeline(show.timeline);
   const resolveIndexes = timeline
-    .map((event, index) => (event.type === "RES" ? index : -1))
+    .map((event, index) => (event.type === TimelineEventType.RES ? index : -1))
     .filter((index) => index >= 0);
 
   return resolveIndexes.map((resolveIndex, segmentIndex) => {
@@ -122,7 +128,7 @@ export function toTimelineTableItem(
     false;
 
   switch (event.type) {
-    case "RES": {
+    case TimelineEventType.RES: {
       const resolvePlaceholderName = event.payload.realName ?? event.payload.username;
       return {
         id: event.id,
@@ -140,7 +146,7 @@ export function toTimelineTableItem(
         isInActiveSegment,
       };
     }
-    case "SFX": {
+    case TimelineEventType.SFX: {
       const sfxPlaceholderName = `Play SFX: ${event.payload.sfxId}`;
       return {
         id: event.id,
@@ -157,7 +163,7 @@ export function toTimelineTableItem(
         isInActiveSegment,
       };
     }
-    case "IMG": {
+    case TimelineEventType.IMG: {
       const imagePlaceholderName = `Show Image: ${event.payload.imageId}`;
       return {
         id: event.id,

@@ -2,6 +2,7 @@ import { Grid, Splitter, useSplitter } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ControlConfirmDialog } from "@/components/control/control-confirm-dialog";
+import { FloatingPanelHost } from "@/components/control/floating-panel-host";
 import { ControlMainPanel } from "@/components/control/panels/control-main-panel";
 import { ControlTimelinePanel } from "@/components/control/panels/control-timeline-panel";
 import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
@@ -42,6 +43,7 @@ function RouteComponent() {
           </Splitter.Panel>
         </Splitter.RootProvider>
         <ControlConfirmDialog />
+        <FloatingPanelHost />
       </Grid>
     </ControlRealtimeProvider>
   );

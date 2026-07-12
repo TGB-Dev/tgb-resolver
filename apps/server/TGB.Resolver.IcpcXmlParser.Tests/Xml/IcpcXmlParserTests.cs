@@ -1,3 +1,7 @@
+// ReSharper cannot resolve public record members from this referenced project under .NET 10.
+// The compiler and TUnit execute this file as part of the parser test project.
+// ReSharper disable CSharpErrors
+
 using IcpcParser = TGB.Resolver.IcpcXmlParser.IcpcXmlParser;
 
 namespace TGB.Resolver.IcpcXmlParser.Tests.Xml;
@@ -13,13 +17,12 @@ public sealed class IcpcXmlParserTests
     await Assert.That(result.Info.Title).IsEqualTo("Contest");
     await Assert.That(result.Info.StartTime).IsEqualTo(1723862700);
     await Assert.That(result.Info.ScoreboardFreezeLength).IsEqualTo("0:15:00");
-    await Assert.That(result.Language.Count).IsEqualTo(20);
-    await Assert.That(result.Region.Count).IsEqualTo(1);
-    await Assert.That(result.Judgement.Count).IsEqualTo(11);
     await Assert.That(result.Problem.Count).IsEqualTo(6);
+    await Assert.That(result.Problem[1].Score).IsEqualTo(125d);
     await Assert.That(result.Team.Count).IsEqualTo(54);
     await Assert.That(result.Run.Count).IsEqualTo(809);
-    await Assert.That(result.Finalized).IsNotNull();
+    await Assert.That(result.Run[0].Time).IsEqualTo(86d);
+    await Assert.That(result.Run.Any(run => run.Score == 23d)).IsTrue();
   }
 
   [Test]
@@ -55,3 +58,4 @@ public sealed class IcpcXmlParserTests
     return Path.Combine(AppContext.BaseDirectory, "Fixtures", "sample.xml");
   }
 }
+// ReSharper restore CSharpErrors

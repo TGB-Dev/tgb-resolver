@@ -2,13 +2,14 @@ import { Text } from "@chakra-ui/react";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 
+import { getServerNow } from "@/lib/api";
 import { controlStartedAtAtom } from "@/state/control-elapsed-time";
 
 export function useNow(interval = 1000) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(getServerNow);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), interval);
+    const id = setInterval(() => setNow(getServerNow()), interval);
     return () => clearInterval(id);
   }, [interval]);
 

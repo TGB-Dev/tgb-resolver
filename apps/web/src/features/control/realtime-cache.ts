@@ -2,27 +2,12 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   generatedClient,
   type ShowStateSnapshot,
-  tgbResolverServerEndpointsGetShowEndpointQueryKey,
+  tgbResolverServerFeaturesShowGetShowEndpointQueryKey,
 } from "@tgb-resolver/contracts";
 import type { ShowWebSocketMessage } from "@tgb-resolver/realtime";
 
-function toSnapshotPlaybackStatus(
-  status: "idle" | "running" | "paused" | "completed",
-): NonNullable<ShowStateSnapshot["playback"]>["status"] {
-  switch (status) {
-    case "running":
-      return "Running";
-    case "paused":
-      return "Paused";
-    case "completed":
-      return "Completed";
-    default:
-      return "Idle";
-  }
-}
-
 export function controlShowQueryKey() {
-  return tgbResolverServerEndpointsGetShowEndpointQueryKey({ client: generatedClient });
+  return tgbResolverServerFeaturesShowGetShowEndpointQueryKey({ client: generatedClient });
 }
 
 export async function applyControlRealtimeMessage(
@@ -30,8 +15,19 @@ export async function applyControlRealtimeMessage(
   message: ShowWebSocketMessage,
 ) {
   if (message.type === "playback-state-changed") {
+    const current = queryClient.getQueryData<ShowStateSnapshot>(controlShowQueryKey());
+    const currentSequence = current?.playback?.executionSequence ?? 0;
+    if (message.playback.executionSequence > currentSequence + 1) {
+      await queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
+      return;
+    }
+
     queryClient.setQueryData<ShowStateSnapshot | undefined>(controlShowQueryKey(), (current) => {
-      if (!current || message.showVersion <= (current.showVersion ?? 0)) {
+      if (
+        !current ||
+        message.showVersion <= (current.showVersion ?? 0) ||
+        message.playback.executionSequence <= (current.playback?.executionSequence ?? 0)
+      ) {
         return current;
       }
 
@@ -39,7 +35,8 @@ export async function applyControlRealtimeMessage(
         ...current,
         showVersion: message.showVersion,
         playback: {
-          status: toSnapshotPlaybackStatus(message.playback.status),
+          status: message.playback.status,
+          executionSequence: message.playback.executionSequence,
           currentResolveEventId: message.playback.currentResolveEventId ?? null,
           currentEventId: message.playback.currentEventId ?? null,
           activeSegment: message.playback.activeSegment

@@ -53,6 +53,7 @@ logs/*.log
 # Server data
 .data/
 .local/
+apps/server/inspect.sarif.json
 
 .nx/cache
 .nx/workspace-data

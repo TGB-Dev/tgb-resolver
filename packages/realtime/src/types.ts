@@ -1,34 +1,37 @@
+import { PlaybackStatus, ShowMode, TimelineEventType, TimelineMode } from "@tgb-resolver/contracts";
+
+export { PlaybackStatus, ShowMode, TimelineEventType, TimelineMode };
+
 export const SHOW_SCHEMA_VERSION = 1;
 export const FILE_EXTENSION = ".tgbresolver";
 
 export interface ClockSyncRequest {
   sessionId: string;
-  clientSentAt: string;
+  clientSentAtUnixMs: number;
 }
 
 export interface ClockSyncResponse {
   sessionId: string;
-  clientSentAt: string;
-  serverReceivedAt: string;
-  serverTransmittedAt: string;
-  estimatedOffsetMs: number;
-  serverProcessingMs: number;
+  clientSentAtUnixMs: number;
+  serverReceivedAtUnixMs: number;
+  serverTransmittedAtUnixMs: number;
 }
 
-export type ShowMode = "editing" | "live";
-export type PlaybackStatus = "idle" | "running" | "paused" | "completed";
-export type AssetKind = "image" | "sfx";
-export type TimelineEventType = "RES" | "IMG" | "SFX";
+export enum AssetKind {
+  Image = "image",
+  Sfx = "sfx",
+}
 
 export interface EventBase {
   id: number;
+  position: number;
   triggerOffsetSeconds?: number;
   requireManualInteraction?: boolean;
   customName?: string;
 }
 
 export interface ResolveEvent extends EventBase {
-  type: "RES";
+  type: TimelineEventType.RES;
   payload: {
     realName: string;
     username: string;
@@ -39,7 +42,7 @@ export interface ResolveEvent extends EventBase {
 }
 
 export interface ShowImageEvent extends EventBase {
-  type: "IMG";
+  type: TimelineEventType.IMG;
   payload: {
     imageId: string;
     durationSeconds?: number;
@@ -47,7 +50,7 @@ export interface ShowImageEvent extends EventBase {
 }
 
 export interface PlaySfxEvent extends EventBase {
-  type: "SFX";
+  type: TimelineEventType.SFX;
   payload: {
     sfxId: string;
     durationSeconds?: number;
@@ -86,6 +89,7 @@ export interface ActivePlaybackSegment {
 
 export interface ShowPlaybackState {
   status: PlaybackStatus;
+  executionSequence: number;
   currentResolveEventId?: number;
   currentEventId?: number;
   activeSegment?: ActivePlaybackSegment;
@@ -116,6 +120,7 @@ export interface ShowFile {
   schemaVersion: typeof SHOW_SCHEMA_VERSION;
   showVersion: number;
   mode: ShowMode;
+  timelineMode: TimelineMode;
   meta: ShowMeta;
   contest: ShowContestData;
   automation: ShowAutomation;

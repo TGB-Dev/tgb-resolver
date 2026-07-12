@@ -16,6 +16,9 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "pnpm run check-types"
   },
+  "dependencies": {
+    "@tgb-resolver/contracts": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^26.0.1",
     "tsdown": "^0.22.3",

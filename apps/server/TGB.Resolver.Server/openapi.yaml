@@ -10,53 +10,11 @@ paths:
       responses:
         200:
           description: ''
-  /api/playback/start:
-    post:
-      tags:
-      - Api
-      operationId: TGBResolverServerEndpointsStartPlaybackEndpoint
-      requestBody:
-        x-name: VersionedCommandRequest
-        description: ''
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionedCommandRequest'
-        required: true
-        x-position: 1
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/playback/reset:
-    post:
-      tags:
-      - Api
-      operationId: TGBResolverServerEndpointsResetPlaybackEndpoint
-      requestBody:
-        x-name: VersionedCommandRequest
-        description: ''
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionedCommandRequest'
-        required: true
-        x-position: 1
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/show:
+  /timeline:
     get:
       tags:
-      - Api
-      operationId: TGBResolverServerEndpointsGetShowEndpoint
+      - Timeline
+      operationId: TGBResolverServerFeaturesShowGetShowEndpoint
       responses:
         200:
           description: Success
@@ -68,7 +26,7 @@ paths:
     post:
       tags:
       - Api
-      operationId: TGBResolverServerEndpointsOptimizeShowEndpoint
+      operationId: TGBResolverServerFeaturesShowOptimizeShowEndpoint
       requestBody:
         x-name: VersionedCommandRequest
         description: ''
@@ -89,7 +47,7 @@ paths:
     post:
       tags:
       - Api
-      operationId: TGBResolverServerEndpointsClearShowEndpoint
+      operationId: TGBResolverServerFeaturesShowClearShowEndpoint
       requestBody:
         x-name: VersionedCommandRequest
         description: ''
@@ -106,11 +64,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/show/import/xml:
+  /import/xml:
     post:
       tags:
-      - Api
-      operationId: TGBResolverServerEndpointsImportXmlEndpoint
+      - Import
+      operationId: TGBResolverServerFeaturesShowImportXmlEndpoint
       requestBody:
         x-name: ImportXmlRequest
         description: ''
@@ -127,11 +85,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/show/import/bundle:
+  /import/bundle:
     post:
       tags:
-      - Api
-      operationId: TGBResolverServerEndpointsImportBundleEndpoint
+      - Import
+      operationId: TGBResolverServerFeaturesShowImportBundleEndpoint
       requestBody:
         x-name: ImportBundleRequest
         description: ''
@@ -148,11 +106,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShowStateSnapshot'
-  /api/show/export/bundle:
+  /export/bundle:
     get:
       tags:
-      - Api
-      operationId: TGBResolverServerEndpointsExportBundleEndpoint
+      - Export
+      operationId: TGBResolverServerFeaturesShowExportBundleEndpoint
       responses:
         204:
           description: No Content
@@ -160,7 +118,7 @@ paths:
     patch:
       tags:
       - Api
-      operationId: TGBResolverServerEndpointsRenameResolveEventEndpoint
+      operationId: TGBResolverServerFeaturesShowRenameResolveEventEndpoint
       parameters:
       - name: id
         in: path
@@ -188,7 +146,7 @@ paths:
     patch:
       tags:
       - Api
-      operationId: TGBResolverServerEndpointsPatchNonResolveEventEndpoint
+      operationId: TGBResolverServerFeaturesShowPatchNonResolveEventEndpoint
       parameters:
       - name: id
         in: path
@@ -216,7 +174,7 @@ paths:
     post:
       tags:
       - Api
-      operationId: TGBResolverServerEndpointsEnableLiveModeEndpoint
+      operationId: TGBResolverServerFeaturesShowEnableLiveModeEndpoint
       responses:
         200:
           description: Success
@@ -227,7 +185,267 @@ paths:
     delete:
       tags:
       - Api
-      operationId: TGBResolverServerEndpointsDisableLiveModeEndpoint
+      operationId: TGBResolverServerFeaturesShowDisableLiveModeEndpoint
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /timeline/event:
+    post:
+      tags:
+      - Timeline
+      operationId: TGBResolverServerFeaturesShowCreateTimelineEventEndpoint
+      requestBody:
+        x-name: CreateTimelineEventRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTimelineEventRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /timeline/event/{id}/position:
+    patch:
+      tags:
+      - Timeline
+      operationId: TGBResolverServerFeaturesShowMoveTimelineEventEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        x-name: MoveTimelineEventRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveTimelineEventRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /timeline/event/{id}:
+    patch:
+      tags:
+      - Timeline
+      operationId: TGBResolverServerFeaturesShowPatchTimelineEventEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        x-name: PatchTimelineEventRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTimelineEventRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+    delete:
+      tags:
+      - Timeline
+      operationId: TGBResolverServerFeaturesShowDeleteTimelineEventEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        x-name: VersionedCommandRequest
+        description: ''
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /timeline/mode:
+    patch:
+      tags:
+      - Timeline
+      operationId: TGBResolverServerFeaturesShowSetTimelineModeEndpoint
+      requestBody:
+        x-name: SetTimelineModeRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTimelineModeRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /api/playback/start:
+    post:
+      tags:
+      - Api
+      operationId: TGBResolverServerFeaturesPlaybackStartPlaybackEndpoint
+      requestBody:
+        x-name: VersionedCommandRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /api/playback/reset:
+    post:
+      tags:
+      - Api
+      operationId: TGBResolverServerFeaturesPlaybackResetPlaybackEndpoint
+      requestBody:
+        x-name: VersionedCommandRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /playback/seek:
+    post:
+      tags:
+      - Playback
+      operationId: TGBResolverServerFeaturesPlaybackSeekPlaybackEndpoint
+      requestBody:
+        x-name: SeekPlaybackRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeekPlaybackRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+  /assets/{id}:
+    get:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsGetAssetEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        204:
+          description: No Content
+    post:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsPutAssetEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        x-name: UpsertAssetRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertAssetRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+    delete:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsDeleteAssetEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        x-name: VersionedCommandRequest
+        description: ''
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+        x-position: 1
       responses:
         200:
           description: Success
@@ -249,6 +467,8 @@ components:
           format: int32
         mode:
           $ref: '#/components/schemas/ShowMode'
+        timelineMode:
+          $ref: '#/components/schemas/TimelineMode'
         meta:
           $ref: '#/components/schemas/ShowMetaSnapshot'
         contest:
@@ -272,6 +492,15 @@ components:
       enum:
       - Editing
       - Live
+    TimelineMode:
+      type: string
+      description: ''
+      x-enumNames:
+      - Rw
+      - Ro
+      enum:
+      - Rw
+      - Ro
     ShowMetaSnapshot:
       type: object
       additionalProperties: false
@@ -320,8 +549,8 @@ components:
         username:
           type: string
         score:
-          type: integer
-          format: int32
+          type: number
+          format: double
         rank:
           type: integer
           format: int32
@@ -358,6 +587,9 @@ components:
           type: integer
           format: int64
           nullable: true
+        executionSequence:
+          type: integer
+          format: int64
     PlaybackStatus:
       type: string
       description: ''
@@ -365,12 +597,10 @@ components:
       - Idle
       - Running
       - Paused
-      - Completed
       enum:
       - Idle
       - Running
       - Paused
-      - Completed
     ActivePlaybackSegmentSnapshot:
       type: object
       additionalProperties: false
@@ -428,6 +658,9 @@ components:
         id:
           type: integer
           format: int32
+        position:
+          type: integer
+          format: int32
         type:
           $ref: '#/components/schemas/TimelineEventType'
         triggerOffsetSeconds:
@@ -474,8 +707,8 @@ components:
         problem:
           type: string
         newScore:
-          type: integer
-          format: int32
+          type: number
+          format: double
         newRank:
           type: integer
           format: int32
@@ -502,6 +735,11 @@ components:
       properties:
         xml:
           type: string
+        excludedUsernames:
+          type: array
+          nullable: true
+          items:
+            type: string
     ImportBundleRequest:
       type: object
       additionalProperties: false
@@ -556,6 +794,105 @@ components:
           type: number
           format: double
           nullable: true
+    CreateTimelineEventRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        type:
+          $ref: '#/components/schemas/TimelineEventType'
+        relativeToEventId:
+          type: integer
+          format: int32
+        before:
+          type: boolean
+        triggerOffsetSeconds:
+          type: number
+          format: double
+          nullable: true
+        requireManualInteraction:
+          type: boolean
+          nullable: true
+        customName:
+          type: string
+          nullable: true
+        payload:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MediaEventPatchPayload'
+    MoveTimelineEventRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        relativeToEventId:
+          type: integer
+          format: int32
+        before:
+          type: boolean
+    PatchTimelineEventRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        customName:
+          type: string
+          nullable: true
+        type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TimelineEventType'
+        triggerOffsetSeconds:
+          type: number
+          format: double
+          nullable: true
+        requireManualInteraction:
+          type: boolean
+          nullable: true
+        payload:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MediaEventPatchPayload'
+    SetTimelineModeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        timelineMode:
+          $ref: '#/components/schemas/TimelineMode'
+    SeekPlaybackRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        eventId:
+          type: integer
+          format: int32
+    UpsertAssetRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        kind:
+          type: string
+        fileName:
+          type: string
+        contentType:
+          type: string
+        bytes:
+          type: string
   securitySchemes:
     JWTBearerAuth:
       type: http

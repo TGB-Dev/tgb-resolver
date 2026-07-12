@@ -7,7 +7,7 @@ import { ControlFullScreenButton } from "./control-full-screen-button";
 import { ControlCurrentTime, ControlElapsedTime, useNow } from "./control-time";
 
 export function ControlStatusBar() {
-  const now = useNow();
+  const now = useNow(250);
 
   return (
     <Grid templateColumns="1fr auto 1fr" h={16} px={2} borderBottomWidth={1} alignItems="center">

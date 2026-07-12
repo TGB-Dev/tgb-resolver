@@ -110,7 +110,9 @@ export function ControlTimelineTableItem({
             {payload.id}
           </Box>
         </Tooltip>
-        <Box fontFamily="mono">{payload.type}</Box>
+        <Box fontFamily="mono" textTransform="uppercase">
+          {payload.type}
+        </Box>
         <Box minW={0}>
           {!isLive ? (
             <ControlTimelineEventCustomNameEditable payload={payload} />

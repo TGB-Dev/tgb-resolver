@@ -1,24 +1,26 @@
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-using TGB.Resolver.Server.Application.Serialization;
-using TGB.Resolver.Server.Application.Shows;
-using TGB.Resolver.Server.Hubs;
-using TGB.Resolver.Server.Infrastructure.Persistence;
 using Scalar.AspNetCore;
+using TGB.Resolver.Server.Commons.Data;
+using TGB.Resolver.Server.Commons.Serialization;
+using TGB.Resolver.Server.Features.Assets;
+using TGB.Resolver.Server.Features.Realtime;
+using TGB.Resolver.Server.Features.Show;
+
+const string frontendCorsPolicy = "Frontend";
 
 var builder = WebApplication.CreateBuilder(args);
-const string FrontendCorsPolicy = "Frontend";
 
 var allowedOrigins =
   builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
   ?? ["http://127.0.0.1:3000", "http://localhost:3000"];
 
 builder.Services.AddCors(o =>
-  o.AddPolicy(FrontendCorsPolicy, p => p
+  o.AddPolicy(frontendCorsPolicy, p => p
     .WithOrigins(allowedOrigins)
     .AllowAnyHeader()
     .AllowAnyMethod()
@@ -35,7 +37,8 @@ builder.Services.Configure<JsonOptions>(options =>
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(AppJsonSerializerContext.Default);
-builder.Services.AddSingleton<IAppJsonSerializer, AppJsonSerializer>();
+builder.Services.AddSingleton<AppJsonSerializer>();
+builder.Services.AddSingleton<AssetStore>();
 builder.Services.AddDbContext<ResolverDbContext>(options =>
 {
   var dataDirectory = Path.Combine(builder.Environment.ContentRootPath, ".data");
@@ -54,7 +57,7 @@ builder.Services.SwaggerDocument(options =>
   options.ShortSchemaNames = true;
 });
 builder.Services.AddSignalR().AddMessagePackProtocol();
-builder.Services.AddScoped<IShowStateService, ShowStateService>();
+builder.Services.AddScoped<ShowStateService>();
 
 var app = builder.Build();
 
@@ -63,18 +66,15 @@ await using (var scope = app.Services.CreateAsyncScope())
   var dbContext = scope.ServiceProvider.GetRequiredService<ResolverDbContext>();
   await dbContext.Database.EnsureCreatedAsync();
 
-  var showStateService = scope.ServiceProvider.GetRequiredService<IShowStateService>();
+  var showStateService = scope.ServiceProvider.GetRequiredService<ShowStateService>();
   await showStateService.EnsureSeededAsync();
 }
 
-app.UseCors(FrontendCorsPolicy);
+app.UseCors(frontendCorsPolicy);
 app.MapGet("/", () => Results.Ok("TGB Resolver Server"));
 app.UseFastEndpoints();
 await app.ExportSwaggerDocsAndExitAsync("v1");
-app.MapHub<ShowHub>("/hubs/show").RequireCors(FrontendCorsPolicy);
-app.UseSwaggerGen(options =>
-{
-  options.Path = "/openapi/{documentName}.json";
-});
+app.MapHub<ShowHub>("/hubs/show").RequireCors(frontendCorsPolicy);
+app.UseSwaggerGen(options => { options.Path = "/openapi/{documentName}.json"; });
 app.MapScalarApiReference();
 app.Run();

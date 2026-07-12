@@ -17,4 +17,9 @@
     <ProjectReference Include="..\TGB.Resolver.Server\TGB.Resolver.Server.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\TGB.Resolver.IcpcXmlParser.Tests\Fixtures\sample.xml" Link="Fixtures\sample.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
