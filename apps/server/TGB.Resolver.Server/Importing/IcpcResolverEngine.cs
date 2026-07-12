@@ -85,12 +85,14 @@ public static class IcpcResolverEngine
     IEnumerable<ProblemDefinition> problems)
   {
     var pending = new Dictionary<PendingProblem, IcpcXmlRun>();
-    foreach (var team in teams)
-    foreach (var problem in problems)
+    var teamList = teams.ToArray();
+    var problemList = problems.ToArray();
+    foreach (var team in teamList)
+    foreach (var problem in problemList)
     {
       var frozenResult = frozen.ResultFor(team.Id, problem.Id);
       var finalResult = final.ResultFor(team.Id, problem.Id);
-      if (finalResult.LastAlteringRunId is not int finalRunId
+      if (finalResult.LastAlteringRunId is not { } finalRunId
           || frozenResult.LastAlteringRunId == finalRunId)
         continue;
 
@@ -107,25 +109,28 @@ public static class IcpcResolverEngine
       : 0;
   }
 
-  private sealed class Scoreboard(
-    IEnumerable<IcpcXmlTeam> sourceTeams,
-    IEnumerable<ProblemDefinition> sourceProblems,
-    IEnumerable<IcpcXmlRun> sourceRuns)
+  private sealed class Scoreboard
   {
-    private readonly IReadOnlyDictionary<int, ProblemDefinition> problems =
-      sourceProblems.ToDictionary(problem => problem.Id);
-
+    private readonly IReadOnlyDictionary<int, ProblemDefinition> problems;
     private readonly Dictionary<ProblemKey, ProblemResult> results = [];
+    private readonly IReadOnlyDictionary<int, IcpcXmlRun> runsById;
+    private readonly IReadOnlyDictionary<ProblemKey, IReadOnlyList<IcpcXmlRun>> runsByProblem;
+    private readonly IReadOnlyDictionary<int, IcpcXmlTeam> teams;
 
-    private readonly IReadOnlyDictionary<int, IcpcXmlRun> runsById =
-      sourceRuns.ToDictionary(run => run.Id);
+    public Scoreboard(
+      IEnumerable<IcpcXmlTeam> sourceTeams,
+      IEnumerable<ProblemDefinition> sourceProblems,
+      IEnumerable<IcpcXmlRun> sourceRuns)
+    {
+      problems = sourceProblems.ToDictionary(problem => problem.Id);
+      teams = sourceTeams.ToDictionary(team => team.Id);
 
-    private readonly IReadOnlyDictionary<ProblemKey, IReadOnlyList<IcpcXmlRun>> runsByProblem =
-      sourceRuns.GroupBy(run => new ProblemKey(run.Team, run.Problem))
+      var runs = sourceRuns.ToArray();
+      runsById = runs.ToDictionary(run => run.Id);
+      runsByProblem = runs
+        .GroupBy(run => new ProblemKey(run.Team, run.Problem))
         .ToDictionary(group => group.Key, group => (IReadOnlyList<IcpcXmlRun>)group.ToArray());
-
-    private readonly IReadOnlyDictionary<int, IcpcXmlTeam> teams =
-      sourceTeams.ToDictionary(team => team.Id);
+    }
 
     public void Apply(IcpcXmlRun run)
     {
@@ -135,10 +140,8 @@ public static class IcpcResolverEngine
 
       if (points > current.Points
           || (points == 0 && current.Points == 0))
-        results[key] = current with
-        {
-          Points = Math.Max(current.Points, points), LastAlteringRunId = run.Id
-        };
+        results[key] = new ProblemResult(
+          Math.Max(current.Points, points), run.Id);
     }
 
     public Scoreboard Clone()
@@ -177,7 +180,9 @@ public static class IcpcResolverEngine
 
       return ordered.Select((team, index) =>
       {
-        if (team.Score != priorScore || team.PenaltySeconds != priorPenalty)
+        if (priorScore is null || Math.Abs(team.Score - priorScore.Value) > 1e-9
+                               || priorPenalty is null ||
+                               Math.Abs(team.PenaltySeconds - priorPenalty.Value) > 1e-9)
         {
           rank = index + 1;
           priorScore = team.Score;
@@ -210,13 +215,13 @@ public static class IcpcResolverEngine
       IcpcXmlRun? finish = null;
       foreach (var (key, result) in teamResults)
       {
-        if (result.LastAlteringRunId is not int lastAlteringRunId || result.Points == 0) continue;
+        if (result.LastAlteringRunId is not { } lastAlteringRunId || result.Points == 0) continue;
 
         var lastAlteringRun = runsById[lastAlteringRunId];
         wrongAttempts += runsByProblem.GetValueOrDefault(key, [])
           .Count(run => run.Id < lastAlteringRunId);
         if (finish is null || lastAlteringRun.Time > finish.Time
-                           || (lastAlteringRun.Time == finish.Time &&
+                           || (Math.Abs(lastAlteringRun.Time - finish.Time) <= 1e-9 &&
                                lastAlteringRun.Id > finish.Id))
           finish = lastAlteringRun;
       }

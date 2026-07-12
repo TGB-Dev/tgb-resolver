@@ -21,8 +21,8 @@ public sealed class IcpcXmlParserTests
     await Assert.That(result.Problem[1].Score).IsEqualTo(125d);
     await Assert.That(result.Team.Count).IsEqualTo(54);
     await Assert.That(result.Run.Count).IsEqualTo(809);
-    await Assert.That(result.Run[0].Time).IsEqualTo(86d);
-    await Assert.That(result.Run.Any(run => run.Score == 23d)).IsTrue();
+    await Assert.That((int)result.Run[0].Time).IsEqualTo(86);
+    await Assert.That(result.Run.Any(run => Math.Abs(run.Score - 23d) < 1e-9)).IsTrue();
   }
 
   [Test]

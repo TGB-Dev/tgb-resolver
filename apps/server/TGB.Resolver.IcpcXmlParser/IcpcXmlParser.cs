@@ -109,6 +109,7 @@ public sealed record IcpcXmlInfo(
   // ReSharper disable once NotAccessedPositionalProperty.Global
   int StartTime,
   string Length,
+  // ReSharper disable once NotAccessedPositionalProperty.Global
   int Penalty,
   string ScoreboardFreezeLength);
 
@@ -125,5 +126,6 @@ public sealed record IcpcXmlRun(
   int Team,
   double Time,
   string Solved,
+  // ReSharper disable once NotAccessedPositionalProperty.Global
   string Penalty,
   double Score);
