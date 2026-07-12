@@ -59,7 +59,10 @@ function ResolveContent({ cue, textProps }: ResolveContentProps): ReactNode {
   const newScore = cue.newScore;
   const newRank = cue.newRank;
   const hasOld =
-    oldScore !== undefined && oldRank !== undefined && newScore !== undefined && newRank !== undefined;
+    oldScore !== undefined &&
+    oldRank !== undefined &&
+    newScore !== undefined &&
+    newRank !== undefined;
 
   return (
     <Text as="span">

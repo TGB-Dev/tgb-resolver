@@ -1,6 +1,7 @@
-import { Heading } from "@/components/ui/heading";
-import { Text, VStack, type TextProps } from "@chakra-ui/react";
+import { Text, type TextProps, VStack } from "@chakra-ui/react";
 import type { ReactNode } from "react";
+
+import { Heading } from "@/components/ui/heading";
 
 export enum Cue {
   CURRENT,

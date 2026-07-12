@@ -23,6 +23,7 @@ import {
   useToggleLiveModeMutation,
 } from "@/features/control/hooks";
 import { useControlRealtime } from "@/features/control/realtime-provider";
+import { useAction } from "@/lib/actions";
 import type { ShowConnectionStatus } from "@/lib/api";
 
 export function ControlMainControls() {
@@ -36,19 +37,28 @@ export function ControlMainControls() {
   const canMutate = useControlCanMutate();
   const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
 
-  function goPrevious() {
-    if (currentIndex > 0) {
-      const prev = rows[currentIndex - 1];
-      if (prev) seekPlayback.mutate(prev.id);
-    }
-  }
+  const prevAction = useAction({
+    handler: () => {
+      if (currentIndex > 0) {
+        const prev = rows[currentIndex - 1];
+        if (prev) seekPlayback.mutate(prev.id);
+      }
+    },
+    enabled: canMutate && currentIndex > 0 && !seekPlayback.isPending,
+    hotkeys: ["ArrowLeft"],
+  });
 
-  function goNext() {
-    if (currentIndex >= 0 && currentIndex < rows.length - 1) {
-      const next = rows[currentIndex + 1];
-      if (next) seekPlayback.mutate(next.id);
-    }
-  }
+  const nextAction = useAction({
+    handler: () => {
+      if (currentIndex >= 0 && currentIndex < rows.length - 1) {
+        const next = rows[currentIndex + 1];
+        if (next) seekPlayback.mutate(next.id);
+      }
+    },
+    enabled:
+      canMutate && currentIndex >= 0 && currentIndex < rows.length - 1 && !seekPlayback.isPending,
+    hotkeys: ["ArrowRight", "Space"],
+  });
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
@@ -67,28 +77,15 @@ export function ControlMainControls() {
         <TimerReset />
       </IconButton>
 
-      <Box flex={1} />
-
-      <IconButton
-        onClick={goPrevious}
-        disabled={!canMutate || currentIndex <= 0 || seekPlayback.isPending}
-        variant="ghost"
-      >
+      <IconButton {...prevAction.buttonProps}>
         <ChevronLeft />
       </IconButton>
 
-      <IconButton
-        onClick={goNext}
-        disabled={
-          !canMutate ||
-          currentIndex < 0 ||
-          currentIndex >= rows.length - 1 ||
-          seekPlayback.isPending
-        }
-        variant="ghost"
-      >
+      <IconButton {...nextAction.buttonProps}>
         <ChevronRight />
       </IconButton>
+
+      <Box flex={1} />
 
       <Tooltip content={getConnectionStatusLabel(connectionStatus)}>
         <Button variant="ghost" disabled>

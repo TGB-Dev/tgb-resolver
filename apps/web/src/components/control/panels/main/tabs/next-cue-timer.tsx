@@ -1,9 +1,9 @@
-import { ChevronDown } from "lucide-react";
-import { useAtomValue } from "jotai";
 import { HStack, Text } from "@chakra-ui/react";
+import { PlaybackStatus } from "@tgb-resolver/contracts";
+import { useAtomValue } from "jotai";
+import { ChevronDown } from "lucide-react";
 import { useMemo } from "react";
 
-import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { useControlShowQuery, useControlShowRows } from "@/features/control/hooks";
 import { controlNowAtom } from "@/state/control-now";
 
@@ -29,7 +29,12 @@ export function NextCueTimer() {
   const now = useAtomValue(controlNowAtom);
 
   const remainingMs = useMemo(() => {
-    if (!isRunning || startedAt === undefined || durationSeconds === undefined || durationSeconds <= 0) {
+    if (
+      !isRunning ||
+      startedAt === undefined ||
+      durationSeconds === undefined ||
+      durationSeconds <= 0
+    ) {
       return 0;
     }
 

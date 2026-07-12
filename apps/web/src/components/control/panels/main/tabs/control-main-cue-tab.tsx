@@ -1,8 +1,9 @@
 import { Grid } from "@chakra-ui/react";
 
 import { useControlShowRows } from "@/features/control/hooks";
-import { Cue, CueItem, CUE_CONFIG } from "./cue-item";
+
 import { CueContent } from "./cue-content";
+import { CUE_CONFIG, Cue, CueItem } from "./cue-item";
 import { NextCueTimer } from "./next-cue-timer";
 
 export function ControlMainCueTab() {
