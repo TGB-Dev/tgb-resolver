@@ -1,7 +1,15 @@
 import { useQueryClient } from "@tanstack/preact-query";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
-import { createShowWebSocketManager, type ShowConnectionStatus } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/api";
+
+import RealtimeWorker from "@/lib/realtime.worker?worker";
+import {
+  createRealtimeClient,
+  ShowConnectionStatus,
+  type ShowWebSocketMessage,
+} from "@tgb-resolver/realtime";
+import type { RealtimeClientCallbacks } from "@tgb-resolver/realtime";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-cache";
 
@@ -15,36 +23,19 @@ const ControlRealtimeContext = createContext<ControlRealtimeContextValue | null>
 const STRICT_MODE_DISCONNECT_DELAY_MS = 250;
 
 interface RealtimeListener {
-  onOpen: (attempt: number) => void | Promise<void>;
-  onClose: (
-    nextStatus: Exclude<ShowConnectionStatus, "idle" | "connected">,
-    attempt: number,
-  ) => void;
+  onStatusChange: (status: ShowConnectionStatus, attempt: number) => void;
+  onMessage: (message: ShowWebSocketMessage) => void;
   onError: (attempt: number, error?: unknown) => void;
-  onMessage: Parameters<
-    Parameters<typeof createShowWebSocketManager>[0]["onMessage"]
-  >[0] extends infer T
-    ? (message: T) => void | Promise<void>
-    : never;
 }
 
 const realtimeListeners = new Set<RealtimeListener>();
-let sharedConnectionStatus: ShowConnectionStatus = "connecting";
+let sharedConnectionStatus: ShowConnectionStatus = ShowConnectionStatus.Connecting;
 let sharedReconnectAttempt = 0;
 let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-const sharedManager = createShowWebSocketManager({
-  onOpen: async (attempt) => {
-    sharedConnectionStatus = "connected";
-    sharedReconnectAttempt = attempt;
-    await Promise.all(Array.from(realtimeListeners, (listener) => listener.onOpen(attempt)));
-  },
-  onClose: (nextStatus, attempt) => {
-    sharedConnectionStatus = nextStatus;
-    sharedReconnectAttempt = attempt;
-    for (const listener of realtimeListeners) {
-      listener.onClose(nextStatus, attempt);
-    }
+const sharedClient = createRealtimeClient(API_BASE_URL, {
+  onMessage: async (message) => {
+    await Promise.all(Array.from(realtimeListeners, (listener) => listener.onMessage(message)));
   },
   onError: (attempt, error) => {
     sharedReconnectAttempt = attempt;
@@ -52,9 +43,16 @@ const sharedManager = createShowWebSocketManager({
       listener.onError(attempt, error);
     }
   },
-  onMessage: async (message) => {
-    await Promise.all(Array.from(realtimeListeners, (listener) => listener.onMessage(message)));
-  },
+} satisfies RealtimeClientCallbacks,
+new RealtimeWorker(),
+);
+
+sharedClient.onStatusChange((status, attempt) => {
+  sharedConnectionStatus = status;
+  sharedReconnectAttempt = attempt;
+  for (const listener of realtimeListeners) {
+    listener.onStatusChange(status, attempt);
+  }
 });
 
 export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
@@ -65,23 +63,22 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const listener: RealtimeListener = {
-      onOpen: async (attempt) => {
-        setConnectionStatus("connected");
+      onStatusChange: (status, attempt) => {
+        setConnectionStatus(status);
         setReconnectAttempt(attempt);
-        await queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
+
+        if (status === ShowConnectionStatus.Connected) {
+          void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
+        }
       },
-      onClose: (nextStatus, attempt) => {
-        setConnectionStatus(nextStatus);
-        setReconnectAttempt(attempt);
+      onMessage: async (message) => {
+        await applyControlRealtimeMessage(queryClient, message);
       },
       onError: (attempt, error) => {
         setReconnectAttempt(attempt);
         if (error) {
           console.error("Show hub connection error", error);
         }
-      },
-      onMessage: async (message) => {
-        await applyControlRealtimeMessage(queryClient, message);
       },
     };
 
@@ -94,7 +91,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
       disconnectTimer = null;
     }
 
-    void sharedManager.connect().catch((error) => {
+    void sharedClient.connect().catch((error) => {
       console.error("Failed to connect to show hub", error);
     });
 
@@ -108,7 +105,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
       disconnectTimer = setTimeout(() => {
         disconnectTimer = null;
         if (realtimeListeners.size === 0) {
-          sharedManager.disconnect();
+          sharedClient.disconnect();
         }
       }, STRICT_MODE_DISCONNECT_DELAY_MS);
     };
@@ -118,7 +115,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
     () => ({
       connectionStatus,
       reconnectAttempt,
-      reconnectNow: () => sharedManager.reconnectNow(),
+      reconnectNow: () => sharedClient.reconnectNow(),
     }),
     [connectionStatus, reconnectAttempt],
   );

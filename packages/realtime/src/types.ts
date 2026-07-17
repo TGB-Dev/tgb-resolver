@@ -154,3 +154,12 @@ export interface PlaybackSegment {
   nextResolveEventId?: number;
   inlineEvents: Array<ShowImageEvent | PlaySfxEvent>;
 }
+
+export enum ShowConnectionStatus {
+  Idle = "idle",
+  Connecting = "connecting",
+  Connected = "connected",
+  Reconnecting = "reconnecting",
+  Disconnected = "disconnected",
+  Failed = "failed",
+}

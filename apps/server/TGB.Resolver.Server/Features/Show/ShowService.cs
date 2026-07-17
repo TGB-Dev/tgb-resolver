@@ -408,6 +408,32 @@ public sealed class ShowStateService(
       request.ShowVersion,
       state =>
       {
+        if (state.Playback.Status == PlaybackStatus.Running)
+        {
+          return state with
+          {
+            ShowVersion = state.ShowVersion + 1,
+            Playback = state.Playback with
+            {
+              Status = PlaybackStatus.Paused,
+              ExecutionSequence = state.Playback.ExecutionSequence + 1
+            }
+          };
+        }
+
+        if (state.Playback.Status == PlaybackStatus.Paused)
+        {
+          return state with
+          {
+            ShowVersion = state.ShowVersion + 1,
+            Playback = state.Playback with
+            {
+              Status = PlaybackStatus.Running,
+              ExecutionSequence = state.Playback.ExecutionSequence + 1
+            }
+          };
+        }
+
         var ordered = state.Ordered();
         var firstResolve = ordered.FirstOrDefault(e => e.Type == TimelineEventType.Res);
         var nextResolve = firstResolve is not null
@@ -434,7 +460,16 @@ public sealed class ShowStateService(
       cancellationToken);
 
     await BroadcastPlaybackAsync(updated);
-    ScheduleNextAdvanceAsync(updated);
+
+    if (updated.Playback.Status == PlaybackStatus.Running)
+    {
+      ScheduleNextAdvanceAsync(updated);
+    }
+    else
+    {
+      orchestrator.CancelAdvance();
+    }
+
     return ShowContractMapper.ToContract(updated);
   }
 

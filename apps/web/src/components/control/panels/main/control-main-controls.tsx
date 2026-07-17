@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  Pause,
   Pen,
   Play,
   Radio,
@@ -13,12 +14,16 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { PlaybackStatus } from "@tgb-resolver/contracts";
+import { ShowConnectionStatus } from "@tgb-resolver/realtime";
+
 import { Tooltip } from "@/components/ui/tooltip";
 import {
   useControlAutoResolveEnabled,
   useControlAutoResolveSpeedMs,
   useControlCanMutate,
   useControlIsLive,
+  useControlShowQuery,
   useControlShowRows,
   useResetPlaybackMutation,
   useSeekPlaybackMutation,
@@ -28,7 +33,6 @@ import {
 } from "@/features/control/hooks";
 import { useControlRealtime } from "@/features/control/realtime-provider";
 import { useAction } from "@/lib/actions";
-import type { ShowConnectionStatus } from "@/lib/api";
 
 export function ControlMainControls() {
   const startPlayback = useStartPlaybackMutation();
@@ -40,6 +44,8 @@ export function ControlMainControls() {
   const { connectionStatus } = useControlRealtime();
   const canMutate = useControlCanMutate();
   const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
+  const showQuery = useControlShowQuery();
+  const playbackStatus = showQuery.data?.playback?.status;
 
   const autoResolveEnabled = useControlAutoResolveEnabled();
   const autoResolveSpeedMs = useControlAutoResolveSpeedMs();
@@ -50,7 +56,6 @@ export function ControlMainControls() {
     const idx = RATES.findIndex((r) => 3000 / r <= autoResolveSpeedMs);
     return idx >= 0 ? idx : RATES.length - 1;
   })();
-  const isAutoplayAllowed = currentIndex >= 0;
 
   const [dragValue, setDragValue] = useState<number[]>([]);
 
@@ -84,7 +89,7 @@ export function ControlMainControls() {
         onClick={() => startPlayback.mutate()}
         disabled={!canMutate}
       >
-        <Play />
+        {playbackStatus === PlaybackStatus.RUNNING ? <Pause /> : <Play />}
       </IconButton>
       <IconButton
         loading={resetPlayback.isPending}
@@ -107,7 +112,7 @@ export function ControlMainControls() {
       <Switch.Root
         checked={autoResolveEnabled}
         onCheckedChange={({ checked }) => updateAutomation.mutate({ autoResolveEnabled: checked })}
-        disabled={!canMutate || !isAutoplayAllowed || updateAutomation.isPending}
+        disabled={!canMutate || updateAutomation.isPending}
       >
         <Switch.Label>Autoplay</Switch.Label>
         <Switch.Control>
@@ -128,7 +133,7 @@ export function ControlMainControls() {
             autoResolveSpeedMs: Math.round(3000 / RATES[value[0]]),
           });
         }}
-        disabled={!canMutate || !isAutoplayAllowed || updateAutomation.isPending}
+        disabled={!canMutate || updateAutomation.isPending}
         width={32}
       >
         <HStack gap={4}>
@@ -170,15 +175,15 @@ export function ControlMainControls() {
 
 function getConnectionStatusLabel(status: ShowConnectionStatus) {
   switch (status) {
-    case "connected":
+    case ShowConnectionStatus.Connected:
       return "Connected";
-    case "connecting":
+    case ShowConnectionStatus.Connecting:
       return "Connecting";
-    case "reconnecting":
+    case ShowConnectionStatus.Reconnecting:
       return "Reconnecting...";
-    case "failed":
+    case ShowConnectionStatus.Failed:
       return "Sync failed";
-    case "disconnected":
+    case ShowConnectionStatus.Disconnected:
       return "Offline";
     default:
       return "Offline";
@@ -187,12 +192,12 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 
 function getConnectionStatusIcon(status: ShowConnectionStatus) {
   switch (status) {
-    case "connected":
+    case ShowConnectionStatus.Connected:
       return <Wifi />;
-    case "connecting":
-    case "reconnecting":
+    case ShowConnectionStatus.Connecting:
+    case ShowConnectionStatus.Reconnecting:
       return <RefreshCw />;
-    case "failed":
+    case ShowConnectionStatus.Failed:
       return <AlertTriangle />;
     default:
       return <WifiOff />;

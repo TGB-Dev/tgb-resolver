@@ -8,7 +8,7 @@ import { ControlMainPanel } from "@/components/control/panels/control-main-panel
 import { ControlTimelinePanel } from "@/components/control/panels/control-timeline-panel";
 import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
-import { getServerNow } from "@/lib/api";
+import { getServerNow } from "@tgb-resolver/realtime";
 import { useControlNowStore } from "@/store/control-now";
 
 export const Route = createFileRoute("/control/")({

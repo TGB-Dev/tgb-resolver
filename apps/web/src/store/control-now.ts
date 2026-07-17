@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { getServerNow } from "@/lib/api";
+import { getServerNow } from "@tgb-resolver/realtime";
 
 interface ControlNowStore {
   now: number;

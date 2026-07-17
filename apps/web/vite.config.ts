@@ -24,33 +24,33 @@ const config = defineConfig({
         codeSplitting: {
           groups: [
             {
-              name: 'vendor-chakra',
+              name: "vendor-chakra",
               test: /node_modules\/@chakra-ui/,
               priority: 100,
             },
             {
-              name: 'vendor-react-core',
+              name: "vendor-react-core",
               test: /node_modules\/(react|react-dom|react-compiler-runtime)/,
               priority: 90,
             },
             {
-              name: 'vendor-tanstack',
+              name: "vendor-tanstack",
               test: /node_modules\/@tanstack\/(react-router|react-start|router-core)/,
               priority: 80,
             },
             {
               name: (id: string) => {
                 // Fix path separators for Windows compatibility
-                const normalizedId = id.replace(/\\/g, '/');
+                const normalizedId = id.replace(/\\/g, "/");
 
-                if (normalizedId.includes('node_modules')) {
+                if (normalizedId.includes("node_modules")) {
                   // PNPM and Yarn Plug'n'Play can have nested node_modules, so we take the last occurrence to get the actual package
                   const pkg = normalizedId.match(
                     /node_modules\/((?:@[^/]+\/[^/]+)|[^/]+)(?!.*node_modules)/,
                   );
                   if (pkg) {
                     // Clean up scoped package characters (@ and /) for clean filenames
-                    const pkgName = pkg[1].replace('@', '').replace('/', '-');
+                    const pkgName = pkg[1].replace("@", "").replace("/", "-");
                     return `vendor-${pkgName}`;
                   }
                 }
@@ -63,7 +63,7 @@ const config = defineConfig({
         },
       },
     },
-  }
+  },
 });
 
 export default config;
