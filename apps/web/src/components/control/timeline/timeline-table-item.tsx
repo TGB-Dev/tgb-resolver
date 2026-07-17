@@ -8,10 +8,11 @@ import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
 import {
   useControlIsLive,
+  useControlShowQuery,
+  useControlShowRows,
   useRenameControlEventMutation,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
-import { CONTROL_TIMELINE_ROW_HEIGHT_PX, pxToChakraSpace } from "@/state/list-metrics";
 
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
 
@@ -40,115 +41,119 @@ function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "pla
 }
 
 interface ControlTimelineTableItemProps {
-  payload: TimelineTableItem;
-  durationInSeconds?: number;
-  isCurrent?: boolean;
+  eventId: number;
 }
 
-export const ControlTimelineTableItem = memo(
-  ({ payload, durationInSeconds, isCurrent }: ControlTimelineTableItemProps) => {
-    const success = useToken("colors", "green.600");
-    const errror = useToken("colors", "red.500");
-    const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
-    const isLive = useControlIsLive();
-    const seekPlayback = useSeekPlaybackMutation();
+export const ControlTimelineTableItem = memo(({ eventId }: ControlTimelineTableItemProps) => {
+  const rows = useControlShowRows();
+  const payload = rows.find((r) => r.id === eventId);
+  const durationInSeconds = payload?.durationSeconds;
+  const showQuery = useControlShowQuery();
+  const isCurrent = eventId === showQuery.data?.playback.currentEventId;
+  const success = useToken("colors", "green.600");
+  const errror = useToken("colors", "red.500");
+  const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
+  const isLive = useControlIsLive();
+  const seekPlayback = useSeekPlaybackMutation();
 
-    return (
-      <Box
-        w="full"
-        h={pxToChakraSpace(CONTROL_TIMELINE_ROW_HEIGHT_PX)}
-        position="relative"
-        borderWidth={2}
-        borderColor={isCurrent ? "border.success" : "transparent"}
-        borderBottomColor="border"
-        animation={isCurrent ? `${pulseBorder} 1s infinite` : undefined}
-      >
-        <MotionBox
-          position="absolute"
-          zIndex={0}
-          top={0}
-          left={0}
-          h="full"
-          initial={{
-            width: "0%",
-            backgroundColor: success,
-          }}
-          animate={
-            isCurrent
-              ? {
-                  width: "100%",
-                  backgroundColor: [success[0], success[0], errror[0]],
-                }
-              : {
-                  width: "0%",
-                  backgroundColor: success,
-                }
-          }
-          transition={{
-            width: {
-              duration: isCurrent ? durationInSeconds : 0,
-              ease: "linear",
-            },
-            backgroundColor: isCurrent
-              ? {
-                  duration: durationInSeconds,
-                  times: [0, warningKeyframe, warningKeyframe],
-                  ease: "linear",
-                }
-              : { duration: 0 },
-          }}
-          pointerEvents="none"
-        />
+  if (!payload) return null;
 
-        <ControlTimelineTableGridRow>
-          <Tooltip
-            content={`Seek to #${payload.id}`}
-            openDelay={0}
-            positioning={{ placement: "left" }}
+  return (
+    <Box
+      w="full"
+      h={8}
+      position="relative"
+      borderWidth={2}
+      borderColor={isCurrent ? "border.success" : "transparent"}
+      borderBottomColor="border"
+      animation={isCurrent ? `${pulseBorder} 1s infinite` : undefined}
+      data-event-id={eventId}
+    >
+      <MotionBox
+        position="absolute"
+        zIndex={0}
+        top={0}
+        left={0}
+        h="full"
+        initial={{
+          width: "0%",
+          backgroundColor: success,
+        }}
+        animate={
+          isCurrent
+            ? {
+                width: "100%",
+                backgroundColor: [success[0], success[0], errror[0]],
+              }
+            : {
+                width: "0%",
+                backgroundColor: success,
+              }
+        }
+        transition={{
+          width: {
+            duration: isCurrent ? durationInSeconds : 0,
+            ease: "linear",
+          },
+          backgroundColor: isCurrent
+            ? {
+                duration: durationInSeconds,
+                times: [0, warningKeyframe, warningKeyframe],
+                ease: "linear",
+              }
+            : { duration: 0 },
+        }}
+        pointerEvents="none"
+      />
+
+      <ControlTimelineTableGridRow>
+        <Tooltip
+          content={`Seek to #${payload.id}`}
+          openDelay={0}
+          positioning={{ placement: "left" }}
+        >
+          <Box
+            textAlign="end"
+            fontFamily="mono"
+            cursor="pointer"
+            onClick={() => seekPlayback.mutate(payload.id)}
           >
-            <Box
-              textAlign="end"
-              fontFamily="mono"
-              cursor="pointer"
-              onClick={() => seekPlayback.mutate(payload.id)}
-            >
-              {payload.id}
-            </Box>
-          </Tooltip>
-          <Box fontFamily="mono" textTransform="uppercase">
-            {payload.type}
+            {payload.id}
           </Box>
-          <Box minW={0}>
-            {!isLive ? (
-              <ControlTimelineEventCustomNameEditable payload={payload} />
-            ) : (
-              <Box>{resolveDisplayName(payload)}</Box>
-            )}
-          </Box>
-          <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis">
-            {payload.problem ? `${payload.problem}` : ""}
-            {payload.newProblemScore !== undefined ? ` (${payload.newProblemScore})` : ""}
-          </Box>
-          <Box textAlign="end" fontFamily="mono">
-            {payload.newTotalScore}
-          </Box>
-          <Box textAlign="end" fontFamily="mono">
-            {payload.newRank}
-          </Box>
-          <Box textAlign="end" fontFamily="mono">
-            {payload.durationSeconds}
-          </Box>
-          <Box textAlign="end" fontFamily="mono">
-            {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
-              ? `+${payload.triggerOffsetSeconds}`
-              : payload.triggerOffsetSeconds}
-          </Box>
-          <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
-        </ControlTimelineTableGridRow>
-      </Box>
-    );
-  },
-);
+        </Tooltip>
+        <Box fontFamily="mono" textTransform="uppercase">
+          {payload.type}
+        </Box>
+        <Box minW={0}>
+          {!isLive ? (
+            <ControlTimelineEventCustomNameEditable payload={payload} />
+          ) : (
+            <Box>{resolveDisplayName(payload)}</Box>
+          )}
+        </Box>
+        <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis">
+          {payload.problem ? `${payload.problem}` : ""}
+          {payload.newProblemScore !== undefined ? ` (${payload.newProblemScore})` : ""}
+        </Box>
+        <Box textAlign="end" fontFamily="mono">
+          {payload.newTotalScore}
+        </Box>
+        <Box textAlign="end" fontFamily="mono">
+          {payload.newRank}
+        </Box>
+        <Box textAlign="end" fontFamily="mono">
+          {payload.durationSeconds}
+        </Box>
+        <Box textAlign="end" fontFamily="mono">
+          {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
+            ? `+${payload.triggerOffsetSeconds}`
+            : payload.triggerOffsetSeconds}
+        </Box>
+        <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
+      </ControlTimelineTableGridRow>
+    </Box>
+  );
+});
 
 export function ControlTimelineTableHeader() {
   return (
@@ -201,7 +206,7 @@ function ControlTimelineTableGridRow({ children, ...props }: GridProps) {
       w="full"
       templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}
       gapX={2}
-      h={pxToChakraSpace(CONTROL_TIMELINE_ROW_HEIGHT_PX)}
+      h={8}
       alignItems="center"
       css={{
         "& > *": {

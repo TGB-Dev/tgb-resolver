@@ -1,9 +1,7 @@
 import { Box, Center, Spinner, Text } from "@chakra-ui/react";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useRef } from "react";
 
-import { useControlShowQuery, useControlShowRows } from "@/features/control/hooks";
-import { CONTROL_TIMELINE_ROW_HEIGHT_PX } from "@/state/list-metrics";
+import { useControlShowQuery } from "@/features/control/hooks";
 
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
 
@@ -17,35 +15,22 @@ interface ControlTimelineTableProps {
 
 export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   const showQuery = useControlShowQuery();
-  const rows = useControlShowRows();
   const currentEventId = showQuery.data?.playback.currentEventId;
+  const events = showQuery.data?.timeline ?? [];
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => CONTROL_TIMELINE_ROW_HEIGHT_PX,
-    overscan: 10,
-  });
-
-  // Auto-scroll to current event — tested manually across devices/browsers.
-  // rows ref changes when data updates; virtualizer reference is stable.
   useEffect(() => {
     if (currentEventId == null) return;
-    const index = rows.findIndex((r) => r.id === currentEventId);
-    if (index >= 0) {
-      virtualizer.scrollToIndex(index, { align: "start" });
-    }
-  }, [currentEventId, rows, virtualizer]);
+    const el = parentRef.current?.querySelector(`[data-event-id="${currentEventId}"]`);
+    el?.scrollIntoView({ block: "start" });
+  }, [currentEventId]);
 
   if (apiRef) {
     apiRef.current = {
       scrollToCurrent: () => {
         if (currentEventId == null) return;
-        const index = rows.findIndex((r) => r.id === currentEventId);
-        if (index >= 0) {
-          virtualizer.scrollToIndex(index, { align: "start" });
-        }
+        const el = parentRef.current?.querySelector(`[data-event-id="${currentEventId}"]`);
+        el?.scrollIntoView({ block: "start" });
       },
     };
   }
@@ -66,7 +51,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
     );
   }
 
-  if (rows.length === 0) {
+  if (events.length === 0) {
     return (
       <Center boxSize="full">
         <Text>No show loaded.</Text>
@@ -79,29 +64,9 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
       <ControlTimelineTableHeader />
 
       <Box flex={1} minH={0} ref={parentRef} overflow="auto">
-        <Box h={`${virtualizer.getTotalSize()}px`} w="full" position="relative">
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const item = rows[virtualRow.index];
-            return (
-              <Box
-                key={virtualRow.key}
-                data-index={virtualRow.index}
-                ref={virtualizer.measureElement}
-                position="absolute"
-                top={0}
-                left={0}
-                w="full"
-                transform={`translateY(${virtualRow.start}px)`}
-              >
-                <ControlTimelineTableItem
-                  payload={item}
-                  isCurrent={item.id === currentEventId}
-                  durationInSeconds={item.durationSeconds}
-                />
-              </Box>
-            );
-          })}
-        </Box>
+        {events.map((event) => (
+          <ControlTimelineTableItem key={event.id} eventId={event.id} />
+        ))}
       </Box>
     </Box>
   );

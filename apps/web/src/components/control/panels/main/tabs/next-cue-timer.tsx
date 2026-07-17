@@ -76,7 +76,7 @@ export function NextCueTimer() {
     <HStack gap={2} alignItems="center" py={4} fontSize="lg" fontFamily="mono">
       <ChevronDown />
       Next cue in{" "}
-      <Text as="span" fontFamily="mono" fontVariantNumeric="tabular-nums">
+      <Text as="span" fontFamily="mono" fontVariantNumeric="tabular-nums" fontWeight="bold">
         {minutes}:{seconds}.
         <Text as="span" fontSize="sm">
           {hundredMillis}
