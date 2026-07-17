@@ -1,5 +1,5 @@
 import { Tabs } from "@chakra-ui/react";
-import { useHotkey } from "@tanstack/react-hotkeys";
+import { useHotkey } from "@tanstack/preact-hotkeys";
 import { Info, Logs, ScanEye, Settings } from "lucide-react";
 import { useState } from "react";
 

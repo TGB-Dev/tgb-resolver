@@ -1,12 +1,14 @@
-import { HotkeysProvider } from "@tanstack/react-hotkeys";
-import type * as React from "react";
+import { HotkeysProvider } from "@tanstack/preact-hotkeys";
+import { QueryClient, QueryClientProvider } from "@tanstack/preact-query";
+import type { ReactNode } from "react";
 
-import { Provider as ChakraProvider } from "@/components/ui/provider.tsx";
-import { TanStackQueryProvider } from "@/integrations/tanstack-query/root-provider.tsx";
+import { Provider as ChakraProvider } from "@/components/ui/provider";
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
+const queryClient = new QueryClient();
+
+export function AppProvider({ children }: { children: ReactNode }) {
   return (
-    <TanStackQueryProvider>
+    <QueryClientProvider client={queryClient}>
       <HotkeysProvider
         defaultOptions={{
           hotkey: { preventDefault: true },
@@ -15,6 +17,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       >
         <ChakraProvider>{children}</ChakraProvider>
       </HotkeysProvider>
-    </TanStackQueryProvider>
+    </QueryClientProvider>
   );
 }

@@ -1,10 +1,10 @@
-import react from "@vitejs/plugin-react";
+import preact from "@preact/preset-vite";
 import { defineConfig } from "vitest/config";
 
 import { resolve } from "node:path";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [preact()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

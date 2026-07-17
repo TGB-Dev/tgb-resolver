@@ -1,55 +1,22 @@
 import { Container } from "@chakra-ui/react";
-import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 
-import { AppDevtools } from "@/components/app/devtools";
 import { AppProvider } from "@/components/app/provider";
 import { Toaster } from "@/components/ui/toaster";
 
-import appCss from "../styles.css?url";
+import "../styles.css";
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "TGB Resolver",
-      },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
-  shellComponent: RootDocument,
+  component: RootComponent,
 });
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootComponent() {
   return (
-    <html lang="vi" suppressHydrationWarning>
-      <head>
-        {import.meta.env.DEV && (
-          <script crossOrigin="anonymous" src="https://unpkg.com/react-scan/dist/auto.global.js" />
-        )}
-        <HeadContent />
-      </head>
-      <body>
-        <AppProvider>
-          <Container fluid px="0" minH="dvh">
-            {children}
-            <Toaster />
-            <AppDevtools />
-          </Container>
-        </AppProvider>
-        <Scripts />
-      </body>
-    </html>
+    <AppProvider>
+      <Container fluid px="0" minH="dvh">
+        <Outlet />
+        <Toaster />
+      </Container>
+    </AppProvider>
   );
 }

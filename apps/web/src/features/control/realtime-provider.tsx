@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { createContext, type ReactNode, use, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/preact-query";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 import { createShowWebSocketManager, type ShowConnectionStatus } from "@/lib/api";
 
@@ -127,7 +127,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useControlRealtime() {
-  const context = use(ControlRealtimeContext);
+  const context = useContext(ControlRealtimeContext);
 
   if (!context) {
     throw new Error("useControlRealtime must be used within ControlRealtimeProvider");

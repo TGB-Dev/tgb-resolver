@@ -59,8 +59,9 @@ export function ImportShowPanel() {
         <Input
           value={excludedUsernames}
           onChange={(event) => {
-            setExcludedUsernames(event.target.value);
-            setDirty(Boolean(file) || event.target.value.length > 0);
+            const target = event.target as HTMLInputElement;
+            setExcludedUsernames(target.value);
+            setDirty(Boolean(file) || target.value.length > 0);
           }}
           placeholder="team_a, team_b"
         />

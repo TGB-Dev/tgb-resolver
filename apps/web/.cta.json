@@ -1,5 +1,5 @@
 {
-  "projectName": "web",
+  "projectName": "web-router-only",
   "mode": "file-router",
   "typescript": true,
   "packageManager": "pnpm",
@@ -9,8 +9,8 @@
   "envVarValues": {},
   "git": false,
   "install": true,
-  "routerOnly": false,
+  "routerOnly": true,
   "version": 1,
   "framework": "react",
-  "chosenAddOns": ["nitro", "tanstack-query"]
+  "chosenAddOns": []
 }

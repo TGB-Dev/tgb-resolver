@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/preact-query";
 import {
   generatedClient,
   type ShowStateSnapshot,

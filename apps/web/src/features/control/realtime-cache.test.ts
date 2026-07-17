@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/preact-query";
 import { PlaybackStatus, type ShowStateSnapshot } from "@tgb-resolver/contracts";
 import { ShowRefetchReason } from "@tgb-resolver/realtime";
 import { describe, expect, test, vi } from "vitest";

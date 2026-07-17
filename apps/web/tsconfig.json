@@ -3,23 +3,24 @@
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "module": "ESNext",
     "paths": {
+      "#/*": ["./src/*"],
       "@/*": ["./src/*"],
-      "@tgb-resolver/contracts": ["../../packages/contracts/src/index.ts"],
-      "@tgb-resolver/realtime": ["../../packages/realtime/src/index.ts"],
-      "@tgb-resolver/realtime/signalr": ["../../packages/realtime/src/signalr.ts"]
+      "react": ["./node_modules/preact/compat/"],
+      "react/jsx-runtime": ["./node_modules/preact/jsx-runtime"],
+      "react-dom": ["./node_modules/preact/compat/"],
+      "react-dom/*": ["./node_modules/preact/compat/*"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
 
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
-    /* Linting */
     "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": true,

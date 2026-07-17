@@ -1,5 +1,5 @@
-import type { RegisterableHotkey } from "@tanstack/react-hotkeys";
-import { useHotkeys } from "@tanstack/react-hotkeys";
+import type { RegisterableHotkey } from "@tanstack/preact-hotkeys";
+import { useHotkeys } from "@tanstack/preact-hotkeys";
 import { useCallback, useRef } from "react";
 
 export interface UseActionOptions {

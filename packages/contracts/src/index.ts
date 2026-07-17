@@ -1,4 +1,4 @@
-export * from "./generated/@tanstack/react-query.gen";
+export * from "./generated/@tanstack/preact-query.gen";
 export { client as generatedClient } from "./generated/client.gen";
 export type { Options } from "./generated/sdk.gen";
 export {

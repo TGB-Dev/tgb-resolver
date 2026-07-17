@@ -30,6 +30,7 @@ export function CueItem({ cue, children }: CueItemProps) {
     <VStack gap={4} alignItems="start">
       <Heading fontSize={config.headingSize}>{config.label}</Heading>
       <Text
+        as="span"
         fontSize={config.contentSize}
         fontFamily="mono"
         textTransform="uppercase"
