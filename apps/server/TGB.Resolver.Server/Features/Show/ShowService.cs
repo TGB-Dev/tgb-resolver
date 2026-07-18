@@ -287,8 +287,8 @@ public sealed class ShowStateService(
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(e => e.Id == eventId);
-      if (item.Type == TimelineEventType.Res)
-        throw new InvalidOperationException("Resolve events cannot be reordered.");
+      if (item.Type == TimelineEventType.Res || item.Type == TimelineEventType.Pre)
+        throw new InvalidOperationException("Resolve and pre-resolve events cannot be reordered.");
 
       var target = state.Timeline.Single(e => e.Id == request.RelativeToEventId);
       var without = state.Timeline.Where(e => e.Id != eventId)
