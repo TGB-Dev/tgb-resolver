@@ -21,7 +21,11 @@ namespace TGB.Resolver.Server.Commons.Serialization;
 [JsonSerializable(typeof(NonResolveEventPatchRequest))]
 [JsonSerializable(typeof(ImportXmlRequest))]
 [JsonSerializable(typeof(ImportBundleRequest))]
-[JsonSerializable(typeof(ShowRefetchRequiredMessage))]
+[JsonSerializable(typeof(ShowReplacedMessage))]
+[JsonSerializable(typeof(TimelineEventAddedMessage))]
+[JsonSerializable(typeof(TimelineEventUpdatedMessage))]
+[JsonSerializable(typeof(TimelineEventRemovedMessage))]
+[JsonSerializable(typeof(TimelineReorderedMessage))]
 [JsonSerializable(typeof(PlaybackStateChangedMessage))]
 [JsonSerializable(typeof(LiveModeChangedMessage))]
 public partial class AppJsonSerializerContext : JsonSerializerContext;

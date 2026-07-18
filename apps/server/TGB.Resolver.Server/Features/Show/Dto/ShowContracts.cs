@@ -67,6 +67,7 @@ public sealed record ShowAssetSnapshot(
   long SizeBytes,
   string Xxh364);
 
+[TranspilationSource]
 public sealed record TimelineEventSnapshot(
   int Id,
   int Position,
@@ -78,6 +79,7 @@ public sealed record TimelineEventSnapshot(
   MediaEventPayloadSnapshot? Image,
   MediaEventPayloadSnapshot? Sfx);
 
+[TranspilationSource]
 public sealed record ResolveEventPayloadSnapshot(
   string RealName,
   string Username,
@@ -88,6 +90,7 @@ public sealed record ResolveEventPayloadSnapshot(
   string ProblemDisplayName,
   VerdictRunResult Verdict);
 
+[TranspilationSource]
 public sealed record MediaEventPayloadSnapshot(
   string AssetId,
   double? DurationSeconds);

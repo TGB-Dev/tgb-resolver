@@ -59,7 +59,7 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return await BroadcastReorderedAsync(updated, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> ClearAsync(VersionedCommandRequest request,
@@ -70,7 +70,7 @@ public sealed class ShowStateService(
       state => ShowRawRepository.CreateEmptyShow(state.ShowVersion + 1, ShowSource.Manual),
       cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
+    return await BroadcastReplacedAsync(updated, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> ImportXmlAsync(ImportXmlRequest request,
@@ -81,7 +81,7 @@ public sealed class ShowStateService(
     var next = ShowRawRepository.BuildShowFromXml(
       request.Xml, request.ExcludedUsernames, current.ShowVersion + 1);
     var updated = await repository.ReplaceAsync(next, cancellationToken);
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
+    return await BroadcastReplacedAsync(updated, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> ImportBundleAsync(ImportBundleRequest request,
@@ -97,7 +97,7 @@ public sealed class ShowStateService(
         Meta = imported.Meta with { Source = ShowSource.Bundle }
       },
       cancellationToken);
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.ShowReplaced, cancellationToken);
+    return await BroadcastReplacedAsync(updated, cancellationToken);
   }
 
   public async Task<byte[]> ExportBundleAsync(CancellationToken cancellationToken = default)
@@ -128,7 +128,7 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return await BroadcastUpdatedAsync(updated, eventId, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> PatchNonResolveEventAsync(
@@ -166,7 +166,7 @@ public sealed class ShowStateService(
               Type = type,
               TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
-              request.RequireManualInteraction ?? e.RequireManualInteraction,
+                request.RequireManualInteraction ?? e.RequireManualInteraction,
               CustomName = request.CustomName ?? e.CustomName,
               Image = type == TimelineEventType.Img ? media : null,
               Sfx = type == TimelineEventType.Sfx ? media : null
@@ -176,7 +176,7 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return await BroadcastUpdatedAsync(updated, eventId, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
@@ -215,7 +215,8 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    var createdId = updated.Timeline.Max(e => e.Id);
+    return await BroadcastAddedAsync(updated, createdId, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> PatchTimelineEventAsync(int eventId,
@@ -264,7 +265,7 @@ public sealed class ShowStateService(
               CustomName = request.CustomName ?? e.CustomName,
               TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
-              request.RequireManualInteraction ?? e.RequireManualInteraction,
+                request.RequireManualInteraction ?? e.RequireManualInteraction,
               Image = isImg ? media : null,
               Sfx = isImg ? null : media
             }
@@ -273,7 +274,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return await BroadcastUpdatedAsync(updated, eventId, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> MoveNonResolveEventAsync(int eventId,
@@ -299,7 +300,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return await BroadcastReorderedAsync(updated, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> DeleteNonResolveEventAsync(int eventId,
@@ -320,7 +321,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return await BroadcastRemovedAsync(updated, eventId, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> SetTimelineModeAsync(SetTimelineModeRequest request,
@@ -335,7 +336,7 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return ShowContractMapper.ToContract(updated);
   }
 
   public async Task<ShowStateSnapshot> UpsertAssetAsync(string assetId, UpsertAssetRequest request,
@@ -363,7 +364,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return ShowContractMapper.ToContract(updated);
   }
 
   public async Task<ShowStateSnapshot> DeleteAssetAsync(string assetId,
@@ -381,7 +382,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return ShowContractMapper.ToContract(updated);
   }
 
   public async Task<ShowStateSnapshot> SetLiveModeAsync(bool enabled,
@@ -411,7 +412,6 @@ public sealed class ShowStateService(
         if (state.Playback.Status == PlaybackStatus.Running)
           return state with
           {
-            ShowVersion = state.ShowVersion + 1,
             Playback = state.Playback with
             {
               Status = PlaybackStatus.Paused,
@@ -422,7 +422,6 @@ public sealed class ShowStateService(
         if (state.Playback.Status == PlaybackStatus.Paused)
           return state with
           {
-            ShowVersion = state.ShowVersion + 1,
             Playback = state.Playback with
             {
               Status = PlaybackStatus.Running,
@@ -441,7 +440,6 @@ public sealed class ShowStateService(
 
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Playback = NewPlayback(
             PlaybackStatus.Running,
             firstResolve?.Id,
@@ -472,7 +470,6 @@ public sealed class ShowStateService(
       request.ShowVersion,
       state => state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Playback = NewPlayback(PlaybackStatus.Idle, null, null, null, null,
           state.Playback.ExecutionSequence)
       },
@@ -498,7 +495,6 @@ public sealed class ShowStateService(
         var resolve = ordered.ResolveBefore(request.EventId);
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Playback = NewPlayback(
             PlaybackStatus.Paused,
             resolve?.Id,
@@ -541,7 +537,6 @@ public sealed class ShowStateService(
       state.ShowVersion,
       s => s with
       {
-        ShowVersion = s.ShowVersion + 1,
         Playback = NewPlayback(
           PlaybackStatus.Running,
           resolve?.Id,
@@ -569,7 +564,6 @@ public sealed class ShowStateService(
       state.ShowVersion,
       s => s with
       {
-        ShowVersion = s.ShowVersion + 1,
         Playback = NewPlayback(PlaybackStatus.Idle, null, null, null, null,
           s.Playback.ExecutionSequence)
       },
@@ -668,7 +662,7 @@ public sealed class ShowStateService(
       ScheduleNextAdvanceAsync(updated);
     }
 
-    return await BroadcastRefetchAsync(updated, ShowRefetchReason.Optimized, cancellationToken);
+    return ShowContractMapper.ToContract(updated);
   }
 
   private static void EnsureTimelineWritable(ShowState state)
@@ -684,14 +678,51 @@ public sealed class ShowStateService(
       new PlaybackStateChangedMessage(snapshot.ShowVersion, snapshot.Playback));
   }
 
-  private async Task<ShowStateSnapshot> BroadcastRefetchAsync(
-    ShowState updated,
-    ShowRefetchReason reason,
-    CancellationToken cancellationToken)
+  private async Task<ShowStateSnapshot> BroadcastAddedAsync(
+    ShowState updated, int eventId, CancellationToken cancellationToken)
   {
     var snapshot = ShowContractMapper.ToContract(updated);
-    await hubContext.Clients.All.ShowRefetchRequired(
-      new ShowRefetchRequiredMessage(snapshot.ShowVersion, reason));
+    var @event = snapshot.Timeline.Single(e => e.Id == eventId);
+    await hubContext.Clients.All.TimelineEventAdded(
+      new TimelineEventAddedMessage(snapshot.ShowVersion, @event));
+    return snapshot;
+  }
+
+  private async Task<ShowStateSnapshot> BroadcastUpdatedAsync(
+    ShowState updated, int eventId, CancellationToken cancellationToken)
+  {
+    var snapshot = ShowContractMapper.ToContract(updated);
+    var @event = snapshot.Timeline.Single(e => e.Id == eventId);
+    await hubContext.Clients.All.TimelineEventUpdated(
+      new TimelineEventUpdatedMessage(snapshot.ShowVersion, @event));
+    return snapshot;
+  }
+
+  private async Task<ShowStateSnapshot> BroadcastRemovedAsync(
+    ShowState updated, int eventId, CancellationToken cancellationToken)
+  {
+    var snapshot = ShowContractMapper.ToContract(updated);
+    await hubContext.Clients.All.TimelineEventRemoved(
+      new TimelineEventRemovedMessage(snapshot.ShowVersion, eventId));
+    return snapshot;
+  }
+
+  private async Task<ShowStateSnapshot> BroadcastReorderedAsync(
+    ShowState updated, CancellationToken cancellationToken)
+  {
+    var snapshot = ShowContractMapper.ToContract(updated);
+    await hubContext.Clients.All.TimelineReordered(
+      new TimelineReorderedMessage(
+        snapshot.ShowVersion,
+        updated.Timeline.OrderBy(e => e.Position).Select(e => e.Id).ToArray()));
+    return snapshot;
+  }
+
+  private async Task<ShowStateSnapshot> BroadcastReplacedAsync(
+    ShowState updated, CancellationToken cancellationToken)
+  {
+    var snapshot = ShowContractMapper.ToContract(updated);
+    await hubContext.Clients.All.ShowReplaced(new ShowReplacedMessage(snapshot.ShowVersion));
     return snapshot;
   }
 

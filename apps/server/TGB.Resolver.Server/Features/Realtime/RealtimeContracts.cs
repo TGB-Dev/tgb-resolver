@@ -6,9 +6,40 @@ using TypedSignalR.Client;
 namespace TGB.Resolver.Server.Features.Realtime;
 
 [TranspilationSource]
-public sealed record ShowRefetchRequiredMessage(
+public enum ShowMessageType
+{
+    ShowReplaced,
+    TimelineEventAdded,
+    TimelineEventUpdated,
+    TimelineEventRemoved,
+    TimelineReordered,
+    PlaybackStateChanged,
+    LiveModeChanged,
+}
+
+[TranspilationSource]
+public sealed record TimelineEventAddedMessage(
   int ShowVersion,
-  ShowRefetchReason Reason);
+  TimelineEventSnapshot Event);
+
+[TranspilationSource]
+public sealed record TimelineEventUpdatedMessage(
+  int ShowVersion,
+  TimelineEventSnapshot Event);
+
+[TranspilationSource]
+public sealed record TimelineEventRemovedMessage(
+  int ShowVersion,
+  int EventId);
+
+[TranspilationSource]
+public sealed record TimelineReorderedMessage(
+  int ShowVersion,
+  IReadOnlyList<int> OrderedEventIds);
+
+[TranspilationSource]
+public sealed record ShowReplacedMessage(
+  int ShowVersion);
 
 [TranspilationSource]
 public sealed record PlaybackStateChangedMessage(
@@ -23,7 +54,11 @@ public sealed record LiveModeChangedMessage(
 [Receiver]
 public interface IShowHubClient
 {
-  Task ShowRefetchRequired(ShowRefetchRequiredMessage message);
+  Task TimelineEventAdded(TimelineEventAddedMessage message);
+  Task TimelineEventUpdated(TimelineEventUpdatedMessage message);
+  Task TimelineEventRemoved(TimelineEventRemovedMessage message);
+  Task TimelineReordered(TimelineReorderedMessage message);
+  Task ShowReplaced(ShowReplacedMessage message);
   Task PlaybackStateChanged(PlaybackStateChangedMessage message);
   Task LiveModeChanged(LiveModeChangedMessage message);
 }
