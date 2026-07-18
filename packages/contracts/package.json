@@ -9,7 +9,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "pnpm run generate && tsdown",
+    "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch --no-clean",
     "generate": "openapi-ts",
@@ -24,6 +24,7 @@
     "valibot": "^1.4.2"
   },
   "devDependencies": {
+    "@tgb-resolver/server": "workspace:*",
     "@hey-api/openapi-ts": "^0.99.0",
     "@types/node": "^26.1.1",
     "bumpp": "^11.1.0",

@@ -4,16 +4,17 @@
 
 /** Transpiled from TGB.Resolver.IcpcXmlParser.VerdictRunResult */
 export enum VerdictRunResult {
-  Unknown = "Unknown",
-  Accepted = "Accepted",
-  WrongAnswer = "WrongAnswer",
-  TimeLimitExceeded = "TimeLimitExceeded",
-  MemoryLimitExceeded = "MemoryLimitExceeded",
-  OutputLimitExceeded = "OutputLimitExceeded",
-  InvalidReturn = "InvalidReturn",
-  RuntimeError = "RuntimeError",
-  CompileError = "CompileError",
-  InternalError = "InternalError",
-  ShortCircuited = "ShortCircuited",
-  Aborted = "Aborted",
+    Unknown = "Unknown",
+    Accepted = "Accepted",
+    WrongAnswer = "WrongAnswer",
+    TimeLimitExceeded = "TimeLimitExceeded",
+    MemoryLimitExceeded = "MemoryLimitExceeded",
+    OutputLimitExceeded = "OutputLimitExceeded",
+    InvalidReturn = "InvalidReturn",
+    RuntimeError = "RuntimeError",
+    CompileError = "CompileError",
+    InternalError = "InternalError",
+    ShortCircuited = "ShortCircuited",
+    Aborted = "Aborted",
 }
+

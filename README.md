@@ -9,7 +9,7 @@ driving audience and control UIs from a single source of truth.
 
 | Layer | Tech |
 |---|---|
-| Workspace | Nx, pnpm workspaces |
+| Workspace | Turborepo, pnpm workspaces |
 | Frontend | React 19, TanStack Start (SPA), Vite 8, Chakra UI 3, Jotai, react-window |
 | Server | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly |
 | Contracts | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot |
@@ -50,17 +50,13 @@ Frontend app: `apps/web/` (TanStack Start SPA).
 ## Build & Test
 
 ```sh
-pnpm build          # Nx dependency-order build
+pnpm build          # Turborepo dependency-order build
 pnpm check-types    # tsc --noEmit for all TS packages
 pnpm test           # vitest (TS) + dotnet test (.NET)
 pnpm serve          # production previews
 ```
 
-The `packages/contracts` package generates its TypeScript client from `apps/server/TGB.Resolver.Server/openapi.yaml` before building. Regenerate OpenAPI with:
-
-```sh
-pnpm nx run server:openapi
-```
+The `packages/contracts` package generates its TypeScript client from `apps/server/TGB.Resolver.Server/openapi.yaml` before building. The OpenAPI document is emitted automatically by the server `build` (`dotnet build -p:GenerateOpenApiDocument=true`), so a normal `pnpm build` keeps it current.
 
 ## Native Git Hooks
 

@@ -13,6 +13,7 @@
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch --no-clean",
+    "generate": "pnpm --filter @tgb-resolver/server exec dotnet tool run dotnet-tsrts --project TGB.Resolver.Server/TGB.Resolver.Server.csproj --output ../../packages/realtime/src/gen --serializer MessagePack --naming-style none --enum name --asm",
     "prepublishOnly": "pnpm run build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "pnpm run check-types"
@@ -21,6 +22,7 @@
     "@tgb-resolver/contracts": "workspace:*"
   },
   "devDependencies": {
+    "@tgb-resolver/server": "workspace:*",
     "@microsoft/signalr": "^10.0.0",
     "@types/node": "^26.1.1",
     "tsdown": "^0.22.8",

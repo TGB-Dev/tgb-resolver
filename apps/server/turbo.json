@@ -1,0 +1,22 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "outputs": [
+        "TGB.Resolver.Server/bin/**",
+        "TGB.Resolver.Server.Tests/bin/**",
+        "TGB.Resolver.IcpcXmlParser/bin/**",
+        "TGB.Resolver.IcpcXmlParser.Tests/bin/**",
+        "TGB.Resolver.Server/openapi.yaml"
+      ]
+    },
+    "check-types": {
+      "outputs": [
+        "TGB.Resolver.Server/bin/**",
+        "TGB.Resolver.Server.Tests/bin/**",
+        "TGB.Resolver.IcpcXmlParser/bin/**",
+        "TGB.Resolver.IcpcXmlParser.Tests/bin/**"
+      ]
+    }
+  }
+}

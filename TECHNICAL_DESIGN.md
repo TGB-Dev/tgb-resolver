@@ -67,8 +67,9 @@ whole object, so it is the dominant re-render source. Conventions:
 ### Tooling
 
 - Run workspace tasks through Nx: `pnpm test`, `pnpm check-types`, `pnpm build`.
-- Contract changes: regenerate `openapi.yaml` (`pnpm nx run server:openapi`),
-  then `packages/contracts` consumes it at build time (`openapi-ts` → `tsdown`).
+- Contract changes: the server `build` emits `openapi.yaml` automatically
+  (`-p:GenerateOpenApiDocument=true`); `packages/contracts` consumes it at build
+  time (`openapi-ts` → `tsdown`).
 - Biome (not ESLint/Prettier) for lint + format. syncpack for dependency consistency.
 - `verbatimModuleSyntax` enabled root-wide — always `import type` for type-only.
 - The server solution uses `.slnx` format (not `.sln`).

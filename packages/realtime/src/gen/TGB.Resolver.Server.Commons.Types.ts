@@ -4,27 +4,28 @@
 
 /** Transpiled from TGB.Resolver.Server.Commons.Types.PlaybackStatus */
 export enum PlaybackStatus {
-  Idle = "Idle",
-  Running = "Running",
-  Paused = "Paused",
+    Idle = "Idle",
+    Running = "Running",
+    Paused = "Paused",
 }
 
 /** Transpiled from TGB.Resolver.Server.Commons.Types.TimelineEventType */
 export enum TimelineEventType {
-  Res = "Res",
-  Img = "Img",
-  Sfx = "Sfx",
-  Pre = "Pre",
+    Res = "Res",
+    Img = "Img",
+    Sfx = "Sfx",
+    Pre = "Pre",
 }
 
 /** Transpiled from TGB.Resolver.Server.Commons.Types.ShowMode */
 export enum ShowMode {
-  Editing = "Editing",
-  Live = "Live",
+    Editing = "Editing",
+    Live = "Live",
 }
 
 /** Transpiled from TGB.Resolver.Server.Commons.Types.ShowRefetchReason */
 export enum ShowRefetchReason {
-  ShowReplaced = "ShowReplaced",
-  Optimized = "Optimized",
+    ShowReplaced = "ShowReplaced",
+    Optimized = "Optimized",
 }
+

@@ -3,14 +3,15 @@
 ## Commands
 
 - `pnpm dev` — run all apps in parallel (server + web)
-- `pnpm build` — builds through Nx respecting dependency graph
+- `pnpm build` — builds through Turborepo respecting dependency graph
 - `pnpm test` — runs all vitest projects + `dotnet test` for .NET
 - `pnpm check-types` — `tsc --noEmit` for all TS packages
 - `pnpm format` / `pnpm lint` / `pnpm check` — Biome (not ESLint/Prettier)
 - `pnpm serve` — run production previews
 - `pnpm sync` / `pnpm sync:check` — syncpack dependency consistency
 - `pnpm hooks:install` — enable native `.githooks/pre-commit` (one-time)
-- `pnpm nx run server:openapi` — regenerate `openapi.yaml` from server
+- `pnpm turbo run quality --filter=@tgb-resolver/server` — ReSharper `cleanupcode` + `inspectcode` SARIF report (slow, .NET-only quality pass)
+- OpenAPI `openapi.yaml` is generated automatically by the server `build` (runs `dotnet build -p:GenerateOpenApiDocument=true`); no separate command needed.
 
 Pre-commit hook runs: `biome check --write --staged` → `sync:check || sync` → `build` → `test`.
 
@@ -30,7 +31,7 @@ Workspace packages: `@tgb-resolver/*`.
 - **`verbatimModuleSyntax`** enabled root-wide — always use `import type` for type-only imports
 - **String-valued enums** for domain vocabularies (not string unions). Contracts owns wire enums; realtime re-exports them
 - **Contracts build**: `pnpm run generate` (openapi-ts) → `tsdown`. Depends on current `openapi.yaml`
-- **OpenAPI regeneration**: `pnpm nx run server:openapi` (wraps `dotnet build -p:GenerateOpenApiDocument=true`)
+- **OpenAPI regeneration**: `pnpm turbo run openapi --filter=@tgb-resolver/server` (wraps `dotnet build -p:GenerateOpenApiDocument=true`)
 - **Biome** (v2.5.1): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan blank package blank alias blank path. Ignores `*.gen.ts` and `vite.config.ts`
 - **syncpack**: explicit pinned versions for typescript/biome/vite; React/TanStack allowed to drift; `@tgb-resolver/*` ignored
 - **Env**: `.env` → `VITE_API_URL` (default `http://localhost:5001`). Copy from `.env.example`
@@ -62,36 +63,24 @@ Workspace packages: `@tgb-resolver/*`.
 - Target: `net10.0`, SDK 10.0.301
 - Solution format: `.slnx` (new XML-based format), not `.sln`
 - Nx server `project.json` at `apps/server/project.json` with targets: `build`, `test`, `dev`, `serve`, `check-types`, `openapi`
+- Turborepo: `@tgb-resolver/server` package at `apps/server/package.json` wraps the .NET toolchain; `apps/server/turbo.json` declares .NET build outputs. Tasks: `build` (also emits `openapi.yaml`), `test`, `dev`, `serve`, `check-types`, `quality`, `generate`
 - `dotnet-tools.json` at `apps/server/dotnet-tools.json` — ReSharper CLI via `dotnet tool run jb`
 - SQLitePCLRaw pinned to 3.0.3 (temp workaround for efcore vulnerability)
 - `ExportSwaggerDocsAndExitAsync("v1")` in `Program.cs` generates `openapi.yaml` at startup
 - Scalar API reference at `/scalar`, Swagger JSON at `/openapi/{documentName}.json`
 
 
-<!-- nx configuration start-->
+<!-- turbo configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 
-## General Guidelines for working with Nx
+## General Guidelines for working with Turborepo
 
-- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
-- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
-- You have access to the Nx MCP server and its tools, use them to help the user
-- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
-- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+- Task graph is declared in `turbo.json` at the repo root; per-package overrides live in `*/turbo.json` (e.g. `apps/server/turbo.json`).
+- When running tasks (build, lint, test, etc.), use `turbo run <task>` through the workspace package manager (e.g. `pnpm turbo run build`, `pnpm turbo run test --filter=@tgb-resolver/web`).
+- Filter by package with `--filter` (`pnpm turbo run build --filter=@tgb-resolver/server`).
+- NEVER guess CLI flags - always check `turbo --help` or the Turborepo docs first when unsure.
 
-## Scaffolding & Generators
-
-- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
-
-## When to use nx_docs
-
-- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
-- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
-- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
-
-
-<!-- nx configuration end-->
+<!-- turbo configuration end-->
 
 ## Realtime Contracts
 

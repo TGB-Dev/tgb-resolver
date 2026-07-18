@@ -8,8 +8,8 @@ allowBuilds:
   core-js: true
   esbuild: true
   msgpackr-extract: true
-  nx: true
   xxhash-addon: true
+  nx: set this to true or false
 
 blockExoticSubdeps: false
 
