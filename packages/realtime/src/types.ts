@@ -148,6 +148,8 @@ export interface TimelineTableItem {
   name: string;
   customName?: string;
   placeholderName: string;
+  realName?: string;
+  username?: string;
   problem?: string;
   problemDisplayName?: string;
   newProblemScore?: number;

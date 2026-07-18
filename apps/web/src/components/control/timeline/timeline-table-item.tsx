@@ -24,6 +24,7 @@ interface ControlTimelineTableItemProps {
 export const ControlTimelineTableItem = memo(
   ({ payload, isLive, onSeek }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
+    const isCurrent = payload.isCurrentResolve || payload.isCurrentInlineEvent;
 
     return (
       <Box
@@ -33,6 +34,10 @@ export const ControlTimelineTableItem = memo(
         borderBottomColor="border"
         overflow="hidden"
         data-event-id={payload.id}
+        _light={{
+          color: isCurrent ? "fg.inverted" : "fg",
+        }}
+        bg={payload.id & 1 ? "bg" : "bg.emphasized"}
       >
         <CurrentEventIndicator eventId={payload.id} durationInSeconds={durationInSeconds} />
 

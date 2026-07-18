@@ -1,18 +1,18 @@
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 
 const verdictColors: Partial<Record<VerdictRunResult, string>> = {
-  [VerdictRunResult.ACCEPTED]: "green.400",
-  [VerdictRunResult.WRONG_ANSWER]: "red.400",
-  [VerdictRunResult.TIME_LIMIT_EXCEEDED]: "yellow.400",
-  [VerdictRunResult.MEMORY_LIMIT_EXCEEDED]: "yellow.400",
-  [VerdictRunResult.OUTPUT_LIMIT_EXCEEDED]: "yellow.400",
-  [VerdictRunResult.INVALID_RETURN]: "red.400",
-  [VerdictRunResult.RUNTIME_ERROR]: "red.400",
-  [VerdictRunResult.COMPILE_ERROR]: "orange.400",
-  [VerdictRunResult.INTERNAL_ERROR]: "orange.400",
-  [VerdictRunResult.SHORT_CIRCUITED]: "gray.400",
-  [VerdictRunResult.ABORTED]: "red.400",
-  [VerdictRunResult.UNKNOWN]: "gray.400",
+  [VerdictRunResult.ACCEPTED]: "fg.success",
+  [VerdictRunResult.WRONG_ANSWER]: "fg.error",
+  [VerdictRunResult.TIME_LIMIT_EXCEEDED]: "fg.warning",
+  [VerdictRunResult.MEMORY_LIMIT_EXCEEDED]: "fg.warning",
+  [VerdictRunResult.OUTPUT_LIMIT_EXCEEDED]: "fg.warning",
+  [VerdictRunResult.INVALID_RETURN]: "fg.error",
+  [VerdictRunResult.RUNTIME_ERROR]: "fg.error",
+  [VerdictRunResult.COMPILE_ERROR]: "fg.warning",
+  [VerdictRunResult.INTERNAL_ERROR]: "fg.warning",
+  [VerdictRunResult.SHORT_CIRCUITED]: "fg.muted",
+  [VerdictRunResult.ABORTED]: "fg.error",
+  [VerdictRunResult.UNKNOWN]: "fg.muted",
 };
 
 const verdictShortCodes: Record<VerdictRunResult, string> = {

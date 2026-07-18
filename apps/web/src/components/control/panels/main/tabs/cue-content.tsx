@@ -18,11 +18,26 @@ export function CueContent({ cue, contentSize }: CueContentProps) {
   const textProps: TextProps = { fontFamily: "mono", fontSize: contentSize, as: "span" };
 
   if (cue.type === TimelineEventType.RES) {
-    return <ResolveContent cue={cue} textProps={textProps} />;
+    return (
+      <Text as="span">
+        <Text {...textProps} color="fg.muted">
+          RES
+        </Text>{" "}
+        | <ResolveContent cue={cue} textProps={textProps} />
+      </Text>
+    );
   }
 
   if (cue.type === TimelineEventType.PRE) {
-    return <ResolveContent cue={cue} textProps={textProps} />;
+    const teamName = cue.realName ?? cue.username ?? cue.name;
+    return (
+      <Text as="span">
+        <Text {...textProps} color="fg.muted">
+          PRE-RES
+        </Text>{" "}
+        | <ResolveContent cue={cue} textProps={textProps} nameOverride={teamName} />
+      </Text>
+    );
   }
 
   const resolvedName = cue.customName ?? cue.name;
@@ -51,10 +66,11 @@ export function CueContent({ cue, contentSize }: CueContentProps) {
 interface ResolveContentProps {
   cue: TimelineTableItem;
   textProps: TextProps;
+  nameOverride?: string;
 }
 
-function ResolveContent({ cue, textProps }: ResolveContentProps): ReactNode {
-  const resolvedName = cue.customName ?? cue.name;
+function ResolveContent({ cue, textProps, nameOverride }: ResolveContentProps): ReactNode {
+  const resolvedName = cue.customName ?? nameOverride ?? cue.name;
 
   if (!cue.problem) {
     return <Text fontFamily="mono">{resolvedName}</Text>;

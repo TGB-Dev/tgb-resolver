@@ -51,6 +51,9 @@ importers:
       '@fontsource-variable/jetbrains-mono':
         specifier: ^5.2.8
         version: 5.2.8
+      '@fontsource-variable/noto-sans-display':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@microsoft/signalr':
         specifier: ^10.0.0
         version: 10.0.0
@@ -834,6 +837,9 @@ packages:
 
   '@fontsource-variable/jetbrains-mono@5.2.8':
     resolution: {integrity: sha512-WBA9elru6Jdp5df2mES55wuOO0WIrn3kpXnI4+W2ek5u3ZgLS9XS4gmIlcQhiZOWEKl95meYdvK7xI+ETLCq/Q==}
+
+  '@fontsource-variable/noto-sans-display@5.2.10':
+    resolution: {integrity: sha512-96RO74CcLjNaLSGc+Wo+ouNSRHKBUkrBvWqPM7LLdxsMLgtvi7dL9vGU1765rNm/p/Yb4bfjN8BnhvByWpr0/A==}
 
   '@hey-api/codegen-core@0.9.1':
     resolution: {integrity: sha512-s97jL1dgTMuiMHv2BZ1X4Tgd99Mf9GOvGdNqNcGwIMmnR+PgYNoraj4Zvp134MKsNCap/m7k0r0vKKnl56pj4w==}
@@ -5401,6 +5407,8 @@ snapshots:
   '@fontsource-variable/inter@5.2.8': {}
 
   '@fontsource-variable/jetbrains-mono@5.2.8': {}
+
+  '@fontsource-variable/noto-sans-display@5.2.10': {}
 
   '@hey-api/codegen-core@0.9.1(magicast@0.5.3)':
     dependencies:

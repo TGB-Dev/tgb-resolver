@@ -9,12 +9,18 @@ const config = defineConfig({
     html: {
       colorPalette: "blue",
     },
+    body: {
+      fontVariationSettings: '"wght" 500, "wdth" 87.5',
+    },
+    "code, pre, kbd, samp": {
+      fontVariationSettings: "normal",
+    },
   },
   theme: {
     tokens: {
       fonts: {
-        heading: { value: '"Inter Variable", sans-serif' },
-        body: { value: '"Inter Variable", sans-serif' },
+        heading: { value: '"Noto Sans Display Variable", sans-serif' },
+        body: { value: '"Noto Sans Display Variable", sans-serif' },
         mono: { value: '"JetBrains Mono Variable", monospace' },
       },
     },

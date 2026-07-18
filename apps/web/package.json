@@ -19,6 +19,7 @@
     "@emotion/react": "^11.14.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/noto-sans-display": "^5.2.10",
     "@microsoft/signalr": "^10.0.0",
     "@microsoft/signalr-protocol-msgpack": "^10.0.0",
     "@preact/signals-react": "^3.10.3",
