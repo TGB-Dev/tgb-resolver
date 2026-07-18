@@ -90,7 +90,8 @@ export const vAssetCollectionSnapshot = v.strictObject({
 export const vTimelineEventType = v.picklist([
     'Res',
     'Img',
-    'Sfx'
+    'Sfx',
+    'Pre'
 ]);
 
 export const vVerdictRunResult = v.picklist([
@@ -133,7 +134,8 @@ export const vTimelineEventSnapshot = v.strictObject({
     customName: v.nullish(v.string()),
     resolve: v.nullish(vResolveEventPayloadSnapshot),
     image: v.nullish(vMediaEventPayloadSnapshot),
-    sfx: v.nullish(vMediaEventPayloadSnapshot)
+    sfx: v.nullish(vMediaEventPayloadSnapshot),
+    pre: v.nullish(vResolveEventPayloadSnapshot)
 });
 
 export const vShowStateSnapshot = v.strictObject({

@@ -136,6 +136,7 @@ export type TimelineEventSnapshot = {
     resolve?: ResolveEventPayloadSnapshot | null;
     image?: MediaEventPayloadSnapshot | null;
     sfx?: MediaEventPayloadSnapshot | null;
+    pre?: ResolveEventPayloadSnapshot | null;
 };
 
 export enum TimelineEventType {
@@ -150,7 +151,11 @@ export enum TimelineEventType {
     /**
      * Sfx
      */
-    SFX = 'Sfx'
+    SFX = 'Sfx',
+    /**
+     * Pre
+     */
+    PRE = 'Pre'
 }
 
 export type ResolveEventPayloadSnapshot = {
