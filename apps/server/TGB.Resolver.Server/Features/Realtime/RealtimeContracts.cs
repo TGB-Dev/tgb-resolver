@@ -6,16 +6,19 @@ using TypedSignalR.Client;
 namespace TGB.Resolver.Server.Features.Realtime;
 
 [TranspilationSource]
+// ReSharper disable once UnusedType.Global
+// ReSharper disable UnusedMember.Global
 public enum ShowMessageType
 {
-    ShowReplaced,
-    TimelineEventAdded,
-    TimelineEventUpdated,
-    TimelineEventRemoved,
-    TimelineReordered,
-    PlaybackStateChanged,
-    LiveModeChanged,
+  ShowReplaced,
+  TimelineEventAdded,
+  TimelineEventUpdated,
+  TimelineEventRemoved,
+  TimelineReordered,
+  PlaybackStateChanged,
+  LiveModeChanged
 }
+// ReSharper restore UnusedMember.Global
 
 [TranspilationSource]
 public sealed record TimelineEventAddedMessage(

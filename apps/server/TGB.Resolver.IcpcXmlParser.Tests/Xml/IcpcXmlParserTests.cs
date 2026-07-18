@@ -1,6 +1,6 @@
 // ReSharper cannot resolve public record members from this referenced project under .NET 10.
 // The compiler and TUnit execute this file as part of the parser test project.
-// ReSharper disable CSharpErrors
+// ReSharper disable CannotResolveSymbol
 
 using IcpcParser = TGB.Resolver.IcpcXmlParser.IcpcXmlParser;
 

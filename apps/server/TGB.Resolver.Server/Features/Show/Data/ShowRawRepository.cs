@@ -111,9 +111,11 @@ public sealed class ShowRawRepository(
 
       // Pre-resolve cue immediately precedes its resolve event so the
       // frontend can focus on the upcoming resolution.
-      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, 0, false, null, null, null, null, payload));
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, 0, false, null, null, null, null,
+        payload));
       id++;
-      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, 0, false, null, payload, null, null, null));
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, 0, false, null, payload, null,
+        null, null));
       id++;
     }
 

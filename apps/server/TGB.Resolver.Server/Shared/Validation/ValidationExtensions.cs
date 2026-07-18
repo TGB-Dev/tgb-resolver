@@ -4,6 +4,7 @@ namespace TGB.Resolver.Server.Shared.Validation;
 
 public static class ValidationExtensions
 {
+  // ReSharper disable UnusedMethodReturnValue.Global
   public static IRuleBuilderOptions<T, string> RequiredLength<T>(
     this IRuleBuilder<T, string> ruleBuilder,
     int minLength,
@@ -24,4 +25,5 @@ public static class ValidationExtensions
     return ruleBuilder
       .MaximumLength(maxLength).WithMessage(message);
   }
+  // ReSharper restore UnusedMethodReturnValue.Global
 }

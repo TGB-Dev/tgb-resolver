@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
-using System.IO;
-using NodaTime;
 using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Exceptions;
@@ -12,6 +10,8 @@ using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
+// ReSharper disable once RedundantUsingDirective
+using NodaTime;
 
 namespace TGB.Resolver.Server.Tests.Application;
 
@@ -94,7 +94,8 @@ public sealed class ShowStateServiceTests
     await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
   }
 
-  private static async Task<(ShowStateService Service, IHubContext<ShowHub, IShowHubClient> Hub)> CreateServiceAsync()
+  private static async Task<(ShowStateService Service, IHubContext<ShowHub, IShowHubClient> Hub)>
+    CreateServiceAsync()
   {
     var options = new DbContextOptionsBuilder<ResolverDbContext>()
       .UseSqlite("Data Source=:memory:")

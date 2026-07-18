@@ -13,7 +13,7 @@ namespace TGB.Resolver.Server.Features.Show.Exporting;
 /// </summary>
 public static class ShowBundleArchive
 {
-  public const string ShowJsonEntryName = "show.json";
+  private const string ShowJsonEntryName = "show.json";
   private const string AssetFolder = "assets";
 
   public static async Task<byte[]> PackAsync(
@@ -24,9 +24,10 @@ public static class ShowBundleArchive
   {
     var showJson = serializer.Serialize(state);
     using var output = new MemoryStream();
-    using (var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
+    await using (var archive = new ZipArchive(output, ZipArchiveMode.Create, true))
     {
-      await WriteEntryAsync(archive, ShowJsonEntryName, Encoding.UTF8.GetBytes(showJson), cancellationToken);
+      await WriteEntryAsync(archive, ShowJsonEntryName, Encoding.UTF8.GetBytes(showJson),
+        cancellationToken);
       foreach (var asset in state.Assets.Images)
         await PackAssetAsync(archive, assetStore, asset, cancellationToken);
       foreach (var asset in state.Assets.Sfx)
@@ -43,12 +44,13 @@ public static class ShowBundleArchive
     CancellationToken cancellationToken = default)
   {
     using var input = new MemoryStream(bundle);
-    using var archive = new ZipArchive(input, ZipArchiveMode.Read);
+    await using var archive = new ZipArchive(input, ZipArchiveMode.Read);
 
     var showEntry = archive.GetEntry(ShowJsonEntryName)
-                    ?? throw new InvalidOperationException("Bundle is missing the show.json entry.");
+                    ?? throw new InvalidOperationException(
+                      "Bundle is missing the show.json entry.");
     string showJson;
-    await using (var entryStream = showEntry.Open())
+    await using (var entryStream = await showEntry.OpenAsync(cancellationToken))
     using (var reader = new StreamReader(entryStream, Encoding.UTF8))
     {
       showJson = await reader.ReadToEndAsync(cancellationToken);
@@ -57,7 +59,7 @@ public static class ShowBundleArchive
     foreach (var entry in archive.Entries)
     {
       if (!TryGetAssetId(entry.FullName, out var assetId)) continue;
-      await using var entryStream = entry.Open();
+      await using var entryStream = await entry.OpenAsync(cancellationToken);
       using var buffer = new MemoryStream();
       await entryStream.CopyToAsync(buffer, cancellationToken);
       await assetStore.SaveAsync(assetId, buffer.ToArray(), cancellationToken);
@@ -71,7 +73,7 @@ public static class ShowBundleArchive
   {
     var (bytes, _) = await assetStore.ReadAsync(asset.Id, cancellationToken);
     var entry = archive.CreateEntry($"{AssetFolder}/{asset.Kind}/{asset.Id}");
-    await using var entryStream = entry.Open();
+    await using var entryStream = await entry.OpenAsync(cancellationToken);
     await entryStream.WriteAsync(bytes, cancellationToken);
   }
 
@@ -79,7 +81,7 @@ public static class ShowBundleArchive
     ZipArchive archive, string name, byte[] bytes, CancellationToken cancellationToken)
   {
     var entry = archive.CreateEntry(name);
-    await using var entryStream = entry.Open();
+    await using var entryStream = await entry.OpenAsync(cancellationToken);
     await entryStream.WriteAsync(bytes, cancellationToken);
   }
 

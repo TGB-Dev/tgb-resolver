@@ -8,6 +8,7 @@ namespace TGB.Resolver.Server.Features.Realtime;
 [Hub]
 public interface IShowHub
 {
+  // ReSharper disable once UnusedMemberInSuper.Global
   Task<ClockSyncResponse> SyncClock(ClockSyncRequest request);
 }
 

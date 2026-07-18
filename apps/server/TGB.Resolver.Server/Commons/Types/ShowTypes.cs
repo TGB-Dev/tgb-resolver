@@ -40,8 +40,11 @@ public enum ShowMode
 }
 
 [TranspilationSource]
+// ReSharper disable once UnusedType.Global
+// ReSharper disable UnusedMember.Global
 public enum ShowRefetchReason
 {
   ShowReplaced,
   Optimized
 }
+// ReSharper restore UnusedMember.Global
