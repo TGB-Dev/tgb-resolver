@@ -169,6 +169,11 @@ function ControlTimelineEventTypeHeaderTooltip() {
         <DataList.ItemLabel>IMG</DataList.ItemLabel>
         <DataList.ItemValue>Show Image</DataList.ItemValue>
       </DataList.Item>
+
+      <DataList.Item>
+        <DataList.ItemLabel>PRE</DataList.ItemLabel>
+        <DataList.ItemValue>Pre-Resolve (preview upcoming resolve)</DataList.ItemValue>
+      </DataList.Item>
     </DataList.Root>
   );
 }

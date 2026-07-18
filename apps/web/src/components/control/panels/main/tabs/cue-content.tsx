@@ -21,6 +21,10 @@ export function CueContent({ cue, contentSize }: CueContentProps) {
     return <ResolveContent cue={cue} textProps={textProps} />;
   }
 
+  if (cue.type === TimelineEventType.PRE) {
+    return <ResolveContent cue={cue} textProps={textProps} />;
+  }
+
   const resolvedName = cue.customName ?? cue.name;
 
   if (cue.type === TimelineEventType.IMG) {

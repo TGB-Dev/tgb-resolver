@@ -151,6 +151,24 @@ async function connectHub(url: string) {
           },
         };
       }
+      case TimelineEventType.PRE: {
+        const r = src.Pre;
+        if (!r) throw new Error("PRE timeline event missing Pre payload");
+        return {
+          ...base,
+          type: TimelineEventType.PRE,
+          payload: {
+            realName: r.RealName,
+            username: r.Username,
+            problem: r.Problem,
+            newTotalScore: r.NewTotalScore,
+            newRank: r.NewRank,
+            newProblemScore: r.NewProblemScore,
+            problemDisplayName: r.ProblemDisplayName,
+            verdict: r.Verdict as unknown as VerdictRunResult,
+          },
+        };
+      }
       case TimelineEventType.IMG: {
         const img = src.Image;
         if (!img) throw new Error("IMG timeline event missing Image payload");
