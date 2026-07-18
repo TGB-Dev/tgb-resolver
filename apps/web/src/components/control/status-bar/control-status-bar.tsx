@@ -2,13 +2,13 @@ import { Button, Grid, HStack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 
 import { ColorModeButton } from "@/components/ui/color-mode";
-import { useControlNowStore } from "@/store/control-now";
+import { controlNowModel } from "@/models/control-now";
 
 import { ControlFullScreenButton } from "./control-full-screen-button";
 import { ControlCurrentTime, ControlElapsedTime } from "./control-time";
 
 export function ControlStatusBar() {
-  const now = useControlNowStore((s) => s.now);
+  const now = controlNowModel.now;
 
   return (
     <Grid templateColumns="1fr auto 1fr" h={16} px={2} borderBottomWidth={1} alignItems="center">

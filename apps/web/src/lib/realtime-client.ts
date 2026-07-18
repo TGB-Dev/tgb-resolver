@@ -1,10 +1,10 @@
-import { projectServerNow } from "./clock";
 import {
+  projectServerNow,
   RealtimeWorkerRequestType,
   RealtimeWorkerResponseType,
-} from "./messages";
-import type { ShowWebSocketMessage } from "./types";
-import { ShowConnectionStatus } from "./types";
+  ShowConnectionStatus,
+  type ShowWebSocketMessage,
+} from "@tgb-resolver/realtime";
 
 export { ShowConnectionStatus };
 

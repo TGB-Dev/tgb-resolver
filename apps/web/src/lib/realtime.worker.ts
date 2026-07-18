@@ -2,25 +2,24 @@
 
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
-
 import {
   calculateClockSample,
   PlaybackStatus,
   RealtimeWorkerRequestType,
   RealtimeWorkerResponseType,
-  selectClockEstimate,
   ShowMode,
-  ShowRefetchReason,
+  type ShowRefetchReason,
+  selectClockEstimate,
 } from "@tgb-resolver/realtime";
+import { Effect, Fiber, Schedule } from "effect";
 
 const MAX_RECONNECT_ATTEMPTS = 8;
-const CLOCK_SYNC_INTERVAL_MS = 10_000;
 const CLOCK_SYNC_SAMPLES = 8;
 
 let connection: ReturnType<HubConnectionBuilder["build"]> | null = null;
 let reconnectAttempt = 0;
 let manualStopInProgress = false;
-let clockSyncTimer: ReturnType<typeof setInterval> | null = null;
+let clockSyncFiber: ReturnType<typeof Effect.runFork> | null = null;
 
 function post(data: Record<string, unknown>) {
   self.postMessage(data);
@@ -34,10 +33,10 @@ async function syncClock() {
   const samples = [];
   for (let index = 0; index < CLOCK_SYNC_SAMPLES; index += 1) {
     const clientSentAtMonotonicMs = performance.now();
-    const response = await connection.invoke("SyncClock", {
+    const response = (await connection.invoke("SyncClock", {
       SessionId: crypto.randomUUID(),
       ClientSentAtUnixMs: Date.now(),
-    }) as {
+    })) as {
       SessionId: string;
       ClientSentAtUnixMs: number;
       ServerReceivedAtUnixMs: number;
@@ -69,28 +68,34 @@ async function syncClock() {
 
 function startClockSync() {
   stopClockSync();
-  clockSyncTimer = setInterval(() => {
-    void syncClock();
-  }, CLOCK_SYNC_INTERVAL_MS);
+  clockSyncFiber = Effect.runFork(
+    Effect.repeat(
+      Effect.tryPromise({
+        try: syncClock,
+        catch: (error) => error,
+      }).pipe(Effect.ignore),
+      Schedule.fixed("10 seconds"),
+    ),
+  );
 }
 
 function stopClockSync() {
-  if (clockSyncTimer !== null) {
-    clearInterval(clockSyncTimer);
-    clockSyncTimer = null;
+  if (clockSyncFiber !== null) {
+    Effect.runFork(Fiber.interrupt(clockSyncFiber));
+    clockSyncFiber = null;
   }
 }
 
 function mapStatus(status: string): string {
-  return status === PlaybackStatus.Running
-    ? PlaybackStatus.Running
-    : status === PlaybackStatus.Paused
-      ? PlaybackStatus.Paused
-      : PlaybackStatus.Idle;
+  return status === PlaybackStatus.RUNNING
+    ? PlaybackStatus.RUNNING
+    : status === PlaybackStatus.PAUSED
+      ? PlaybackStatus.PAUSED
+      : PlaybackStatus.IDLE;
 }
 
 function mapMode(mode: string): string {
-  return String(mode) === "Live" ? ShowMode.Live : ShowMode.Editing;
+  return String(mode) === "Live" ? ShowMode.LIVE : ShowMode.EDITING;
 }
 
 async function connectHub(url: string) {
@@ -119,46 +124,49 @@ async function connectHub(url: string) {
     });
   });
 
-  connection.on("PlaybackStateChanged", (message: {
-    ShowVersion: number;
-    Playback: {
-      Status: string;
-      ExecutionSequence: number;
-      CurrentResolveEventId?: number;
-      CurrentEventId?: number;
-      ActiveSegment?: {
-        ResolveEventId: number;
-        NextResolveEventId?: number;
-        InlineEventIds: number[];
-        CurrentInlineIndex: number;
+  connection.on(
+    "PlaybackStateChanged",
+    (message: {
+      ShowVersion: number;
+      Playback: {
+        Status: string;
+        ExecutionSequence: number;
+        CurrentResolveEventId?: number;
+        CurrentEventId?: number;
+        ActiveSegment?: {
+          ResolveEventId: number;
+          NextResolveEventId?: number;
+          InlineEventIds: number[];
+          CurrentInlineIndex: number;
+        };
+        StartedAt?: number;
       };
-      StartedAt?: number;
-    };
-  }) => {
-    const p = message.Playback;
-    post({
-      type: RealtimeWorkerResponseType.Message,
-      message: {
-        type: "playback-state-changed",
-        showVersion: message.ShowVersion,
-        playback: {
-          status: mapStatus(p.Status),
-          executionSequence: p.ExecutionSequence,
-          currentResolveEventId: p.CurrentResolveEventId ?? undefined,
-          currentEventId: p.CurrentEventId ?? undefined,
-          activeSegment: p.ActiveSegment
-            ? {
-                resolveEventId: p.ActiveSegment.ResolveEventId,
-                nextResolveEventId: p.ActiveSegment.NextResolveEventId ?? undefined,
-                inlineEventIds: p.ActiveSegment.InlineEventIds,
-                currentInlineIndex: p.ActiveSegment.CurrentInlineIndex,
-              }
-            : undefined,
-          startedAt: p.StartedAt ?? undefined,
+    }) => {
+      const p = message.Playback;
+      post({
+        type: RealtimeWorkerResponseType.Message,
+        message: {
+          type: "playback-state-changed",
+          showVersion: message.ShowVersion,
+          playback: {
+            status: mapStatus(p.Status),
+            executionSequence: p.ExecutionSequence,
+            currentResolveEventId: p.CurrentResolveEventId ?? undefined,
+            currentEventId: p.CurrentEventId ?? undefined,
+            activeSegment: p.ActiveSegment
+              ? {
+                  resolveEventId: p.ActiveSegment.ResolveEventId,
+                  nextResolveEventId: p.ActiveSegment.NextResolveEventId ?? undefined,
+                  inlineEventIds: p.ActiveSegment.InlineEventIds,
+                  currentInlineIndex: p.ActiveSegment.CurrentInlineIndex,
+                }
+              : undefined,
+            startedAt: p.StartedAt ?? undefined,
+          },
         },
-      },
-    });
-  });
+      });
+    },
+  );
 
   connection.on("LiveModeChanged", (message: { ShowVersion: number; Mode: string }) => {
     post({

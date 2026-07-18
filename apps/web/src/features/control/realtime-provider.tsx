@@ -1,21 +1,22 @@
-import { useQueryClient } from "@tanstack/preact-query";
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { useSignal } from "@preact/signals-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  generatedClient,
+  tgbResolverServerFeaturesShowGetShowEndpointOptions,
+} from "@tgb-resolver/contracts";
+import { ShowConnectionStatus, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from "react";
 
 import { API_BASE_URL } from "@/lib/api";
-
 import RealtimeWorker from "@/lib/realtime.worker?worker";
-import {
-  createRealtimeClient,
-  ShowConnectionStatus,
-  type ShowWebSocketMessage,
-} from "@tgb-resolver/realtime";
-import type { RealtimeClientCallbacks } from "@tgb-resolver/realtime";
+import { createRealtimeClient, type RealtimeClientCallbacks } from "@/lib/realtime-client";
+import { syncPlaybackFromSnapshot } from "@/models/playback-state";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-cache";
 
 interface ControlRealtimeContextValue {
-  connectionStatus: ShowConnectionStatus;
-  reconnectAttempt: number;
+  connectionStatus: { readonly value: ShowConnectionStatus };
+  reconnectAttempt: { readonly value: number };
   reconnectNow: () => Promise<void>;
 }
 
@@ -33,18 +34,20 @@ let sharedConnectionStatus: ShowConnectionStatus = ShowConnectionStatus.Connecti
 let sharedReconnectAttempt = 0;
 let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-const sharedClient = createRealtimeClient(API_BASE_URL, {
-  onMessage: async (message) => {
-    await Promise.all(Array.from(realtimeListeners, (listener) => listener.onMessage(message)));
-  },
-  onError: (attempt, error) => {
-    sharedReconnectAttempt = attempt;
-    for (const listener of realtimeListeners) {
-      listener.onError(attempt, error);
-    }
-  },
-} satisfies RealtimeClientCallbacks,
-new RealtimeWorker(),
+const sharedClient = createRealtimeClient(
+  API_BASE_URL,
+  {
+    onMessage: async (message) => {
+      await Promise.all(Array.from(realtimeListeners, (listener) => listener.onMessage(message)));
+    },
+    onError: (attempt, error) => {
+      sharedReconnectAttempt = attempt;
+      for (const listener of realtimeListeners) {
+        listener.onError(attempt, error);
+      }
+    },
+  } satisfies RealtimeClientCallbacks,
+  new RealtimeWorker(),
 );
 
 sharedClient.onStatusChange((status, attempt) => {
@@ -57,15 +60,18 @@ sharedClient.onStatusChange((status, attempt) => {
 
 export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [connectionStatus, setConnectionStatus] =
-    useState<ShowConnectionStatus>(sharedConnectionStatus);
-  const [reconnectAttempt, setReconnectAttempt] = useState(sharedReconnectAttempt);
+  const connectionStatus = useSignal<ShowConnectionStatus>(sharedConnectionStatus);
+  const reconnectAttempt = useSignal(sharedReconnectAttempt);
+  const showQuery = useQuery({
+    ...tgbResolverServerFeaturesShowGetShowEndpointOptions({ client: generatedClient }),
+    queryKey: controlShowQueryKey(),
+  });
 
   useEffect(() => {
     const listener: RealtimeListener = {
       onStatusChange: (status, attempt) => {
-        setConnectionStatus(status);
-        setReconnectAttempt(attempt);
+        connectionStatus.value = status;
+        reconnectAttempt.value = attempt;
 
         if (status === ShowConnectionStatus.Connected) {
           void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
@@ -75,7 +81,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
         await applyControlRealtimeMessage(queryClient, message);
       },
       onError: (attempt, error) => {
-        setReconnectAttempt(attempt);
+        reconnectAttempt.value = attempt;
         if (error) {
           console.error("Show hub connection error", error);
         }
@@ -83,8 +89,8 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
     };
 
     realtimeListeners.add(listener);
-    setConnectionStatus(sharedConnectionStatus);
-    setReconnectAttempt(sharedReconnectAttempt);
+    connectionStatus.value = sharedConnectionStatus;
+    reconnectAttempt.value = sharedReconnectAttempt;
 
     if (disconnectTimer) {
       clearTimeout(disconnectTimer);
@@ -109,7 +115,15 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
         }
       }, STRICT_MODE_DISCONNECT_DELAY_MS);
     };
-  }, [queryClient]);
+  }, [queryClient, connectionStatus, reconnectAttempt]);
+
+  useEffect(() => {
+    if (!showQuery.data?.playback) {
+      return;
+    }
+
+    syncPlaybackFromSnapshot(showQuery.data.showVersion ?? 0, showQuery.data.playback);
+  }, [showQuery.data]);
 
   const value = useMemo(
     () => ({
@@ -117,7 +131,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
       reconnectAttempt,
       reconnectNow: () => sharedClient.reconnectNow(),
     }),
-    [connectionStatus, reconnectAttempt],
+    [reconnectAttempt, connectionStatus],
   );
 
   return <ControlRealtimeContext value={value}>{children}</ControlRealtimeContext>;

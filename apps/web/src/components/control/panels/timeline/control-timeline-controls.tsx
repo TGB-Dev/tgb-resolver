@@ -8,8 +8,8 @@ import {
   useExportShowAction,
   useOptimizeShowMutation,
 } from "@/features/control/hooks";
-import { useFloatingPanelStore } from "@/store/floating-panel";
-import { FloatingPanelType } from "@/store/floating-panel-types";
+import { floatingPanelModel } from "@/models/floating-panel";
+import { FloatingPanelType } from "@/models/floating-panel-types";
 
 interface ControlTimelineControlsProps {
   onJumpToCurrent?: () => void;
@@ -21,7 +21,7 @@ export function ControlTimelineControls({ onJumpToCurrent }: ControlTimelineCont
   const exportCurrentShow = useExportShowAction();
   const isLive = useControlIsLive();
   const canMutate = useControlCanMutate();
-  const openFloatingPanel = useFloatingPanelStore((s) => s.openFloatingPanel);
+  const openFloatingPanel = floatingPanelModel.openFloatingPanel;
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>

@@ -1,23 +1,23 @@
 import { Button, Field, FileUpload, HStack, Input, Stack, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
-import { useState } from "react";
 
 import { useImportShowMutation } from "@/features/control/hooks";
-import { useFloatingPanelStore } from "@/store/floating-panel";
+import { floatingPanelModel } from "@/models/floating-panel";
 
 export function ImportShowPanel() {
-  const [file, setFile] = useState<File | null>(null);
-  const [excludedUsernames, setExcludedUsernames] = useState("");
-  const setDirty = useFloatingPanelStore((s) => s.setDirty);
-  const closeFloatingPanel = useFloatingPanelStore((s) => s.closeFloatingPanel);
+  const file = useSignal<File | null>(null);
+  const excludedUsernames = useSignal("");
+  const setDirty = floatingPanelModel.setDirty;
+  const closeFloatingPanel = floatingPanelModel.closeFloatingPanel;
   const importShow = useImportShowMutation();
 
   const accept = async () => {
-    if (!file) return;
+    if (!file.value) return;
 
     await importShow.mutateAsync({
-      file,
-      excludedUsernames: excludedUsernames
+      file: file.value,
+      excludedUsernames: excludedUsernames.value
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
@@ -32,8 +32,8 @@ export function ImportShowPanel() {
         maxFiles={1}
         onFileChange={(details) => {
           const f = details.acceptedFiles[0] ?? null;
-          setFile(f);
-          setDirty(Boolean(f) || excludedUsernames.length > 0);
+          file.value = f;
+          setDirty(Boolean(f) || excludedUsernames.value.length > 0);
         }}
       >
         <FileUpload.HiddenInput />
@@ -41,10 +41,10 @@ export function ImportShowPanel() {
         <HStack gap={2} mt={2}>
           <FileUpload.Trigger asChild>
             <Button variant="outline" size="sm">
-              {file ? file.name : "Choose file for upload"}
+              {file.value ? file.value.name : "Choose file for upload"}
             </Button>
           </FileUpload.Trigger>
-          {file && (
+          {file.value && (
             <FileUpload.ClearTrigger asChild>
               <Button variant="ghost" size="sm">
                 Clear
@@ -57,11 +57,11 @@ export function ImportShowPanel() {
       <Field.Root>
         <Field.Label>Excluded usernames</Field.Label>
         <Input
-          value={excludedUsernames}
+          value={excludedUsernames.value}
           onChange={(event) => {
             const target = event.target as HTMLInputElement;
-            setExcludedUsernames(target.value);
-            setDirty(Boolean(file) || target.value.length > 0);
+            excludedUsernames.value = target.value;
+            setDirty(Boolean(file.value) || target.value.length > 0);
           }}
           placeholder="team_a, team_b"
         />
@@ -74,7 +74,7 @@ export function ImportShowPanel() {
         <Button variant="outline" onClick={() => closeFloatingPanel(false)}>
           Cancel
         </Button>
-        <Button disabled={!file || importShow.isPending} onClick={() => void accept()}>
+        <Button disabled={!file.value || importShow.isPending} onClick={() => void accept()}>
           Import
         </Button>
       </HStack>

@@ -1,38 +1,13 @@
-import { Box, DataList, Editable, Grid, type GridProps, useToken } from "@chakra-ui/react";
-import { keyframes } from "@emotion/react";
+import { Box, DataList, Editable, Grid, type GridProps } from "@chakra-ui/react";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 
-import { MotionBox } from "@/components/motionized";
 import { Tooltip } from "@/components/ui/tooltip";
-import {
-  useControlIsLive,
-  useControlShowQuery,
-  useControlShowRows,
-  useRenameControlEventMutation,
-  useSeekPlaybackMutation,
-} from "@/features/control/hooks";
+import { useRenameControlEventMutation } from "@/features/control/hooks";
 
+import { CurrentEventIndicator } from "./CurrentEventIndicator";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
-
-const SECONDS_BEFORE_WARNING = 2;
-
-const pulseBorder = keyframes`
-  0%, 100% {
-    border-color: var(--chakra-colors-border-success);
-  }
-
-  50% {
-    border-color: var(--chakra-colors-border);
-  }
-`;
-
-function fractionalKeyframeForWarning(durationInSeconds?: number) {
-  return durationInSeconds && durationInSeconds > SECONDS_BEFORE_WARNING
-    ? (durationInSeconds - SECONDS_BEFORE_WARNING) / durationInSeconds
-    : 0;
-}
 
 function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "placeholderName">) {
   return payload.customName && payload.customName.trim().length > 0
@@ -41,119 +16,75 @@ function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "pla
 }
 
 interface ControlTimelineTableItemProps {
-  eventId: number;
+  payload: TimelineTableItem;
+  isLive: boolean;
+  onSeek: (id: number) => void;
 }
 
-export const ControlTimelineTableItem = memo(({ eventId }: ControlTimelineTableItemProps) => {
-  const rows = useControlShowRows();
-  const payload = rows.find((r) => r.id === eventId);
-  const durationInSeconds = payload?.durationSeconds;
-  const showQuery = useControlShowQuery();
-  const isCurrent = eventId === showQuery.data?.playback.currentEventId;
-  const success = useToken("colors", "green.600");
-  const errror = useToken("colors", "red.500");
-  const warningKeyframe = fractionalKeyframeForWarning(durationInSeconds);
-  const isLive = useControlIsLive();
-  const seekPlayback = useSeekPlaybackMutation();
+export const ControlTimelineTableItem = memo(
+  ({ payload, isLive, onSeek }: ControlTimelineTableItemProps) => {
+    const durationInSeconds = payload.durationSeconds;
 
-  if (!payload) return null;
+    return (
+      <Box
+        w="full"
+        h={8}
+        position="relative"
+        borderBottomColor="border"
+        overflow="hidden"
+        data-event-id={payload.id}
+      >
+        <CurrentEventIndicator eventId={payload.id} durationInSeconds={durationInSeconds} />
 
-  return (
-    <Box
-      w="full"
-      h={8}
-      position="relative"
-      borderWidth={2}
-      borderColor={isCurrent ? "border.success" : "transparent"}
-      borderBottomColor="border"
-      animation={isCurrent ? `${pulseBorder} 1s infinite` : undefined}
-      data-event-id={eventId}
-    >
-      <MotionBox
-        position="absolute"
-        zIndex={0}
-        top={0}
-        left={0}
-        h="full"
-        initial={{
-          width: "0%",
-          backgroundColor: success,
-        }}
-        animate={
-          isCurrent
-            ? {
-                width: "100%",
-                backgroundColor: [success[0], success[0], errror[0]],
-              }
-            : {
-                width: "0%",
-                backgroundColor: success,
-              }
-        }
-        transition={{
-          width: {
-            duration: isCurrent ? durationInSeconds : 0,
-            ease: "linear",
-          },
-          backgroundColor: isCurrent
-            ? {
-                duration: durationInSeconds,
-                times: [0, warningKeyframe, warningKeyframe],
-                ease: "linear",
-              }
-            : { duration: 0 },
-        }}
-        pointerEvents="none"
-      />
-
-      <ControlTimelineTableGridRow>
-        <Tooltip
-          content={`Seek to #${payload.id}`}
-          openDelay={0}
-          positioning={{ placement: "left" }}
-        >
-          <Box
-            textAlign="end"
-            fontFamily="mono"
-            cursor="pointer"
-            onClick={() => seekPlayback.mutate(payload.id)}
+        <ControlTimelineTableGridRow>
+          <Tooltip
+            content={`Seek to #${payload.id}`}
+            openDelay={0}
+            positioning={{ placement: "left" }}
           >
-            {payload.id}
+            <Box
+              textAlign="end"
+              fontFamily="mono"
+              cursor="pointer"
+              onClick={() => onSeek(payload.id)}
+            >
+              {payload.id}
+            </Box>
+          </Tooltip>
+          <Box fontFamily="mono" textTransform="uppercase">
+            {payload.type}
           </Box>
-        </Tooltip>
-        <Box fontFamily="mono" textTransform="uppercase">
-          {payload.type}
-        </Box>
-        <Box minW={0}>
-          {!isLive ? (
-            <ControlTimelineEventCustomNameEditable payload={payload} />
-          ) : (
-            <Box>{resolveDisplayName(payload)}</Box>
-          )}
-        </Box>
-        <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis">
-          {payload.problem ? `${payload.problem}` : ""}
-          {payload.newProblemScore !== undefined ? ` (${payload.newProblemScore})` : ""}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.newTotalScore}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.newRank}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.durationSeconds}
-        </Box>
-        <Box textAlign="end" fontFamily="mono">
-          {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
-            ? `+${payload.triggerOffsetSeconds}`
-            : payload.triggerOffsetSeconds}
-        </Box>
-        <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
-      </ControlTimelineTableGridRow>
-    </Box>
-  );
-});
+          <Box minW={0}>
+            {!isLive ? (
+              <ControlTimelineEventCustomNameEditable payload={payload} />
+            ) : (
+              <Box>{resolveDisplayName(payload)}</Box>
+            )}
+          </Box>
+          <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis">
+            {payload.problem ? `${payload.problem}` : ""}
+            {payload.newProblemScore !== undefined ? ` (${payload.newProblemScore})` : ""}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.newTotalScore}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.newRank}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.durationSeconds}
+          </Box>
+          <Box textAlign="end" fontFamily="mono">
+            {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
+              ? `+${payload.triggerOffsetSeconds}`
+              : payload.triggerOffsetSeconds}
+          </Box>
+          <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
+        </ControlTimelineTableGridRow>
+      </Box>
+    );
+  },
+);
 
 export function ControlTimelineTableHeader() {
   return (

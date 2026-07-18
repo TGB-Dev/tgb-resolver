@@ -1,5 +1,6 @@
 import { generatedClient } from "@tgb-resolver/contracts";
-import { getServerNow } from "@tgb-resolver/realtime";
+
+import { getServerNow } from "@/lib/realtime-client";
 
 export { getServerNow };
 

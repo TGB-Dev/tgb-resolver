@@ -5,7 +5,7 @@ export default defineConfig({
   output: "src/generated",
   plugins: [
     "@hey-api/client-ofetch",
-    "@tanstack/preact-query",
+    "@tanstack/react-query",
     "valibot",
     {
       name: "@hey-api/typescript",

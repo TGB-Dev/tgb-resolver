@@ -1,10 +1,14 @@
 import { Button, Dialog, Portal } from "@chakra-ui/react";
 
-import { useConfirmActionStore } from "@/store/control-confirm-action";
+import { confirmActionModel } from "@/models/confirm-action";
 
 export function ControlConfirmDialog() {
-  const { open, title, message, confirmLabel, cancelLabel } = useConfirmActionStore();
-  const resolveConfirmAction = useConfirmActionStore((s) => s.resolveConfirmAction);
+  const open = confirmActionModel.open.value;
+  const title = confirmActionModel.title;
+  const message = confirmActionModel.message;
+  const confirmLabel = confirmActionModel.confirmLabel;
+  const cancelLabel = confirmActionModel.cancelLabel;
+  const resolveConfirmAction = confirmActionModel.resolveConfirmAction;
 
   return (
     <Dialog.Root size="sm" open={open} role="alertdialog">
@@ -13,17 +17,21 @@ export function ControlConfirmDialog() {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>{title}</Dialog.Title>
+              <Dialog.Title>
+                <>{title}</>
+              </Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body>{message}</Dialog.Body>
+            <Dialog.Body>
+              <>{message}</>
+            </Dialog.Body>
             <Dialog.Footer gap="3">
               <Dialog.ActionTrigger asChild>
                 <Button variant="outline" onClick={() => resolveConfirmAction(false)}>
-                  {cancelLabel}
+                  <>{cancelLabel}</>
                 </Button>
               </Dialog.ActionTrigger>
               <Button colorPalette="red" onClick={() => resolveConfirmAction(true)}>
-                {confirmLabel}
+                <>{confirmLabel}</>
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

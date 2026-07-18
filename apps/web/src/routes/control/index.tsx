@@ -8,8 +8,8 @@ import { ControlMainPanel } from "@/components/control/panels/control-main-panel
 import { ControlTimelinePanel } from "@/components/control/panels/control-timeline-panel";
 import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
-import { getServerNow } from "@tgb-resolver/realtime";
-import { useControlNowStore } from "@/store/control-now";
+import { getServerNow } from "@/lib/realtime-client";
+import { controlNowModel } from "@/models/control-now";
 
 export const Route = createFileRoute("/control/")({
   component: RouteComponent,
@@ -23,12 +23,12 @@ function RouteComponent() {
       { id: "timeline", minSize: 45 },
     ],
   });
-  const setNow = useControlNowStore((s) => s.setNow);
+  const setNow = controlNowModel.setNow;
 
   useEffect(() => {
     const id = setInterval(() => setNow(getServerNow()), 200);
     return () => clearInterval(id);
-  }, [setNow]);
+  }, []);
 
   return (
     <ControlRealtimeProvider>

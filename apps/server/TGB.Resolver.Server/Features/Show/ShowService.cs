@@ -409,7 +409,6 @@ public sealed class ShowStateService(
       state =>
       {
         if (state.Playback.Status == PlaybackStatus.Running)
-        {
           return state with
           {
             ShowVersion = state.ShowVersion + 1,
@@ -419,10 +418,8 @@ public sealed class ShowStateService(
               ExecutionSequence = state.Playback.ExecutionSequence + 1
             }
           };
-        }
 
         if (state.Playback.Status == PlaybackStatus.Paused)
-        {
           return state with
           {
             ShowVersion = state.ShowVersion + 1,
@@ -432,7 +429,6 @@ public sealed class ShowStateService(
               ExecutionSequence = state.Playback.ExecutionSequence + 1
             }
           };
-        }
 
         var ordered = state.Ordered();
         var firstResolve = ordered.FirstOrDefault(e => e.Type == TimelineEventType.Res);
@@ -462,13 +458,9 @@ public sealed class ShowStateService(
     await BroadcastPlaybackAsync(updated);
 
     if (updated.Playback.Status == PlaybackStatus.Running)
-    {
       ScheduleNextAdvanceAsync(updated);
-    }
     else
-    {
       orchestrator.CancelAdvance();
-    }
 
     return ShowContractMapper.ToContract(updated);
   }
@@ -562,6 +554,13 @@ public sealed class ShowStateService(
 
     await BroadcastPlaybackAsync(updated);
     ScheduleNextAdvanceAsync(updated);
+  }
+
+  public async Task RescheduleAdvanceAsync(CancellationToken cancellationToken = default)
+  {
+    var state = await repository.GetStateAsync(cancellationToken);
+    if (state.Playback.Status == PlaybackStatus.Running)
+      ScheduleNextAdvanceAsync(state);
   }
 
   private async Task StopPlaybackAsync(ShowState state, CancellationToken cancellationToken)

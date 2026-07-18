@@ -1,12 +1,12 @@
 import { FloatingPanel, IconButton, Portal } from "@chakra-ui/react";
 import { GripHorizontal, X } from "lucide-react";
 
-import { useFloatingPanelStore } from "@/store/floating-panel";
-import { floatingPanelComponents } from "@/store/floating-panel-types";
+import { floatingPanelModel } from "@/models/floating-panel";
+import { floatingPanelComponents } from "@/models/floating-panel-types";
 
 export function FloatingPanelHost() {
-  const active = useFloatingPanelStore((s) => s.active);
-  const requestClose = useFloatingPanelStore((s) => s.requestFloatingPanelClose);
+  const active = floatingPanelModel.active.value;
+  const requestClose = floatingPanelModel.requestFloatingPanelClose;
   const PanelComponent = active ? floatingPanelComponents[active.type] : null;
 
   return (

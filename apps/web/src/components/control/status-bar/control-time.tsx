@@ -1,6 +1,7 @@
 import { Text } from "@chakra-ui/react";
+import { type ReadonlySignal, useComputed } from "@preact/signals-react";
 
-import { useControlShowQuery } from "@/features/control/hooks";
+import { playbackSignal } from "@/models/playback-state";
 
 function formatHms(date: Date): string {
   return date.toLocaleTimeString("en-GB", { hour12: false });
@@ -14,27 +15,32 @@ function formatElapsed(ms: number): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function ControlCurrentTime({ now }: { now: number }) {
+export function ControlCurrentTime({ now }: { now: ReadonlySignal<number> }) {
+  const formatted = useComputed(() => formatHms(new Date(now.value)));
+
   return (
     <Text fontFamily="mono" fontVariantNumeric="tabular-nums">
-      {formatHms(new Date(now))}
+      <>{formatted}</>
     </Text>
   );
 }
 
-export function ControlElapsedTime({ now }: { now: number }) {
-  const startedAt = useControlShowQuery().data?.playback.startedAt;
-  const isStarted = startedAt != null;
-  const elapsedMs = isStarted ? now - startedAt : 0;
+export function ControlElapsedTime({ now }: { now: ReadonlySignal<number> }) {
+  const isStarted = useComputed(() => playbackSignal.value.startedAt != null);
+  const elapsedText = useComputed(() => {
+    const startedAt = playbackSignal.value.startedAt;
+    const elapsedMs = startedAt != null ? now.value - startedAt : 0;
+    return startedAt != null ? formatElapsed(elapsedMs) : "--:--:--";
+  });
 
   return (
     <Text
       fontSize="3xl"
       fontFamily="mono"
       fontVariantNumeric="tabular-nums"
-      opacity={isStarted ? 1 : 0.5}
+      opacity={isStarted.value ? 1 : 0.5}
     >
-      T+{isStarted ? formatElapsed(elapsedMs) : "--:--:--"}
+      <>T+{elapsedText}</>
     </Text>
   );
 }

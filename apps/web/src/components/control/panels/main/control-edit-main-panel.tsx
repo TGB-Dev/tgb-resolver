@@ -1,7 +1,7 @@
 import { Tabs } from "@chakra-ui/react";
-import { useHotkey } from "@tanstack/preact-hotkeys";
+import { useSignal } from "@preact/signals-react";
+import { useHotkey } from "@tanstack/react-hotkeys";
 import { Info, Logs, ScanEye, Settings } from "lucide-react";
-import { useState } from "react";
 
 import { ControlMainCueTab } from "./tabs/control-main-cue-tab";
 import { ControlMainInfoTab } from "./tabs/control-main-info-tab";
@@ -16,17 +16,27 @@ enum ControlEditMainPanelTabs {
 }
 
 export function ControlEditMainPanel() {
-  const [tab, setTab] = useState<ControlEditMainPanelTabs>(ControlEditMainPanelTabs.PREVIEW);
+  const tab = useSignal<ControlEditMainPanelTabs>(ControlEditMainPanelTabs.PREVIEW);
 
-  useHotkey("Mod+1", () => setTab(ControlEditMainPanelTabs.PREVIEW));
-  useHotkey("Mod+2", () => setTab(ControlEditMainPanelTabs.CUE));
-  useHotkey("Mod+3", () => setTab(ControlEditMainPanelTabs.INFO));
-  useHotkey("Mod+4", () => setTab(ControlEditMainPanelTabs.SETTINGS));
+  useHotkey("Mod+1", () => {
+    tab.value = ControlEditMainPanelTabs.PREVIEW;
+  });
+  useHotkey("Mod+2", () => {
+    tab.value = ControlEditMainPanelTabs.CUE;
+  });
+  useHotkey("Mod+3", () => {
+    tab.value = ControlEditMainPanelTabs.INFO;
+  });
+  useHotkey("Mod+4", () => {
+    tab.value = ControlEditMainPanelTabs.SETTINGS;
+  });
 
   return (
     <Tabs.Root
-      value={tab}
-      onValueChange={(e) => setTab(e.value as ControlEditMainPanelTabs)}
+      value={tab.value}
+      onValueChange={(e) => {
+        tab.value = e.value as ControlEditMainPanelTabs;
+      }}
       h="full"
       minH={0}
       overflow="hidden"

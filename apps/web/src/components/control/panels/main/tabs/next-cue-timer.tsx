@@ -1,13 +1,11 @@
 import { HStack, Text } from "@chakra-ui/react";
+import { useComputed, useSignal } from "@preact/signals-react";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
-import {
-  useControlAutoResolveEnabled,
-  useControlShowQuery,
-  useControlShowRows,
-} from "@/features/control/hooks";
-import { useControlNowStore } from "@/store/control-now";
+import { useControlAutoResolveEnabled, useControlShowRows } from "@/features/control/hooks";
+import { controlNowModel } from "@/models/control-now";
+import { playbackSignal } from "@/models/playback-state";
 
 function formatRemaining(ms: number) {
   const clamped = Math.max(0, ms);
@@ -20,26 +18,25 @@ function formatRemaining(ms: number) {
 }
 
 export function NextCueTimer() {
-  const showQuery = useControlShowQuery();
   const rows = useControlShowRows();
-  const playback = showQuery.data?.playback;
-  const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
+  const currentEventId = playbackSignal.value.currentEventId;
+  const currentIndex =
+    currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
   const currentEvent = currentIndex >= 0 ? rows[currentIndex] : undefined;
   const durationSeconds = currentEvent?.durationSeconds;
-  const isRunning = playback?.status === "Running";
+  const isRunning = useComputed(() => playbackSignal.value.status === "Running").value;
   const autoResolveEnabled = useControlAutoResolveEnabled();
-  const now = useControlNowStore((s) => s.now);
+  const now = useComputed(() => controlNowModel.now.value);
 
-  const currentEventId = currentEvent?.id;
   const prevEventIdRef = useRef<number | undefined>(undefined);
-  const [eventStartedAt, setEventStartedAt] = useState(now);
+  const eventStartedAt = useSignal(now.value);
 
   useEffect(() => {
-    if (currentEventId !== undefined && currentEventId !== prevEventIdRef.current) {
-      setEventStartedAt(now);
+    if (currentEventId != null && currentEventId !== prevEventIdRef.current) {
+      eventStartedAt.value = now.value;
       prevEventIdRef.current = currentEventId;
     }
-  }, [currentEventId, now]);
+  }, [currentEventId, now.value, eventStartedAt]);
 
   const remainingMs = useMemo(() => {
     if (
@@ -51,8 +48,8 @@ export function NextCueTimer() {
       return 0;
     }
 
-    return Math.max(0, eventStartedAt + durationSeconds * 1000 - now);
-  }, [isRunning, autoResolveEnabled, durationSeconds, eventStartedAt, now]);
+    return Math.max(0, eventStartedAt.value + durationSeconds * 1000 - now.value);
+  }, [isRunning, autoResolveEnabled, durationSeconds, eventStartedAt.value, now.value]);
 
   if (
     !currentEvent ||

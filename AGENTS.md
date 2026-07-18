@@ -19,7 +19,7 @@ Pre-commit hook runs: `biome check --write --staged` → `sync:check || sync` �
 | Path | Role |
 |---|---|
 | `apps/server/` | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format |
-| `apps/web/` | TanStack Start SPA (React 19, Vite, Chakra UI 3, Zustand, @tanstack/react-virtual). Dev port 3000 |
+| `apps/web/` | TanStack Start SPA (React 19, Vite, Chakra UI 3, Preact Signals, @tanstack/react-virtual). Dev port 3000 |
 | `packages/contracts/` | OpenAPI-generated TS HTTP client + TanStack Query + Valibot schemas. Generated from `apps/server/.../openapi.yaml` |
 | `packages/realtime/` | Client-side clock sync, timeline and domain helpers. Re-exports contracts enums; must not redeclare them |
 
@@ -34,6 +34,21 @@ Workspace packages: `@tgb-resolver/*`.
 - **Biome** (v2.5.1): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan blank package blank alias blank path. Ignores `*.gen.ts` and `vite.config.ts`
 - **syncpack**: explicit pinned versions for typescript/biome/vite; React/TanStack allowed to drift; `@tgb-resolver/*` ignored
 - **Env**: `.env` → `VITE_API_URL` (default `http://localhost:5001`). Copy from `.env.example`
+
+### Frontend state (Preact Signals)
+
+- Import signals **only** from `@preact/signals-react` (never `@preact/signals`).
+- Render display-only signals **directly in JSX** — `<>{signal}</>` — so the
+  adapter patches the DOM Text node without reconciling React.
+- On hot paths (clock, playback), drive animations with `effect()` +
+  imperative `animate()` from `motion/react` (WAAPI). Avoid declarative
+  `motion/react` `animate` props bound to fast-changing signals — they commit
+  React on every change and starve frames.
+- Isolate a hot signal read into a tiny leaf component so only that leaf
+  re-renders, not a large ancestor subtree.
+- `batch()` correlated multi-signal writes; `peek()` for signal reads that must
+  not subscribe a component (reads used only inside callbacks/effects).
+- Wrap non-urgent `@tanstack/react-query` invalidations in `startTransition`.
 
 ## Testing
 

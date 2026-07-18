@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/preact-query";
+import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   clearShow,
   disableLiveMode,
@@ -20,8 +20,15 @@ import {
   TimelineEventType,
   tgbResolverServerFeaturesShowGetShowEndpointOptions,
 } from "@tgb-resolver/contracts";
-import { FILE_EXTENSION, toTimelineTableItems } from "@tgb-resolver/realtime";
-import { useMemo } from "react";
+import {
+  FILE_EXTENSION,
+  type TimelineTableItem,
+  toTimelineTableItems,
+} from "@tgb-resolver/realtime";
+import { Effect, Schedule } from "effect";
+import { useMemo, useRef } from "react";
+
+import { playbackSignal } from "@/models/playback-state";
 
 import { controlShowQueryKey } from "./realtime-cache";
 import { useControlRealtime } from "./realtime-provider";
@@ -42,6 +49,41 @@ function requireShow(show: ReturnType<typeof useControlShowQuery>["data"]) {
   return show;
 }
 
+function is409Error(error: unknown): boolean {
+  return (
+    (error as { status?: number })?.status === 409 ||
+    (error as { response?: { status?: number } })?.response?.status === 409
+  );
+}
+
+export function withRetry<T>(queryClient: QueryClient, fn: () => Promise<T>): Promise<T> {
+  const runMutation = Effect.tryPromise({
+    try: fn,
+    catch: (error) => error,
+  }).pipe(
+    Effect.tapError((error) =>
+      is409Error(error)
+        ? Effect.tryPromise({
+            try: async () => {
+              await queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
+              await queryClient.refetchQueries({ queryKey: controlShowQueryKey() });
+            },
+            catch: (refetchError) => refetchError,
+          })
+        : Effect.succeed(undefined),
+    ),
+  );
+
+  return Effect.runPromise(
+    Effect.retry(
+      runMutation,
+      Schedule.recurWhile((error: unknown) => is409Error(error)).pipe(
+        Schedule.intersect(Schedule.once),
+      ),
+    ),
+  );
+}
+
 export function useControlShowQuery() {
   return useQuery({
     ...tgbResolverServerFeaturesShowGetShowEndpointOptions({ client: generatedClient }),
@@ -52,11 +94,57 @@ export function useControlShowQuery() {
 
 export function useControlShowRows() {
   const showQuery = useControlShowQuery();
-
-  return useMemo(
+  const nextRows = useMemo(
     () => (showQuery.data ? toTimelineTableItems(showQuery.data) : []),
     [showQuery.data],
   );
+
+  return useStableRowIdentity(nextRows);
+}
+
+function hashTimelineRow(row: TimelineTableItem): number {
+  let h = 0x811c9dc5;
+  for (const value of Object.values(row)) {
+    if (typeof value === "string") {
+      for (let i = 0; i < value.length; i++) {
+        h ^= value.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+      }
+    } else if (typeof value === "number") {
+      h = Math.imul(h ^ (value & 0xffff), 0x01000193);
+      h = Math.imul(h ^ (value >>> 16), 0x01000193);
+    } else if (value != null) {
+      h = Math.imul(h ^ 1, 0x01000193);
+    }
+  }
+  return h >>> 0;
+}
+
+function useStableRowIdentity(nextRows: TimelineTableItem[]): TimelineTableItem[] {
+  const prevRef = useRef<Map<number, { hash: number; row: TimelineTableItem }>>(new Map());
+
+  return useMemo(() => {
+    if (prevRef.current.size === 0) {
+      const cache = new Map<number, { hash: number; row: TimelineTableItem }>();
+      const rows = nextRows.map((row) => {
+        const hash = hashTimelineRow(row);
+        cache.set(row.id, { hash, row });
+        return row;
+      });
+      prevRef.current = cache;
+      return rows;
+    }
+
+    const merged = nextRows.map((row) => {
+      const hash = hashTimelineRow(row);
+      const prev = prevRef.current.get(row.id);
+      if (prev && prev.hash === hash) return prev.row;
+      prevRef.current.set(row.id, { hash, row });
+      return row;
+    });
+
+    return merged;
+  }, [nextRows]);
 }
 
 export function useControlIsLive() {
@@ -67,7 +155,7 @@ export function useControlCanMutate() {
   const { connectionStatus } = useControlRealtime();
   const showQuery = useControlShowQuery();
 
-  return connectionStatus === "connected" && !!showQuery.data;
+  return connectionStatus.value === "connected" && !!showQuery.data;
 }
 
 export function useStartPlaybackMutation() {
@@ -76,13 +164,15 @@ export function useStartPlaybackMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const show = requireShow(showQuery.data);
-      const { data } = await startPlayback({
-        client: generatedClient,
-        body: { showVersion: show.showVersion },
-      });
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await startPlayback({
+          client: generatedClient,
+          body: { showVersion: playbackSignal.value.showVersion },
+        });
 
-      return data as ShowStateSnapshot;
+        return data as ShowStateSnapshot;
+      });
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
@@ -96,13 +186,15 @@ export function useResetPlaybackMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const show = requireShow(showQuery.data);
-      const { data } = await resetPlayback({
-        client: generatedClient,
-        body: { showVersion: show.showVersion },
-      });
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await resetPlayback({
+          client: generatedClient,
+          body: { showVersion: playbackSignal.value.showVersion },
+        });
 
-      return data as ShowStateSnapshot;
+        return data as ShowStateSnapshot;
+      });
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
@@ -116,13 +208,15 @@ export function useSeekPlaybackMutation() {
 
   return useMutation({
     mutationFn: async (eventId: number) => {
-      const show = requireShow(showQuery.data);
-      const { data } = await seekPlayback({
-        client: generatedClient,
-        body: { showVersion: show.showVersion, eventId },
-      });
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await seekPlayback({
+          client: generatedClient,
+          body: { showVersion: playbackSignal.value.showVersion, eventId },
+        });
 
-      return data as ShowStateSnapshot;
+        return data as ShowStateSnapshot;
+      });
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
@@ -136,13 +230,15 @@ export function useOptimizeShowMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const show = requireShow(showQuery.data);
-      const { data } = await optimizeShow({
-        client: generatedClient,
-        body: { showVersion: show.showVersion },
-      });
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await optimizeShow({
+          client: generatedClient,
+          body: { showVersion: playbackSignal.value.showVersion },
+        });
 
-      return data as ShowStateSnapshot;
+        return data as ShowStateSnapshot;
+      });
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
@@ -156,13 +252,15 @@ export function useClearShowMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const show = requireShow(showQuery.data);
-      const { data } = await clearShow({
-        client: generatedClient,
-        body: { showVersion: show.showVersion },
-      });
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await clearShow({
+          client: generatedClient,
+          body: { showVersion: playbackSignal.value.showVersion },
+        });
 
-      return data as ShowStateSnapshot;
+        return data as ShowStateSnapshot;
+      });
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
@@ -202,32 +300,33 @@ export function useRenameControlEventMutation() {
 
   return useMutation({
     mutationFn: async (payload: { eventId: number; type: string; customName: string }) => {
-      const show = requireShow(showQuery.data);
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        if (payload.type === TimelineEventType.RES) {
+          const { data } = await renameResolveEvent({
+            client: generatedClient,
+            path: { id: payload.eventId },
+            body: {
+              showVersion: playbackSignal.value.showVersion,
+              customName: payload.customName.trim(),
+            },
+          });
+          return data as ShowStateSnapshot;
+        }
 
-      if (payload.type === TimelineEventType.RES) {
-        const { data } = await renameResolveEvent({
+        const eventType =
+          payload.type === TimelineEventType.IMG ? TimelineEventType.IMG : TimelineEventType.SFX;
+        const { data } = await patchNonResolveEvent({
           client: generatedClient,
           path: { id: payload.eventId },
           body: {
-            showVersion: show.showVersion,
+            showVersion: playbackSignal.value.showVersion,
+            type: eventType,
             customName: payload.customName.trim(),
           },
         });
         return data as ShowStateSnapshot;
-      }
-
-      const eventType =
-        payload.type === TimelineEventType.IMG ? TimelineEventType.IMG : TimelineEventType.SFX;
-      const { data } = await patchNonResolveEvent({
-        client: generatedClient,
-        path: { id: payload.eventId },
-        body: {
-          showVersion: show.showVersion,
-          type: eventType,
-          customName: payload.customName.trim(),
-        },
       });
-      return data as ShowStateSnapshot;
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
@@ -292,15 +391,17 @@ export function useUpdateAutomationMutation() {
         Pick<SetAutomationRequest, "autoResolveEnabled" | "autoResolveSpeedMs" | "fullAutoEnabled">
       >,
     ) => {
-      const show = requireShow(showQuery.data);
-      const { data } = await setAutomation({
-        client: generatedClient,
-        body: {
-          showVersion: show.showVersion,
-          ...patch,
-        },
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await setAutomation({
+          client: generatedClient,
+          body: {
+            showVersion: playbackSignal.value.showVersion,
+            ...patch,
+          },
+        });
+        return data as ShowStateSnapshot;
       });
-      return data as ShowStateSnapshot;
     },
     onSuccess: (data) => {
       setShowInCache(queryClient, data);

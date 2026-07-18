@@ -1,4 +1,7 @@
 import { Box, Button, HStack, IconButton, Separator, Slider, Switch } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
+import { PlaybackStatus } from "@tgb-resolver/contracts";
+import { ShowConnectionStatus } from "@tgb-resolver/realtime";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -12,10 +15,6 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
-import { useState } from "react";
-
-import { PlaybackStatus } from "@tgb-resolver/contracts";
-import { ShowConnectionStatus } from "@tgb-resolver/realtime";
 
 import { Tooltip } from "@/components/ui/tooltip";
 import {
@@ -23,7 +22,6 @@ import {
   useControlAutoResolveSpeedMs,
   useControlCanMutate,
   useControlIsLive,
-  useControlShowQuery,
   useControlShowRows,
   useResetPlaybackMutation,
   useSeekPlaybackMutation,
@@ -33,6 +31,7 @@ import {
 } from "@/features/control/hooks";
 import { useControlRealtime } from "@/features/control/realtime-provider";
 import { useAction } from "@/lib/actions";
+import { playbackSignal } from "@/models/playback-state";
 
 export function ControlMainControls() {
   const startPlayback = useStartPlaybackMutation();
@@ -41,11 +40,8 @@ export function ControlMainControls() {
   const toggleLiveMode = useToggleLiveModeMutation();
   const isLive = useControlIsLive();
   const rows = useControlShowRows();
-  const { connectionStatus } = useControlRealtime();
+  const connectionStatus = useControlRealtime().connectionStatus.value;
   const canMutate = useControlCanMutate();
-  const currentIndex = rows.findIndex((row) => row.isCurrentResolve || row.isCurrentInlineEvent);
-  const showQuery = useControlShowQuery();
-  const playbackStatus = showQuery.data?.playback?.status;
 
   const autoResolveEnabled = useControlAutoResolveEnabled();
   const autoResolveSpeedMs = useControlAutoResolveSpeedMs();
@@ -57,55 +53,17 @@ export function ControlMainControls() {
     return idx >= 0 ? idx : RATES.length - 1;
   })();
 
-  const [dragValue, setDragValue] = useState<number[]>([]);
-
-  const prevAction = useAction({
-    handler: () => {
-      if (currentIndex > 0) {
-        const prev = rows[currentIndex - 1];
-        if (prev) seekPlayback.mutate(prev.id);
-      }
-    },
-    enabled: canMutate && currentIndex > 0 && !seekPlayback.isPending,
-    hotkeys: ["ArrowLeft"],
-  });
-
-  const nextAction = useAction({
-    handler: () => {
-      if (currentIndex >= 0 && currentIndex < rows.length - 1) {
-        const next = rows[currentIndex + 1];
-        if (next) seekPlayback.mutate(next.id);
-      }
-    },
-    enabled:
-      canMutate && currentIndex >= 0 && currentIndex < rows.length - 1 && !seekPlayback.isPending,
-    hotkeys: ["ArrowRight", "Space"],
-  });
+  const dragValue = useSignal<number[]>([]);
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
-      <IconButton
-        loading={startPlayback.isPending}
-        onClick={() => startPlayback.mutate()}
-        disabled={!canMutate}
-      >
-        {playbackStatus === PlaybackStatus.RUNNING ? <Pause /> : <Play />}
-      </IconButton>
-      <IconButton
-        loading={resetPlayback.isPending}
-        onClick={() => resetPlayback.mutate()}
-        disabled={!canMutate}
-      >
-        <TimerReset />
-      </IconButton>
-
-      <IconButton {...prevAction.buttonProps}>
-        <ChevronLeft />
-      </IconButton>
-
-      <IconButton {...nextAction.buttonProps}>
-        <ChevronRight />
-      </IconButton>
+      <PlaybackTransportState
+        rows={rows}
+        canMutate={canMutate}
+        startPlayback={startPlayback}
+        resetPlayback={resetPlayback}
+        seekPlayback={seekPlayback}
+      />
 
       <Separator orientation="vertical" size="sm" />
 
@@ -122,13 +80,15 @@ export function ControlMainControls() {
       </Switch.Root>
 
       <Slider.Root
-        value={dragValue.length > 0 ? dragValue : [rateIndex]}
+        value={dragValue.value.length > 0 ? dragValue.value : [rateIndex]}
         min={0}
         max={4}
         step={1}
-        onValueChange={(details) => setDragValue(details.value)}
+        onValueChange={(details) => {
+          dragValue.value = details.value;
+        }}
         onValueChangeEnd={({ value }) => {
-          setDragValue([]);
+          dragValue.value = [];
           updateAutomation.mutate({
             autoResolveSpeedMs: Math.round(3000 / RATES[value[0]]),
           });
@@ -170,6 +130,75 @@ export function ControlMainControls() {
         </Button>
       </Tooltip>
     </HStack>
+  );
+}
+
+function PlaybackTransportState({
+  rows,
+  canMutate,
+  startPlayback,
+  resetPlayback,
+  seekPlayback,
+}: {
+  rows: ReturnType<typeof useControlShowRows>;
+  canMutate: boolean;
+  startPlayback: ReturnType<typeof useStartPlaybackMutation>;
+  resetPlayback: ReturnType<typeof useResetPlaybackMutation>;
+  seekPlayback: ReturnType<typeof useSeekPlaybackMutation>;
+}) {
+  const currentEventId = playbackSignal.value.currentEventId;
+  const currentIndex =
+    currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
+  const playbackStatus = playbackSignal.value.status;
+
+  const prevAction = useAction({
+    handler: () => {
+      if (currentIndex > 0) {
+        const prev = rows[currentIndex - 1];
+        if (prev) seekPlayback.mutate(prev.id);
+      }
+    },
+    enabled: canMutate && currentIndex > 0 && !seekPlayback.isPending,
+    hotkeys: ["ArrowLeft"],
+  });
+
+  const nextAction = useAction({
+    handler: () => {
+      if (currentIndex >= 0 && currentIndex < rows.length - 1) {
+        const next = rows[currentIndex + 1];
+        if (next) seekPlayback.mutate(next.id);
+      }
+    },
+    enabled:
+      canMutate && currentIndex >= 0 && currentIndex < rows.length - 1 && !seekPlayback.isPending,
+    hotkeys: ["ArrowRight", "Space"],
+  });
+
+  return (
+    <>
+      <IconButton
+        loading={startPlayback.isPending}
+        onClick={() => startPlayback.mutate()}
+        disabled={!canMutate}
+      >
+        {playbackStatus === PlaybackStatus.RUNNING ? <Pause /> : <Play />}
+      </IconButton>
+      <IconButton
+        loading={resetPlayback.isPending}
+        onClick={() => resetPlayback.mutate()}
+        disabled={!canMutate}
+      >
+        <TimerReset />
+      </IconButton>
+
+      <IconButton {...prevAction.buttonProps}>
+        <ChevronLeft />
+      </IconButton>
+
+      <IconButton {...nextAction.buttonProps}>
+        <ChevronRight />
+      </IconButton>
+    </>
   );
 }
 

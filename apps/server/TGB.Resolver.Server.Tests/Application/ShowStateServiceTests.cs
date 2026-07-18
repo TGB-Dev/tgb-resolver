@@ -63,6 +63,19 @@ public sealed class ShowStateServiceTests
     await Assert.That(snapshot.Playback.CurrentResolveEventId).IsEqualTo(1);
   }
 
+  [Test]
+  public async Task RescheduleAdvance_DoesNothingWhenPlaybackIsNotRunning()
+  {
+    var service = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    await service.RescheduleAdvanceAsync();
+
+    var after = await service.GetSnapshotAsync();
+    await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
+    await Assert.That(after.Playback.Status).IsEqualTo(before.Playback.Status);
+  }
+
   private static async Task<ShowStateService> CreateServiceAsync()
   {
     var options = new DbContextOptionsBuilder<ResolverDbContext>()

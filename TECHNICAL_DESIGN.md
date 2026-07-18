@@ -44,11 +44,25 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 | Decision | Rationale |
 |---|---|
 | **Nx monorepo** | Pruned Docker images + caching; handles .NET + TS projects efficiently |
-| **Zustand** | Zustand with selector-based subscriptions avoids re-render overhead on large tables |
+| **Preact Signals (`@preact/signals-react`)** | Fine-grained reactivity; render display-only signals directly to skip React reconciliation on hot paths |
 | **TanStack Virtual** | TanStack Virtual had perf issues (but it's fixable) |
 | **SignalR + MessagePack** | Smaller wire payload than JSON for realtime frames |
 | **Generated JSON serializer** | .NET JIT serialization (not AOT); same approach as TGB Event, kept most endpoints at 8–9 ms |
 | **Feature-based server structure** | Domain-organized endpoints, dtos, and services per feature |
+
+### Frontend rendering performance
+
+`playbackSignal` is a single object signal; any `.value` read subscribes to the
+whole object, so it is the dominant re-render source. Conventions:
+
+- Render display-only signals directly in JSX (`<>{signal}</>`) to patch the DOM
+  without React reconciliation.
+- Drive hot-path animations with `effect()` + imperative `animate()` (WAAPI),
+  not declarative `motion/react` props bound to fast-changing signals.
+- Keep hot-signal reads in small leaf components so large subtrees (timeline
+  rows, transport controls, cue tab) do not re-render on playback ticks.
+- `batch()` correlated writes; `peek()` for non-subscribing reads; wrap
+  non-urgent react-query invalidations in `startTransition`.
 
 ### Tooling
 

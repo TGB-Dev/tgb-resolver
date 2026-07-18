@@ -1,6 +1,7 @@
 import { Container } from "@chakra-ui/react";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 
+import { Devtools } from "@/components/app/devtools";
 import { AppProvider } from "@/components/app/provider";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -16,6 +17,7 @@ function RootComponent() {
       <Container fluid px="0" minH="dvh">
         <Outlet />
         <Toaster />
+        <Devtools />
       </Container>
     </AppProvider>
   );

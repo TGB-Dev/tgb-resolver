@@ -1,3 +1,5 @@
+using TGB.Resolver.Server.Commons.Exceptions;
+
 namespace TGB.Resolver.Server.Features.Show;
 
 public sealed class TimelineOrchestrator(
@@ -40,6 +42,12 @@ public sealed class TimelineOrchestrator(
     }
     catch (OperationCanceledException)
     {
+    }
+    catch (VersionDriftException)
+    {
+      using var scope = scopeFactory.CreateScope();
+      var service = scope.ServiceProvider.GetRequiredService<ShowStateService>();
+      await service.RescheduleAdvanceAsync(CancellationToken.None);
     }
   }
 }

@@ -1,7 +1,5 @@
-import "preact/debug";
-
 import { RouterProvider } from "@tanstack/react-router";
-import { render } from "preact";
+import { createRoot } from "react-dom/client";
 
 import { router } from "./router";
 
@@ -9,5 +7,5 @@ import { router } from "./router";
 const rootElement = document.getElementById("app")!;
 
 if (!rootElement.innerHTML) {
-  render(<RouterProvider router={router} />, rootElement);
+  createRoot(rootElement).render(<RouterProvider router={router} />);
 }

@@ -1,5 +1,7 @@
-import preact from "@preact/preset-vite";
+import reactScan from "@react-scan/vite-plugin-react-scan";
+import babel from "@rolldown/plugin-babel";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 import { resolve } from "node:path";
@@ -16,7 +18,15 @@ const config = defineConfig({
   server: {
     host: "127.0.0.1",
   },
-  plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), preact()],
+  plugins: [
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
+    viteReact(),
+    babel({
+      plugins: ["module:@preact/signals-react-transform"],
+      presets: [reactCompilerPreset()],
+    }),
+    reactScan(),
+  ],
   build: {
     rolldownOptions: {
       output: {
@@ -50,7 +60,7 @@ const config = defineConfig({
                   );
                   if (pkg) {
                     // Clean up scoped package characters (@ and /) for clean filenames
-                    const pkgName = pkg[1].replace("@", "").replace("/", "-");
+                    const pkgName = pkg?.[1]?.replace("@", "").replace("/", "-");
                     return `vendor-${pkgName}`;
                   }
                 }
