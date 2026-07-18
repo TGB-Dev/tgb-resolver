@@ -25,7 +25,7 @@ public sealed class AppJsonSerializerTests
       [
         new TimelineEventSnapshot(1, 1, TimelineEventType.Res, 0, false, "Intro",
           new ResolveEventPayloadSnapshot("Alice", "alice", "A", 100, 1, 0, "",
-            VerdictRunResult.Accepted), null, null)
+            VerdictRunResult.Accepted), null, null, null)
       ]);
 
     var json = serializer.Serialize(payload);

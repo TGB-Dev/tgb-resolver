@@ -790,6 +790,10 @@ components:
           nullable: true
           oneOf:
           - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
+        pre:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
     TimelineEventType:
       type: string
       description: ''
@@ -797,10 +801,12 @@ components:
       - Res
       - Img
       - Sfx
+      - Pre
       enum:
       - Res
       - Img
       - Sfx
+      - Pre
     ResolveEventPayloadSnapshot:
       type: object
       additionalProperties: false

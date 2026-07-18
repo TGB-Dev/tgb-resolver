@@ -77,7 +77,8 @@ public sealed record TimelineEventSnapshot(
   string? CustomName,
   ResolveEventPayloadSnapshot? Resolve,
   MediaEventPayloadSnapshot? Image,
-  MediaEventPayloadSnapshot? Sfx);
+  MediaEventPayloadSnapshot? Sfx,
+  ResolveEventPayloadSnapshot? Pre);
 
 [TranspilationSource]
 public sealed record ResolveEventPayloadSnapshot(

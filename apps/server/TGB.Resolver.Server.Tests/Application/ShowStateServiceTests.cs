@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using System.IO;
 using NodaTime;
 using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Exceptions;
 using TGB.Resolver.Server.Commons.Serialization;
+using TGB.Resolver.Server.Features.Assets;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Data;
@@ -30,9 +33,10 @@ public sealed class ShowStateServiceTests
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
     var orchestrator = new TimelineOrchestrator(null!);
+    var assetStore = CreateAssetStore();
 
     var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance);
+      repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
 
     await service.EnsureSeededAsync();
 
@@ -104,9 +108,17 @@ public sealed class ShowStateServiceTests
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
     var orchestrator = new TimelineOrchestrator(null!);
+    var assetStore = CreateAssetStore();
     var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance);
+      repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
     await service.EnsureSeededAsync();
     return (service, hubContext);
+  }
+
+  private static AssetStore CreateAssetStore()
+  {
+    var environment = Substitute.For<IHostEnvironment>();
+    environment.ContentRootPath.Returns(Path.GetTempPath());
+    return new AssetStore(environment);
   }
 }

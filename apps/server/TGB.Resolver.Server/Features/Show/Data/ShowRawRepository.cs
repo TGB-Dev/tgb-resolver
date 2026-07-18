@@ -100,15 +100,22 @@ public sealed class ShowRawRepository(
     int showVersion)
   {
     var resolution = IcpcResolverEngine.Convert(xml, excludedUsernames);
-    var runs = resolution.ResolveEvents
-      .Select((resolve, index) => new TimelineEvent(
-        index + 1, index + 1, TimelineEventType.Res, 0, false, null,
-        new ResolveEventPayload(
-          resolve.RealName, resolve.Username, resolve.Problem,
-          resolve.NewTotalScore, resolve.NewRank, resolve.NewProblemScore,
-          resolve.ProblemDisplayName, resolve.Verdict),
-        null, null))
-      .ToArray();
+    var events = new List<TimelineEvent>(resolution.ResolveEvents.Count * 2);
+    var id = 1;
+    foreach (var resolve in resolution.ResolveEvents)
+    {
+      var payload = new ResolveEventPayload(
+        resolve.RealName, resolve.Username, resolve.Problem,
+        resolve.NewTotalScore, resolve.NewRank, resolve.NewProblemScore,
+        resolve.ProblemDisplayName, resolve.Verdict);
+
+      // Pre-resolve cue immediately precedes its resolve event so the
+      // frontend can focus on the upcoming resolution.
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, 0, false, null, null, null, null, payload));
+      id++;
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, 0, false, null, payload, null, null, null));
+      id++;
+    }
 
     return CreateEmptyShow(showVersion, ShowSource.Xml) with
     {
@@ -117,7 +124,7 @@ public sealed class ShowRawRepository(
         resolution.DurationSeconds,
         resolution.FreezeDurationSeconds,
         resolution.PreFreezeSnapshot),
-      Timeline = runs
+      Timeline = events
     };
   }
 
@@ -135,14 +142,14 @@ public sealed class ShowRawRepository(
       [
         new TimelineEvent(1, 1, TimelineEventType.Res, 0, false, null,
           new ResolveEventPayload("Alice Team", "alice", "A", 100, 1, 0, "",
-            VerdictRunResult.Accepted), null, null),
+            VerdictRunResult.Accepted), null, null, null),
         new TimelineEvent(2, 2, TimelineEventType.Sfx, 0.5, false, "Opening Sting",
-          null, null, new MediaEventPayload("sting", 2.5)),
+          null, null, new MediaEventPayload("sting", 2.5), null),
         new TimelineEvent(3, 3, TimelineEventType.Img, 1, false, "Title Board",
-          null, new MediaEventPayload("award-board", 5), null),
+          null, new MediaEventPayload("award-board", 5), null, null),
         new TimelineEvent(4, 4, TimelineEventType.Res, 0, false, "Bob Reveal",
           new ResolveEventPayload("Bob Team", "bob", "B", 180, 2, 0, "", VerdictRunResult.Accepted),
-          null, null)
+          null, null, null)
       ]
     };
   }

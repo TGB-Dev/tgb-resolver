@@ -1,12 +1,13 @@
-using System.Text;
 using Microsoft.AspNetCore.SignalR;
 using NodaTime;
 using NodaTime.HighPerformance;
 using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Commons.Types;
+using TGB.Resolver.Server.Features.Assets;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
+using TGB.Resolver.Server.Features.Show.Exporting;
 
 namespace TGB.Resolver.Server.Features.Show;
 
@@ -15,7 +16,8 @@ public sealed class ShowStateService(
   AppJsonSerializer serializer,
   IHubContext<ShowHub, IShowHubClient> hubContext,
   TimelineOrchestrator orchestrator,
-  IClock clock)
+  IClock clock,
+  AssetStore assetStore)
 {
   private Instant64 Now()
   {
@@ -47,7 +49,8 @@ public sealed class ShowStateService(
       state =>
       {
         var normalized = state.Timeline
-          .Where(e => e.Type == TimelineEventType.Res || e.Image is not null || e.Sfx is not null)
+          .Where(e => e.Type == TimelineEventType.Res || e.Type == TimelineEventType.Pre
+                      || e.Image is not null || e.Sfx is not null)
           .Select((e, i) => e with { Position = i + 1 })
           .ToArray();
 
@@ -87,8 +90,8 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> ImportBundleAsync(ImportBundleRequest request,
     CancellationToken cancellationToken = default)
   {
-    var json = Encoding.UTF8.GetString(Convert.FromBase64String(request.Bytes));
-    var imported = serializer.Deserialize<ShowState>(json);
+    var bytes = Convert.FromBase64String(request.Bytes);
+    var imported = await ShowBundleArchive.UnpackAsync(bytes, serializer, assetStore, cancellationToken);
     var nextVersion = (await repository.GetStateAsync(cancellationToken)).ShowVersion + 1;
     var updated = await repository.ReplaceAsync(
       imported with
@@ -103,7 +106,7 @@ public sealed class ShowStateService(
   public async Task<byte[]> ExportBundleAsync(CancellationToken cancellationToken = default)
   {
     var state = await repository.GetStateAsync(cancellationToken);
-    return Encoding.UTF8.GetBytes(serializer.Serialize(state));
+    return await ShowBundleArchive.PackAsync(state, serializer, assetStore, cancellationToken);
   }
 
   public async Task<ShowStateSnapshot> RenameResolveEventAsync(
@@ -206,7 +209,7 @@ public sealed class ShowStateService(
       var created = new TimelineEvent(
         nextId, position, isImg ? TimelineEventType.Img : TimelineEventType.Sfx,
         request.TriggerOffsetSeconds ?? 0, request.RequireManualInteraction ?? false,
-        request.CustomName, null, isImg ? media : null, isImg ? null : media);
+        request.CustomName, null, isImg ? media : null, isImg ? null : media, null);
 
       return state with
       {

@@ -28,7 +28,8 @@ public enum TimelineEventType
 {
   Res,
   Img,
-  Sfx
+  Sfx,
+  Pre
 }
 
 [TranspilationSource]

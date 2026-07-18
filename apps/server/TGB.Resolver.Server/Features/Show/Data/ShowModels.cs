@@ -73,7 +73,8 @@ public sealed record TimelineEvent(
   string? CustomName,
   ResolveEventPayload? Resolve,
   MediaEventPayload? Image,
-  MediaEventPayload? Sfx);
+  MediaEventPayload? Sfx,
+  ResolveEventPayload? Pre);
 
 public sealed record ResolveEventPayload(
   string RealName,
