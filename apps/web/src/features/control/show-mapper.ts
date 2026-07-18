@@ -45,6 +45,24 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       continue;
     }
 
+    if (event.type === TimelineEventType.PRE && event.pre) {
+      timeline.push({
+        ...base,
+        type: TimelineEventType.PRE,
+        payload: {
+          realName: event.pre.realName ?? "",
+          username: event.pre.username ?? "",
+          problem: event.pre.problem ?? "",
+          newTotalScore: event.pre.newTotalScore ?? 0,
+          newRank: event.pre.newRank ?? 0,
+          newProblemScore: event.pre.newProblemScore ?? 0,
+          problemDisplayName: event.pre.problemDisplayName ?? "",
+          verdict: (event.pre.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
+        },
+      });
+      continue;
+    }
+
     if (event.type === TimelineEventType.IMG && event.image) {
       timeline.push({
         ...base,
