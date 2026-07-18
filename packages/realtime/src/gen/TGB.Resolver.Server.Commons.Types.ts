@@ -9,6 +9,13 @@ export enum PlaybackStatus {
   Paused = "Paused",
 }
 
+/** Transpiled from TGB.Resolver.Server.Commons.Types.TimelineEventType */
+export enum TimelineEventType {
+  Res = "Res",
+  Img = "Img",
+  Sfx = "Sfx",
+}
+
 /** Transpiled from TGB.Resolver.Server.Commons.Types.ShowMode */
 export enum ShowMode {
   Editing = "Editing",

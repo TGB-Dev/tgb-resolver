@@ -6,8 +6,13 @@ export {
 export type {
   LiveModeChangedMessage,
   PlaybackStateChangedMessage,
-  ShowRefetchRequiredMessage,
+  ShowReplacedMessage,
+  TimelineEventAddedMessage,
+  TimelineEventRemovedMessage,
+  TimelineEventUpdatedMessage,
+  TimelineReorderedMessage,
 } from "./gen/TGB.Resolver.Server.Features.Realtime.js";
+export { ShowMessageType } from "./gen/TGB.Resolver.Server.Features.Realtime.js";
 export type {
   ActivePlaybackSegmentSnapshot,
   ClockSyncRequest,

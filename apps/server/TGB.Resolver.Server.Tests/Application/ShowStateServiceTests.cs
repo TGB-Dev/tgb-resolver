@@ -55,7 +55,7 @@ public sealed class ShowStateServiceTests
   [Test]
   public async Task SeekPlayback_MovesTheCurrentEventToTheRequestedTimelineEvent()
   {
-    var service = await CreateServiceAsync();
+    var (service, _) = await CreateServiceAsync();
 
     var snapshot = await service.SeekPlaybackAsync(new SeekPlaybackRequest(1, 3));
 
@@ -66,7 +66,7 @@ public sealed class ShowStateServiceTests
   [Test]
   public async Task RescheduleAdvance_DoesNothingWhenPlaybackIsNotRunning()
   {
-    var service = await CreateServiceAsync();
+    var (service, _) = await CreateServiceAsync();
     var before = await service.GetSnapshotAsync();
 
     await service.RescheduleAdvanceAsync();
@@ -76,7 +76,21 @@ public sealed class ShowStateServiceTests
     await Assert.That(after.Playback.Status).IsEqualTo(before.Playback.Status);
   }
 
-  private static async Task<ShowStateService> CreateServiceAsync()
+  [Test]
+  public async Task StartPlayback_BroadcastsPlaybackStateChangedWithoutBumpingShowVersion()
+  {
+    var (service, hub) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    await service.StartPlaybackAsync(new VersionedCommandRequest(before.ShowVersion));
+
+    await hub.Clients.All.Received(1).PlaybackStateChanged(Arg.Any<PlaybackStateChangedMessage>());
+    await hub.Clients.All.DidNotReceive().ShowReplaced(Arg.Any<ShowReplacedMessage>());
+    var after = await service.GetSnapshotAsync();
+    await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
+  }
+
+  private static async Task<(ShowStateService Service, IHubContext<ShowHub, IShowHubClient> Hub)> CreateServiceAsync()
   {
     var options = new DbContextOptionsBuilder<ResolverDbContext>()
       .UseSqlite("Data Source=:memory:")
@@ -93,6 +107,6 @@ public sealed class ShowStateServiceTests
     var service = new ShowStateService(
       repository, serializer, hubContext, orchestrator, SystemClock.Instance);
     await service.EnsureSeededAsync();
-    return service;
+    return (service, hubContext);
   }
 }

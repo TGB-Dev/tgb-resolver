@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
+using Tapper;
 
 namespace TGB.Resolver.IcpcXmlParser;
 
@@ -156,6 +157,7 @@ public sealed record IcpcXmlRun(
   VerdictRunResult Verdict,
   double SubmissionSecondsSinceStart);
 
+[TranspilationSource]
 public enum VerdictRunResult
 {
   Unknown,

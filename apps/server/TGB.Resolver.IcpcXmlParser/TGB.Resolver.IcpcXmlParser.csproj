@@ -7,4 +7,8 @@
     <RootNamespace>TGB.Resolver.IcpcXmlParser</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" Version="1.17.0" />
+  </ItemGroup>
+
 </Project>

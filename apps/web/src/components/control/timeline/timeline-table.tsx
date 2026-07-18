@@ -4,9 +4,9 @@ import { type RefObject, useCallback, useEffect, useRef } from "react";
 import {
   useControlIsLive,
   useControlShowQuery,
-  useControlShowRows,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
+import { rowsSignal } from "@/features/control/show-store";
 import { playbackSignal } from "@/models/playback-state";
 
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
@@ -28,7 +28,7 @@ function scrollEventToTop(parent: HTMLDivElement | null, currentEventId: number 
 
 export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   const showQuery = useControlShowQuery();
-  const rows = useControlShowRows();
+  const rows = rowsSignal.value;
   const isLive = useControlIsLive();
   const seekPlayback = useSeekPlaybackMutation();
   const onSeek = useCallback((id: number) => seekPlayback.mutate(id), [seekPlayback.mutate]);

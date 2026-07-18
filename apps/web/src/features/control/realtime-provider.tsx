@@ -13,6 +13,8 @@ import { createRealtimeClient, type RealtimeClientCallbacks } from "@/lib/realti
 import { syncPlaybackFromSnapshot } from "@/models/playback-state";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-cache";
+import { mapShowStateSnapshotToShowFile } from "./show-mapper";
+import { hydrateShowFromSnapshot } from "./show-store";
 
 interface ControlRealtimeContextValue {
   connectionStatus: { readonly value: ShowConnectionStatus };
@@ -65,6 +67,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
   const showQuery = useQuery({
     ...tgbResolverServerFeaturesShowGetShowEndpointOptions({ client: generatedClient }),
     queryKey: controlShowQueryKey(),
+    select: mapShowStateSnapshotToShowFile,
   });
 
   useEffect(() => {
@@ -122,6 +125,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    hydrateShowFromSnapshot(showQuery.data);
     syncPlaybackFromSnapshot(showQuery.data.showVersion ?? 0, showQuery.data.playback);
   }, [showQuery.data]);
 

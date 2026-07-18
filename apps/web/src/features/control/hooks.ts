@@ -20,19 +20,15 @@ import {
   TimelineEventType,
   tgbResolverServerFeaturesShowGetShowEndpointOptions,
 } from "@tgb-resolver/contracts";
-import {
-  FILE_EXTENSION,
-  type TimelineTableItem,
-  toTimelineTableItems,
-} from "@tgb-resolver/realtime";
+import { FILE_EXTENSION, type TimelineTableItem } from "@tgb-resolver/realtime";
 import { Effect, Schedule } from "effect";
-import { useMemo, useRef } from "react";
 
 import { playbackSignal } from "@/models/playback-state";
 
 import { controlShowQueryKey } from "./realtime-cache";
 import { useControlRealtime } from "./realtime-provider";
 import { mapShowStateSnapshotToShowFile } from "./show-mapper";
+import { rowsSignal } from "./show-store";
 
 function setShowInCache(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -92,59 +88,8 @@ export function useControlShowQuery() {
   });
 }
 
-export function useControlShowRows() {
-  const showQuery = useControlShowQuery();
-  const nextRows = useMemo(
-    () => (showQuery.data ? toTimelineTableItems(showQuery.data) : []),
-    [showQuery.data],
-  );
-
-  return useStableRowIdentity(nextRows);
-}
-
-function hashTimelineRow(row: TimelineTableItem): number {
-  let h = 0x811c9dc5;
-  for (const value of Object.values(row)) {
-    if (typeof value === "string") {
-      for (let i = 0; i < value.length; i++) {
-        h ^= value.charCodeAt(i);
-        h = Math.imul(h, 0x01000193);
-      }
-    } else if (typeof value === "number") {
-      h = Math.imul(h ^ (value & 0xffff), 0x01000193);
-      h = Math.imul(h ^ (value >>> 16), 0x01000193);
-    } else if (value != null) {
-      h = Math.imul(h ^ 1, 0x01000193);
-    }
-  }
-  return h >>> 0;
-}
-
-function useStableRowIdentity(nextRows: TimelineTableItem[]): TimelineTableItem[] {
-  const prevRef = useRef<Map<number, { hash: number; row: TimelineTableItem }>>(new Map());
-
-  return useMemo(() => {
-    if (prevRef.current.size === 0) {
-      const cache = new Map<number, { hash: number; row: TimelineTableItem }>();
-      const rows = nextRows.map((row) => {
-        const hash = hashTimelineRow(row);
-        cache.set(row.id, { hash, row });
-        return row;
-      });
-      prevRef.current = cache;
-      return rows;
-    }
-
-    const merged = nextRows.map((row) => {
-      const hash = hashTimelineRow(row);
-      const prev = prevRef.current.get(row.id);
-      if (prev && prev.hash === hash) return prev.row;
-      prevRef.current.set(row.id, { hash, row });
-      return row;
-    });
-
-    return merged;
-  }, [nextRows]);
+export function useControlShowRows(): TimelineTableItem[] {
+  return rowsSignal.value;
 }
 
 export function useControlIsLive() {

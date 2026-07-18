@@ -15,7 +15,7 @@ import {
   VerdictRunResult,
 } from "@tgb-resolver/contracts";
 
-import { ShowRefetchReason } from "./signalr";
+import { ShowMessageType, ShowRefetchReason } from "./signalr";
 
 export type ShowPlaybackState = PlaybackStateSnapshot;
 export type ActivePlaybackSegment = ActivePlaybackSegmentSnapshot;
@@ -26,8 +26,18 @@ export type ShowAutomation = AutomationSnapshot;
 export type ShowAssets = AssetCollectionSnapshot;
 export type ShowAsset = ShowAssetSnapshot;
 
+export type {
+  LiveModeChangedMessage,
+  PlaybackStateChangedMessage,
+  ShowReplacedMessage,
+  TimelineEventAddedMessage,
+  TimelineEventRemovedMessage,
+  TimelineEventUpdatedMessage,
+  TimelineReorderedMessage,
+} from "./signalr";
 export {
   PlaybackStatus,
+  ShowMessageType,
   ShowMode,
   ShowRefetchReason,
   ShowSource,
@@ -110,21 +120,13 @@ export interface ShowFile {
 }
 
 export type ShowWebSocketMessage =
-  | {
-      type: "show-refetch-required";
-      showVersion: number;
-      reason: ShowRefetchReason;
-    }
-  | {
-      type: "playback-state-changed";
-      showVersion: number;
-      playback: ShowPlaybackState;
-    }
-  | {
-      type: "live-mode-changed";
-      showVersion: number;
-      mode: ShowMode;
-    };
+  | { type: ShowMessageType.ShowReplaced; showVersion: number }
+  | { type: ShowMessageType.TimelineEventAdded; showVersion: number; event: TimelineEvent }
+  | { type: ShowMessageType.TimelineEventUpdated; showVersion: number; event: TimelineEvent }
+  | { type: ShowMessageType.TimelineEventRemoved; showVersion: number; eventId: number }
+  | { type: ShowMessageType.TimelineReordered; showVersion: number; orderedEventIds: number[] }
+  | { type: ShowMessageType.PlaybackStateChanged; showVersion: number; playback: ShowPlaybackState }
+  | { type: ShowMessageType.LiveModeChanged; showVersion: number; mode: ShowMode };
 
 export interface TimelineTableItem {
   id: number;

@@ -2,113 +2,129 @@
 /* eslint-disable */
 /* tslint:disable */
 // @ts-nocheck
-import type { HubConnection } from "@microsoft/signalr";
+import type { HubConnection, IStreamResult, Subject } from '@microsoft/signalr';
+import type { IShowHub, IShowHubClient } from './TGB.Resolver.Server.Features.Realtime';
+import type { ClockSyncRequest, ClockSyncResponse } from '../TGB.Resolver.Server.Features.Show.Dto';
+import type { TimelineEventAddedMessage, TimelineEventUpdatedMessage, TimelineEventRemovedMessage, TimelineReorderedMessage, ShowReplacedMessage, PlaybackStateChangedMessage, LiveModeChangedMessage } from '../TGB.Resolver.Server.Features.Realtime';
 
-import type {
-  LiveModeChangedMessage,
-  PlaybackStateChangedMessage,
-  ShowRefetchRequiredMessage,
-} from "../TGB.Resolver.Server.Features.Realtime";
-import type { ClockSyncRequest, ClockSyncResponse } from "../TGB.Resolver.Server.Features.Show.Dto";
-import type { IShowHub, IShowHubClient } from "./TGB.Resolver.Server.Features.Realtime";
 
 // components
 
 export type Disposable = {
-  dispose(): void;
-};
+    dispose(): void;
+}
 
 export type HubProxyFactory<T> = {
-  createHubProxy(connection: HubConnection): T;
-};
+    createHubProxy(connection: HubConnection): T;
+}
 
 export type ReceiverRegister<T> = {
-  register(connection: HubConnection, receiver: T): Disposable;
-};
+    register(connection: HubConnection, receiver: T): Disposable;
+}
 
 type ReceiverMethod = {
-  methodName: string;
-  method: (...args: any[]) => void;
-};
+    methodName: string,
+    method: (...args: any[]) => void
+}
 
 class ReceiverMethodSubscription implements Disposable {
-  public constructor(
-    private connection: HubConnection,
-    private receiverMethod: ReceiverMethod[],
-  ) {}
 
-  public readonly dispose = () => {
-    for (const it of this.receiverMethod) {
-      this.connection.off(it.methodName, it.method);
+    public constructor(
+        private connection: HubConnection,
+        private receiverMethod: ReceiverMethod[]) {
     }
-  };
+
+    public readonly dispose = () => {
+        for (const it of this.receiverMethod) {
+            this.connection.off(it.methodName, it.method);
+        }
+    }
 }
 
 // API
 
-export type HubProxyFactoryProvider = (hubType: "IShowHub") => HubProxyFactory<IShowHub>;
+export type HubProxyFactoryProvider = {
+    (hubType: "IShowHub"): HubProxyFactory<IShowHub>;
+}
 
 export const getHubProxyFactory = ((hubType: string) => {
-  if (hubType === "IShowHub") {
-    return IShowHub_HubProxyFactory.Instance;
-  }
+    if(hubType === "IShowHub") {
+        return IShowHub_HubProxyFactory.Instance;
+    }
 }) as HubProxyFactoryProvider;
 
-export type ReceiverRegisterProvider = (
-  receiverType: "IShowHubClient",
-) => ReceiverRegister<IShowHubClient>;
+export type ReceiverRegisterProvider = {
+    (receiverType: "IShowHubClient"): ReceiverRegister<IShowHubClient>;
+}
 
 export const getReceiverRegister = ((receiverType: string) => {
-  if (receiverType === "IShowHubClient") {
-    return IShowHubClient_Binder.Instance;
-  }
+    if(receiverType === "IShowHubClient") {
+        return IShowHubClient_Binder.Instance;
+    }
 }) as ReceiverRegisterProvider;
 
 // HubProxy
 
 class IShowHub_HubProxyFactory implements HubProxyFactory<IShowHub> {
-  public static Instance = new IShowHub_HubProxyFactory();
+    public static Instance = new IShowHub_HubProxyFactory();
 
-  private constructor() {}
+    private constructor() {
+    }
 
-  public readonly createHubProxy = (connection: HubConnection): IShowHub => {
-    return new IShowHub_HubProxy(connection);
-  };
+    public readonly createHubProxy = (connection: HubConnection): IShowHub => {
+        return new IShowHub_HubProxy(connection);
+    }
 }
 
 class IShowHub_HubProxy implements IShowHub {
-  public constructor(private connection: HubConnection) {}
 
-  public readonly syncClock = async (request: ClockSyncRequest): Promise<ClockSyncResponse> => {
-    return await this.connection.invoke("SyncClock", request);
-  };
+    public constructor(private connection: HubConnection) {
+    }
+
+    public readonly syncClock = async (request: ClockSyncRequest): Promise<ClockSyncResponse> => {
+        return await this.connection.invoke("SyncClock", request);
+    }
 }
+
 
 // Receiver
 
 class IShowHubClient_Binder implements ReceiverRegister<IShowHubClient> {
-  public static Instance = new IShowHubClient_Binder();
 
-  private constructor() {}
+    public static Instance = new IShowHubClient_Binder();
 
-  public readonly register = (connection: HubConnection, receiver: IShowHubClient): Disposable => {
-    const __ShowRefetchRequired = (...args: [ShowRefetchRequiredMessage]) =>
-      receiver.showRefetchRequired(...args);
-    const __PlaybackStateChanged = (...args: [PlaybackStateChangedMessage]) =>
-      receiver.playbackStateChanged(...args);
-    const __LiveModeChanged = (...args: [LiveModeChangedMessage]) =>
-      receiver.liveModeChanged(...args);
+    private constructor() {
+    }
 
-    connection.on("ShowRefetchRequired", __ShowRefetchRequired);
-    connection.on("PlaybackStateChanged", __PlaybackStateChanged);
-    connection.on("LiveModeChanged", __LiveModeChanged);
+    public readonly register = (connection: HubConnection, receiver: IShowHubClient): Disposable => {
 
-    const methodList: ReceiverMethod[] = [
-      { methodName: "ShowRefetchRequired", method: __ShowRefetchRequired },
-      { methodName: "PlaybackStateChanged", method: __PlaybackStateChanged },
-      { methodName: "LiveModeChanged", method: __LiveModeChanged },
-    ];
+        const __TimelineEventAdded = (...args: [TimelineEventAddedMessage]) => receiver.timelineEventAdded(...args);
+        const __TimelineEventUpdated = (...args: [TimelineEventUpdatedMessage]) => receiver.timelineEventUpdated(...args);
+        const __TimelineEventRemoved = (...args: [TimelineEventRemovedMessage]) => receiver.timelineEventRemoved(...args);
+        const __TimelineReordered = (...args: [TimelineReorderedMessage]) => receiver.timelineReordered(...args);
+        const __ShowReplaced = (...args: [ShowReplacedMessage]) => receiver.showReplaced(...args);
+        const __PlaybackStateChanged = (...args: [PlaybackStateChangedMessage]) => receiver.playbackStateChanged(...args);
+        const __LiveModeChanged = (...args: [LiveModeChangedMessage]) => receiver.liveModeChanged(...args);
 
-    return new ReceiverMethodSubscription(connection, methodList);
-  };
+        connection.on("TimelineEventAdded", __TimelineEventAdded);
+        connection.on("TimelineEventUpdated", __TimelineEventUpdated);
+        connection.on("TimelineEventRemoved", __TimelineEventRemoved);
+        connection.on("TimelineReordered", __TimelineReordered);
+        connection.on("ShowReplaced", __ShowReplaced);
+        connection.on("PlaybackStateChanged", __PlaybackStateChanged);
+        connection.on("LiveModeChanged", __LiveModeChanged);
+
+        const methodList: ReceiverMethod[] = [
+            { methodName: "TimelineEventAdded", method: __TimelineEventAdded },
+            { methodName: "TimelineEventUpdated", method: __TimelineEventUpdated },
+            { methodName: "TimelineEventRemoved", method: __TimelineEventRemoved },
+            { methodName: "TimelineReordered", method: __TimelineReordered },
+            { methodName: "ShowReplaced", method: __ShowReplaced },
+            { methodName: "PlaybackStateChanged", method: __PlaybackStateChanged },
+            { methodName: "LiveModeChanged", method: __LiveModeChanged }
+        ]
+
+        return new ReceiverMethodSubscription(connection, methodList);
+    }
 }
+

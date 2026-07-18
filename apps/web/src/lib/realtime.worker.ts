@@ -4,12 +4,22 @@ import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/s
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import {
   calculateClockSample,
+  type LiveModeChangedMessage,
+  type PlaybackStateChangedMessage,
   PlaybackStatus,
   RealtimeWorkerRequestType,
   RealtimeWorkerResponseType,
+  ShowMessageType,
   ShowMode,
-  type ShowRefetchReason,
+  type ShowReplacedMessage,
   selectClockEstimate,
+  type TimelineEvent,
+  type TimelineEventAddedMessage,
+  type TimelineEventRemovedMessage,
+  TimelineEventType,
+  type TimelineEventUpdatedMessage,
+  type TimelineReorderedMessage,
+  VerdictRunResult,
 } from "@tgb-resolver/realtime";
 import { Effect, Fiber, Schedule } from "effect";
 
@@ -94,7 +104,7 @@ function mapStatus(status: string): string {
       : PlaybackStatus.IDLE;
 }
 
-function mapMode(mode: string): string {
+function mapMode(mode: string): ShowMode {
   return String(mode) === "Live" ? ShowMode.LIVE : ShowMode.EDITING;
 }
 
@@ -113,66 +123,161 @@ async function connectHub(url: string) {
     .configureLogging(LogLevel.Error)
     .build();
 
-  connection.on("ShowRefetchRequired", (message: { ShowVersion: number; Reason: string }) => {
+  function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): TimelineEvent {
+    const base = {
+      id: src.Id,
+      position: src.Position,
+      triggerOffsetSeconds: src.TriggerOffsetSeconds,
+      requireManualInteraction: src.RequireManualInteraction,
+      customName: src.CustomName,
+    };
+
+    switch (src.Type as string) {
+      case TimelineEventType.RES: {
+        const r = src.Resolve;
+        if (!r) throw new Error("RES timeline event missing Resolve payload");
+        return {
+          ...base,
+          type: TimelineEventType.RES,
+          payload: {
+            realName: r.RealName,
+            username: r.Username,
+            problem: r.Problem,
+            newTotalScore: r.NewTotalScore,
+            newRank: r.NewRank,
+            newProblemScore: r.NewProblemScore,
+            problemDisplayName: r.ProblemDisplayName,
+            verdict: r.Verdict as unknown as VerdictRunResult,
+          },
+        };
+      }
+      case TimelineEventType.IMG: {
+        const img = src.Image;
+        if (!img) throw new Error("IMG timeline event missing Image payload");
+        return {
+          ...base,
+          type: TimelineEventType.IMG,
+          payload: {
+            imageId: img.AssetId,
+            durationSeconds: img.DurationSeconds,
+          },
+        };
+      }
+      case TimelineEventType.SFX: {
+        const sfx = src.Sfx;
+        if (!sfx) throw new Error("SFX timeline event missing Sfx payload");
+        return {
+          ...base,
+          type: TimelineEventType.SFX,
+          payload: {
+            sfxId: sfx.AssetId,
+            durationSeconds: sfx.DurationSeconds,
+          },
+        };
+      }
+      default:
+        return {
+          ...base,
+          type: TimelineEventType.RES,
+          payload: {
+            realName: "",
+            username: "",
+            problem: "",
+            newTotalScore: 0,
+            newRank: 0,
+            newProblemScore: 0,
+            problemDisplayName: "",
+            verdict: VerdictRunResult.UNKNOWN,
+          },
+        };
+    }
+  }
+
+  connection.on("TimelineEventAdded", (message: TimelineEventAddedMessage) => {
     post({
       type: RealtimeWorkerResponseType.Message,
       message: {
-        type: "show-refetch-required",
+        type: ShowMessageType.TimelineEventAdded,
         showVersion: message.ShowVersion,
-        reason: message.Reason as ShowRefetchReason,
+        event: mapTimelineEvent(message.Event),
       },
     });
   });
 
-  connection.on(
-    "PlaybackStateChanged",
-    (message: {
-      ShowVersion: number;
-      Playback: {
-        Status: string;
-        ExecutionSequence: number;
-        CurrentResolveEventId?: number;
-        CurrentEventId?: number;
-        ActiveSegment?: {
-          ResolveEventId: number;
-          NextResolveEventId?: number;
-          InlineEventIds: number[];
-          CurrentInlineIndex: number;
-        };
-        StartedAt?: number;
-      };
-    }) => {
-      const p = message.Playback;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: "playback-state-changed",
-          showVersion: message.ShowVersion,
-          playback: {
-            status: mapStatus(p.Status),
-            executionSequence: p.ExecutionSequence,
-            currentResolveEventId: p.CurrentResolveEventId ?? undefined,
-            currentEventId: p.CurrentEventId ?? undefined,
-            activeSegment: p.ActiveSegment
-              ? {
-                  resolveEventId: p.ActiveSegment.ResolveEventId,
-                  nextResolveEventId: p.ActiveSegment.NextResolveEventId ?? undefined,
-                  inlineEventIds: p.ActiveSegment.InlineEventIds,
-                  currentInlineIndex: p.ActiveSegment.CurrentInlineIndex,
-                }
-              : undefined,
-            startedAt: p.StartedAt ?? undefined,
-          },
-        },
-      });
-    },
-  );
-
-  connection.on("LiveModeChanged", (message: { ShowVersion: number; Mode: string }) => {
+  connection.on("TimelineEventUpdated", (message: TimelineEventUpdatedMessage) => {
     post({
       type: RealtimeWorkerResponseType.Message,
       message: {
-        type: "live-mode-changed",
+        type: ShowMessageType.TimelineEventUpdated,
+        showVersion: message.ShowVersion,
+        event: mapTimelineEvent(message.Event),
+      },
+    });
+  });
+
+  connection.on("TimelineEventRemoved", (message: TimelineEventRemovedMessage) => {
+    post({
+      type: RealtimeWorkerResponseType.Message,
+      message: {
+        type: ShowMessageType.TimelineEventRemoved,
+        showVersion: message.ShowVersion,
+        eventId: message.EventId,
+      },
+    });
+  });
+
+  connection.on("TimelineReordered", (message: TimelineReorderedMessage) => {
+    post({
+      type: RealtimeWorkerResponseType.Message,
+      message: {
+        type: ShowMessageType.TimelineReordered,
+        showVersion: message.ShowVersion,
+        orderedEventIds: message.OrderedEventIds,
+      },
+    });
+  });
+
+  connection.on("ShowReplaced", (message: ShowReplacedMessage) => {
+    post({
+      type: RealtimeWorkerResponseType.Message,
+      message: {
+        type: ShowMessageType.ShowReplaced,
+        showVersion: message.ShowVersion,
+      },
+    });
+  });
+
+  connection.on("PlaybackStateChanged", (message: PlaybackStateChangedMessage) => {
+    const p = message.Playback;
+    post({
+      type: RealtimeWorkerResponseType.Message,
+      message: {
+        type: ShowMessageType.PlaybackStateChanged,
+        showVersion: message.ShowVersion,
+        playback: {
+          status: mapStatus(p.Status),
+          executionSequence: p.ExecutionSequence,
+          currentResolveEventId: p.CurrentResolveEventId ?? undefined,
+          currentEventId: p.CurrentEventId ?? undefined,
+          activeSegment: p.ActiveSegment
+            ? {
+                resolveEventId: p.ActiveSegment.ResolveEventId,
+                nextResolveEventId: p.ActiveSegment.NextResolveEventId ?? undefined,
+                inlineEventIds: p.ActiveSegment.InlineEventIds,
+                currentInlineIndex: p.ActiveSegment.CurrentInlineIndex,
+              }
+            : undefined,
+          startedAt: p.StartedAt ?? undefined,
+        },
+      },
+    });
+  });
+
+  connection.on("LiveModeChanged", (message: LiveModeChangedMessage) => {
+    post({
+      type: RealtimeWorkerResponseType.Message,
+      message: {
+        type: ShowMessageType.LiveModeChanged,
         showVersion: message.ShowVersion,
         mode: mapMode(message.Mode),
       },

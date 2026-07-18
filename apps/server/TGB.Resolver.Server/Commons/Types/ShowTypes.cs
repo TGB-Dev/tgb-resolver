@@ -23,6 +23,7 @@ public enum PlaybackStatus
   Paused
 }
 
+[TranspilationSource]
 public enum TimelineEventType
 {
   Res,

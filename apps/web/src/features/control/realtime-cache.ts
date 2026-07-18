@@ -3,40 +3,47 @@ import {
   generatedClient,
   tgbResolverServerFeaturesShowGetShowEndpointQueryKey,
 } from "@tgb-resolver/contracts";
-import type { ShowWebSocketMessage } from "@tgb-resolver/realtime";
-import { startTransition } from "react";
+import { ShowMessageType, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
 
 import { syncPlaybackFromSnapshot } from "@/models/playback-state";
+
+import { hydrateShowFromSnapshot, showMode, tryApplyShowMessage } from "./show-store";
 
 export function controlShowQueryKey() {
   return tgbResolverServerFeaturesShowGetShowEndpointQueryKey({ client: generatedClient });
 }
 
-export async function applyControlRealtimeMessage(
+export function applyControlRealtimeMessage(
   queryClient: QueryClient,
   message: ShowWebSocketMessage,
 ) {
-  if (message.type === "playback-state-changed") {
-    syncPlaybackFromSnapshot(message.showVersion, message.playback);
-    return;
-  }
+  switch (message.type) {
+    case ShowMessageType.PlaybackStateChanged:
+      // Playback carries the (unchanged) DATA showVersion; never refetch, never drift the data version.
+      syncPlaybackFromSnapshot(message.showVersion, message.playback);
+      return;
 
-  if (message.type === "live-mode-changed") {
-    startTransition(() => {
+    case ShowMessageType.LiveModeChanged:
+      showMode.value = message.mode;
+      return;
+
+    case ShowMessageType.ShowReplaced:
+      // Wholesale replace (import/clear): refetch the whole show. Rare + user-initiated,
+      // so a full refetch is correct and avoids mapping the large snapshot.
       void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
-    });
-    return;
-  }
+      return;
 
-  if (message.type === "show-refetch-required") {
-    // Keep current playback signal until REST refetch reconciles it.
-    startTransition(() => {
-      void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
-    });
-    return;
+    case ShowMessageType.TimelineEventAdded:
+    case ShowMessageType.TimelineEventUpdated:
+    case ShowMessageType.TimelineEventRemoved:
+    case ShowMessageType.TimelineReordered:
+      if (!tryApplyShowMessage(message)) {
+        // Version gap (missed message / late join) -> repair via whole-show refetch (original desync design).
+        void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
+      }
+      return;
   }
-
-  startTransition(() => {
-    void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
-  });
 }
+
+// Re-exported for callers that hydrate the store directly from a REST snapshot.
+export { hydrateShowFromSnapshot };

@@ -9,7 +9,7 @@
     "generate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "dotnet tool run dotnet-tsrts --project TGB.Resolver.Server/TGB.Resolver.Server.csproj --output ../../packages/realtime/src/gen --serializer MessagePack --naming-style none --enum name",
+        "command": "dotnet tool run dotnet-tsrts --project TGB.Resolver.Server/TGB.Resolver.Server.csproj --output ../../packages/realtime/src/gen --serializer MessagePack --naming-style none --enum name --asm",
         "cwd": "apps/server"
       },
       "dependsOn": ["^build"],
