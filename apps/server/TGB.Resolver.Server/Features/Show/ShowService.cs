@@ -614,22 +614,27 @@ public sealed class ShowStateService(
         return;
     }
 
-    // Use the current event's media duration for inline events, falling back to
-    // trigger-offset-based timing for events without explicit duration.
+    // Use the current event's media duration for inline events. When autoplay is
+    // on, a resolve (or the pre-resolve immediately preceding it) dwells for the
+    // configured auto-resolve speed so the reveal is actually shown; otherwise
+    // fall back to trigger-offset-based timing.
     var currentEvent = ordered[currentIndex];
     var currentDurationSeconds = currentEvent.Type != TimelineEventType.Res
       ? currentEvent.Image?.DurationSeconds ?? currentEvent.Sfx?.DurationSeconds
       : null;
+
+    var autoAdvanceRes =
+      state.Automation.FullAutoEnabled || state.Automation.AutoResolveEnabled;
 
     long delayMs;
     if (currentDurationSeconds is > 0)
     {
       delayMs = Math.Max(1, (long)(currentDurationSeconds.Value * 1000));
     }
-    else if (nextEvent.Type == TimelineEventType.Res)
+    else if (autoAdvanceRes
+             && (currentEvent.Type == TimelineEventType.Res
+                 || nextEvent.Type == TimelineEventType.Res))
     {
-      if (!state.Automation.FullAutoEnabled && !state.Automation.AutoResolveEnabled)
-        return;
       delayMs = state.Automation.AutoResolveSpeedMs;
     }
     else

@@ -1,9 +1,9 @@
 import { HStack, Text } from "@chakra-ui/react";
-import { useComputed, useSignal } from "@preact/signals-react";
+import { type ReadonlySignal, useComputed, useSignal } from "@preact/signals-react";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-import { useControlAutoResolveEnabled, useControlShowRows } from "@/features/control/hooks";
+import { useControlShowRows } from "@/features/control/hooks";
 import { controlNowModel } from "@/models/control-now";
 import { playbackSignal } from "@/models/playback-state";
 
@@ -17,68 +17,75 @@ function formatRemaining(ms: number) {
   };
 }
 
+function NextCueRemaining({
+  durations,
+  eventStartedAt,
+  now,
+}: {
+  durations: number[];
+  eventStartedAt: ReadonlySignal<number>;
+  now: ReadonlySignal<number>;
+}) {
+  const remainingMs = useComputed(() => {
+    const elapsed = now.value - eventStartedAt.value;
+    return durations.reduce((sum, d) => sum + Math.max(0, d * 1000 - elapsed), 0);
+  });
+  const mainText = useComputed(() => {
+    const { minutes, seconds } = formatRemaining(remainingMs.value);
+    return `${minutes}:${seconds}.`;
+  });
+  const hundredText = useComputed(() => formatRemaining(remainingMs.value).hundredMillis);
+
+  return (
+    <Text as="span" fontFamily="mono" fontVariantNumeric="tabular-nums" fontWeight="bold">
+      <>{mainText}</>
+      <Text as="span" fontSize="sm">
+        <>{hundredText}</>
+      </Text>
+    </Text>
+  );
+}
+
 export function NextCueTimer() {
   const rows = useControlShowRows();
   const currentEventId = playbackSignal.value.currentEventId;
-  const currentIndex =
-    currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
-  const currentEvent = currentIndex >= 0 ? rows[currentIndex] : undefined;
-  const durationSeconds = currentEvent?.durationSeconds;
-  const isRunning = useComputed(() => playbackSignal.value.status === "Running").value;
-  const autoResolveEnabled = useControlAutoResolveEnabled();
-  const now = useComputed(() => controlNowModel.now.value);
+  const playingEvents = rows.filter(
+    (row) => row.id === currentEventId && (row.durationSeconds ?? 0) > 0,
+  );
 
-  const prevEventIdRef = useRef<number | undefined>(undefined);
-  const eventStartedAt = useSignal(now.value);
+  const playingKey = playingEvents.map((row) => row.id).join(",");
+  const prevPlayingKeyRef = useRef<string>("");
+  const eventStartedAt = useSignal(controlNowModel.now.peek());
 
   useEffect(() => {
-    if (currentEventId != null && currentEventId !== prevEventIdRef.current) {
-      eventStartedAt.value = now.value;
-      prevEventIdRef.current = currentEventId;
+    if (playingKey && playingKey !== prevPlayingKeyRef.current) {
+      eventStartedAt.value = controlNowModel.now.peek();
+      prevPlayingKeyRef.current = playingKey;
     }
-  }, [currentEventId, now.value, eventStartedAt]);
+  }, [playingKey, eventStartedAt]);
 
-  const remainingMs = useMemo(() => {
-    if (
-      !isRunning ||
-      !autoResolveEnabled ||
-      durationSeconds === undefined ||
-      durationSeconds <= 0
-    ) {
-      return 0;
-    }
-
-    return Math.max(0, eventStartedAt.value + durationSeconds * 1000 - now.value);
-  }, [isRunning, autoResolveEnabled, durationSeconds, eventStartedAt.value, now.value]);
-
-  if (
-    !currentEvent ||
-    !autoResolveEnabled ||
-    durationSeconds === undefined ||
-    durationSeconds <= 0
-  ) {
+  if (playingEvents.length === 0) {
     return (
       <HStack gap={2} alignItems="center" py={4} fontSize="lg" fontFamily="mono">
         <ChevronDown />
         <Text as="span" color="fg.muted" fontVariantNumeric="tabular-nums">
-          No duration
+          No active cue
         </Text>
       </HStack>
     );
   }
 
-  const { minutes, seconds, hundredMillis } = formatRemaining(remainingMs);
+  const durations = playingEvents.map((row) => row.durationSeconds ?? 0);
 
   return (
     <HStack gap={2} alignItems="center" py={4} fontSize="lg" fontFamily="mono">
       <ChevronDown />
       Next cue in{" "}
-      <Text as="span" fontFamily="mono" fontVariantNumeric="tabular-nums" fontWeight="bold">
-        {minutes}:{seconds}.
-        <Text as="span" fontSize="sm">
-          {hundredMillis}
-        </Text>
-      </Text>
+      <NextCueRemaining
+        durations={durations}
+        eventStartedAt={eventStartedAt}
+        now={controlNowModel.now}
+      />
     </HStack>
   );
 }

@@ -23,7 +23,7 @@ function scrollEventToTop(parent: HTMLDivElement | null, currentEventId: number 
   if (!parent || currentEventId == null) return;
   const el = parent.querySelector<HTMLElement>(`[data-event-id="${currentEventId}"]`);
   if (!el) return;
-  parent.scrollTop += el.getBoundingClientRect().top - parent.getBoundingClientRect().top;
+  el.scrollIntoView({ block: "start", behavior: "auto" });
 }
 
 export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
@@ -89,7 +89,8 @@ function CurrentEventScroller({ parentRef }: { parentRef: RefObject<HTMLDivEleme
   const currentEventId = playbackSignal.value.currentEventId;
 
   useEffect(() => {
-    scrollEventToTop(parentRef.current, currentEventId);
+    const raf = requestAnimationFrame(() => scrollEventToTop(parentRef.current, currentEventId));
+    return () => cancelAnimationFrame(raf);
   }, [currentEventId, parentRef]);
 
   return null;

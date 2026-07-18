@@ -13,7 +13,7 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, TimelineTableColumnCo
     maxW: "4ch",
   },
   name: {
-    minW: "25ch",
+    minW: "30ch",
   },
   problem: {
     minW: "5ch",
