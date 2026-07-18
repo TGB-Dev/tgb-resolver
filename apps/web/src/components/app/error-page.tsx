@@ -1,9 +1,11 @@
-import { Code, Stack, Text, VStack } from "@chakra-ui/react";
+import { Button, Code, Icon, Stack, Text, VStack } from "@chakra-ui/react";
+import { Copy } from "lucide-react";
+import { useState } from "react";
 
 export function NotFoundPage() {
   return (
     <VStack minH="100dvh" align="center" justify="center" gap={2} bg="bg.subtle">
-      <Text fontSize="lg" fontWeight="medium" color="fg" fontFamily="mono">
+      <Text fontSize="lg" fontWeight="medium" color="fg">
         404{" "}
         <Text as="span" color="fg.muted" mx={2}>
           |
@@ -19,6 +21,19 @@ export function NotFoundPage() {
 }
 
 export function ErrorPage({ error }: { error: Error }) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyError = () => {
+    const errorData = {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+    navigator.clipboard.writeText(JSON.stringify(errorData, null, 2));
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   return (
     <VStack minH="100dvh" align="center" justify="center" bg="bg.subtle" p={6}>
       <Stack
@@ -42,6 +57,17 @@ export function ErrorPage({ error }: { error: Error }) {
         </Stack>
 
         <Stack gap={2}>
+          <Button
+            size="xs"
+            colorPalette="gray"
+            variant="surface"
+            onClick={handleCopyError}
+            w="fit-content"
+          >
+            <Icon as={Copy} w={3} h={3} mr={1} />
+            {isCopied ? "Đã sao chép" : "Sao chép lỗi"}
+          </Button>
+
           <Text fontSize="sm" fontWeight="bold" color="fg">
             {error.name}
           </Text>

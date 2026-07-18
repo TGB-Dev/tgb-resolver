@@ -1,4 +1,5 @@
 import { computed, type ReadonlySignal, signal } from "@preact/signals-react";
+import type { ShowMetaSnapshot } from "@tgb-resolver/contracts";
 import type { ShowFile, TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
 import {
   PlaybackStatus,
@@ -19,6 +20,7 @@ export const showOrderedIds = signal<number[]>([]);
 export const showContext = signal<ShowDerivedContext | null>(null);
 export const showMode = signal<ShowMode>(ShowMode.EDITING);
 export const dataVersion = signal<number>(0);
+export const showMeta = signal<ShowMetaSnapshot>();
 
 export function hydrateShowFromSnapshot(show: ShowFile): void {
   const map = new Map<number, TimelineEvent>();
@@ -36,6 +38,7 @@ export function hydrateShowFromSnapshot(show: ShowFile): void {
   };
   showMode.value = show.mode;
   dataVersion.value = show.showVersion;
+  showMeta.value = show.meta;
 }
 
 function applyTimelineEvent(event: TimelineEvent): void {
@@ -93,6 +96,7 @@ export function tryApplyShowMessage(
 // skip re-render when their derived content is unchanged.
 const rowIdentityCache = new Map<number, { hash: number; row: TimelineTableItem }>();
 
+// TODO: find a more efficient way to accomplish this
 function hashTimelineRow(row: TimelineTableItem): number {
   let h = 0x811c9dc5;
   for (const value of Object.values(row)) {
