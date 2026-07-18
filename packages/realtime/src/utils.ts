@@ -160,7 +160,7 @@ export function toTimelineTableItem(
       };
     }
     case TimelineEventType.SFX: {
-      const sfxPlaceholderName = `Play SFX: ${event.payload.sfxId}`;
+      const sfxPlaceholderName = `Playing SFX ${event.payload.sfxId}`;
       return {
         id: event.id,
         type: event.type,
@@ -177,7 +177,7 @@ export function toTimelineTableItem(
       };
     }
     case TimelineEventType.IMG: {
-      const imagePlaceholderName = `Show Image: ${event.payload.imageId}`;
+      const imagePlaceholderName = `Playing IMG ${event.payload.imageId}`;
       return {
         id: event.id,
         type: event.type,
@@ -194,7 +194,7 @@ export function toTimelineTableItem(
       };
     }
     case TimelineEventType.PRE: {
-      const resolvePlaceholderName = `Pre: ${event.payload.realName ?? event.payload.username}`;
+      const resolvePlaceholderName = `Pre-resolve for user ${event.payload.username}`;
       return {
         id: event.id,
         type: event.type,
