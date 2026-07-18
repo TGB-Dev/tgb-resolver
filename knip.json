@@ -1,0 +1,54 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "**/*.gen.ts",
+    "**/src/generated/**",
+    "**/src/gen/**",
+    "**/.opencode/**",
+    "**/.github/**",
+    "**/.agents/**",
+    "**/.cursor/**",
+    "**/.codex/**",
+    "**/.husky/**",
+    "**/agent/**",
+    "skills-lock.json"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": ["*.json", "vitest.workspace.ts"],
+      "vitest": {
+        "config": []
+      }
+    },
+    "apps/web": {
+      "entry": ["src/main.tsx", "src/router.tsx", "src/styles.css", "index.html"],
+      "ignore": [
+        "public",
+        ".tanstack",
+        "src/components/control/timeline/timeline-table-column.config.ts",
+        "src/components/ui/color-mode.tsx",
+        "src/components/ui/provider.tsx",
+        "src/components/ui/toaster.tsx",
+        "src/features/control/realtime-cache.ts",
+        "src/features/control/show-store.ts",
+        "src/lib/api.ts",
+        "src/lib/realtime-client.ts",
+        "src/models/playback-state.ts"
+      ],
+      "ignoreDependencies": [
+        "@fontsource-variable/inter",
+        "@fontsource-variable/jetbrains-mono",
+        "@fontsource-variable/noto-sans-display",
+        "@testing-library/dom"
+      ]
+    },
+    "packages/contracts": {
+      "entry": ["src/index.ts", "openapi-ts.config.ts"],
+      "ignoreDependencies": ["@tgb-resolver/server"]
+    },
+    "packages/realtime": {
+      "entry": ["src/index.ts", "src/signalr.ts"],
+      "ignoreDependencies": ["@tgb-resolver/server"]
+    }
+  }
+}

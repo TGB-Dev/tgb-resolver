@@ -9,22 +9,24 @@
     "check-types": "turbo run check-types",
     "dev": "turbo run dev",
     "format": "biome format . --write",
+    "generate": "turbo run generate",
     "hooks:install": "git config core.hooksPath .githooks",
+    "knip": "knip",
     "lint": "biome lint . --write",
+    "nuget:outdated": "turbo run nuget:outdated --filter=@tgb-resolver/server",
+    "nuget:update": "turbo run nuget:update --filter=@tgb-resolver/server",
+    "preview": "turbo run preview",
+    "quality": "turbo run quality --filter=@tgb-resolver/server",
     "serve": "turbo run serve",
     "sync": "pnpm syncpack fix --dependency-types prod,dev,peer && pnpm syncpack format",
     "sync:check": "pnpm syncpack lint --dependency-types prod,dev,peer",
     "test": "turbo run test"
   },
-  "dependencies": {
-    "dotenv-cli": "^11.0.0"
-  },
   "devDependencies": {
     "@biomejs/biome": "2.5.4",
     "@types/node": "^26.1.1",
-    "rimraf": "^6.1.3",
+    "knip": "^6.27.0",
     "syncpack": "^15.3.2",
-    "tsx": "^4.23.1",
     "turbo": "^2.5.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.10"

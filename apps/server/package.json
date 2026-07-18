@@ -8,6 +8,8 @@
     "test": "dotnet test TGB.Resolver.Server.slnx --no-restore",
     "dev": "ASPNETCORE_ENVIRONMENT=Development dotnet watch --project TGB.Resolver.Server/TGB.Resolver.Server.csproj run --no-launch-profile --urls http://0.0.0.0:5001",
     "serve": "ASPNETCORE_ENVIRONMENT=Development dotnet run --project TGB.Resolver.Server/TGB.Resolver.Server.csproj --no-build --no-launch-profile --urls http://0.0.0.0:5001",
-    "quality": "dotnet jb cleanupcode TGB.Resolver.Server.slnx && python3 scripts/run-inspect.py"
+    "quality": "dotnet jb cleanupcode TGB.Resolver.Server.slnx && python3 scripts/run-inspect.py",
+    "nuget:outdated": "dotnet tool run dotnet-outdated TGB.Resolver.Server.slnx",
+    "nuget:update": "dotnet tool run dotnet-outdated TGB.Resolver.Server.slnx --upgrade"
   }
 }

@@ -17,6 +17,12 @@
         "TGB.Resolver.IcpcXmlParser/bin/**",
         "TGB.Resolver.IcpcXmlParser.Tests/bin/**"
       ]
+    },
+    "nuget:outdated": {
+      "cache": false
+    },
+    "nuget:update": {
+      "cache": false
     }
   }
 }

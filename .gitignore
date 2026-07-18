@@ -57,3 +57,6 @@ apps/server/inspect.sarif.json
 
 .claude/worktrees
 .claude/settings.local.json
+
+# Tests
+TestResults/

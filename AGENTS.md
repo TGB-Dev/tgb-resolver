@@ -9,6 +9,9 @@
 - `pnpm format` / `pnpm lint` / `pnpm check` — Biome (not ESLint/Prettier)
 - `pnpm serve` — run production previews
 - `pnpm sync` / `pnpm sync:check` — syncpack dependency consistency
+- `pnpm knip` — knip unused dependency/export/asset check across the workspace (config: `knip.json`)
+- `pnpm turbo run nuget:outdated --filter=@tgb-resolver/server` — list outdated NuGet packages
+- `pnpm turbo run nuget:update --filter=@tgb-resolver/server` — upgrade NuGet packages to latest compatible
 - `pnpm hooks:install` — enable native `.githooks/pre-commit` (one-time)
 - `pnpm turbo run quality --filter=@tgb-resolver/server` — ReSharper `cleanupcode` + `inspectcode` SARIF report (slow, .NET-only quality pass)
 - OpenAPI `openapi.yaml` is generated automatically by the server `build` (runs `dotnet build -p:GenerateOpenApiDocument=true`); no separate command needed.
@@ -20,7 +23,7 @@ Pre-commit hook runs: `biome check --write --staged` → `sync:check || sync` �
 | Path | Role |
 |---|---|
 | `apps/server/` | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format |
-| `apps/web/` | TanStack Start SPA (React 19, Vite, Chakra UI 3, Preact Signals, @tanstack/react-virtual). Dev port 3000 |
+| `apps/web/` | TanStack Start SPA (React 19, Vite, Chakra UI 3, Preact Signals). Dev port 3000 |
 | `packages/contracts/` | OpenAPI-generated TS HTTP client + TanStack Query + Valibot schemas. Generated from `apps/server/.../openapi.yaml` |
 | `packages/realtime/` | Client-side clock sync, timeline and domain helpers. Re-exports contracts enums; must not redeclare them |
 
@@ -31,8 +34,8 @@ Workspace packages: `@tgb-resolver/*`.
 - **`verbatimModuleSyntax`** enabled root-wide — always use `import type` for type-only imports
 - **String-valued enums** for domain vocabularies (not string unions). Contracts owns wire enums; realtime re-exports them
 - **Contracts build**: `pnpm run generate` (openapi-ts) → `tsdown`. Depends on current `openapi.yaml`
-- **OpenAPI regeneration**: `pnpm turbo run openapi --filter=@tgb-resolver/server` (wraps `dotnet build -p:GenerateOpenApiDocument=true`)
-- **Biome** (v2.5.1): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan blank package blank alias blank path. Ignores `*.gen.ts` and `vite.config.ts`
+- **OpenAPI regeneration**: emitted by the server `build` (`dotnet build -p:GenerateOpenApiDocument=true`); `pnpm turbo run build --filter=@tgb-resolver/server` regenerates `openapi.yaml`. No separate `openapi` task.
+- **Biome** (v2.5.4): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan blank package blank alias blank path. Ignores `*.gen.ts` and `vite.config.ts`
 - **syncpack**: explicit pinned versions for typescript/biome/vite; React/TanStack allowed to drift; `@tgb-resolver/*` ignored
 - **Env**: `.env` → `VITE_API_URL` (default `http://localhost:5001`). Copy from `.env.example`
 
@@ -62,12 +65,25 @@ Workspace packages: `@tgb-resolver/*`.
 
 - Target: `net10.0`, SDK 10.0.301
 - Solution format: `.slnx` (new XML-based format), not `.sln`
-- Nx server `project.json` at `apps/server/project.json` with targets: `build`, `test`, `dev`, `serve`, `check-types`, `openapi`
 - Turborepo: `@tgb-resolver/server` package at `apps/server/package.json` wraps the .NET toolchain; `apps/server/turbo.json` declares .NET build outputs. Tasks: `build` (also emits `openapi.yaml`), `test`, `dev`, `serve`, `check-types`, `quality`, `generate`
-- `dotnet-tools.json` at `apps/server/dotnet-tools.json` — ReSharper CLI via `dotnet tool run jb`
+- `dotnet-tools.json` at `apps/server/dotnet-tools.json` — ReSharper CLI (`dotnet tool run jb` → `cleanupcode` + `inspectcode`) and `typedsignalr.client.typescript.generator` (`dotnet tool run dotnet-tsrts`, the SignalR hub client generator)
 - SQLitePCLRaw pinned to 3.0.3 (temp workaround for efcore vulnerability)
 - `ExportSwaggerDocsAndExitAsync("v1")` in `Program.cs` generates `openapi.yaml` at startup
 - Scalar API reference at `/scalar`, Swagger JSON at `/openapi/{documentName}.json`
+
+## Automated tooling
+
+The repo relies on several codegen/quality tools that run automatically as part of the build and pre-commit flow. Do not hand-edit their generated output.
+
+- **Turborepo** — task orchestration, caching, and dependency-ordered builds across the pnpm workspace.
+- **Biome** (lint + format) and **syncpack** (dependency-version consistency) — run on pre-commit and via `pnpm check` / `pnpm sync:check`.
+- **`openapi-ts`** (`@hey-api/openapi-ts`) — generates the `packages/contracts` HTTP client, TanStack Query helpers, and Valibot schemas from `openapi.yaml`. Output is `*.gen.ts` (Biome-ignored). Run via `pnpm --filter @tgb-resolver/contracts generate`.
+- **`dotnet-tsrts`** (`typedsignalr.client.typescript.generator`) — generates the strongly-typed SignalR hub client (`packages/realtime/src/gen`) from the server's `IShowHubClient` interface. Run via `pnpm --filter @tgb-resolver/realtime generate`. This is the source of truth for the client `HubConnectionBuilder` types; the `connection.on(...)` handlers in `api.ts` are written by hand on top of it.
+- **`tsdown`** — bundles `packages/contracts` and `packages/realtime` to `dist/`.
+- **`dotnet-outdated`** — NuGet dependency linter/upgrader, installed as a local tool in `apps/server/dotnet-tools.json`. `nuget:outdated` lists upgradable packages; `nuget:update` applies them (`-u`). Run via `pnpm turbo run nuget:outdated --filter=@tgb-resolver/server`.
+- **`knip`** — workspace-wide unused dependency/export/asset linter for the TS packages; config at `knip.json` (ignores generated `*.gen.ts`, `src/generated`, `src/gen`, and CSS-imported font packages). Run via `pnpm knip`. The root vitest error is suppressed via `vitest: { config: [] }` in the root workspace.
+- **ReSharper CLI** (`dotnet jb cleanupcode` + `inspectcode` → SARIF) — .NET-only quality pass via `pnpm turbo run quality --filter=@tgb-resolver/server`.
+- **Pre-commit hook** (`.githooks/pre-commit`) — `biome check --write --staged` → `sync:check || sync` → `build` → `test`.
 
 
 <!-- turbo configuration start-->

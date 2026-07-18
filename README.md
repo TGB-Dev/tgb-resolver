@@ -10,7 +10,7 @@ driving audience and control UIs from a single source of truth.
 | Layer | Tech |
 |---|---|
 | Workspace | Turborepo, pnpm workspaces |
-| Frontend | React 19, TanStack Start (SPA), Vite 8, Chakra UI 3, Jotai, react-window |
+| Frontend | React 19, TanStack Start (SPA), Vite 8, Chakra UI 3, Preact Signals |
 | Server | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly |
 | Contracts | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot |
 | Parsers | .NET `TGB.Resolver.IcpcXmlParser` (server-side) |
@@ -56,7 +56,7 @@ pnpm test           # vitest (TS) + dotnet test (.NET)
 pnpm serve          # production previews
 ```
 
-The `packages/contracts` package generates its TypeScript client from `apps/server/TGB.Resolver.Server/openapi.yaml` before building. The OpenAPI document is emitted automatically by the server `build` (`dotnet build -p:GenerateOpenApiDocument=true`), so a normal `pnpm build` keeps it current.
+The `packages/contracts` package generates its TypeScript HTTP client from `apps/server/TGB.Resolver.Server/openapi.yaml` (via `openapi-ts`) before building, and `packages/realtime` generates its SignalR hub client from the server via the `dotnet-tsrts` tool. The OpenAPI document is emitted automatically by the server `build` (`dotnet build -p:GenerateOpenApiDocument=true`), so a normal `pnpm build` keeps both clients current.
 
 ## Native Git Hooks
 

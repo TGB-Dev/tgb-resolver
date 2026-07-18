@@ -46,6 +46,7 @@
       "!!**/obj",
       "!!**/TypedSignalR.Client",
       "!**/*.gen.ts",
+      "!**/TestResults/",
       "vite.config.ts"
     ]
   }

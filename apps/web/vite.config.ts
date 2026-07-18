@@ -19,6 +19,7 @@ const config = defineConfig(async () => {
     server: {
       host: "127.0.0.1",
     },
+    envDir: resolve(__dirname, "../.."),
     plugins: [
       tanstackRouter({ target: "react", autoCodeSplitting: true }),
       viteReact(),
