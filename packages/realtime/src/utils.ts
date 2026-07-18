@@ -2,6 +2,7 @@ import {
   type PlaybackSegment,
   PlaybackStatus,
   type PlaySfxEvent,
+  type PreResolveEvent,
   SHOW_SCHEMA_VERSION,
   type ShowAsset,
   type ShowFile,
@@ -27,7 +28,13 @@ export function isPlaySfxEvent(event: TimelineEvent): event is PlaySfxEvent {
   return event.type === TimelineEventType.SFX;
 }
 
-export function isNonResolveEvent(event: TimelineEvent): event is ShowImageEvent | PlaySfxEvent {
+export function isPreResolveEvent(event: TimelineEvent): event is PreResolveEvent {
+  return event.type === TimelineEventType.PRE;
+}
+
+export function isNonResolveEvent(
+  event: TimelineEvent,
+): event is ShowImageEvent | PlaySfxEvent | PreResolveEvent {
   return event.type !== TimelineEventType.RES;
 }
 
@@ -181,6 +188,28 @@ export function toTimelineTableItem(
         requireManualInteraction: event.requireManualInteraction,
         durationSeconds: event.payload.durationSeconds,
         assetId: event.payload.imageId,
+        isCurrentResolve,
+        isCurrentInlineEvent,
+        isInActiveSegment,
+      };
+    }
+    case TimelineEventType.PRE: {
+      const resolvePlaceholderName = `Pre: ${event.payload.realName ?? event.payload.username}`;
+      return {
+        id: event.id,
+        type: event.type,
+        name: resolveDisplayName(event.customName, resolvePlaceholderName),
+        customName: event.customName,
+        placeholderName: resolvePlaceholderName,
+        problem: event.payload.problem,
+        problemDisplayName: event.payload.problemDisplayName,
+        newProblemScore: event.payload.newProblemScore,
+        newTotalScore: event.payload.newTotalScore,
+        newRank: event.payload.newRank,
+        verdict: event.payload.verdict,
+        triggerOffsetSeconds: event.triggerOffsetSeconds,
+        requireManualInteraction: event.requireManualInteraction,
+        durationSeconds: autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined,
         isCurrentResolve,
         isCurrentInlineEvent,
         isInActiveSegment,

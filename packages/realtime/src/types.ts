@@ -104,7 +104,21 @@ export interface PlaySfxEvent extends EventBase {
   };
 }
 
-export type TimelineEvent = ResolveEvent | ShowImageEvent | PlaySfxEvent;
+export interface PreResolveEvent extends EventBase {
+  type: TimelineEventType.PRE;
+  payload: {
+    realName: string;
+    username: string;
+    problem: string;
+    newTotalScore: number;
+    newRank: number;
+    newProblemScore: number;
+    problemDisplayName: string;
+    verdict: VerdictRunResult;
+  };
+}
+
+export type TimelineEvent = ResolveEvent | ShowImageEvent | PlaySfxEvent | PreResolveEvent;
 
 export interface ShowFile {
   schemaVersion: typeof SHOW_SCHEMA_VERSION;
@@ -154,7 +168,7 @@ export interface TimelineTableItem {
 export interface PlaybackSegment {
   resolveEventId: number;
   nextResolveEventId?: number;
-  inlineEvents: Array<ShowImageEvent | PlaySfxEvent>;
+  inlineEvents: Array<ShowImageEvent | PlaySfxEvent | PreResolveEvent>;
 }
 
 export enum ShowConnectionStatus {

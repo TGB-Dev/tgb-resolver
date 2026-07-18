@@ -14,6 +14,7 @@ export enum TimelineEventType {
   Res = "Res",
   Img = "Img",
   Sfx = "Sfx",
+  Pre = "Pre",
 }
 
 /** Transpiled from TGB.Resolver.Server.Commons.Types.ShowMode */

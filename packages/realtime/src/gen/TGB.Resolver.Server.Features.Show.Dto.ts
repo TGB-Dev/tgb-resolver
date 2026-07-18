@@ -73,6 +73,8 @@ export type TimelineEventSnapshot = {
   Image?: MediaEventPayloadSnapshot;
   /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.MediaEventPayloadSnapshot? */
   Sfx?: MediaEventPayloadSnapshot;
+  /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot? */
+  Pre?: ResolveEventPayloadSnapshot;
 };
 
 /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot */
