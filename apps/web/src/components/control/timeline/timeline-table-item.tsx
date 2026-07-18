@@ -1,10 +1,15 @@
 import { Box, DataList, Editable, Grid, type GridProps } from "@chakra-ui/react";
+import { useComputed } from "@preact/signals-react";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useState } from "react";
 
 import { Tooltip } from "@/components/ui/tooltip";
 import { useRenameControlEventMutation } from "@/features/control/hooks";
+import {
+  currentEventIdSignal,
+  currentResolveEventIdSignal,
+} from "@/features/control/playback-signals";
 
 import { CurrentEventIndicator } from "./CurrentEventIndicator";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
@@ -24,7 +29,11 @@ interface ControlTimelineTableItemProps {
 export const ControlTimelineTableItem = memo(
   ({ payload, isLive, onSeek }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
-    const isCurrent = payload.isCurrentResolve || payload.isCurrentInlineEvent;
+    const isCurrent = useComputed(
+      () =>
+        currentEventIdSignal.value === payload.id ||
+        currentResolveEventIdSignal.value === payload.id,
+    ).value;
 
     return (
       <Box
@@ -187,44 +196,83 @@ interface ControlTimelineEventCustomNameEditableProps {
   payload: TimelineTableItem;
 }
 
-function ControlTimelineEventCustomNameEditable({
-  payload,
-}: ControlTimelineEventCustomNameEditableProps) {
-  const renameEvent = useRenameControlEventMutation();
+const ControlTimelineEventCustomNameEditable = memo(
+  function ControlTimelineEventCustomNameEditable({
+    payload,
+  }: ControlTimelineEventCustomNameEditableProps) {
+    const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    setDraftName(payload.customName ?? "");
-  }, [payload.customName]);
-
-  const [draftName, setDraftName] = useState(payload.customName ?? "");
-
-  async function commitName(nextValue: string) {
-    const normalizedNextValue = nextValue.trim();
-    const normalizedCurrentValue = (payload.customName ?? "").trim();
-
-    if (normalizedNextValue === normalizedCurrentValue) {
-      setDraftName(payload.customName ?? "");
-      return;
+    // Mount the heavy Chakra `Editable` only while this specific row is being
+    // edited. Otherwise render a cheap text node so the timeline can mount
+    // hundreds of rows without paying the Editable mount/effect cost per row.
+    if (!editing) {
+      return (
+        <Box
+          onDoubleClick={() => setEditing(true)}
+          cursor="text"
+          px={1}
+          py={0.5}
+          minH={6}
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
+          title={resolveDisplayName(payload)}
+        >
+          {resolveDisplayName(payload)}
+        </Box>
+      );
     }
 
-    await renameEvent.mutateAsync({
-      eventId: payload.id,
-      type: payload.type,
-      customName: normalizedNextValue,
-    });
-  }
+    return <ControlTimelineEventNameEditor payload={payload} onDone={() => setEditing(false)} />;
+  },
+);
+
+interface ControlTimelineEventNameEditorProps {
+  payload: TimelineTableItem;
+  onDone: () => void;
+}
+
+function ControlTimelineEventNameEditor({ payload, onDone }: ControlTimelineEventNameEditorProps) {
+  const renameEvent = useRenameControlEventMutation();
+  const [draftName, setDraftName] = useState(payload.customName ?? "");
+
+  const commitName = useCallback(
+    async (nextValue: string) => {
+      const normalizedNextValue = nextValue.trim();
+      const normalizedCurrentValue = (payload.customName ?? "").trim();
+
+      if (normalizedNextValue === normalizedCurrentValue) {
+        setDraftName(payload.customName ?? "");
+        return;
+      }
+
+      await renameEvent.mutateAsync({
+        eventId: payload.id,
+        type: payload.type,
+        customName: normalizedNextValue,
+      });
+    },
+    [payload.customName, payload.id, payload.type, renameEvent],
+  );
+
+  const handleValueChange = useCallback(({ value }: { value: string }) => setDraftName(value), []);
 
   return (
     <Editable.Root
       activationMode="dblclick"
       submitMode="both"
+      defaultEdit
       value={draftName}
       placeholder={payload.placeholderName}
-      onValueChange={({ value }) => setDraftName(value)}
+      onValueChange={handleValueChange}
       onValueCommit={({ value }) => {
         void commitName(value);
+        onDone();
       }}
-      onValueRevert={() => setDraftName(payload.customName ?? "")}
+      onValueRevert={() => {
+        setDraftName(payload.customName ?? "");
+        onDone();
+      }}
     >
       <Editable.Preview
         px={1}

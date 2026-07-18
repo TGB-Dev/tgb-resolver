@@ -60,3 +60,6 @@ apps/server/inspect.sarif.json
 
 # Tests
 TestResults/
+
+# Agent docs
+docs/

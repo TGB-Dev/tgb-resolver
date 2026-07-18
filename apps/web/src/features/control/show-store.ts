@@ -1,10 +1,5 @@
 import { computed, type ReadonlySignal, signal } from "@preact/signals-react";
-import type {
-  ShowFile,
-  ShowPlaybackState,
-  TimelineEvent,
-  TimelineTableItem,
-} from "@tgb-resolver/realtime";
+import type { ShowFile, TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
 import {
   PlaybackStatus,
   ShowMessageType,
@@ -13,8 +8,6 @@ import {
   TimelineMode,
   toTimelineTableItems,
 } from "@tgb-resolver/realtime";
-
-import { playbackSignal } from "@/models/playback-state";
 
 interface ShowDerivedContext {
   preFreezeSnapshot: ShowFile["contest"]["preFreezeSnapshot"];
@@ -67,26 +60,6 @@ function removeTimelineEvent(eventId: number): void {
 function reorderTimeline(orderedEventIds: number[]): void {
   // The server's id list is the authoritative order; trust it verbatim.
   showOrderedIds.value = [...orderedEventIds];
-}
-
-function mapPlaybackToSnapshot(): ShowPlaybackState {
-  const state = playbackSignal.value;
-  const segment = state.activeSegment;
-  return {
-    status: (state.status as PlaybackStatus) ?? PlaybackStatus.IDLE,
-    executionSequence: state.executionSequence ?? 0,
-    currentResolveEventId: state.currentResolveEventId ?? undefined,
-    currentEventId: state.currentEventId ?? undefined,
-    activeSegment: segment
-      ? {
-          resolveEventId: segment.resolveEventId,
-          nextResolveEventId: segment.nextResolveEventId ?? undefined,
-          inlineEventIds: segment.inlineEventIds,
-          currentInlineIndex: segment.currentInlineIndex,
-        }
-      : undefined,
-    startedAt: state.startedAt ?? undefined,
-  };
 }
 
 export function tryApplyShowMessage(
@@ -159,7 +132,11 @@ export const rowsSignal: ReadonlySignal<TimelineTableItem[]> = computed(() => {
       autoResolveSpeedMs: ctx.autoResolveSpeedMs,
       fullAutoEnabled: false,
     },
-    playback: mapPlaybackToSnapshot(),
+    // Playback-derived "current" state is NOT folded in here anymore. It is
+    // derived per-row in leaf components from `currentEventIdSignal` /
+    // `currentResolveEventIdSignal`, so a playback tick no longer re-runs this
+    // fold or re-renders every `rowsSignal` consumer.
+    playback: { status: PlaybackStatus.IDLE, executionSequence: 0 },
     assets: { images: [], sfx: [] },
     timeline: events as TimelineEvent[],
   });

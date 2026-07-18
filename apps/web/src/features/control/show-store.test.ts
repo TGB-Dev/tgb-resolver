@@ -9,6 +9,8 @@ import {
 } from "@tgb-resolver/realtime";
 import { beforeEach, expect, test } from "vitest";
 
+import { playbackSignal } from "@/models/playback-state";
+
 import {
   dataVersion,
   hydrateShowFromSnapshot,
@@ -148,4 +150,19 @@ test("rowsSignal folds the store into table items in order", () => {
   const rows = rowsSignal.value;
   expect(rows).toHaveLength(3);
   expect(rows.map((r) => r.id)).toEqual([2, 3, 1]);
+});
+
+test("rowsSignal does not recompute when only playback changes", () => {
+  hydrateShowFromSnapshot(makeShow(1, [event(1, 1), event(2, 2)]));
+
+  const before = rowsSignal.value;
+
+  // Simulate a playback tick (current event advances) without any show-data edit.
+  playbackSignal.value = { ...playbackSignal.value, currentEventId: 2 };
+
+  const after = rowsSignal.value;
+  // Same array reference => the table body does not re-render on a tick.
+  expect(after).toBe(before);
+  // Rows carry no playback-derived current flags anymore.
+  expect(after.every((r) => !r.isCurrentResolve && !r.isCurrentInlineEvent)).toBe(true);
 });
