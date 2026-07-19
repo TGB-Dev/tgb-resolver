@@ -32,14 +32,13 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
         ...base,
         type: TimelineEventType.RES,
         payload: {
-          realName: event.resolve.realName ?? "",
-          username: event.resolve.username ?? "",
-          problem: event.resolve.problem ?? "",
+          userId: event.resolve.userId ?? 0,
+          problemId: event.resolve.problemId ?? 0,
           newTotalScore: event.resolve.newTotalScore ?? 0,
           newRank: event.resolve.newRank ?? 0,
           newProblemScore: event.resolve.newProblemScore ?? 0,
-          problemDisplayName: event.resolve.problemDisplayName ?? "",
           verdict: (event.resolve.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
+          submissionSeconds: event.resolve.submissionSeconds ?? 0,
         },
       });
       continue;
@@ -50,14 +49,13 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
         ...base,
         type: TimelineEventType.PRE,
         payload: {
-          realName: event.pre.realName ?? "",
-          username: event.pre.username ?? "",
-          problem: event.pre.problem ?? "",
+          userId: event.pre.userId ?? 0,
+          problemId: event.pre.problemId ?? 0,
           newTotalScore: event.pre.newTotalScore ?? 0,
           newRank: event.pre.newRank ?? 0,
           newProblemScore: event.pre.newProblemScore ?? 0,
-          problemDisplayName: event.pre.problemDisplayName ?? "",
           verdict: (event.pre.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
+          submissionSeconds: event.pre.submissionSeconds ?? 0,
         },
       });
       continue;
@@ -106,12 +104,28 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       contest: {
         durationSeconds: snapshot.contest?.durationSeconds ?? 0,
         freezeDurationSeconds: snapshot.contest?.freezeDurationSeconds ?? 0,
-        preFreezeSnapshot: (snapshot.contest?.preFreezeSnapshot ?? []).map((team) => ({
-          teamId: team.teamId ?? 0,
-          realName: team.realName ?? "",
-          username: team.username ?? "",
-          score: team.score ?? 0,
-          rank: team.rank ?? 0,
+        problems: (snapshot.contest?.problems ?? []).map((problem) => ({
+          id: problem.id ?? 0,
+          label: problem.label ?? "",
+          name: problem.name ?? "",
+          score: problem.score ?? 0,
+        })),
+        users: (snapshot.contest?.users ?? []).map((user) => ({
+          id: user.id ?? 0,
+          username: user.username ?? "",
+          realName: user.realName ?? "",
+        })),
+        preFreezeSnapshot: (snapshot.contest?.preFreezeSnapshot ?? []).map((entry) => ({
+          userId: entry.userId ?? 0,
+          totalScore: entry.totalScore ?? 0,
+          rank: entry.rank ?? 0,
+          problems: (entry.problems ?? []).map((problem) => ({
+            problemId: problem.problemId ?? 0,
+            score: problem.score ?? 0,
+            verdict: (problem.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
+          })),
+          lastRunId: entry.lastRunId ?? null,
+          lastSubmittedSeconds: entry.lastSubmittedSeconds ?? null,
         })),
       },
       automation: {

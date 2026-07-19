@@ -27,7 +27,13 @@ function makeShow(showVersion: number, events: TimelineEvent[]): ShowFile {
     mode: ShowMode.EDITING,
     timelineMode: TimelineMode.RW,
     meta: { title: "t", source: ShowSource.MANUAL },
-    contest: { durationSeconds: 0, freezeDurationSeconds: 0, preFreezeSnapshot: [] },
+    contest: {
+      durationSeconds: 0,
+      freezeDurationSeconds: 0,
+      problems: [],
+      users: [],
+      preFreezeSnapshot: [],
+    },
     automation: {
       autoResolveEnabled: false,
       autoResolveSpeedMs: 3_000,

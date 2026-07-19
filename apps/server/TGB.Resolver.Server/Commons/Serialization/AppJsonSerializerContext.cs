@@ -7,9 +7,13 @@ using TGB.Resolver.Server.Features.Show.Dto;
 namespace TGB.Resolver.Server.Commons.Serialization;
 
 [JsonSourceGenerationOptions(
-  PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-  DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(ShowState))]
+[JsonSerializable(typeof(ProblemDefinition))]
+[JsonSerializable(typeof(UserDefinition))]
+[JsonSerializable(typeof(FreezeSnapshotEntry))]
+[JsonSerializable(typeof(ProblemFreezeResult))]
 [JsonSerializable(typeof(ShowStateSnapshot))]
 [JsonSerializable(typeof(PlaybackStateSnapshot))]
 [JsonSerializable(typeof(TimelineEventSnapshot))]

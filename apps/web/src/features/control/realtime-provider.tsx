@@ -7,12 +7,13 @@ import {
 import { ShowConnectionStatus, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
 import { createContext, type ReactNode, useContext, useEffect, useMemo } from "react";
 
+import { BigRefetchOverlay } from "@/components/control/big-refetch-overlay";
 import { API_BASE_URL } from "@/lib/api";
 import RealtimeWorker from "@/lib/realtime.worker?worker";
 import { createRealtimeClient, type RealtimeClientCallbacks } from "@/lib/realtime-client";
 import { syncPlaybackFromSnapshot } from "@/models/playback-state";
 
-import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-cache";
+import { applyControlRealtimeMessage, bigRefetching, controlShowQueryKey } from "./realtime-cache";
 import { mapShowStateSnapshotToShowFile } from "./show-mapper";
 import { hydrateShowFromSnapshot } from "./show-store";
 
@@ -127,6 +128,7 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
 
     hydrateShowFromSnapshot(showQuery.data);
     syncPlaybackFromSnapshot(showQuery.data.showVersion ?? 0, showQuery.data.playback);
+    bigRefetching.value = false;
   }, [showQuery.data]);
 
   const value = useMemo(
@@ -138,7 +140,12 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
     [reconnectAttempt, connectionStatus],
   );
 
-  return <ControlRealtimeContext value={value}>{children}</ControlRealtimeContext>;
+  return (
+    <ControlRealtimeContext value={value}>
+      {children}
+      <BigRefetchOverlay />
+    </ControlRealtimeContext>
+  );
 }
 
 export function useControlRealtime() {

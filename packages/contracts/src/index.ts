@@ -23,8 +23,8 @@ export type {
   AutomationSnapshot,
   ClientOptions,
   ContestSnapshot,
-  ContestTeamSnapshot,
   CreateTimelineEventRequest,
+  FreezeSnapshotEntrySnapshot,
   ImportBundleRequest,
   ImportXmlRequest,
   MediaEventPatchPayload,
@@ -33,6 +33,8 @@ export type {
   NonResolveEventPatchRequest,
   PatchTimelineEventRequest,
   PlaybackStateSnapshot,
+  ProblemDefinitionSnapshot,
+  ProblemFreezeResultSnapshot,
   ResolveEventPayloadSnapshot,
   ResolveEventRenameRequest,
   SeekPlaybackRequest,
@@ -43,6 +45,7 @@ export type {
   ShowStateSnapshot,
   TimelineEventSnapshot,
   UpsertAssetRequest,
+  UserDefinitionSnapshot,
   VersionedCommandRequest,
 } from "./generated/types.gen";
 export {

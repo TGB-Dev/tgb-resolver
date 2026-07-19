@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="TGB.Resolver.Server/TGB.Resolver.Server.csproj" />
-  <Project Path="TGB.Resolver.Server.Tests/TGB.Resolver.Server.Tests.csproj" />
-  <Project Path="TGB.Resolver.IcpcXmlParser/TGB.Resolver.IcpcXmlParser.csproj" />
-  <Project Path="TGB.Resolver.IcpcXmlParser.Tests/TGB.Resolver.IcpcXmlParser.Tests.csproj" />
+  <Project Path="TGB.Resolver.Server/TGB.Resolver.Server.csproj"/>
+  <Project Path="TGB.Resolver.Server.Tests/TGB.Resolver.Server.Tests.csproj"/>
+  <Project Path="TGB.Resolver.IcpcXmlParser/TGB.Resolver.IcpcXmlParser.csproj"/>
+  <Project Path="TGB.Resolver.IcpcXmlParser.Tests/TGB.Resolver.IcpcXmlParser.Tests.csproj"/>
 </Solution>

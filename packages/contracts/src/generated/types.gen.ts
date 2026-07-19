@@ -63,16 +63,89 @@ export enum ShowSource {
 export type ContestSnapshot = {
     durationSeconds?: number;
     freezeDurationSeconds?: number;
-    preFreezeSnapshot?: Array<ContestTeamSnapshot>;
+    problems?: Array<ProblemDefinitionSnapshot>;
+    users?: Array<UserDefinitionSnapshot>;
+    preFreezeSnapshot?: Array<FreezeSnapshotEntrySnapshot>;
 };
 
-export type ContestTeamSnapshot = {
-    teamId?: number;
-    realName?: string;
-    username?: string;
+export type ProblemDefinitionSnapshot = {
+    id?: number;
+    label?: string;
+    name?: string;
     score?: number;
-    rank?: number;
 };
+
+export type UserDefinitionSnapshot = {
+    id?: number;
+    username?: string;
+    realName?: string;
+};
+
+export type FreezeSnapshotEntrySnapshot = {
+    userId?: number;
+    totalScore?: number;
+    rank?: number;
+    problems?: Array<ProblemFreezeResultSnapshot>;
+    lastRunId?: number | null;
+    lastSubmittedSeconds?: number | null;
+};
+
+export type ProblemFreezeResultSnapshot = {
+    problemId?: number;
+    score?: number;
+    verdict?: VerdictRunResult;
+};
+
+export enum VerdictRunResult {
+    /**
+     * Unknown
+     */
+    UNKNOWN = 'Unknown',
+    /**
+     * Accepted
+     */
+    ACCEPTED = 'Accepted',
+    /**
+     * WrongAnswer
+     */
+    WRONG_ANSWER = 'WrongAnswer',
+    /**
+     * TimeLimitExceeded
+     */
+    TIME_LIMIT_EXCEEDED = 'TimeLimitExceeded',
+    /**
+     * MemoryLimitExceeded
+     */
+    MEMORY_LIMIT_EXCEEDED = 'MemoryLimitExceeded',
+    /**
+     * OutputLimitExceeded
+     */
+    OUTPUT_LIMIT_EXCEEDED = 'OutputLimitExceeded',
+    /**
+     * InvalidReturn
+     */
+    INVALID_RETURN = 'InvalidReturn',
+    /**
+     * RuntimeError
+     */
+    RUNTIME_ERROR = 'RuntimeError',
+    /**
+     * CompileError
+     */
+    COMPILE_ERROR = 'CompileError',
+    /**
+     * InternalError
+     */
+    INTERNAL_ERROR = 'InternalError',
+    /**
+     * ShortCircuited
+     */
+    SHORT_CIRCUITED = 'ShortCircuited',
+    /**
+     * Aborted
+     */
+    ABORTED = 'Aborted'
+}
 
 export type AutomationSnapshot = {
     autoResolveEnabled?: boolean;
@@ -159,66 +232,14 @@ export enum TimelineEventType {
 }
 
 export type ResolveEventPayloadSnapshot = {
-    realName?: string;
-    username?: string;
-    problem?: string;
+    userId?: number;
+    problemId?: number;
     newTotalScore?: number;
     newRank?: number;
     newProblemScore?: number;
-    problemDisplayName?: string;
     verdict?: VerdictRunResult;
+    submissionSeconds?: number;
 };
-
-export enum VerdictRunResult {
-    /**
-     * Unknown
-     */
-    UNKNOWN = 'Unknown',
-    /**
-     * Accepted
-     */
-    ACCEPTED = 'Accepted',
-    /**
-     * WrongAnswer
-     */
-    WRONG_ANSWER = 'WrongAnswer',
-    /**
-     * TimeLimitExceeded
-     */
-    TIME_LIMIT_EXCEEDED = 'TimeLimitExceeded',
-    /**
-     * MemoryLimitExceeded
-     */
-    MEMORY_LIMIT_EXCEEDED = 'MemoryLimitExceeded',
-    /**
-     * OutputLimitExceeded
-     */
-    OUTPUT_LIMIT_EXCEEDED = 'OutputLimitExceeded',
-    /**
-     * InvalidReturn
-     */
-    INVALID_RETURN = 'InvalidReturn',
-    /**
-     * RuntimeError
-     */
-    RUNTIME_ERROR = 'RuntimeError',
-    /**
-     * CompileError
-     */
-    COMPILE_ERROR = 'CompileError',
-    /**
-     * InternalError
-     */
-    INTERNAL_ERROR = 'InternalError',
-    /**
-     * ShortCircuited
-     */
-    SHORT_CIRCUITED = 'ShortCircuited',
-    /**
-     * Aborted
-     */
-    ABORTED = 'Aborted'
-}
 
 export type MediaEventPayloadSnapshot = {
     assetId?: string;

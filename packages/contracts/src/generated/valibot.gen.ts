@@ -18,18 +18,55 @@ export const vShowMetaSnapshot = v.strictObject({
     source: v.optional(vShowSource)
 });
 
-export const vContestTeamSnapshot = v.strictObject({
-    teamId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    realName: v.optional(v.string()),
+export const vProblemDefinitionSnapshot = v.strictObject({
+    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    label: v.optional(v.string()),
+    name: v.optional(v.string()),
+    score: v.optional(v.number())
+});
+
+export const vUserDefinitionSnapshot = v.strictObject({
+    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     username: v.optional(v.string()),
+    realName: v.optional(v.string())
+});
+
+export const vVerdictRunResult = v.picklist([
+    'Unknown',
+    'Accepted',
+    'WrongAnswer',
+    'TimeLimitExceeded',
+    'MemoryLimitExceeded',
+    'OutputLimitExceeded',
+    'InvalidReturn',
+    'RuntimeError',
+    'CompileError',
+    'InternalError',
+    'ShortCircuited',
+    'Aborted'
+]);
+
+export const vProblemFreezeResultSnapshot = v.strictObject({
+    problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     score: v.optional(v.number()),
-    rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+    verdict: v.optional(vVerdictRunResult)
+});
+
+export const vFreezeSnapshotEntrySnapshot = v.strictObject({
+    userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    totalScore: v.optional(v.number()),
+    rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    problems: v.optional(v.array(vProblemFreezeResultSnapshot)),
+    lastRunId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    lastSubmittedSeconds: v.nullish(v.number())
 });
 
 export const vContestSnapshot = v.strictObject({
     durationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     freezeDurationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    preFreezeSnapshot: v.optional(v.array(vContestTeamSnapshot))
+    problems: v.optional(v.array(vProblemDefinitionSnapshot)),
+    users: v.optional(v.array(vUserDefinitionSnapshot)),
+    preFreezeSnapshot: v.optional(v.array(vFreezeSnapshotEntrySnapshot))
 });
 
 export const vAutomationSnapshot = v.strictObject({
@@ -94,30 +131,14 @@ export const vTimelineEventType = v.picklist([
     'Pre'
 ]);
 
-export const vVerdictRunResult = v.picklist([
-    'Unknown',
-    'Accepted',
-    'WrongAnswer',
-    'TimeLimitExceeded',
-    'MemoryLimitExceeded',
-    'OutputLimitExceeded',
-    'InvalidReturn',
-    'RuntimeError',
-    'CompileError',
-    'InternalError',
-    'ShortCircuited',
-    'Aborted'
-]);
-
 export const vResolveEventPayloadSnapshot = v.strictObject({
-    realName: v.optional(v.string()),
-    username: v.optional(v.string()),
-    problem: v.optional(v.string()),
+    userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     newTotalScore: v.optional(v.number()),
     newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     newProblemScore: v.optional(v.number()),
-    problemDisplayName: v.optional(v.string()),
-    verdict: v.optional(vVerdictRunResult)
+    verdict: v.optional(vVerdictRunResult),
+    submissionSeconds: v.optional(v.number())
 });
 
 export const vMediaEventPayloadSnapshot = v.strictObject({

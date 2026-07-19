@@ -140,14 +140,13 @@ async function connectHub(url: string) {
           ...base,
           type: TimelineEventType.RES,
           payload: {
-            realName: r.RealName,
-            username: r.Username,
-            problem: r.Problem,
+            userId: r.UserId,
+            problemId: r.ProblemId,
             newTotalScore: r.NewTotalScore,
             newRank: r.NewRank,
             newProblemScore: r.NewProblemScore,
-            problemDisplayName: r.ProblemDisplayName,
             verdict: r.Verdict as unknown as VerdictRunResult,
+            submissionSeconds: r.SubmissionSeconds,
           },
         };
       }
@@ -158,14 +157,13 @@ async function connectHub(url: string) {
           ...base,
           type: TimelineEventType.PRE,
           payload: {
-            realName: r.RealName,
-            username: r.Username,
-            problem: r.Problem,
+            userId: r.UserId,
+            problemId: r.ProblemId,
             newTotalScore: r.NewTotalScore,
             newRank: r.NewRank,
             newProblemScore: r.NewProblemScore,
-            problemDisplayName: r.ProblemDisplayName,
             verdict: r.Verdict as unknown as VerdictRunResult,
+            submissionSeconds: r.SubmissionSeconds,
           },
         };
       }
@@ -198,14 +196,13 @@ async function connectHub(url: string) {
           ...base,
           type: TimelineEventType.RES,
           payload: {
-            realName: "",
-            username: "",
-            problem: "",
+            userId: 0,
+            problemId: 0,
             newTotalScore: 0,
             newRank: 0,
             newProblemScore: 0,
-            problemDisplayName: "",
             verdict: VerdictRunResult.UNKNOWN,
+            submissionSeconds: 0,
           },
         };
     }

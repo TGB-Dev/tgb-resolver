@@ -1,4 +1,4 @@
-import { Box, Code, Heading, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Code, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import { ShowMode } from "@tgb-resolver/realtime";
 
 import {
@@ -8,6 +8,8 @@ import {
   showMode,
   showOrderedIds,
 } from "@/features/control/show-store";
+import { floatingPanelModel } from "@/models/floating-panel";
+import { FloatingPanelType } from "@/models/floating-panel-types";
 
 export function ControlMainInfoTab() {
   const mode = showMode.value;
@@ -18,9 +20,21 @@ export function ControlMainInfoTab() {
     <Box boxSize="full" p={4}>
       <VStack gap={4} align="stretch">
         <Box>
-          <Heading size="md" mb={2}>
-            Show Details
-          </Heading>
+          <HStack justify="space-between" mb={2}>
+            <Heading size="md">Show Details</Heading>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                void floatingPanelModel.openFloatingPanel(
+                  FloatingPanelType.InspectShow,
+                  "Inspect show",
+                )
+              }
+            >
+              Inspect
+            </Button>
+          </HStack>
         </Box>
 
         <VStack gap={2} align="stretch">

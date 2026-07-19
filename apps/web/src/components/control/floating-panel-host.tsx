@@ -1,20 +1,24 @@
 import { FloatingPanel, IconButton, Portal } from "@chakra-ui/react";
-import { GripHorizontal, X } from "lucide-react";
+import { GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
 
 import { floatingPanelModel } from "@/models/floating-panel";
-import { floatingPanelComponents } from "@/models/floating-panel-types";
+import { floatingPanelComponents, floatingPanelConfig } from "@/models/floating-panel-types";
 
 export function FloatingPanelHost() {
   const active = floatingPanelModel.active.value;
   const requestClose = floatingPanelModel.requestFloatingPanelClose;
   const PanelComponent = active ? floatingPanelComponents[active.type] : null;
+  const config = active ? floatingPanelConfig[active.type] : undefined;
+  const resizable = config?.resizable ?? true;
 
   return (
     <FloatingPanel.Root
       allowOverflow={false}
       closeOnEscape
       open={Boolean(active)}
-      size={{ width: 560, height: 360 }}
+      resizable={resizable}
+      defaultSize={config?.size}
+      minSize={config?.minSize}
       onOpenChange={(details) => {
         if (!details.open) {
           void requestClose();
@@ -30,6 +34,20 @@ export function FloatingPanelHost() {
                 <FloatingPanel.Title>{active?.title}</FloatingPanel.Title>
               </FloatingPanel.DragTrigger>
               <FloatingPanel.Control>
+                {config?.maximizable && (
+                  <>
+                    <FloatingPanel.StageTrigger stage="maximized" asChild>
+                      <IconButton aria-label="Maximize panel" size="2xs" variant="ghost">
+                        <Maximize2 size={14} />
+                      </IconButton>
+                    </FloatingPanel.StageTrigger>
+                    <FloatingPanel.StageTrigger stage="default" asChild>
+                      <IconButton aria-label="Restore panel" size="2xs" variant="ghost">
+                        <Minimize2 size={14} />
+                      </IconButton>
+                    </FloatingPanel.StageTrigger>
+                  </>
+                )}
                 <IconButton
                   aria-label="Close panel"
                   size="2xs"
@@ -45,6 +63,7 @@ export function FloatingPanelHost() {
                 <PanelComponent {...(active.props as Record<string, unknown>)} />
               ) : null}
             </FloatingPanel.Body>
+            {resizable && <FloatingPanel.ResizeTriggers />}
           </FloatingPanel.Content>
         </FloatingPanel.Positioner>
       </Portal>

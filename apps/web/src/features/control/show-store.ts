@@ -11,6 +11,8 @@ import {
 } from "@tgb-resolver/realtime";
 
 interface ShowDerivedContext {
+  problems: ShowFile["contest"]["problems"];
+  users: ShowFile["contest"]["users"];
   preFreezeSnapshot: ShowFile["contest"]["preFreezeSnapshot"];
   autoResolveSpeedMs: number;
 }
@@ -21,8 +23,10 @@ export const showContext = signal<ShowDerivedContext | null>(null);
 export const showMode = signal<ShowMode>(ShowMode.EDITING);
 export const dataVersion = signal<number>(0);
 export const showMeta = signal<ShowMetaSnapshot>();
+export const showFile = signal<ShowFile | null>(null);
 
 export function hydrateShowFromSnapshot(show: ShowFile): void {
+  showFile.value = show;
   const map = new Map<number, TimelineEvent>();
   for (const event of show.timeline ?? []) {
     map.set(event.id, event);
@@ -33,6 +37,8 @@ export function hydrateShowFromSnapshot(show: ShowFile): void {
   showEvents.value = map;
   showOrderedIds.value = ids;
   showContext.value = {
+    problems: show.contest?.problems ?? [],
+    users: show.contest?.users ?? [],
     preFreezeSnapshot: show.contest?.preFreezeSnapshot ?? [],
     autoResolveSpeedMs: show.automation?.autoResolveSpeedMs ?? 3_000,
   };
@@ -129,6 +135,8 @@ export const rowsSignal: ReadonlySignal<TimelineTableItem[]> = computed(() => {
     contest: {
       durationSeconds: 0,
       freezeDurationSeconds: 0,
+      problems: ctx.problems,
+      users: ctx.users,
       preFreezeSnapshot: ctx.preFreezeSnapshot,
     },
     automation: {

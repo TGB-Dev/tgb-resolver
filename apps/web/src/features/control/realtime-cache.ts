@@ -1,3 +1,4 @@
+import { signal } from "@preact/signals-react";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   generatedClient,
@@ -12,6 +13,10 @@ import { hydrateShowFromSnapshot, showMode, tryApplyShowMessage } from "./show-s
 export function controlShowQueryKey() {
   return tgbResolverServerFeaturesShowGetShowEndpointQueryKey({ client: generatedClient });
 }
+
+// True while a wholesale show refetch is in flight (import/clear, or a repair
+// refetch triggered by a realtime version gap). Drives the big-refetch overlay.
+export const bigRefetching = signal(false);
 
 export function applyControlRealtimeMessage(
   queryClient: QueryClient,
@@ -30,6 +35,7 @@ export function applyControlRealtimeMessage(
     case ShowMessageType.ShowReplaced:
       // Wholesale replace (import/clear): refetch the whole show. Rare + user-initiated,
       // so a full refetch is correct and avoids mapping the large snapshot.
+      bigRefetching.value = true;
       void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
       return;
 
@@ -39,6 +45,7 @@ export function applyControlRealtimeMessage(
     case ShowMessageType.TimelineReordered:
       if (!tryApplyShowMessage(message)) {
         // Version gap (missed message / late join) -> repair via whole-show refetch (original desync design).
+        bigRefetching.value = true;
         void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
       }
       return;

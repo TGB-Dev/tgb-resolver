@@ -3,6 +3,7 @@ import {
   PlaybackStatus,
   type PlaySfxEvent,
   type PreResolveEvent,
+  type ProblemDefinition,
   SHOW_SCHEMA_VERSION,
   type ShowAsset,
   type ShowFile,
@@ -14,6 +15,8 @@ import {
   TimelineEventType,
   TimelineMode,
   type TimelineTableItem,
+  type UserDefinition,
+  type VerdictRunResult,
 } from "./types";
 
 export function isResolveEvent(event: TimelineEvent): boolean {
@@ -51,6 +54,8 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
     contest: {
       durationSeconds: 0,
       freezeDurationSeconds: 0,
+      problems: [],
+      users: [],
       preFreezeSnapshot: [],
     },
     automation: {
@@ -127,6 +132,8 @@ export function toTimelineTableItem(
   event: TimelineEvent,
   playback?: ShowPlaybackState,
   autoResolveSpeedMs?: number,
+  userMap?: Map<number, UserDefinition>,
+  problemMap?: Map<number, ProblemDefinition>,
 ): TimelineTableItem {
   const activeSegment = playback?.activeSegment;
   const isCurrentResolve = playback?.currentResolveEventId === event.id;
@@ -138,15 +145,19 @@ export function toTimelineTableItem(
 
   switch (event.type) {
     case TimelineEventType.RES: {
-      const resolvePlaceholderName = event.payload.realName ?? event.payload.username;
+      const user = userMap?.get(event.payload.userId);
+      const problem = problemMap?.get(event.payload.problemId);
+      const resolvePlaceholderName = user?.realName ?? user?.username ?? "";
       return {
         id: event.id,
         type: event.type,
         name: resolveDisplayName(event.customName, resolvePlaceholderName),
         customName: event.customName,
         placeholderName: resolvePlaceholderName,
-        problem: event.payload.problem,
-        problemDisplayName: event.payload.problemDisplayName,
+        realName: user?.realName,
+        username: user?.username,
+        problem: problem?.label,
+        problemDisplayName: problem?.name,
         newProblemScore: event.payload.newProblemScore,
         newTotalScore: event.payload.newTotalScore,
         newRank: event.payload.newRank,
@@ -195,16 +206,18 @@ export function toTimelineTableItem(
     }
     case TimelineEventType.PRE: {
       const resolvePlaceholderName = `PRE-RES`;
+      const user = userMap?.get(event.payload.userId);
+      const problem = problemMap?.get(event.payload.problemId);
       return {
         id: event.id,
         type: event.type,
         name: resolveDisplayName(event.customName, resolvePlaceholderName),
         customName: event.customName,
         placeholderName: resolvePlaceholderName,
-        realName: event.payload.realName,
-        username: event.payload.username,
-        problem: event.payload.problem,
-        problemDisplayName: event.payload.problemDisplayName,
+        realName: user?.realName,
+        username: user?.username,
+        problem: problem?.label,
+        problemDisplayName: problem?.name,
         newProblemScore: event.payload.newProblemScore,
         newTotalScore: event.payload.newTotalScore,
         newRank: event.payload.newRank,
@@ -220,13 +233,25 @@ export function toTimelineTableItem(
   }
 }
 
+function buildContestLookups(show: ShowFile): {
+  userById: Map<number, UserDefinition>;
+  problemById: Map<number, ProblemDefinition>;
+} {
+  const userById = new Map<number, UserDefinition>();
+  for (const user of show.contest.users ?? []) userById.set(user.id, user);
+  const problemById = new Map<number, ProblemDefinition>();
+  for (const problem of show.contest.problems ?? []) problemById.set(problem.id, problem);
+  return { userById, problemById };
+}
+
 export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
-  const initialFromSnapshot = new Map<string, { score: number; rank: number }>();
-  for (const team of show.contest.preFreezeSnapshot ?? []) {
-    if (team.username && !initialFromSnapshot.has(team.username)) {
-      initialFromSnapshot.set(team.username, {
-        score: team.score ?? 0,
-        rank: team.rank ?? 0,
+  const { userById, problemById } = buildContestLookups(show);
+  const initialFromSnapshot = new Map<number, { score: number; rank: number }>();
+  for (const entry of show.contest.preFreezeSnapshot ?? []) {
+    if (!initialFromSnapshot.has(entry.userId)) {
+      initialFromSnapshot.set(entry.userId, {
+        score: entry.totalScore ?? 0,
+        rank: entry.rank ?? 0,
       });
     }
   }
@@ -234,16 +259,22 @@ export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
   const teamStates = new Map(initialFromSnapshot);
 
   return sortTimeline(show.timeline).map((event) => {
-    const item = toTimelineTableItem(event, show.playback, show.automation.autoResolveSpeedMs);
+    const item = toTimelineTableItem(
+      event,
+      show.playback,
+      show.automation.autoResolveSpeedMs,
+      userById,
+      problemById,
+    );
 
     if (event.type === TimelineEventType.RES) {
-      const username = event.payload.username;
-      const previous = teamStates.get(username);
+      const userId = event.payload.userId;
+      const previous = teamStates.get(userId);
       if (previous) {
         item.oldScore = previous.score;
         item.oldRank = previous.rank;
       }
-      teamStates.set(username, {
+      teamStates.set(userId, {
         score: event.payload.newTotalScore,
         rank: event.payload.newRank,
       });
@@ -251,4 +282,92 @@ export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
 
     return item;
   });
+}
+
+export interface LeaderboardProblemResult {
+  problemId: number;
+  label: string;
+  name: string;
+  score: number;
+  verdict: VerdictRunResult;
+}
+
+export interface LeaderboardEntry {
+  userId: number;
+  username: string;
+  realName: string;
+  rank: number;
+  totalScore: number;
+  problems: LeaderboardProblemResult[];
+}
+
+/// <summary>
+///   Derives the live leaderboard (the audience / resolving view) from the
+///   centralized problem + user maps and the freeze snapshot, folded forward
+///   by every resolve event up to <paramref name="upToEventId" /> (or all of
+///   them when omitted). Names are resolved from the contest maps so callers
+///   never need the denormalized strings.
+/// </summary>
+export function deriveLeaderboard(show: ShowFile, upToEventId?: number): LeaderboardEntry[] {
+  const { userById, problemById } = buildContestLookups(show);
+  const entries = new Map<
+    number,
+    {
+      score: number;
+      rank: number;
+      problems: Map<number, { score: number; verdict: VerdictRunResult }>;
+    }
+  >();
+
+  for (const entry of show.contest.preFreezeSnapshot ?? []) {
+    const problems = new Map<number, { score: number; verdict: VerdictRunResult }>();
+    for (const problem of entry.problems ?? []) {
+      problems.set(problem.problemId, { score: problem.score, verdict: problem.verdict });
+    }
+    entries.set(entry.userId, { score: entry.totalScore, rank: entry.rank, problems });
+  }
+
+  const ordered = sortTimeline(show.timeline);
+  const target =
+    upToEventId !== undefined ? ordered.find((event) => event.id === upToEventId) : undefined;
+  const targetPosition = target?.position ?? Number.POSITIVE_INFINITY;
+
+  for (const event of ordered) {
+    if (event.type !== TimelineEventType.RES) continue;
+    if (event.position > targetPosition) break;
+
+    const state = entries.get(event.payload.userId);
+    if (!state) continue;
+
+    state.score = event.payload.newTotalScore;
+    state.rank = event.payload.newRank;
+    state.problems.set(event.payload.problemId, {
+      score: event.payload.newProblemScore,
+      verdict: event.payload.verdict,
+    });
+  }
+
+  return [...entries.entries()]
+    .map(([userId, state]) => {
+      const user = userById.get(userId);
+      const problems = [...state.problems.entries()]
+        .map(([problemId, result]) => ({
+          problemId,
+          label: problemById.get(problemId)?.label ?? "",
+          name: problemById.get(problemId)?.name ?? "",
+          score: result.score,
+          verdict: result.verdict,
+        }))
+        .sort((a, b) => a.problemId - b.problemId);
+
+      return {
+        userId,
+        username: user?.username ?? "",
+        realName: user?.realName ?? "",
+        rank: state.rank,
+        totalScore: state.score,
+        problems,
+      };
+    })
+    .sort((a, b) => a.rank - b.rank || b.totalScore - a.totalScore || a.userId - b.userId);
 }

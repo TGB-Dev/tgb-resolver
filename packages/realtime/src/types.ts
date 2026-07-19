@@ -2,8 +2,6 @@ import {
   type ActivePlaybackSegmentSnapshot,
   type AssetCollectionSnapshot,
   type AutomationSnapshot,
-  type ContestSnapshot,
-  type ContestTeamSnapshot,
   type PlaybackStateSnapshot,
   PlaybackStatus,
   type ShowAssetSnapshot,
@@ -19,12 +17,46 @@ import { ShowMessageType, ShowRefetchReason } from "./signalr";
 
 export type ShowPlaybackState = PlaybackStateSnapshot;
 export type ActivePlaybackSegment = ActivePlaybackSegmentSnapshot;
-export type ShowContestData = ContestSnapshot;
-export type ShowContestSnapshotTeam = ContestTeamSnapshot;
 export type ShowMeta = ShowMetaSnapshot;
 export type ShowAutomation = AutomationSnapshot;
 export type ShowAssets = AssetCollectionSnapshot;
 export type ShowAsset = ShowAssetSnapshot;
+
+export interface ProblemDefinition {
+  id: number;
+  label: string;
+  name: string;
+  score: number;
+}
+
+export interface UserDefinition {
+  id: number;
+  username: string;
+  realName: string;
+}
+
+export interface ProblemFreezeResult {
+  problemId: number;
+  score: number;
+  verdict: VerdictRunResult;
+}
+
+export interface FreezeSnapshotEntry {
+  userId: number;
+  totalScore: number;
+  rank: number;
+  problems: ProblemFreezeResult[];
+  lastRunId: number | null;
+  lastSubmittedSeconds: number | null;
+}
+
+export interface ShowContestData {
+  durationSeconds: number;
+  freezeDurationSeconds: number;
+  problems: ProblemDefinition[];
+  users: UserDefinition[];
+  preFreezeSnapshot: FreezeSnapshotEntry[];
+}
 
 export type {
   LiveModeChangedMessage,
@@ -74,18 +106,19 @@ export interface EventBase {
   customName?: string;
 }
 
+export interface ResolvePayload {
+  userId: number;
+  problemId: number;
+  newTotalScore: number;
+  newRank: number;
+  newProblemScore: number;
+  verdict: VerdictRunResult;
+  submissionSeconds: number;
+}
+
 export interface ResolveEvent extends EventBase {
   type: TimelineEventType.RES;
-  payload: {
-    realName: string;
-    username: string;
-    problem: string;
-    newTotalScore: number;
-    newRank: number;
-    newProblemScore: number;
-    problemDisplayName: string;
-    verdict: VerdictRunResult;
-  };
+  payload: ResolvePayload;
 }
 
 export interface ShowImageEvent extends EventBase {
@@ -106,16 +139,7 @@ export interface PlaySfxEvent extends EventBase {
 
 export interface PreResolveEvent extends EventBase {
   type: TimelineEventType.PRE;
-  payload: {
-    realName: string;
-    username: string;
-    problem: string;
-    newTotalScore: number;
-    newRank: number;
-    newProblemScore: number;
-    problemDisplayName: string;
-    verdict: VerdictRunResult;
-  };
+  payload: ResolvePayload;
 }
 
 export type TimelineEvent = ResolveEvent | ShowImageEvent | PlaySfxEvent | PreResolveEvent;

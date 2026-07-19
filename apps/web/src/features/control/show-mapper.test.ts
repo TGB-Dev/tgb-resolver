@@ -4,6 +4,7 @@ import {
   ShowSource,
   type ShowStateSnapshot,
   TimelineEventType,
+  VerdictRunResult,
 } from "@tgb-resolver/contracts";
 import { describe, expect, test } from "vitest";
 
@@ -23,13 +24,16 @@ describe("mapShowStateSnapshotToShowFile", () => {
       contest: {
         durationSeconds: 18_000,
         freezeDurationSeconds: 900,
+        problems: [{ id: 1, label: "A", name: "Thế Giới Âm Nhạc", score: 100 }],
+        users: [{ id: 1, username: "alice", realName: "Alice Team" }],
         preFreezeSnapshot: [
           {
-            teamId: 1,
-            realName: "Alice Team",
-            username: "alice",
-            score: 100,
+            userId: 1,
+            totalScore: 100,
             rank: 1,
+            problems: [{ problemId: 1, score: 100, verdict: VerdictRunResult.ACCEPTED }],
+            lastRunId: 5,
+            lastSubmittedSeconds: 12,
           },
         ],
       },
@@ -70,13 +74,13 @@ describe("mapShowStateSnapshotToShowFile", () => {
           type: TimelineEventType.RES,
           customName: "A. Alice",
           resolve: {
-            realName: "Alice Team",
-            username: "alice",
-            problem: "A",
+            userId: 1,
+            problemId: 1,
             newTotalScore: 100,
             newRank: 1,
             newProblemScore: 100,
-            problemDisplayName: "Thế Giới Âm Nhạc",
+            verdict: VerdictRunResult.ACCEPTED,
+            submissionSeconds: 12,
           },
         },
         {
@@ -105,12 +109,31 @@ describe("mapShowStateSnapshotToShowFile", () => {
         currentResolveEventId: 10,
         currentEventId: 11,
       },
+      contest: {
+        preFreezeSnapshot: [
+          expect.objectContaining({
+            userId: 1,
+            totalScore: 100,
+            rank: 1,
+            problems: [{ problemId: 1, score: 100, verdict: VerdictRunResult.ACCEPTED }],
+          }),
+        ],
+      },
     });
     expect(show.timeline).toEqual([
       expect.objectContaining({
         id: 10,
         type: TimelineEventType.RES,
         customName: "A. Alice",
+        payload: expect.objectContaining({
+          userId: 1,
+          problemId: 1,
+          newTotalScore: 100,
+          newRank: 1,
+          newProblemScore: 100,
+          verdict: VerdictRunResult.ACCEPTED,
+          submissionSeconds: 12,
+        }),
       }),
       expect.objectContaining({
         id: 11,

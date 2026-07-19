@@ -38,7 +38,7 @@ export const ControlTimelineTableItem = memo(
     return (
       <Box
         w="full"
-        h={8}
+        minH={8}
         position="relative"
         borderBottomColor="border"
         overflow="hidden"
@@ -151,7 +151,7 @@ function ControlTimelineTableGridRow({ children, ...props }: GridProps) {
       w="full"
       templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}
       gapX={2}
-      h={8}
+      minH={8}
       alignItems="center"
       css={{
         "& > *": {

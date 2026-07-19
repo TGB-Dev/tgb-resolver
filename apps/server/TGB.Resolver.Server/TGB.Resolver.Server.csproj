@@ -12,30 +12,30 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastEndpoints" Version="8.2.0" />
-    <PackageReference Include="FastEndpoints.Swagger" Version="8.2.0" />
-    <PackageReference Include="FluentValidation" Version="12.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
-    <PackageReference Include="NodaTime" Version="3.3.3" />
-   	<!-- Temporary workaround until vulnerability fixed: https://github.com/dotnet/efcore/issues/38257 -->
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" VersionOverride="3.0.3" />
-    <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
+    <PackageReference Include="FastEndpoints" Version="8.2.0"/>
+    <PackageReference Include="FastEndpoints.Swagger" Version="8.2.0"/>
+    <PackageReference Include="FluentValidation" Version="12.1.1"/>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.10"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10"/>
+    <PackageReference Include="NodaTime" Version="3.3.3"/>
+    <!-- Temporary workaround until vulnerability fixed: https://github.com/dotnet/efcore/issues/38257 -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" VersionOverride="3.0.3"/>
+    <PackageReference Include="NSwag.AspNetCore" Version="14.7.1"/>
     <PackageReference Include="NSwag.MSBuild" Version="14.7.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.16.15" />
-    <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" Version="1.17.0" />
+    <PackageReference Include="Riok.Mapperly" Version="4.3.1"/>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.15"/>
+    <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" Version="1.17.0"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TGB.Resolver.IcpcXmlParser\TGB.Resolver.IcpcXmlParser.csproj" />
+    <ProjectReference Include="..\TGB.Resolver.IcpcXmlParser\TGB.Resolver.IcpcXmlParser.csproj"/>
   </ItemGroup>
 
   <Target Name="GenerateOpenApiDocumentTarget" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' and '$(GenerateOpenApiDocument)' == 'true'">
-    <Exec WorkingDirectory="$(ProjectDir)" Command="$(NSwagExe_Net100) aspnetcore2openapi /project:$(MSBuildProjectFullPath) /documentName:v1 /output:$(OpenApiDocumentPath) /noBuild:true" />
+    <Exec WorkingDirectory="$(ProjectDir)" Command="$(NSwagExe_Net100) aspnetcore2openapi /project:$(MSBuildProjectFullPath) /documentName:v1 /output:$(OpenApiDocumentPath) /noBuild:true"/>
   </Target>
 
 </Project>

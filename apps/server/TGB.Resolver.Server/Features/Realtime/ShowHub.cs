@@ -8,16 +8,16 @@ namespace TGB.Resolver.Server.Features.Realtime;
 [Hub]
 public interface IShowHub
 {
-  // ReSharper disable once UnusedMemberInSuper.Global
-  Task<ClockSyncResponse> SyncClock(ClockSyncRequest request);
+    // ReSharper disable once UnusedMemberInSuper.Global
+    Task<ClockSyncResponse> SyncClock(ClockSyncRequest request);
 }
 
 public sealed class ShowHub(IClock clock) : Hub<IShowHubClient>, IShowHub
 {
-  public Task<ClockSyncResponse> SyncClock(ClockSyncRequest request)
-  {
-    var receivedAt = clock.GetCurrentInstant();
-    var transmittedAt = clock.GetCurrentInstant();
-    return Task.FromResult(ClockSyncResponse.Create(request, receivedAt, transmittedAt));
-  }
+    public Task<ClockSyncResponse> SyncClock(ClockSyncRequest request)
+    {
+        var receivedAt = clock.GetCurrentInstant();
+        var transmittedAt = clock.GetCurrentInstant();
+        return Task.FromResult(ClockSyncResponse.Create(request, receivedAt, transmittedAt));
+    }
 }
