@@ -876,6 +876,10 @@ components:
           nullable: true
           oneOf:
             - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
+        custom:
+          type: object
+          nullable: true
+          additionalProperties: { }
     TimelineEventType:
       type: string
       description: ''
@@ -884,11 +888,13 @@ components:
         - Img
         - Sfx
         - Pre
+        - Cus
       enum:
         - Res
         - Img
         - Sfx
         - Pre
+        - Cus
     ResolveEventPayloadSnapshot:
       type: object
       additionalProperties: false
@@ -1045,6 +1051,10 @@ components:
           nullable: true
           oneOf:
             - $ref: '#/components/schemas/MediaEventPatchPayload'
+        custom:
+          type: object
+          nullable: true
+          additionalProperties: { }
     MediaEventPatchPayload:
       type: object
       additionalProperties: false
@@ -1092,6 +1102,10 @@ components:
           nullable: true
           oneOf:
             - $ref: '#/components/schemas/MediaEventPatchPayload'
+        custom:
+          type: object
+          nullable: true
+          additionalProperties: { }
     MoveTimelineEventRequest:
       type: object
       additionalProperties: false
@@ -1132,6 +1146,10 @@ components:
           nullable: true
           oneOf:
             - $ref: '#/components/schemas/MediaEventPatchPayload'
+        custom:
+          type: object
+          nullable: true
+          additionalProperties: { }
     SetTimelineModeRequest:
       type: object
       additionalProperties: false

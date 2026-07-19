@@ -2,8 +2,8 @@
 /* eslint-disable */
 /* tslint:disable */
 
-import type { VerdictRunResult } from "./TGB.Resolver.IcpcXmlParser";
-import type { PlaybackStatus, TimelineEventType } from "./TGB.Resolver.Server.Commons.Types";
+import type {VerdictRunResult} from "./TGB.Resolver.IcpcXmlParser";
+import type {PlaybackStatus, TimelineEventType} from "./TGB.Resolver.Server.Commons.Types";
 
 /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ClockSyncRequest */
 export type ClockSyncRequest = {
@@ -75,6 +75,8 @@ export type TimelineEventSnapshot = {
   Sfx?: MediaEventPayloadSnapshot;
   /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot? */
   Pre?: ResolveEventPayloadSnapshot;
+  /** Transpiled from System.Collections.Generic.Dictionary<string, object?>? */
+  Custom?: Partial<Record<string, any>>;
 };
 
 /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot */

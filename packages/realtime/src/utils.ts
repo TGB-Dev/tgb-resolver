@@ -230,6 +230,21 @@ export function toTimelineTableItem(
         isInActiveSegment,
       };
     }
+    case TimelineEventType.CUS: {
+      const placeholderName = `Custom event`;
+      return {
+        id: event.id,
+        type: event.type,
+        name: resolveDisplayName(event.customName, placeholderName),
+        customName: event.customName,
+        placeholderName,
+        triggerOffsetSeconds: event.triggerOffsetSeconds,
+        requireManualInteraction: event.requireManualInteraction,
+        isCurrentResolve,
+        isCurrentInlineEvent,
+        isInActiveSegment,
+      };
+    }
   }
 }
 

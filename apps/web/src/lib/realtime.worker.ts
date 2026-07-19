@@ -191,6 +191,13 @@ async function connectHub(url: string) {
           },
         };
       }
+      case TimelineEventType.CUS: {
+        return {
+          ...base,
+          type: TimelineEventType.CUS,
+          payload: (src.Custom as Record<string, unknown>) ?? {},
+        };
+      }
       default:
         return {
           ...base,

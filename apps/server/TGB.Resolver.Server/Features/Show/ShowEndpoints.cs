@@ -4,155 +4,155 @@ using TGB.Resolver.Server.Features.Show.Dto;
 namespace TGB.Resolver.Server.Features.Show;
 
 public sealed class GetShowEndpoint(ShowStateService showStateService)
-    : EndpointWithoutRequest<ShowStateSnapshot>
+  : EndpointWithoutRequest<ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Get("/timeline");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Get("/timeline");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.GetSnapshotAsync(ct), ct);
-    }
+  public override async Task HandleAsync(CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.GetSnapshotAsync(ct), ct);
+  }
 }
 
 public sealed class OptimizeShowEndpoint(ShowStateService showStateService)
-    : Endpoint<VersionedCommandRequest, ShowStateSnapshot>
+  : Endpoint<VersionedCommandRequest, ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Post("/api/show/optimize");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Post("/api/show/optimize");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(VersionedCommandRequest request, CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.OptimizeAsync(request, ct), ct);
-    }
+  public override async Task HandleAsync(VersionedCommandRequest request, CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.OptimizeAsync(request, ct), ct);
+  }
 }
 
 public sealed class ClearShowEndpoint(ShowStateService showStateService)
-    : Endpoint<VersionedCommandRequest, ShowStateSnapshot>
+  : Endpoint<VersionedCommandRequest, ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Post("/api/show/clear");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Post("/api/show/clear");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(VersionedCommandRequest request, CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.ClearAsync(request, ct), ct);
-    }
+  public override async Task HandleAsync(VersionedCommandRequest request, CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.ClearAsync(request, ct), ct);
+  }
 }
 
 public sealed class ImportXmlEndpoint(ShowStateService showStateService)
-    : Endpoint<ImportXmlRequest, ShowStateSnapshot>
+  : Endpoint<ImportXmlRequest, ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Post("/import/xml");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Post("/import/xml");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(ImportXmlRequest request, CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.ImportXmlAsync(request, ct), ct);
-    }
+  public override async Task HandleAsync(ImportXmlRequest request, CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.ImportXmlAsync(request, ct), ct);
+  }
 }
 
 public sealed class ImportBundleEndpoint(ShowStateService showStateService)
-    : Endpoint<ImportBundleRequest, ShowStateSnapshot>
+  : Endpoint<ImportBundleRequest, ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Post("/import/bundle");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Post("/import/bundle");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(ImportBundleRequest request, CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.ImportBundleAsync(request, ct), ct);
-    }
+  public override async Task HandleAsync(ImportBundleRequest request, CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.ImportBundleAsync(request, ct), ct);
+  }
 }
 
 public sealed class ExportBundleEndpoint(ShowStateService showStateService) : EndpointWithoutRequest
 {
-    public override void Configure()
-    {
-        Get("/export/bundle");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Get("/export/bundle");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(CancellationToken ct)
-    {
-        var bytes = await showStateService.ExportBundleAsync(ct);
-        HttpContext.Response.ContentType = "application/octet-stream";
-        HttpContext.Response.Headers.ContentDisposition = "attachment; filename=\"show.tgbresolver\"";
-        await HttpContext.Response.Body.WriteAsync(bytes, ct);
-    }
+  public override async Task HandleAsync(CancellationToken ct)
+  {
+    var bytes = await showStateService.ExportBundleAsync(ct);
+    HttpContext.Response.ContentType = "application/octet-stream";
+    HttpContext.Response.Headers.ContentDisposition = "attachment; filename=\"show.tgbresolver\"";
+    await HttpContext.Response.Body.WriteAsync(bytes, ct);
+  }
 }
 
 public sealed class RenameResolveEventEndpoint(ShowStateService showStateService)
-    : Endpoint<ResolveEventRenameRequest, ShowStateSnapshot>
+  : Endpoint<ResolveEventRenameRequest, ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Patch("/api/show/events/resolve/{id:int}");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Patch("/api/show/events/resolve/{id:int}");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(ResolveEventRenameRequest request, CancellationToken ct)
-    {
-        var eventId = Route<int>("id");
-        await Send.OkAsync(await showStateService.RenameResolveEventAsync(eventId, request, ct), ct);
-    }
+  public override async Task HandleAsync(ResolveEventRenameRequest request, CancellationToken ct)
+  {
+    var eventId = Route<int>("id");
+    await Send.OkAsync(await showStateService.RenameResolveEventAsync(eventId, request, ct), ct);
+  }
 }
 
 public sealed class PatchNonResolveEventEndpoint(ShowStateService showStateService)
-    : Endpoint<NonResolveEventPatchRequest, ShowStateSnapshot>
+  : Endpoint<NonResolveEventPatchRequest, ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Patch("/api/show/events/non-resolve/{id:int}");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Patch("/api/show/events/non-resolve/{id:int}");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(NonResolveEventPatchRequest request, CancellationToken ct)
-    {
-        var eventId = Route<int>("id");
-        await Send.OkAsync(await showStateService.PatchNonResolveEventAsync(eventId, request, ct), ct);
-    }
+  public override async Task HandleAsync(NonResolveEventPatchRequest request, CancellationToken ct)
+  {
+    var eventId = Route<int>("id");
+    await Send.OkAsync(await showStateService.PatchNonResolveEventAsync(eventId, request, ct), ct);
+  }
 }
 
 public sealed class EnableLiveModeEndpoint(ShowStateService showStateService)
-    : EndpointWithoutRequest<ShowStateSnapshot>
+  : EndpointWithoutRequest<ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Post("/api/show/live");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Post("/api/show/live");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.SetLiveModeAsync(true, ct), ct);
-    }
+  public override async Task HandleAsync(CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.SetLiveModeAsync(true, ct), ct);
+  }
 }
 
 public sealed class DisableLiveModeEndpoint(ShowStateService showStateService)
-    : EndpointWithoutRequest<ShowStateSnapshot>
+  : EndpointWithoutRequest<ShowStateSnapshot>
 {
-    public override void Configure()
-    {
-        Delete("/api/show/live");
-        AllowAnonymous();
-    }
+  public override void Configure()
+  {
+    Delete("/api/show/live");
+    AllowAnonymous();
+  }
 
-    public override async Task HandleAsync(CancellationToken ct)
-    {
-        await Send.OkAsync(await showStateService.SetLiveModeAsync(false, ct), ct);
-    }
+  public override async Task HandleAsync(CancellationToken ct)
+  {
+    await Send.OkAsync(await showStateService.SetLiveModeAsync(false, ct), ct);
+  }
 }

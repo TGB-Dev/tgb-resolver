@@ -4,7 +4,8 @@ Common mistakes and how to fix them.
 
 ## .env Files Must Be in `inputs`
 
-Turbo does NOT read `.env` files. Your framework (Next.js, Vite, etc.) or `dotenv` loads them. But Turbo needs to know when they change.
+Turbo does NOT read `.env` files. Your framework (Next.js, Vite, etc.) or `dotenv` loads them. But
+Turbo needs to know when they change.
 
 **Wrong:**
 
@@ -33,7 +34,8 @@ Turbo does NOT read `.env` files. Your framework (Next.js, Vite, etc.) or `doten
 
 ## Strict Mode Filters CI Variables
 
-In strict mode, CI provider variables (GITHUB_TOKEN, GITLAB_CI, etc.) are filtered unless explicitly listed.
+In strict mode, CI provider variables (GITHUB_TOKEN, GITLAB_CI, etc.) are filtered unless explicitly
+listed.
 
 **Symptom:** Task fails with "authentication required" or "permission denied" in CI.
 
@@ -61,7 +63,8 @@ Variables in `passThroughEnv` are available at runtime but changes WON'T trigger
 }
 ```
 
-If `API_URL` changes from staging to production, Turbo may serve a cached build pointing to the wrong API.
+If `API_URL` changes from staging to production, Turbo may serve a cached build pointing to the
+wrong API.
 
 **Use passThroughEnv only for:**
 
@@ -142,7 +145,9 @@ This config:
 
 ### With `futureFlags.globalConfiguration`
 
-The same config using the `global` key. The `.env` files move to `global.inputs`, which means they get folded into each task's hash individually rather than the global hash. This lets tasks exclude specific `.env` files if needed.
+The same config using the `global` key. The `.env` files move to `global.inputs`, which means they
+get folded into each task's hash individually rather than the global hash. This lets tasks exclude
+specific `.env` files if needed.
 
 ```json
 {
@@ -172,4 +177,5 @@ With this approach, a task that doesn't care about `.env.production` can exclude
 }
 ```
 
-This wouldn't have been possible with `globalDependencies`, where `.env.production` would be baked into the global hash and affect every task unconditionally.
+This wouldn't have been possible with `globalDependencies`, where `.env.production` would be baked
+into the global hash and affect every task unconditionally.

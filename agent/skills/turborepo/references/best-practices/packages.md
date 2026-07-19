@@ -272,7 +272,8 @@ packages/
 
 ### Use Node.js Subpath Imports (Not `paths`)
 
-TypeScript `compilerOptions.paths` breaks with JIT packages. Use Node.js subpath imports instead (TypeScript 5.4+).
+TypeScript `compilerOptions.paths` breaks with JIT packages. Use Node.js subpath imports instead (
+TypeScript 5.4+).
 
 **JIT Package:**
 
@@ -308,7 +309,8 @@ import { MY_STRING } from "#utils.js"; // Uses .js extension
 
 ### Use `tsc` for Internal Packages
 
-For internal packages, prefer `tsc` over bundlers. Bundlers can mangle code before it reaches your app's bundler, causing hard-to-debug issues.
+For internal packages, prefer `tsc` over bundlers. Bundlers can mangle code before it reaches your
+app's bundler, causing hard-to-debug issues.
 
 ### Enable Go-to-Definition
 
@@ -328,7 +330,8 @@ This creates `.d.ts` and `.d.ts.map` files for IDE navigation.
 
 ### No Root tsconfig.json Needed
 
-Each package should have its own `tsconfig.json`. A root one causes all tasks to miss cache when changed. Only use root `tsconfig.json` for non-package scripts.
+Each package should have its own `tsconfig.json`. A root one causes all tasks to miss cache when
+changed. Only use root `tsconfig.json` for non-package scripts.
 
 ### Avoid TypeScript Project References
 

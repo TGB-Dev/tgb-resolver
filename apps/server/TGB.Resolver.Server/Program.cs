@@ -18,23 +18,23 @@ const string frontendCorsPolicy = "Frontend";
 var builder = WebApplication.CreateBuilder(args);
 
 var allowedOrigins =
-    builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
-    ?? ["http://127.0.0.1:3000", "http://localhost:3000"];
+  builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+  ?? ["http://127.0.0.1:3000", "http://localhost:3000"];
 
 builder.Services.AddCors(o =>
-    o.AddPolicy(frontendCorsPolicy, p => p
-        .WithOrigins(allowedOrigins)
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials()));
+  o.AddPolicy(frontendCorsPolicy, p => p
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
 builder.Services.Configure<JsonOptions>(options =>
 {
-    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonSerializerContext.Default);
-    options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
-        AppJsonSerializerContext.Default,
-        new DefaultJsonTypeInfoResolver());
+  options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+  options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+  options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonSerializerContext.Default);
+  options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
+    AppJsonSerializerContext.Default,
+    new DefaultJsonTypeInfoResolver());
 });
 
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
@@ -43,20 +43,20 @@ builder.Services.AddSingleton<AppJsonSerializer>();
 builder.Services.AddSingleton<AssetStore>();
 builder.Services.AddDbContext<ResolverDbContext>(options =>
 {
-    var dataDirectory = Path.Combine(builder.Environment.ContentRootPath, ".data");
-    Directory.CreateDirectory(dataDirectory);
-    options.UseSqlite($"Data Source={Path.Combine(dataDirectory, "resolver.db")}");
+  var dataDirectory = Path.Combine(builder.Environment.ContentRootPath, ".data");
+  Directory.CreateDirectory(dataDirectory);
+  options.UseSqlite($"Data Source={Path.Combine(dataDirectory, "resolver.db")}");
 });
 builder.Services.AddFastEndpoints();
 builder.Services.SwaggerDocument(options =>
 {
-    options.DocumentSettings = settings =>
-    {
-        settings.DocumentName = "v1";
-        settings.Title = "TGB Resolver Server";
-        settings.Version = "v1";
-    };
-    options.ShortSchemaNames = true;
+  options.DocumentSettings = settings =>
+  {
+    settings.DocumentName = "v1";
+    settings.Title = "TGB Resolver Server";
+    settings.Version = "v1";
+  };
+  options.ShortSchemaNames = true;
 });
 builder.Services.AddSignalR().AddMessagePackProtocol();
 builder.Services.AddScoped<ShowRawRepository>();
@@ -67,11 +67,11 @@ var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ResolverDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
+  var dbContext = scope.ServiceProvider.GetRequiredService<ResolverDbContext>();
+  await dbContext.Database.EnsureCreatedAsync();
 
-    var showStateService = scope.ServiceProvider.GetRequiredService<ShowStateService>();
-    await showStateService.EnsureSeededAsync();
+  var showStateService = scope.ServiceProvider.GetRequiredService<ShowStateService>();
+  await showStateService.EnsureSeededAsync();
 }
 
 app.UseCors(frontendCorsPolicy);

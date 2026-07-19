@@ -142,7 +142,17 @@ export interface PreResolveEvent extends EventBase {
   payload: ResolvePayload;
 }
 
-export type TimelineEvent = ResolveEvent | ShowImageEvent | PlaySfxEvent | PreResolveEvent;
+export interface CustomEvent extends EventBase {
+  type: TimelineEventType.CUS;
+  payload: Record<string, unknown>;
+}
+
+export type TimelineEvent =
+  | ResolveEvent
+  | ShowImageEvent
+  | PlaySfxEvent
+  | PreResolveEvent
+  | CustomEvent;
 
 export interface ShowFile {
   schemaVersion: typeof SHOW_SCHEMA_VERSION;

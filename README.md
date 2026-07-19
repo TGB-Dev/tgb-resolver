@@ -7,15 +7,15 @@ driving audience and control UIs from a single source of truth.
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Workspace | Turborepo, pnpm workspaces |
-| Frontend | React 19, TanStack Start (SPA), Vite 8, Chakra UI 3, Preact Signals |
-| Server | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly |
-| Contracts | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot |
-| Parsers | .NET `TGB.Resolver.IcpcXmlParser` (server-side) |
-| Lint/Format | Biome, syncpack |
-| Tests | Vitest, Testing Library (web), TUnit (.NET) |
+| Layer       | Tech                                                                           |
+|-------------|--------------------------------------------------------------------------------|
+| Workspace   | Turborepo, pnpm workspaces                                                     |
+| Frontend    | React 19, TanStack Start (SPA), Vite 8, Chakra UI 3, Preact Signals            |
+| Server      | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly |
+| Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot                       |
+| Parsers     | .NET `TGB.Resolver.IcpcXmlParser` (server-side)                                |
+| Lint/Format | Biome, syncpack                                                                |
+| Tests       | Vitest, Testing Library (web), TUnit (.NET)                                    |
 
 ## Prerequisites
 
@@ -39,10 +39,10 @@ pnpm dev
 
 Runs the server (port 5001) and frontend (port 3000) in parallel.
 
-| Route | UI |
-|---|---|
-| `/` | Audience |
-| `/control` | Control |
+| Route      | UI       |
+|------------|----------|
+| `/`        | Audience |
+| `/control` | Control  |
 
 Server solution: `apps/server/TGB.Resolver.Server.slnx` (.slnx format).
 Frontend app: `apps/web/` (TanStack Start SPA).
@@ -56,7 +56,12 @@ pnpm test           # vitest (TS) + dotnet test (.NET)
 pnpm serve          # production previews
 ```
 
-The `packages/contracts` package generates its TypeScript HTTP client from `apps/server/TGB.Resolver.Server/openapi.yaml` (via `openapi-ts`) before building, and `packages/realtime` generates its SignalR hub client from the server via the `dotnet-tsrts` tool. The OpenAPI document is emitted automatically by the server `build` (`dotnet build -p:GenerateOpenApiDocument=true`), so a normal `pnpm build` keeps both clients current.
+The `packages/contracts` package generates its TypeScript HTTP client from
+`apps/server/TGB.Resolver.Server/openapi.yaml` (via `openapi-ts`) before building, and
+`packages/realtime` generates its SignalR hub client from the server via the `dotnet-tsrts` tool.
+The OpenAPI document is emitted automatically by the server `build` (
+`dotnet build -p:GenerateOpenApiDocument=true`), so a normal `pnpm build` keeps both clients
+current.
 
 ## Native Git Hooks
 

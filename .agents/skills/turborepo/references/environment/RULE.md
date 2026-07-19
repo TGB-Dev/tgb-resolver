@@ -1,6 +1,7 @@
 # Environment Variables in Turborepo
 
-Turborepo provides fine-grained control over which environment variables affect task hashing and runtime availability.
+Turborepo provides fine-grained control over which environment variables affect task hashing and
+runtime availability.
 
 ## Configuration Keys
 
@@ -30,7 +31,8 @@ Variables that affect EVERY task's hash. When these change, all tasks rebuild.
 
 ### `passThroughEnv` - Runtime-Only Variables (Not Hashed)
 
-Variables available at runtime but NOT included in hash. **Use with caution** - changes won't trigger rebuilds.
+Variables available at runtime but NOT included in hash. **Use with caution** - changes won't
+trigger rebuilds.
 
 ```json
 {
@@ -78,14 +80,16 @@ Exclude variables (useful with framework inference):
 
 ## With `futureFlags.globalConfiguration`
 
-When the `globalConfiguration` future flag is enabled, global environment keys move under the `global` key with cleaner names:
+When the `globalConfiguration` future flag is enabled, global environment keys move under the
+`global` key with cleaner names:
 
 | Old (top-level)        | New (`global.`)  |
-| ---------------------- | ---------------- |
+|------------------------|------------------|
 | `globalEnv`            | `env`            |
 | `globalPassThroughEnv` | `passThroughEnv` |
 
-`global.env` and `global.passThroughEnv` behave identically to their top-level counterparts — they affect the global hash and all tasks, respectively. The rename is purely organizational.
+`global.env` and `global.passThroughEnv` behave identically to their top-level counterparts — they
+affect the global hash and all tasks, respectively. The rename is purely organizational.
 
 ```json
 {

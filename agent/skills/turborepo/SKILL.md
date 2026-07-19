@@ -2,9 +2,11 @@
 description: "Turborepo monorepo build system guidance. Triggers on: turbo.json, task pipelines,\ndependsOn, caching, remote cache, the \"turbo\" CLI, --filter, --affected, CI optimization, environment\nvariables, internal packages, monorepo structure/best practices, and boundaries.\n\nUse when user: configures tasks/workflows/pipelines, creates packages, sets up\nmonorepo, shares code between apps, runs changed/affected packages, debugs cache,\nor has apps/packages directories.\n"
 metadata: {"version":"2.10.6-canary.2"}
 ---
+
 # Turborepo Skill
 
-Build system for JavaScript/TypeScript monorepos. Turborepo caches task outputs and runs tasks in parallel based on dependency graph.
+Build system for JavaScript/TypeScript monorepos. Turborepo caches task outputs and runs tasks in
+parallel based on dependency graph.
 
 ## IMPORTANT: Package Tasks, Not Root Tasks
 
@@ -16,7 +18,8 @@ When creating tasks/scripts/pipelines, you MUST default to package tasks:
 2. Register the task in root `turbo.json`
 3. Root `package.json` only delegates via `turbo run <task>`
 
-**DO NOT** put task logic in root `package.json` when it can live in packages. This defeats Turborepo's parallelization.
+**DO NOT** put task logic in root `package.json` when it can live in packages. This defeats
+Turborepo's parallelization.
 
 ```json
 // DO THIS: Scripts in each package
@@ -64,7 +67,8 @@ When creating tasks/scripts/pipelines, you MUST default to package tasks:
 }
 ```
 
-Root Tasks (`//#taskname`) are ONLY for tasks that truly cannot exist in packages, such as Vitest Projects' `//#test`, repo-wide release scripts, or tooling that does not invoke `turbo` itself.
+Root Tasks (`//#taskname`) are ONLY for tasks that truly cannot exist in packages, such as Vitest
+Projects' `//#test`, repo-wide release scripts, or tooling that does not invoke `turbo` itself.
 
 ## Secondary Rule: `turbo run` vs `turbo`
 
@@ -84,7 +88,8 @@ Root Tasks (`//#taskname`) are ONLY for tasks that truly cannot exist in package
 - run: turbo run build --affected
 ```
 
-**The shorthand `turbo <tasks>` is ONLY for one-off terminal commands** typed directly by humans or agents. Never write `turbo build` into package.json, CI, or scripts.
+**The shorthand `turbo <tasks>` is ONLY for one-off terminal commands** typed directly by humans or
+agents. Never write `turbo build` into package.json, CI, or scripts.
 
 ## Quick Decision Trees
 
@@ -123,7 +128,8 @@ Run only what changed?
 └─ See all filter options → references/filtering/RULE.md
 ```
 
-**`--affected` is the primary way to run only changed packages.** It automatically compares against the default branch and includes dependents.
+**`--affected` is the primary way to run only changed packages.** It automatically compares against
+the default branch and includes dependents.
 
 ### "I want to filter packages"
 
@@ -209,7 +215,8 @@ Enforce boundaries?
 
 ### Using `turbo` Shorthand in Code
 
-**`turbo run` is recommended in package.json scripts and CI pipelines.** The shorthand `turbo <task>` is intended for interactive terminal use.
+**`turbo run` is recommended in package.json scripts and CI pipelines.** The shorthand
+`turbo <task>` is intended for interactive terminal use.
 
 ```json
 // WRONG - using shorthand in package.json
@@ -295,11 +302,14 @@ Scripts like `prebuild` that manually build other packages bypass Turborepo's de
 
 **However, the fix depends on whether workspace dependencies are declared:**
 
-1. **If dependencies ARE declared** (e.g., `"@repo/types": "workspace:*"` in package.json), remove the `prebuild` script. Turbo's `dependsOn: ["^build"]` handles this automatically.
+1. **If dependencies ARE declared** (e.g., `"@repo/types": "workspace:*"` in package.json), remove
+   the `prebuild` script. Turbo's `dependsOn: ["^build"]` handles this automatically.
 
-2. **If dependencies are NOT declared**, the `prebuild` exists because `^build` won't trigger without a dependency relationship. The fix is to:
-   - Add the dependency to package.json: `"@repo/types": "workspace:*"`
-   - Then remove the `prebuild` script
+2. **If dependencies are NOT declared**, the `prebuild` exists because `^build` won't trigger
+   without a dependency relationship. The fix is to:
+
+- Add the dependency to package.json: `"@repo/types": "workspace:*"`
+- Then remove the `prebuild` script
 
 ```json
 // CORRECT - declare dependency, let turbo handle build order
@@ -324,11 +334,13 @@ Scripts like `prebuild` that manually build other packages bypass Turborepo's de
 }
 ```
 
-**Key insight:** `^build` only runs build in packages listed as dependencies. No dependency declaration = no automatic build ordering.
+**Key insight:** `^build` only runs build in packages listed as dependencies. No dependency
+declaration = no automatic build ordering.
 
 ### Overly Broad `globalDependencies`
 
-`globalDependencies` affects ALL tasks in ALL packages via the **global hash** — tasks cannot opt out of specific files, even with negation globs in `inputs`. Be specific.
+`globalDependencies` affects ALL tasks in ALL packages via the **global hash** — tasks cannot opt
+out of specific files, even with negation globs in `inputs`. Be specific.
 
 ```json
 // WRONG - heavy hammer, affects all hashes
@@ -348,7 +360,8 @@ Scripts like `prebuild` that manually build other packages bypass Turborepo's de
 }
 ```
 
-With `futureFlags.globalConfiguration`, this problem is reduced because `global.inputs` files are folded into each task's inputs (not the global hash). Tasks can exclude specific files:
+With `futureFlags.globalConfiguration`, this problem is reduced because `global.inputs` files are
+folded into each task's inputs (not the global hash). Tasks can exclude specific files:
 
 ```json
 // BEST - global.inputs with per-task exclusion
@@ -368,7 +381,8 @@ With `futureFlags.globalConfiguration`, this problem is reduced because `global.
 
 ### Repetitive Task Configuration
 
-Look for repeated configuration across tasks that can be collapsed. Turborepo supports shared configuration patterns.
+Look for repeated configuration across tasks that can be collapsed. Turborepo supports shared
+configuration patterns.
 
 ```json
 // WRONG - repetitive env and inputs across tasks
@@ -413,11 +427,13 @@ Look for repeated configuration across tasks that can be collapsed. Turborepo su
 
 ### NOT an Anti-Pattern: Large `env` Arrays
 
-A large `env` array (even 50+ variables) is **not** a problem. It usually means the user was thorough about declaring their build's environment dependencies. Do not flag this as an issue.
+A large `env` array (even 50+ variables) is **not** a problem. It usually means the user was
+thorough about declaring their build's environment dependencies. Do not flag this as an issue.
 
 ### Using `--parallel` Flag
 
-The `--parallel` flag bypasses Turborepo's dependency graph. If tasks need parallel execution, configure `dependsOn` correctly instead.
+The `--parallel` flag bypasses Turborepo's dependency graph. If tasks need parallel execution,
+configure `dependsOn` correctly instead.
 
 ```bash
 # WRONG - bypasses dependency graph
@@ -430,7 +446,8 @@ turbo run lint
 
 ### Package-Specific Task Overrides in Root turbo.json
 
-When multiple packages need different task configurations, use **Package Configurations** (`turbo.json` in each package) instead of cluttering root `turbo.json` with `package#task` overrides.
+When multiple packages need different task configurations, use **Package Configurations** (
+`turbo.json` in each package) instead of cluttering root `turbo.json` with `package#task` overrides.
 
 ```json
 // WRONG - root turbo.json with many package-specific overrides
@@ -486,7 +503,8 @@ See `references/configuration/RULE.md#package-configurations` for full details.
 
 ### Using `../` to Traverse Out of Package in `inputs`
 
-Don't use relative paths like `../` to reference files outside the package. Use `$TURBO_ROOT$` instead.
+Don't use relative paths like `../` to reference files outside the package. Use `$TURBO_ROOT$`
+instead.
 
 ```json
 // WRONG - traversing out of package
@@ -545,7 +563,8 @@ Common outputs by framework:
 
 **TypeScript `--noEmit` can still produce cache files:**
 
-When `incremental: true` in tsconfig.json, `tsc --noEmit` writes `.tsbuildinfo` files even without emitting JS. Check the tsconfig before assuming no outputs:
+When `incremental: true` in tsconfig.json, `tsc --noEmit` writes `.tsbuildinfo` files even without
+emitting JS. Check the tsconfig before assuming no outputs:
 
 ```json
 // If tsconfig has incremental: true, tsc --noEmit produces cache files
@@ -561,7 +580,8 @@ When `incremental: true` in tsconfig.json, `tsc --noEmit` writes `.tsbuildinfo` 
 To determine correct outputs for TypeScript tasks:
 
 1. Check if `incremental` or `composite` is enabled in tsconfig
-2. Check `tsBuildInfoFile` for custom cache location (default: alongside `outDir` or in project root)
+2. Check `tsBuildInfoFile` for custom cache location (default: alongside `outDir` or in project
+   root)
 3. If no incremental mode, `tsc --noEmit` produces no files
 
 ### `^build` vs `build` Confusion
@@ -635,7 +655,9 @@ Turbo does NOT load `.env` files - your framework does. But Turbo needs to know 
 
 ### Root `.env` File in Monorepo
 
-A `.env` file at the repo root is an anti-pattern — even for small monorepos or starter templates. It creates implicit coupling between packages and makes it unclear which packages depend on which variables.
+A `.env` file at the repo root is an anti-pattern — even for small monorepos or starter templates.
+It creates implicit coupling between packages and makes it unclear which packages depend on which
+variables.
 
 ```
 // WRONG - root .env affects all packages implicitly
@@ -664,11 +686,13 @@ my-monorepo/
 - Security risk: packages may accidentally access sensitive vars meant for others
 - Bad habits start small — starter templates should model correct patterns
 
-**If you must share variables**, use `globalEnv` to be explicit about what's shared, and document why.
+**If you must share variables**, use `globalEnv` to be explicit about what's shared, and document
+why.
 
 ### Strict Mode Filtering CI Variables
 
-By default, Turborepo filters environment variables to only those in `env`/`globalEnv`. CI variables may be missing:
+By default, Turborepo filters environment variables to only those in `env`/`globalEnv`. CI variables
+may be missing:
 
 ```json
 // If CI scripts need GITHUB_TOKEN but it's not in env:
@@ -744,11 +768,13 @@ import { Button } from "@repo/ui/button";
 }
 ```
 
-Add a `transit` task if you have tasks that need parallel execution with cache invalidation (see below).
+Add a `transit` task if you have tasks that need parallel execution with cache invalidation (see
+below).
 
 ### Dev Task with `^dev` Pattern (for `turbo watch`)
 
-A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.json may look unusual but is **correct for `turbo watch` workflows**:
+A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.json may look unusual
+but is **correct for `turbo watch` workflows**:
 
 ```json
 // Root turbo.json
@@ -775,13 +801,17 @@ A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.js
 
 **Why this works:**
 
-- **Packages** (e.g., `@acme/db`, `@acme/validators`) have `"dev": "tsc"` — one-shot type generation that completes quickly
+- **Packages** (e.g., `@acme/db`, `@acme/validators`) have `"dev": "tsc"` — one-shot type generation
+  that completes quickly
 - **Apps** override with `persistent: true` for actual dev servers (Next.js, etc.)
-- **`turbo watch`** re-runs the one-shot package `dev` scripts when source files change, keeping types in sync
+- **`turbo watch`** re-runs the one-shot package `dev` scripts when source files change, keeping
+  types in sync
 
-**Intended usage:** Run `turbo watch dev` (not `turbo run dev`). Watch mode re-executes one-shot tasks on file changes while keeping persistent tasks running.
+**Intended usage:** Run `turbo watch dev` (not `turbo run dev`). Watch mode re-executes one-shot
+tasks on file changes while keeping persistent tasks running.
 
-**Alternative pattern:** Use a separate task name like `prepare` or `generate` for one-shot dependency builds to make the intent clearer:
+**Alternative pattern:** Use a separate task name like `prepare` or `generate` for one-shot
+dependency builds to make the intent clearer:
 
 ```json
 {
@@ -801,7 +831,8 @@ A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.js
 
 ### Transit Nodes for Parallel Tasks with Cache Invalidation
 
-Some tasks can run in parallel (don't need built output from dependencies) but must invalidate cache when dependency source code changes.
+Some tasks can run in parallel (don't need built output from dependencies) but must invalidate cache
+when dependency source code changes.
 
 **The problem with `dependsOn: ["^taskname"]`:**
 
@@ -823,9 +854,11 @@ Some tasks can run in parallel (don't need built output from dependencies) but m
 }
 ```
 
-The `transit` task creates dependency relationships without matching any actual script, so tasks run in parallel with correct cache invalidation.
+The `transit` task creates dependency relationships without matching any actual script, so tasks run
+in parallel with correct cache invalidation.
 
-**How to identify tasks that need this pattern:** Look for tasks that read source files from dependencies but don't need their build outputs.
+**How to identify tasks that need this pattern:** Look for tasks that read source files from
+dependencies but don't need their build outputs.
 
 ### With Environment Variables
 
@@ -843,7 +876,8 @@ The `transit` task creates dependency relationships without matching any actual 
 }
 ```
 
-With `futureFlags.globalConfiguration`, the same config moves global settings under `global` — and `.env` becomes a per-task input instead of a global hash input:
+With `futureFlags.globalConfiguration`, the same config moves global settings under `global` — and
+`.env` becomes a per-task input instead of a global hash input:
 
 ```json
 {
@@ -867,7 +901,7 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 ### Configuration
 
 | File                                                                            | Purpose                                                                   |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+|---------------------------------------------------------------------------------|---------------------------------------------------------------------------|
 | [configuration/RULE.md](./references/configuration/RULE.md)                     | turbo.json overview, Package Configurations                               |
 | [configuration/tasks.md](./references/configuration/tasks.md)                   | dependsOn, outputs, inputs, env, cache, persistent                        |
 | [configuration/global-options.md](./references/configuration/global-options.md) | globalEnv, globalDependencies, global key, futureFlags, cacheDir, envMode |
@@ -876,7 +910,7 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 ### Caching
 
 | File                                                            | Purpose                                      |
-| --------------------------------------------------------------- | -------------------------------------------- |
+|-----------------------------------------------------------------|----------------------------------------------|
 | [caching/RULE.md](./references/caching/RULE.md)                 | How caching works, hash inputs               |
 | [caching/remote-cache.md](./references/caching/remote-cache.md) | Vercel Remote Cache, self-hosted, login/link |
 | [caching/gotchas.md](./references/caching/gotchas.md)           | Debugging cache misses, --summarize, --dry   |
@@ -884,7 +918,7 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 ### Environment Variables
 
 | File                                                          | Purpose                                   |
-| ------------------------------------------------------------- | ----------------------------------------- |
+|---------------------------------------------------------------|-------------------------------------------|
 | [environment/RULE.md](./references/environment/RULE.md)       | env, globalEnv, passThroughEnv            |
 | [environment/modes.md](./references/environment/modes.md)     | Strict vs Loose mode, framework inference |
 | [environment/gotchas.md](./references/environment/gotchas.md) | .env files, CI issues                     |
@@ -892,14 +926,14 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 ### Filtering
 
 | File                                                        | Purpose                  |
-| ----------------------------------------------------------- | ------------------------ |
+|-------------------------------------------------------------|--------------------------|
 | [filtering/RULE.md](./references/filtering/RULE.md)         | --filter syntax overview |
 | [filtering/patterns.md](./references/filtering/patterns.md) | Common filter patterns   |
 
 ### CI/CD
 
 | File                                                      | Purpose                         |
-| --------------------------------------------------------- | ------------------------------- |
+|-----------------------------------------------------------|---------------------------------|
 | [ci/RULE.md](./references/ci/RULE.md)                     | General CI principles           |
 | [ci/github-actions.md](./references/ci/github-actions.md) | Complete GitHub Actions setup   |
 | [ci/vercel.md](./references/ci/vercel.md)                 | Vercel deployment, turbo-ignore |
@@ -908,14 +942,14 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 ### CLI
 
 | File                                            | Purpose                                       |
-| ----------------------------------------------- | --------------------------------------------- |
+|-------------------------------------------------|-----------------------------------------------|
 | [cli/RULE.md](./references/cli/RULE.md)         | turbo run basics                              |
 | [cli/commands.md](./references/cli/commands.md) | turbo run flags, turbo-ignore, other commands |
 
 ### Best Practices
 
 | File                                                                          | Purpose                                                         |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
+|-------------------------------------------------------------------------------|-----------------------------------------------------------------|
 | [best-practices/RULE.md](./references/best-practices/RULE.md)                 | Monorepo best practices overview                                |
 | [best-practices/structure.md](./references/best-practices/structure.md)       | Repository structure, workspace config, TypeScript/ESLint setup |
 | [best-practices/packages.md](./references/best-practices/packages.md)         | Creating internal packages, JIT vs Compiled, exports            |
@@ -924,13 +958,13 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 ### Watch Mode
 
 | File                                        | Purpose                                         |
-| ------------------------------------------- | ----------------------------------------------- |
+|---------------------------------------------|-------------------------------------------------|
 | [watch/RULE.md](./references/watch/RULE.md) | turbo watch, interruptible tasks, dev workflows |
 
 ### Boundaries (Experimental)
 
 | File                                                  | Purpose                                               |
-| ----------------------------------------------------- | ----------------------------------------------------- |
+|-------------------------------------------------------|-------------------------------------------------------|
 | [boundaries/RULE.md](./references/boundaries/RULE.md) | Enforce package isolation, tag-based dependency rules |
 
 ## Source Documentation

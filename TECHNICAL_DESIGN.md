@@ -41,13 +41,13 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 
 ### Tech choices
 
-| Decision | Rationale |
-|---|---|
-| **Turborepo** | Pruned Docker images + caching; handles .NET + TS projects efficiently |
+| Decision                                     | Rationale                                                                                               |
+|----------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| **Turborepo**                                | Pruned Docker images + caching; handles .NET + TS projects efficiently                                  |
 | **Preact Signals (`@preact/signals-react`)** | Fine-grained reactivity; render display-only signals directly to skip React reconciliation on hot paths |
-| **SignalR + MessagePack** | Smaller wire payload than JSON for realtime frames |
-| **Generated JSON serializer** | .NET JIT serialization (not AOT); same approach as TGB Event, kept most endpoints at 8–9 ms |
-| **Feature-based server structure** | Domain-organized endpoints, dtos, and services per feature |
+| **SignalR + MessagePack**                    | Smaller wire payload than JSON for realtime frames                                                      |
+| **Generated JSON serializer**                | .NET JIT serialization (not AOT); same approach as TGB Event, kept most endpoints at 8–9 ms             |
+| **Feature-based server structure**           | Domain-organized endpoints, dtos, and services per feature                                              |
 
 ### Frontend rendering performance
 
@@ -73,7 +73,9 @@ whole object, so it is the dominant re-render source. Conventions:
   interface via the `dotnet-tsrts` tool — the `connection.on(...)` handlers in
   `api.ts` are written by hand on top of it.
 - Biome (not ESLint/Prettier) for lint + format. syncpack for dependency consistency.
-- `dotnet-outdated` (local tool in `apps/server/dotnet-tools.json`) lints/upgrades NuGet packages (`nuget:outdated` / `nuget:update`). `knip` (config `knip.json`) lints the TS packages for unused dependencies and exports.
+- `dotnet-outdated` (local tool in `apps/server/dotnet-tools.json`) lints/upgrades NuGet packages (
+  `nuget:outdated` / `nuget:update`). `knip` (config `knip.json`) lints the TS packages for unused
+  dependencies and exports.
 - `verbatimModuleSyntax` enabled root-wide — always `import type` for type-only.
 - The server solution uses `.slnx` format (not `.sln`).
 - ReSharper CLI (`dotnet jb cleanupcode` + `inspectcode`) runs a .NET-only

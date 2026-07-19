@@ -1,11 +1,11 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, test, vi } from "vitest";
 
+import { withRetry } from "./hooks";
+
 vi.mock("./realtime-provider", () => ({
   useControlRealtime: () => ({ connectionStatus: { value: "connected" } }),
 }));
-
-import { withRetry } from "./hooks";
 
 describe("withRetry", () => {
   test("retries once on 409 and succeeds", async () => {

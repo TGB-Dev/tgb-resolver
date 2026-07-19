@@ -21,11 +21,15 @@ export interface RealtimeClientCallbacks {
 }
 
 export interface RealtimeClient {
-  connect(): Promise<void>;
-  disconnect(): void;
-  reconnectNow(): Promise<void>;
   readonly connectionStatus: ShowConnectionStatus;
   readonly reconnectAttempt: number;
+
+  connect(): Promise<void>;
+
+  disconnect(): void;
+
+  reconnectNow(): Promise<void>;
+
   onStatusChange(listener: (status: ShowConnectionStatus, attempt: number) => void): () => void;
 }
 

@@ -5,7 +5,8 @@ description: 'Link workspace packages in monorepos (npm, yarn, pnpm, bun). USE W
 
 # Link Workspace Packages
 
-Add dependencies between packages in a monorepo. All package managers support workspaces but with different syntax.
+Add dependencies between packages in a monorepo. All package managers support workspaces but with
+different syntax.
 
 ## Detect Package Manager
 

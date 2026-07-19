@@ -8,9 +8,9 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ControlIndexRouteImport } from './routes/control/index'
+import {Route as rootRouteImport} from './routes/__root'
+import {Route as IndexRouteImport} from './routes/index'
+import {Route as ControlIndexRouteImport} from './routes/control/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -27,15 +27,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/control/': typeof ControlIndexRoute
 }
+
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/control': typeof ControlIndexRoute
 }
+
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/control/': typeof ControlIndexRoute
 }
+
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/control/'
@@ -44,6 +47,7 @@ export interface FileRouteTypes {
   id: '__root__' | '/' | '/control/'
   fileRoutesById: FileRoutesById
 }
+
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ControlIndexRoute: typeof ControlIndexRoute

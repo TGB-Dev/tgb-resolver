@@ -82,6 +82,15 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
           durationSeconds: event.sfx.durationSeconds ?? undefined,
         },
       });
+      continue;
+    }
+
+    if (event.type === TimelineEventType.CUS) {
+      timeline.push({
+        ...base,
+        type: TimelineEventType.CUS,
+        payload: (event.custom as Record<string, unknown>) ?? {},
+      });
     }
   }
 
