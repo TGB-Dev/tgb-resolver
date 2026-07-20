@@ -1,5 +1,7 @@
-@import "@fontsource-variable/noto-sans-display";
-@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/noto-sans-display/wdth.css";
+@import "@fontsource-variable/noto-sans-display/wdth-italic.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght-italic.css";
 
 *,
 :not(input),
@@ -11,10 +13,15 @@
   scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  font-variation-settings: "wght" 500, "wdth" 87.5;
 }
 
 code,
-pre {
+pre,
+kbd,
+samp {
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
+  font-variation-settings: "normal";
 }

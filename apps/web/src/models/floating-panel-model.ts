@@ -1,6 +1,6 @@
 import { batch, createModel, type ReadonlySignal, signal } from "@preact/signals-react";
 
-import { confirmActionModel } from "./confirm-action";
+import { confirmActionModel } from "./confirm-action-model";
 import type { FloatingPanelType } from "./floating-panel-types";
 
 interface FloatingPanelRequest {

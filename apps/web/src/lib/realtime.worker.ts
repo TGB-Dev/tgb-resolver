@@ -6,22 +6,19 @@ import {
   calculateClockSample,
   type LiveModeChangedMessage,
   type PlaybackStateChangedMessage,
-  PlaybackStatus,
   RealtimeWorkerRequestType,
   RealtimeWorkerResponseType,
   ShowMessageType,
-  ShowMode,
   type ShowReplacedMessage,
   selectClockEstimate,
-  type TimelineEvent,
   type TimelineEventAddedMessage,
   type TimelineEventRemovedMessage,
-  TimelineEventType,
   type TimelineEventUpdatedMessage,
   type TimelineReorderedMessage,
-  VerdictRunResult,
 } from "@tgb-resolver/realtime";
 import { Effect, Fiber, Schedule } from "effect";
+
+import { mapMode, mapStatus, mapTimelineEvent } from "@/lib/show-message-mapper";
 
 const MAX_RECONNECT_ATTEMPTS = 8;
 const CLOCK_SYNC_SAMPLES = 8;
@@ -96,18 +93,6 @@ function stopClockSync() {
   }
 }
 
-function mapStatus(status: string): string {
-  return status === PlaybackStatus.RUNNING
-    ? PlaybackStatus.RUNNING
-    : status === PlaybackStatus.PAUSED
-      ? PlaybackStatus.PAUSED
-      : PlaybackStatus.IDLE;
-}
-
-function mapMode(mode: string): ShowMode {
-  return String(mode) === "Live" ? ShowMode.LIVE : ShowMode.EDITING;
-}
-
 async function connectHub(url: string) {
   if (connection) {
     await connection.stop();
@@ -122,98 +107,6 @@ async function connectHub(url: string) {
     .withAutomaticReconnect([0, 500, 1_000, 2_000, 4_000, 8_000, 10_000, 10_000])
     .configureLogging(LogLevel.Error)
     .build();
-
-  function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): TimelineEvent {
-    const base = {
-      id: src.Id,
-      position: src.Position,
-      triggerOffsetSeconds: src.TriggerOffsetSeconds,
-      requireManualInteraction: src.RequireManualInteraction,
-      customName: src.CustomName,
-    };
-
-    switch (src.Type as string) {
-      case TimelineEventType.RES: {
-        const r = src.Resolve;
-        if (!r) throw new Error("RES timeline event missing Resolve payload");
-        return {
-          ...base,
-          type: TimelineEventType.RES,
-          payload: {
-            userId: r.UserId,
-            problemId: r.ProblemId,
-            newTotalScore: r.NewTotalScore,
-            newRank: r.NewRank,
-            newProblemScore: r.NewProblemScore,
-            verdict: r.Verdict as unknown as VerdictRunResult,
-            submissionSeconds: r.SubmissionSeconds,
-          },
-        };
-      }
-      case TimelineEventType.PRE: {
-        const r = src.Pre;
-        if (!r) throw new Error("PRE timeline event missing Pre payload");
-        return {
-          ...base,
-          type: TimelineEventType.PRE,
-          payload: {
-            userId: r.UserId,
-            problemId: r.ProblemId,
-            newTotalScore: r.NewTotalScore,
-            newRank: r.NewRank,
-            newProblemScore: r.NewProblemScore,
-            verdict: r.Verdict as unknown as VerdictRunResult,
-            submissionSeconds: r.SubmissionSeconds,
-          },
-        };
-      }
-      case TimelineEventType.IMG: {
-        const img = src.Image;
-        if (!img) throw new Error("IMG timeline event missing Image payload");
-        return {
-          ...base,
-          type: TimelineEventType.IMG,
-          payload: {
-            imageId: img.AssetId,
-            durationSeconds: img.DurationSeconds,
-          },
-        };
-      }
-      case TimelineEventType.SFX: {
-        const sfx = src.Sfx;
-        if (!sfx) throw new Error("SFX timeline event missing Sfx payload");
-        return {
-          ...base,
-          type: TimelineEventType.SFX,
-          payload: {
-            sfxId: sfx.AssetId,
-            durationSeconds: sfx.DurationSeconds,
-          },
-        };
-      }
-      case TimelineEventType.CUS: {
-        return {
-          ...base,
-          type: TimelineEventType.CUS,
-          payload: (src.Custom as Record<string, unknown>) ?? {},
-        };
-      }
-      default:
-        return {
-          ...base,
-          type: TimelineEventType.RES,
-          payload: {
-            userId: 0,
-            problemId: 0,
-            newTotalScore: 0,
-            newRank: 0,
-            newProblemScore: 0,
-            verdict: VerdictRunResult.UNKNOWN,
-            submissionSeconds: 0,
-          },
-        };
-    }
-  }
 
   connection.on("TimelineEventAdded", (message: TimelineEventAddedMessage) => {
     post({

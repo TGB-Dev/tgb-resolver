@@ -1,10 +1,7 @@
 import { Box, useToken } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
-import { useComputed } from "@preact/signals-react";
 import { type AnimationPlaybackControls, animate } from "motion/react";
 import { useEffect, useRef } from "react";
-
-import { playbackSignal } from "@/models/playback-state";
 
 const pulseBorder = keyframes`
   0%, 100% {
@@ -17,13 +14,14 @@ const pulseBorder = keyframes`
 `;
 
 interface CurrentEventIndicatorProps {
-  eventId: number;
+  isCurrent: boolean;
   durationInSeconds?: number;
 }
 
-export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEventIndicatorProps) {
-  const eventIsCurrent = useComputed(() => playbackSignal.value.currentEventId === eventId);
-  const isCurrent = eventIsCurrent.value;
+export function CurrentEventIndicator({
+  isCurrent,
+  durationInSeconds,
+}: CurrentEventIndicatorProps) {
   const [success, error] = useToken("colors", ["green.600", "red.500"]);
   const barRef = useRef<HTMLDivElement>(null);
   const warnRef = useRef<HTMLDivElement>(null);

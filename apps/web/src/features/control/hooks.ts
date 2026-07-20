@@ -23,12 +23,10 @@ import {
 import { FILE_EXTENSION, type TimelineTableItem } from "@tgb-resolver/realtime";
 import { Effect, Schedule } from "effect";
 
-import { playbackSignal } from "@/models/playback-state";
+import { playbackModel, realtimeModel, showModel } from "@/models";
 
-import { controlShowQueryKey } from "./realtime-cache";
-import { useControlRealtime } from "./realtime-provider";
+import { controlShowQueryKey } from "./realtime-handler";
 import { mapShowStateSnapshotToShowFile } from "./show-mapper";
-import { rowsSignal } from "./show-store";
 
 function setShowInCache(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -89,7 +87,7 @@ export function useControlShowQuery() {
 }
 
 export function useControlShowRows(): TimelineTableItem[] {
-  return rowsSignal.value;
+  return showModel.rows.value;
 }
 
 export function useControlIsLive() {
@@ -97,10 +95,9 @@ export function useControlIsLive() {
 }
 
 export function useControlCanMutate() {
-  const { connectionStatus } = useControlRealtime();
   const showQuery = useControlShowQuery();
 
-  return connectionStatus.value === "connected" && !!showQuery.data;
+  return realtimeModel.connectionStatus.value === "connected" && !!showQuery.data;
 }
 
 export function useStartPlaybackMutation() {
@@ -113,14 +110,14 @@ export function useStartPlaybackMutation() {
       return await withRetry(queryClient, async () => {
         const { data } = await startPlayback({
           client: generatedClient,
-          body: { showVersion: playbackSignal.value.showVersion },
+          body: { showVersion: playbackModel.state.value.showVersion },
         });
 
         return data as ShowStateSnapshot;
       });
     },
     onSuccess: (data) => {
-      setShowInCache(queryClient, data);
+      if (data.playback) playbackModel.syncFromSnapshot(data.showVersion ?? 0, data.playback);
     },
   });
 }
@@ -135,14 +132,14 @@ export function useResetPlaybackMutation() {
       return await withRetry(queryClient, async () => {
         const { data } = await resetPlayback({
           client: generatedClient,
-          body: { showVersion: playbackSignal.value.showVersion },
+          body: { showVersion: playbackModel.state.value.showVersion },
         });
 
         return data as ShowStateSnapshot;
       });
     },
     onSuccess: (data) => {
-      setShowInCache(queryClient, data);
+      if (data.playback) playbackModel.syncFromSnapshot(data.showVersion ?? 0, data.playback);
     },
   });
 }
@@ -157,14 +154,14 @@ export function useSeekPlaybackMutation() {
       return await withRetry(queryClient, async () => {
         const { data } = await seekPlayback({
           client: generatedClient,
-          body: { showVersion: playbackSignal.value.showVersion, eventId },
+          body: { showVersion: playbackModel.state.value.showVersion, eventId },
         });
 
         return data as ShowStateSnapshot;
       });
     },
     onSuccess: (data) => {
-      setShowInCache(queryClient, data);
+      if (data.playback) playbackModel.syncFromSnapshot(data.showVersion ?? 0, data.playback);
     },
   });
 }
@@ -179,7 +176,7 @@ export function useOptimizeShowMutation() {
       return await withRetry(queryClient, async () => {
         const { data } = await optimizeShow({
           client: generatedClient,
-          body: { showVersion: playbackSignal.value.showVersion },
+          body: { showVersion: playbackModel.state.value.showVersion },
         });
 
         return data as ShowStateSnapshot;
@@ -201,7 +198,7 @@ export function useClearShowMutation() {
       return await withRetry(queryClient, async () => {
         const { data } = await clearShow({
           client: generatedClient,
-          body: { showVersion: playbackSignal.value.showVersion },
+          body: { showVersion: playbackModel.state.value.showVersion },
         });
 
         return data as ShowStateSnapshot;
@@ -252,7 +249,7 @@ export function useRenameControlEventMutation() {
             client: generatedClient,
             path: { id: payload.eventId },
             body: {
-              showVersion: playbackSignal.value.showVersion,
+              showVersion: playbackModel.state.value.showVersion,
               customName: payload.customName.trim(),
             },
           });
@@ -265,7 +262,7 @@ export function useRenameControlEventMutation() {
           client: generatedClient,
           path: { id: payload.eventId },
           body: {
-            showVersion: playbackSignal.value.showVersion,
+            showVersion: playbackModel.state.value.showVersion,
             type: eventType,
             customName: payload.customName.trim(),
           },
@@ -341,7 +338,7 @@ export function useUpdateAutomationMutation() {
         const { data } = await setAutomation({
           client: generatedClient,
           body: {
-            showVersion: playbackSignal.value.showVersion,
+            showVersion: playbackModel.state.value.showVersion,
             ...patch,
           },
         });

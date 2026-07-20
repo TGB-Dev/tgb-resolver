@@ -1,9 +1,9 @@
 import { Box, Code, Text } from "@chakra-ui/react";
 
-import { showFile } from "@/features/control/show-store";
+import { showModel } from "@/models";
 
 export function InspectShowPanel() {
-  const file = showFile.value;
+  const file = showModel.showFile.value;
 
   if (!file) {
     return <Text color="fg.muted">No show loaded.</Text>;

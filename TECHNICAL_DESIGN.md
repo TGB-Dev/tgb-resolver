@@ -51,8 +51,11 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 
 ### Frontend rendering performance
 
-`playbackSignal` is a single object signal; any `.value` read subscribes to the
-whole object, so it is the dominant re-render source. Conventions:
+`playbackModel.state` is the single object signal holding playback state; `currentEventId`,
+`currentCueId`, and `status` are derived computed signals, and `currentCueId`
+(`currentResolveEventId ?? currentEventId`) is what the timeline highlight, scroll
+target, and cue tab all read. Any `state.value` read subscribes to the whole
+object, so it is the dominant re-render source. Conventions:
 
 - Render display-only signals directly in JSX (`<>{signal}</>`) to patch the DOM
   without React reconciliation.

@@ -9,12 +9,7 @@ const config = defineConfig({
     html: {
       colorPalette: "blue",
     },
-    body: {
-      fontVariationSettings: '"wght" 500, "wdth" 87.5',
-    },
-    "code, pre, kbd, samp": {
-      fontVariationSettings: "normal",
-    },
+    
   },
   theme: {
     tokens: {

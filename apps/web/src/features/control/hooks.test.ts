@@ -3,10 +3,6 @@ import { describe, expect, test, vi } from "vitest";
 
 import { withRetry } from "./hooks";
 
-vi.mock("./realtime-provider", () => ({
-  useControlRealtime: () => ({ connectionStatus: { value: "connected" } }),
-}));
-
 describe("withRetry", () => {
   test("retries once on 409 and succeeds", async () => {
     const queryClient = new QueryClient();

@@ -8,7 +8,7 @@ import {
   useExportShowAction,
   useOptimizeShowMutation,
 } from "@/features/control/hooks";
-import { floatingPanelModel } from "@/models/floating-panel";
+import { floatingPanelModel } from "@/models";
 import { FloatingPanelType } from "@/models/floating-panel-types";
 
 interface ControlTimelineControlsProps {

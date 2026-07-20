@@ -6,10 +6,7 @@ import { memo, useCallback, useState } from "react";
 
 import { Tooltip } from "@/components/ui/tooltip";
 import { useRenameControlEventMutation } from "@/features/control/hooks";
-import {
-  currentEventIdSignal,
-  currentResolveEventIdSignal,
-} from "@/features/control/playback-signals";
+import { playbackModel } from "@/models";
 
 import { CurrentEventIndicator } from "./CurrentEventIndicator";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
@@ -29,11 +26,7 @@ interface ControlTimelineTableItemProps {
 export const ControlTimelineTableItem = memo(
   ({ payload, isLive, onSeek }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
-    const isCurrent = useComputed(
-      () =>
-        currentEventIdSignal.value === payload.id ||
-        currentResolveEventIdSignal.value === payload.id,
-    ).value;
+    const isCurrent = useComputed(() => playbackModel.currentCueId.value === payload.id).value;
 
     return (
       <Box
@@ -48,7 +41,7 @@ export const ControlTimelineTableItem = memo(
         }}
         bg={payload.id & 1 ? "bg" : "bg.emphasized"}
       >
-        <CurrentEventIndicator eventId={payload.id} durationInSeconds={durationInSeconds} />
+        <CurrentEventIndicator isCurrent={isCurrent} durationInSeconds={durationInSeconds} />
 
         <ControlTimelineTableGridRow>
           <Tooltip

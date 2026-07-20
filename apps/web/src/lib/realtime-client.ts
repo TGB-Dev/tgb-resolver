@@ -6,6 +6,9 @@ import {
   type ShowWebSocketMessage,
 } from "@tgb-resolver/realtime";
 
+import { API_BASE_URL } from "@/lib/api";
+import RealtimeWorker from "@/lib/realtime.worker?worker";
+
 export { ShowConnectionStatus };
 
 let serverClockAtSyncMs = Date.now();
@@ -27,8 +30,6 @@ export interface RealtimeClient {
   connect(): Promise<void>;
 
   disconnect(): void;
-
-  reconnectNow(): Promise<void>;
 
   onStatusChange(listener: (status: ShowConnectionStatus, attempt: number) => void): () => void;
 }
@@ -150,15 +151,89 @@ export function createRealtimeClient(
       workerDestroyed = true;
       worker.terminate();
     },
+  };
+}
 
-    reconnectNow: async () => {
-      notifyStatus(ShowConnectionStatus.Connecting, 0);
-      postToWorker({
-        type: RealtimeWorkerRequestType.ReconnectNow,
-        url: `${baseUrl}/hubs/show`,
-      });
+// --- Module-level shared connection (singleton) -----------------------------
 
-      await waitForConnection();
-    },
+const STRICT_MODE_DISCONNECT_DELAY_MS = 250;
+
+interface RealtimeListener {
+  onStatusChange: (status: ShowConnectionStatus, attempt: number) => void;
+  onMessage: (message: ShowWebSocketMessage) => void;
+  onError: (attempt: number, error: unknown) => void;
+}
+
+const realtimeListeners = new Set<RealtimeListener>();
+let sharedConnectionStatus: ShowConnectionStatus = ShowConnectionStatus.Connecting;
+let sharedReconnectAttempt = 0;
+let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+let sharedClient: RealtimeClient | undefined;
+
+function getSharedClient(): RealtimeClient {
+  if (!sharedClient) {
+    sharedClient = createRealtimeClient(
+      API_BASE_URL,
+      {
+        onMessage: async (message) => {
+          await Promise.all(
+            Array.from(realtimeListeners, (listener) => listener.onMessage(message)),
+          );
+        },
+        onError: (attempt, error) => {
+          sharedReconnectAttempt = attempt;
+          for (const listener of realtimeListeners) listener.onError(attempt, error);
+        },
+      },
+      new RealtimeWorker(),
+    );
+
+    sharedClient.onStatusChange((status, attempt) => {
+      sharedConnectionStatus = status;
+      sharedReconnectAttempt = attempt;
+      for (const listener of realtimeListeners) listener.onStatusChange(status, attempt);
+    });
+  }
+
+  return sharedClient;
+}
+
+/** Subscribe to realtime status + messages. Returns an unsubscribe function. */
+export function connectRealtime(
+  onStatusChange: (status: ShowConnectionStatus, attempt: number) => void,
+  onMessage: (message: ShowWebSocketMessage) => void,
+  onError: (attempt: number, error: unknown) => void = (_attempt, error) => {
+    if (error) console.error("Show hub connection error", error);
+  },
+): () => void {
+  const listener: RealtimeListener = { onStatusChange, onMessage, onError };
+  realtimeListeners.add(listener);
+  onStatusChange(sharedConnectionStatus, sharedReconnectAttempt);
+
+  if (disconnectTimer) {
+    clearTimeout(disconnectTimer);
+    disconnectTimer = null;
+  }
+
+  void getSharedClient()
+    .connect()
+    .catch((error) => {
+      console.error("Failed to connect to show hub", error);
+    });
+
+  return () => {
+    realtimeListeners.delete(listener);
+
+    if (realtimeListeners.size > 0) {
+      return;
+    }
+
+    disconnectTimer = setTimeout(() => {
+      disconnectTimer = null;
+      if (realtimeListeners.size === 0) {
+        void sharedClient?.disconnect();
+      }
+    }, STRICT_MODE_DISCONNECT_DELAY_MS);
   };
 }

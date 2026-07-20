@@ -1,14 +1,10 @@
 import { Grid } from "@chakra-ui/react";
 
 import { useControlShowRows } from "@/features/control/hooks";
-import {
-  currentEventIdSignal,
-  currentResolveEventIdSignal,
-} from "@/features/control/playback-signals";
+import { playbackModel } from "@/models";
 
 import { CueContent } from "./cue-content";
 import { CUE_CONFIG, Cue, CueItem } from "./cue-item";
-import { currentCue } from "./cue-selection";
 import { NextCueTimer } from "./next-cue-timer";
 
 export function ControlMainCueTab() {
@@ -21,12 +17,11 @@ export function ControlMainCueTab() {
 
 function CurrentEventCues() {
   const rows = useControlShowRows();
-  const currentEventId = currentEventIdSignal.value;
-  const currentResolveEventId = currentResolveEventIdSignal.value;
-  const currentIndex =
-    currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
-  const current = currentCue(rows, currentEventId, currentResolveEventId);
-  const next = rows[currentIndex >= 0 ? currentIndex + 1 : 0];
+  const currentCueId = playbackModel.currentCueId.value;
+  const currentIndex = rows.findIndex((row) => row.id === currentCueId);
+  const current = currentIndex >= 0 ? rows[currentIndex] : undefined;
+  const next =
+    currentIndex >= 0 && currentIndex < rows.length - 1 ? rows[currentIndex + 1] : undefined;
   const previous = currentIndex > 0 ? rows[currentIndex - 1] : undefined;
 
   return (

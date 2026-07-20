@@ -51,9 +51,22 @@ Workspace packages: `@tgb-resolver/*`.
 
 ### Frontend state (Preact Signals)
 
+All **global / shared / cross-component** state lives in `apps/web/src/models/` as
+`createModel` singletons (Zustand/Pinia-style). One barrel re-exports them:
+`apps/web/src/models/index.ts`. See `apps/web/QUICK_REF.md` for the full list and
+usage. Conventions:
+
 - Import signals **only** from `@preact/signals-react` (never `@preact/signals`).
-- Render display-only signals **directly in JSX** — `<>{signal}</>` — so the
-  adapter patches the DOM Text node without reconciling React.
+- **BANNED for shared state:** React `useState`, `useReducer`, `createContext`,
+  `useContext` for any state that crosses a component boundary or outlives a render.
+  Use a `createModel` store instead. (Local-only ephemeral UI such as a disclosure
+  open/close may still use `useState`; prefer a signal for consistency.)
+- **Allowed React hooks:** `useQuery`/`useMutation` (TanStack Query — async cache),
+  `useRef` (imperative refs), `useEffect` (lifecycle wiring), `useSignal` (component-
+  local signal), `useComputed`/`useSignalEffect`/`effect`, `startTransition`.
+- Declare a store with `createModel<T>(() => ({ field: signal(...), action() {} }))`
+  then `export const xModel = new XModel();`. Read with `xModel.field.value` or render
+  display-only signals directly in JSX: `<>{xModel.field}</>`.
 - On hot paths (clock, playback), drive animations with `effect()` +
   imperative `animate()` from `motion/react` (WAAPI). Avoid declarative
   `motion/react` `animate` props bound to fast-changing signals — they commit
@@ -157,8 +170,10 @@ Adding a new realtime message requires touching exactly five places, in order:
    await hubContext.Clients.All.MyNewMessage(new MyNewMessageMessage(...));
    ```
 
-3. **Client — `api.ts`** (register the SignalR handler)
-   Add a `connection.on("MyNewMessage", ...)` block that deserializes the raw message and calls
+3. **Client — `realtime.worker.ts` + `lib/show-message-mapper.ts`** (register the
+   SignalR handler). Add a `connection.on("MyNewMessage", ...)` block in
+   `realtime.worker.ts` that calls `mapMyNewMessage(...)` from
+   `lib/show-message-mapper.ts` and posts the `ShowWebSocketMessage` variant.
    `callbacks.onMessage(...)`.
 
 4. **Client — `types.ts` (`packages/realtime/src/types.ts`)**
@@ -167,7 +182,7 @@ Adding a new realtime message requires touching exactly five places, in order:
    | { type: "my-new-message"; showVersion: number; someData: string }
    ```
 
-5. **Client — `realtime-cache.ts`**
+5. **Client — `realtime-handler.ts`**
    Handle the new message type in the `if` chain inside `applyControlRealtimeMessage`.
 
 ### Message type naming

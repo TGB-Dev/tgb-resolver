@@ -9,7 +9,7 @@ import { ControlTimelinePanel } from "@/components/control/panels/control-timeli
 import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
 import { getServerNow } from "@/lib/realtime-client";
-import { controlNowModel } from "@/models/control-now";
+import { controlNowModel } from "@/models";
 
 export const Route = createFileRoute("/control/")({
   component: RouteComponent,

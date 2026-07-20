@@ -4,8 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import { useControlShowRows } from "@/features/control/hooks";
-import { currentEventIdSignal } from "@/features/control/playback-signals";
-import { controlNowModel } from "@/models/control-now";
+import { controlNowModel, playbackModel } from "@/models";
 
 function formatRemaining(ms: number) {
   const clamped = Math.max(0, ms);
@@ -48,7 +47,7 @@ function NextCueRemaining({
 
 export function NextCueTimer() {
   const rows = useControlShowRows();
-  const currentEventId = currentEventIdSignal.value;
+  const currentEventId = playbackModel.currentEventId.value;
   const playingEvents = rows.filter(
     (row) => row.id === currentEventId && (row.durationSeconds ?? 0) > 0,
   );
