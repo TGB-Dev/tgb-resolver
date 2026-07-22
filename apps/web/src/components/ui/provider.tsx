@@ -9,7 +9,6 @@ const config = defineConfig({
     html: {
       colorPalette: "blue",
     },
-    
   },
   theme: {
     tokens: {

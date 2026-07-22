@@ -14,7 +14,9 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  font-variation-settings: "wght" 500, "wdth" 87.5;
+  font-variation-settings:
+    "wght" 500,
+    "wdth" 87.5;
 }
 
 code,
