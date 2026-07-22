@@ -1,7 +1,7 @@
 import { FloatingPanel, IconButton, Portal } from "@chakra-ui/react";
 import { GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
 
-import { floatingPanelModel } from "@/models/floating-panel";
+import { floatingPanelModel } from "@/models";
 import { floatingPanelComponents, floatingPanelConfig } from "@/models/floating-panel-types";
 
 export function FloatingPanelHost() {

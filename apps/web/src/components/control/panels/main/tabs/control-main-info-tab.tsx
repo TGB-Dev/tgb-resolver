@@ -1,20 +1,13 @@
 import { Box, Button, Code, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import { ShowMode } from "@tgb-resolver/realtime";
 
-import {
-  dataVersion,
-  showEvents,
-  showMeta,
-  showMode,
-  showOrderedIds,
-} from "@/features/control/show-store";
-import { floatingPanelModel } from "@/models/floating-panel";
+import { floatingPanelModel, showModel } from "@/models";
 import { FloatingPanelType } from "@/models/floating-panel-types";
 
 export function ControlMainInfoTab() {
-  const mode = showMode.value;
-  const events = showEvents.value;
-  const meta = showMeta.value;
+  const mode = showModel.showMode.value;
+  const events = showModel.showEvents.value;
+  const meta = showModel.showMeta.value;
 
   return (
     <Box boxSize="full" p={4}>
@@ -53,8 +46,8 @@ export function ControlMainInfoTab() {
                 Timeline
               </Text>
               <Text fontFamily="mono" fontSize="md">
-                {events.size} event{events.size !== 1 ? "s" : ""} | {showOrderedIds.value.length}{" "}
-                ordered
+                {events.size} event{events.size !== 1 ? "s" : ""} |{" "}
+                {showModel.showOrderedIds.value.length} ordered
               </Text>
             </Box>
           )}
@@ -75,7 +68,7 @@ export function ControlMainInfoTab() {
               Version
             </Text>
             <Text fontFamily="mono" fontSize="md">
-              {dataVersion.value}
+              {showModel.dataVersion.value}
             </Text>
           </Box>
         </VStack>

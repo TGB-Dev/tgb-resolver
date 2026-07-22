@@ -13,7 +13,7 @@ paths:
   /api/show/automation:
     patch:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowSetAutomationEndpoint
       requestBody:
         x-name: SetAutomationRequest
@@ -34,7 +34,7 @@ paths:
   /api/playback/start:
     post:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowStartPlaybackEndpoint
       requestBody:
         x-name: VersionedCommandRequest
@@ -61,7 +61,7 @@ paths:
   /api/playback/reset:
     post:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowResetPlaybackEndpoint
       requestBody:
         x-name: VersionedCommandRequest
@@ -88,7 +88,7 @@ paths:
   /playback/seek:
     post:
       tags:
-        - Playback
+      - Playback
       operationId: TGBResolverServerFeaturesShowSeekPlaybackEndpoint
       requestBody:
         x-name: SeekPlaybackRequest
@@ -115,7 +115,7 @@ paths:
   /timeline:
     get:
       tags:
-        - Timeline
+      - Timeline
       operationId: TGBResolverServerFeaturesShowGetShowEndpoint
       responses:
         200:
@@ -127,7 +127,7 @@ paths:
   /api/show/optimize:
     post:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowOptimizeShowEndpoint
       requestBody:
         x-name: VersionedCommandRequest
@@ -154,7 +154,7 @@ paths:
   /api/show/clear:
     post:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowClearShowEndpoint
       requestBody:
         x-name: VersionedCommandRequest
@@ -181,7 +181,7 @@ paths:
   /import/xml:
     post:
       tags:
-        - Import
+      - Import
       operationId: TGBResolverServerFeaturesShowImportXmlEndpoint
       requestBody:
         x-name: ImportXmlRequest
@@ -208,7 +208,7 @@ paths:
   /import/bundle:
     post:
       tags:
-        - Import
+      - Import
       operationId: TGBResolverServerFeaturesShowImportBundleEndpoint
       requestBody:
         x-name: ImportBundleRequest
@@ -235,7 +235,7 @@ paths:
   /export/bundle:
     get:
       tags:
-        - Export
+      - Export
       operationId: TGBResolverServerFeaturesShowExportBundleEndpoint
       responses:
         204:
@@ -243,15 +243,15 @@ paths:
   /api/show/events/resolve/{id}:
     patch:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowRenameResolveEventEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         x-name: ResolveEventRenameRequest
         description: ''
@@ -277,15 +277,15 @@ paths:
   /api/show/events/non-resolve/{id}:
     patch:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowPatchNonResolveEventEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         x-name: NonResolveEventPatchRequest
         description: ''
@@ -305,7 +305,7 @@ paths:
   /api/show/live:
     post:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowEnableLiveModeEndpoint
       responses:
         200:
@@ -316,7 +316,7 @@ paths:
                 $ref: '#/components/schemas/ShowStateSnapshot'
     delete:
       tags:
-        - Api
+      - Api
       operationId: TGBResolverServerFeaturesShowDisableLiveModeEndpoint
       responses:
         200:
@@ -328,7 +328,7 @@ paths:
   /timeline/event:
     post:
       tags:
-        - Timeline
+      - Timeline
       operationId: TGBResolverServerFeaturesShowCreateTimelineEventEndpoint
       requestBody:
         x-name: CreateTimelineEventRequest
@@ -355,15 +355,15 @@ paths:
   /timeline/event/{id}/position:
     patch:
       tags:
-        - Timeline
+      - Timeline
       operationId: TGBResolverServerFeaturesShowMoveTimelineEventEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         x-name: MoveTimelineEventRequest
         description: ''
@@ -389,15 +389,15 @@ paths:
   /timeline/event/{id}:
     patch:
       tags:
-        - Timeline
+      - Timeline
       operationId: TGBResolverServerFeaturesShowPatchTimelineEventEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         x-name: PatchTimelineEventRequest
         description: ''
@@ -416,15 +416,15 @@ paths:
                 $ref: '#/components/schemas/ShowStateSnapshot'
     delete:
       tags:
-        - Timeline
+      - Timeline
       operationId: TGBResolverServerFeaturesShowDeleteTimelineEventEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         x-name: VersionedCommandRequest
         description: ''
@@ -453,7 +453,7 @@ paths:
   /timeline/mode:
     patch:
       tags:
-        - Timeline
+      - Timeline
       operationId: TGBResolverServerFeaturesShowSetTimelineModeEndpoint
       requestBody:
         x-name: SetTimelineModeRequest
@@ -480,27 +480,27 @@ paths:
   /assets/{id}:
     get:
       tags:
-        - Assets
+      - Assets
       operationId: TGBResolverServerFeaturesAssetsGetAssetEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         204:
           description: No Content
     post:
       tags:
-        - Assets
+      - Assets
       operationId: TGBResolverServerFeaturesAssetsPutAssetEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       requestBody:
         x-name: UpsertAssetRequest
         description: ''
@@ -525,14 +525,14 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags:
-        - Assets
+      - Assets
       operationId: TGBResolverServerFeaturesAssetsDeleteAssetEndpoint
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       requestBody:
         x-name: VersionedCommandRequest
         description: ''
@@ -592,20 +592,20 @@ components:
       type: string
       description: ''
       x-enumNames:
-        - Editing
-        - Live
+      - Editing
+      - Live
       enum:
-        - Editing
-        - Live
+      - Editing
+      - Live
     TimelineMode:
       type: string
       description: ''
       x-enumNames:
-        - Rw
-        - Ro
+      - Rw
+      - Ro
       enum:
-        - Rw
-        - Ro
+      - Rw
+      - Ro
     ShowMetaSnapshot:
       type: object
       additionalProperties: false
@@ -621,13 +621,13 @@ components:
       type: string
       description: ''
       x-enumNames:
-        - Xml
-        - Bundle
-        - Manual
+      - Xml
+      - Bundle
+      - Manual
       enum:
-        - Xml
-        - Bundle
-        - Manual
+      - Xml
+      - Bundle
+      - Manual
     ContestSnapshot:
       type: object
       additionalProperties: false
@@ -716,31 +716,31 @@ components:
       type: string
       description: ''
       x-enumNames:
-        - Unknown
-        - Accepted
-        - WrongAnswer
-        - TimeLimitExceeded
-        - MemoryLimitExceeded
-        - OutputLimitExceeded
-        - InvalidReturn
-        - RuntimeError
-        - CompileError
-        - InternalError
-        - ShortCircuited
-        - Aborted
+      - Unknown
+      - Accepted
+      - WrongAnswer
+      - TimeLimitExceeded
+      - MemoryLimitExceeded
+      - OutputLimitExceeded
+      - InvalidReturn
+      - RuntimeError
+      - CompileError
+      - InternalError
+      - ShortCircuited
+      - Aborted
       enum:
-        - Unknown
-        - Accepted
-        - WrongAnswer
-        - TimeLimitExceeded
-        - MemoryLimitExceeded
-        - OutputLimitExceeded
-        - InvalidReturn
-        - RuntimeError
-        - CompileError
-        - InternalError
-        - ShortCircuited
-        - Aborted
+      - Unknown
+      - Accepted
+      - WrongAnswer
+      - TimeLimitExceeded
+      - MemoryLimitExceeded
+      - OutputLimitExceeded
+      - InvalidReturn
+      - RuntimeError
+      - CompileError
+      - InternalError
+      - ShortCircuited
+      - Aborted
     AutomationSnapshot:
       type: object
       additionalProperties: false
@@ -769,7 +769,7 @@ components:
         activeSegment:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/ActivePlaybackSegmentSnapshot'
+          - $ref: '#/components/schemas/ActivePlaybackSegmentSnapshot'
         startedAt:
           type: integer
           format: int64
@@ -781,13 +781,13 @@ components:
       type: string
       description: ''
       x-enumNames:
-        - Idle
-        - Running
-        - Paused
+      - Idle
+      - Running
+      - Paused
       enum:
-        - Idle
-        - Running
-        - Paused
+      - Idle
+      - Running
+      - Paused
     ActivePlaybackSegmentSnapshot:
       type: object
       additionalProperties: false
@@ -863,38 +863,38 @@ components:
         resolve:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
+          - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
         image:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
+          - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
         sfx:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
+          - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
         pre:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
+          - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
         custom:
           type: object
           nullable: true
-          additionalProperties: { }
+          additionalProperties: {}
     TimelineEventType:
       type: string
       description: ''
       x-enumNames:
-        - Res
-        - Img
-        - Sfx
-        - Pre
-        - Cus
+      - Res
+      - Img
+      - Sfx
+      - Pre
+      - Cus
       enum:
-        - Res
-        - Img
-        - Sfx
-        - Pre
-        - Cus
+      - Res
+      - Img
+      - Sfx
+      - Pre
+      - Cus
     ResolveEventPayloadSnapshot:
       type: object
       additionalProperties: false
@@ -992,7 +992,7 @@ components:
       type: object
       additionalProperties: false
       required:
-        - xml
+      - xml
       properties:
         xml:
           type: string
@@ -1008,7 +1008,7 @@ components:
       type: object
       additionalProperties: false
       required:
-        - bytes
+      - bytes
       properties:
         bytes:
           type: string
@@ -1036,7 +1036,7 @@ components:
         type:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/TimelineEventType'
+          - $ref: '#/components/schemas/TimelineEventType'
         triggerOffsetSeconds:
           type: number
           format: double
@@ -1050,11 +1050,11 @@ components:
         payload:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/MediaEventPatchPayload'
+          - $ref: '#/components/schemas/MediaEventPatchPayload'
         custom:
           type: object
           nullable: true
-          additionalProperties: { }
+          additionalProperties: {}
     MediaEventPatchPayload:
       type: object
       additionalProperties: false
@@ -1101,11 +1101,11 @@ components:
         payload:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/MediaEventPatchPayload'
+          - $ref: '#/components/schemas/MediaEventPatchPayload'
         custom:
           type: object
           nullable: true
-          additionalProperties: { }
+          additionalProperties: {}
     MoveTimelineEventRequest:
       type: object
       additionalProperties: false
@@ -1134,7 +1134,7 @@ components:
         type:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/TimelineEventType'
+          - $ref: '#/components/schemas/TimelineEventType'
         triggerOffsetSeconds:
           type: number
           format: double
@@ -1145,11 +1145,11 @@ components:
         payload:
           nullable: true
           oneOf:
-            - $ref: '#/components/schemas/MediaEventPatchPayload'
+          - $ref: '#/components/schemas/MediaEventPatchPayload'
         custom:
           type: object
           nullable: true
-          additionalProperties: { }
+          additionalProperties: {}
     SetTimelineModeRequest:
       type: object
       additionalProperties: false
@@ -1164,9 +1164,9 @@ components:
       type: object
       additionalProperties: false
       required:
-        - fileName
-        - contentType
-        - bytes
+      - fileName
+      - contentType
+      - bytes
       properties:
         showVersion:
           type: integer

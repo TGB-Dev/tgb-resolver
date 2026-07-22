@@ -7,267 +7,267 @@ export const vShowMode = v.picklist(['Editing', 'Live']);
 export const vTimelineMode = v.picklist(['Rw', 'Ro']);
 
 export const vShowSource = v.picklist([
-  'Xml',
-  'Bundle',
-  'Manual'
+    'Xml',
+    'Bundle',
+    'Manual'
 ]);
 
 export const vShowMetaSnapshot = v.strictObject({
-  title: v.optional(v.string()),
-  contestId: v.nullish(v.string()),
-  source: v.optional(vShowSource)
+    title: v.optional(v.string()),
+    contestId: v.nullish(v.string()),
+    source: v.optional(vShowSource)
 });
 
 export const vProblemDefinitionSnapshot = v.strictObject({
-  id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  label: v.optional(v.string()),
-  name: v.optional(v.string()),
-  score: v.optional(v.number())
+    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    label: v.optional(v.string()),
+    name: v.optional(v.string()),
+    score: v.optional(v.number())
 });
 
 export const vUserDefinitionSnapshot = v.strictObject({
-  id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  username: v.optional(v.string()),
-  realName: v.optional(v.string())
+    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    username: v.optional(v.string()),
+    realName: v.optional(v.string())
 });
 
 export const vVerdictRunResult = v.picklist([
-  'Unknown',
-  'Accepted',
-  'WrongAnswer',
-  'TimeLimitExceeded',
-  'MemoryLimitExceeded',
-  'OutputLimitExceeded',
-  'InvalidReturn',
-  'RuntimeError',
-  'CompileError',
-  'InternalError',
-  'ShortCircuited',
-  'Aborted'
+    'Unknown',
+    'Accepted',
+    'WrongAnswer',
+    'TimeLimitExceeded',
+    'MemoryLimitExceeded',
+    'OutputLimitExceeded',
+    'InvalidReturn',
+    'RuntimeError',
+    'CompileError',
+    'InternalError',
+    'ShortCircuited',
+    'Aborted'
 ]);
 
 export const vProblemFreezeResultSnapshot = v.strictObject({
-  problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  score: v.optional(v.number()),
-  verdict: v.optional(vVerdictRunResult)
+    problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    score: v.optional(v.number()),
+    verdict: v.optional(vVerdictRunResult)
 });
 
 export const vFreezeSnapshotEntrySnapshot = v.strictObject({
-  userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  totalScore: v.optional(v.number()),
-  rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  problems: v.optional(v.array(vProblemFreezeResultSnapshot)),
-  lastRunId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  lastSubmittedSeconds: v.nullish(v.number())
+    userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    totalScore: v.optional(v.number()),
+    rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    problems: v.optional(v.array(vProblemFreezeResultSnapshot)),
+    lastRunId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    lastSubmittedSeconds: v.nullish(v.number())
 });
 
 export const vContestSnapshot = v.strictObject({
-  durationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  freezeDurationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  problems: v.optional(v.array(vProblemDefinitionSnapshot)),
-  users: v.optional(v.array(vUserDefinitionSnapshot)),
-  preFreezeSnapshot: v.optional(v.array(vFreezeSnapshotEntrySnapshot))
+    durationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    freezeDurationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    problems: v.optional(v.array(vProblemDefinitionSnapshot)),
+    users: v.optional(v.array(vUserDefinitionSnapshot)),
+    preFreezeSnapshot: v.optional(v.array(vFreezeSnapshotEntrySnapshot))
 });
 
 export const vAutomationSnapshot = v.strictObject({
-  autoResolveEnabled: v.optional(v.boolean()),
-  autoResolveSpeedMs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  fullAutoEnabled: v.optional(v.boolean())
+    autoResolveEnabled: v.optional(v.boolean()),
+    autoResolveSpeedMs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    fullAutoEnabled: v.optional(v.boolean())
 });
 
 export const vPlaybackStatus = v.picklist([
-  'Idle',
-  'Running',
-  'Paused'
+    'Idle',
+    'Running',
+    'Paused'
 ]);
 
 export const vActivePlaybackSegmentSnapshot = v.strictObject({
-  resolveEventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  nextResolveEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  inlineEventIds: v.optional(v.array(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))),
-  currentInlineIndex: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+    resolveEventId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    nextResolveEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    inlineEventIds: v.optional(v.array(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))),
+    currentInlineIndex: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
 export const vPlaybackStateSnapshot = v.strictObject({
-  status: v.optional(vPlaybackStatus),
-  currentResolveEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  currentEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  activeSegment: v.nullish(vActivePlaybackSegmentSnapshot),
-  startedAt: v.nullish(v.pipe(v.union([
-    v.number(),
-    v.string(),
-    v.bigint()
-  ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
-  executionSequence: v.optional(v.pipe(v.union([
-    v.number(),
-    v.string(),
-    v.bigint()
-  ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+    status: v.optional(vPlaybackStatus),
+    currentResolveEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    currentEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    activeSegment: v.nullish(vActivePlaybackSegmentSnapshot),
+    startedAt: v.nullish(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    executionSequence: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
 });
 
 export const vShowAssetSnapshot = v.strictObject({
-  id: v.optional(v.string()),
-  kind: v.optional(v.string()),
-  fileName: v.optional(v.string()),
-  originalName: v.optional(v.string()),
-  contentType: v.optional(v.string()),
-  sizeBytes: v.optional(v.pipe(v.union([
-    v.number(),
-    v.string(),
-    v.bigint()
-  ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
-  xxh364: v.optional(v.string())
+    id: v.optional(v.string()),
+    kind: v.optional(v.string()),
+    fileName: v.optional(v.string()),
+    originalName: v.optional(v.string()),
+    contentType: v.optional(v.string()),
+    sizeBytes: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    xxh364: v.optional(v.string())
 });
 
 export const vAssetCollectionSnapshot = v.strictObject({
-  images: v.optional(v.array(vShowAssetSnapshot)),
-  sfx: v.optional(v.array(vShowAssetSnapshot))
+    images: v.optional(v.array(vShowAssetSnapshot)),
+    sfx: v.optional(v.array(vShowAssetSnapshot))
 });
 
 export const vTimelineEventType = v.picklist([
-  'Res',
-  'Img',
-  'Sfx',
-  'Pre',
-  'Cus'
+    'Res',
+    'Img',
+    'Sfx',
+    'Pre',
+    'Cus'
 ]);
 
 export const vResolveEventPayloadSnapshot = v.strictObject({
-  userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  newTotalScore: v.optional(v.number()),
-  newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  newProblemScore: v.optional(v.number()),
-  verdict: v.optional(vVerdictRunResult),
-  submissionSeconds: v.optional(v.number())
+    userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    newTotalScore: v.optional(v.number()),
+    newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    newProblemScore: v.optional(v.number()),
+    verdict: v.optional(vVerdictRunResult),
+    submissionSeconds: v.optional(v.number())
 });
 
 export const vMediaEventPayloadSnapshot = v.strictObject({
-  assetId: v.optional(v.string()),
-  durationSeconds: v.nullish(v.number())
+    assetId: v.optional(v.string()),
+    durationSeconds: v.nullish(v.number())
 });
 
 export const vTimelineEventSnapshot = v.strictObject({
-  id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  position: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  type: v.optional(vTimelineEventType),
-  triggerOffsetSeconds: v.nullish(v.number()),
-  requireManualInteraction: v.nullish(v.boolean()),
-  customName: v.nullish(v.string()),
-  resolve: v.nullish(vResolveEventPayloadSnapshot),
-  image: v.nullish(vMediaEventPayloadSnapshot),
-  sfx: v.nullish(vMediaEventPayloadSnapshot),
-  pre: v.nullish(vResolveEventPayloadSnapshot),
-  custom: v.nullish(v.record(v.string(), v.unknown()))
+    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    position: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    type: v.optional(vTimelineEventType),
+    triggerOffsetSeconds: v.nullish(v.number()),
+    requireManualInteraction: v.nullish(v.boolean()),
+    customName: v.nullish(v.string()),
+    resolve: v.nullish(vResolveEventPayloadSnapshot),
+    image: v.nullish(vMediaEventPayloadSnapshot),
+    sfx: v.nullish(vMediaEventPayloadSnapshot),
+    pre: v.nullish(vResolveEventPayloadSnapshot),
+    custom: v.nullish(v.record(v.string(), v.unknown()))
 });
 
 export const vShowStateSnapshot = v.strictObject({
-  schemaVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  mode: v.optional(vShowMode),
-  timelineMode: v.optional(vTimelineMode),
-  meta: v.optional(vShowMetaSnapshot),
-  contest: v.optional(vContestSnapshot),
-  automation: v.optional(vAutomationSnapshot),
-  playback: v.optional(vPlaybackStateSnapshot),
-  assets: v.optional(vAssetCollectionSnapshot),
-  timeline: v.optional(v.array(vTimelineEventSnapshot))
+    schemaVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    mode: v.optional(vShowMode),
+    timelineMode: v.optional(vTimelineMode),
+    meta: v.optional(vShowMetaSnapshot),
+    contest: v.optional(vContestSnapshot),
+    automation: v.optional(vAutomationSnapshot),
+    playback: v.optional(vPlaybackStateSnapshot),
+    assets: v.optional(vAssetCollectionSnapshot),
+    timeline: v.optional(v.array(vTimelineEventSnapshot))
 });
 
 export const vSetAutomationRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  autoResolveEnabled: v.nullish(v.boolean()),
-  autoResolveSpeedMs: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  fullAutoEnabled: v.nullish(v.boolean())
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    autoResolveEnabled: v.nullish(v.boolean()),
+    autoResolveSpeedMs: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    fullAutoEnabled: v.nullish(v.boolean())
 });
 
 export const vVersionedCommandRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
 /**
  * the dto used to send an error response to the client
  */
 export const vErrorResponse = v.strictObject({
-  statusCode: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')), 400),
-  message: v.optional(v.string(), 'One or more errors occurred!'),
-  errors: v.optional(v.record(v.string(), v.array(v.string())))
+    statusCode: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')), 400),
+    message: v.optional(v.string(), 'One or more errors occurred!'),
+    errors: v.optional(v.record(v.string(), v.array(v.string())))
 });
 
 export const vSeekPlaybackRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  eventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    eventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
 export const vImportXmlRequest = v.strictObject({
-  xml: v.pipe(v.string(), v.minLength(1), v.maxLength(10485760)),
-  excludedUsernames: v.nullish(v.array(v.string()))
+    xml: v.pipe(v.string(), v.minLength(1), v.maxLength(10485760)),
+    excludedUsernames: v.nullish(v.array(v.string()))
 });
 
 export const vImportBundleRequest = v.strictObject({
-  bytes: v.pipe(v.string(), v.minLength(1))
+    bytes: v.pipe(v.string(), v.minLength(1))
 });
 
 export const vResolveEventRenameRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  customName: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(100)))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    customName: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(100)))
 });
 
 export const vMediaEventPatchPayload = v.strictObject({
-  imageId: v.nullish(v.string()),
-  sfxId: v.nullish(v.string()),
-  durationSeconds: v.nullish(v.number())
+    imageId: v.nullish(v.string()),
+    sfxId: v.nullish(v.string()),
+    durationSeconds: v.nullish(v.number())
 });
 
 export const vNonResolveEventPatchRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  type: v.nullish(vTimelineEventType),
-  triggerOffsetSeconds: v.nullish(v.number()),
-  requireManualInteraction: v.nullish(v.boolean()),
-  customName: v.nullish(v.string()),
-  payload: v.nullish(vMediaEventPatchPayload),
-  custom: v.nullish(v.record(v.string(), v.unknown()))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    type: v.nullish(vTimelineEventType),
+    triggerOffsetSeconds: v.nullish(v.number()),
+    requireManualInteraction: v.nullish(v.boolean()),
+    customName: v.nullish(v.string()),
+    payload: v.nullish(vMediaEventPatchPayload),
+    custom: v.nullish(v.record(v.string(), v.unknown()))
 });
 
 export const vCreateTimelineEventRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  type: v.optional(vTimelineEventType),
-  relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  before: v.optional(v.boolean()),
-  triggerOffsetSeconds: v.nullish(v.number()),
-  requireManualInteraction: v.nullish(v.boolean()),
-  customName: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(100))),
-  payload: v.nullish(vMediaEventPatchPayload),
-  custom: v.nullish(v.record(v.string(), v.unknown()))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    type: v.optional(vTimelineEventType),
+    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    before: v.optional(v.boolean()),
+    triggerOffsetSeconds: v.nullish(v.number()),
+    requireManualInteraction: v.nullish(v.boolean()),
+    customName: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(100))),
+    payload: v.nullish(vMediaEventPatchPayload),
+    custom: v.nullish(v.record(v.string(), v.unknown()))
 });
 
 export const vMoveTimelineEventRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  before: v.optional(v.boolean())
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    before: v.optional(v.boolean())
 });
 
 export const vPatchTimelineEventRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  customName: v.nullish(v.string()),
-  type: v.nullish(vTimelineEventType),
-  triggerOffsetSeconds: v.nullish(v.number()),
-  requireManualInteraction: v.nullish(v.boolean()),
-  payload: v.nullish(vMediaEventPatchPayload),
-  custom: v.nullish(v.record(v.string(), v.unknown()))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    customName: v.nullish(v.string()),
+    type: v.nullish(vTimelineEventType),
+    triggerOffsetSeconds: v.nullish(v.number()),
+    requireManualInteraction: v.nullish(v.boolean()),
+    payload: v.nullish(vMediaEventPatchPayload),
+    custom: v.nullish(v.record(v.string(), v.unknown()))
 });
 
 export const vSetTimelineModeRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  timelineMode: v.optional(vTimelineMode)
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    timelineMode: v.optional(vTimelineMode)
 });
 
 export const vUpsertAssetRequest = v.strictObject({
-  showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-  kind: v.optional(v.string()),
-  fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-  contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
-  bytes: v.pipe(v.string(), v.minLength(1))
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    kind: v.optional(v.string()),
+    fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+    contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+    bytes: v.pipe(v.string(), v.minLength(1))
 });
 
 export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequest;
@@ -339,7 +339,7 @@ export const vTgbResolverServerFeaturesShowExportBundleEndpointResponse = v.void
 export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointBody = vResolveEventRenameRequest;
 
 export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointPath = v.object({
-  id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
@@ -350,7 +350,7 @@ export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointResponse = 
 export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointBody = vNonResolveEventPatchRequest;
 
 export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointPath = v.object({
-  id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
@@ -378,7 +378,7 @@ export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse =
 export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointBody = vMoveTimelineEventRequest;
 
 export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointPath = v.object({
-  id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
@@ -389,7 +389,7 @@ export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse = v
 export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointBody = vVersionedCommandRequest;
 
 export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointPath = v.object({
-  id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
@@ -400,7 +400,7 @@ export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse =
 export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointBody = vPatchTimelineEventRequest;
 
 export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointPath = v.object({
-  id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
 });
 
 /**
@@ -418,7 +418,7 @@ export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = vSh
 export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointBody = vVersionedCommandRequest;
 
 export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointPath = v.object({
-  id: v.string()
+    id: v.string()
 });
 
 /**
@@ -427,7 +427,7 @@ export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointPath = v.object(
 export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse = vShowStateSnapshot;
 
 export const vTgbResolverServerFeaturesAssetsGetAssetEndpointPath = v.object({
-  id: v.string()
+    id: v.string()
 });
 
 /**
@@ -438,7 +438,7 @@ export const vTgbResolverServerFeaturesAssetsGetAssetEndpointResponse = v.void()
 export const vTgbResolverServerFeaturesAssetsPutAssetEndpointBody = vUpsertAssetRequest;
 
 export const vTgbResolverServerFeaturesAssetsPutAssetEndpointPath = v.object({
-  id: v.string()
+    id: v.string()
 });
 
 /**

@@ -1,7 +1,7 @@
 import { Text } from "@chakra-ui/react";
 import { type ReadonlySignal, useComputed } from "@preact/signals-react";
 
-import { playbackSignal } from "@/models/playback-state";
+import { playbackModel } from "@/models";
 
 function formatHms(date: Date): string {
   return date.toLocaleTimeString("en-GB", { hour12: false });
@@ -26,9 +26,9 @@ export function ControlCurrentTime({ now }: { now: ReadonlySignal<number> }) {
 }
 
 export function ControlElapsedTime({ now }: { now: ReadonlySignal<number> }) {
-  const isStarted = useComputed(() => playbackSignal.value.startedAt != null);
+  const isStarted = useComputed(() => playbackModel.state.value.startedAt != null);
   const elapsedText = useComputed(() => {
-    const startedAt = playbackSignal.value.startedAt;
+    const startedAt = playbackModel.state.value.startedAt;
     const elapsedMs = startedAt != null ? now.value - startedAt : 0;
     return startedAt != null ? formatElapsed(elapsedMs) : "--:--:--";
   });

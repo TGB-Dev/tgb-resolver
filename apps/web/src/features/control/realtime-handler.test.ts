@@ -11,10 +11,9 @@ import {
 } from "@tgb-resolver/realtime";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { playbackSignal, syncPlaybackFromSnapshot } from "@/models/playback-state";
+import { playbackModel, showModel } from "@/models";
 
-import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-cache";
-import { dataVersion, hydrateShowFromSnapshot, showEvents, showMode } from "./show-store";
+import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-handler";
 
 const baseShow: ShowFile = {
   schemaVersion: 1,
@@ -51,16 +50,8 @@ const baseShow: ShowFile = {
 };
 
 beforeEach(() => {
-  playbackSignal.value = {
-    showVersion: 0,
-    status: "Idle",
-    executionSequence: 0,
-    currentResolveEventId: null,
-    currentEventId: null,
-    activeSegment: null,
-    startedAt: null,
-  };
-  hydrateShowFromSnapshot(baseShow);
+  playbackModel.reset();
+  showModel.hydrateFromSnapshot(baseShow);
 });
 
 describe("applyControlRealtimeMessage", () => {
@@ -77,7 +68,7 @@ describe("applyControlRealtimeMessage", () => {
       },
     });
 
-    expect(playbackSignal.value).toMatchObject({
+    expect(playbackModel.state.value).toMatchObject({
       status: PlaybackStatus.RUNNING,
       executionSequence: 1,
       currentResolveEventId: 4,
@@ -114,30 +105,27 @@ describe("applyControlRealtimeMessage", () => {
   });
 
   test("does not reset playback signal on a wholesale replace", async () => {
-    playbackSignal.value = {
+    playbackModel.update({
       showVersion: 2,
       status: "Running",
       executionSequence: 5,
       currentResolveEventId: 42,
-      currentEventId: null,
-      activeSegment: null,
-      startedAt: null,
-    };
+    });
 
     await applyControlRealtimeMessage(new QueryClient(), {
       type: ShowMessageType.ShowReplaced,
       showVersion: 3,
     });
 
-    expect(playbackSignal.value.currentResolveEventId).toBe(42);
-    expect(playbackSignal.value.executionSequence).toBe(5);
-    expect(playbackSignal.value.showVersion).toBe(2);
+    expect(playbackModel.state.value.currentResolveEventId).toBe(42);
+    expect(playbackModel.state.value.executionSequence).toBe(5);
+    expect(playbackModel.state.value.showVersion).toBe(2);
   });
 
   test("patches the store for a live-mode change without refetching", async () => {
     const queryClient = new QueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    showMode.value = ShowMode.EDITING;
+    showModel.showMode.value = ShowMode.EDITING;
 
     await applyControlRealtimeMessage(queryClient, {
       type: ShowMessageType.LiveModeChanged,
@@ -145,7 +133,7 @@ describe("applyControlRealtimeMessage", () => {
       mode: ShowMode.LIVE,
     });
 
-    expect(showMode.value).toBe(ShowMode.LIVE);
+    expect(showModel.showMode.value).toBe(ShowMode.LIVE);
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
@@ -163,8 +151,8 @@ describe("applyControlRealtimeMessage", () => {
       event: addedEvent,
     });
 
-    expect(showEvents.value.has(2)).toBe(true);
-    expect(dataVersion.value).toBe(2);
+    expect(showModel.showEvents.value.has(2)).toBe(true);
+    expect(showModel.dataVersion.value).toBe(2);
   });
 
   test("repairs via refetch when a granular diff arrives out of order", async () => {
@@ -182,12 +170,12 @@ describe("applyControlRealtimeMessage", () => {
       event: addedEvent,
     });
 
-    expect(showEvents.value.has(2)).toBe(false);
+    expect(showModel.showEvents.value.has(2)).toBe(false);
     expect(invalidateSpy).toHaveBeenCalled();
   });
 
   test("syncs playback from snapshot data", () => {
-    syncPlaybackFromSnapshot(5, {
+    playbackModel.syncFromSnapshot(5, {
       status: PlaybackStatus.RUNNING,
       executionSequence: 3,
       currentResolveEventId: 7,
@@ -201,7 +189,7 @@ describe("applyControlRealtimeMessage", () => {
       startedAt: 1000,
     });
 
-    expect(playbackSignal.value).toMatchObject({
+    expect(playbackModel.state.value).toMatchObject({
       showVersion: 5,
       status: PlaybackStatus.RUNNING,
       executionSequence: 3,

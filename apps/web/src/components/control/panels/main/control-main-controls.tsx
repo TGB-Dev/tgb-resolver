@@ -29,9 +29,8 @@ import {
   useToggleLiveModeMutation,
   useUpdateAutomationMutation,
 } from "@/features/control/hooks";
-import { currentEventIdSignal, playbackStatusSignal } from "@/features/control/playback-signals";
-import { useControlRealtime } from "@/features/control/realtime-provider";
 import { useAction } from "@/lib/actions";
+import { playbackModel, realtimeModel } from "@/models";
 
 export function ControlMainControls() {
   const startPlayback = useStartPlaybackMutation();
@@ -40,7 +39,7 @@ export function ControlMainControls() {
   const toggleLiveMode = useToggleLiveModeMutation();
   const isLive = useControlIsLive();
   const rows = useControlShowRows();
-  const connectionStatus = useControlRealtime().connectionStatus.value;
+  const connectionStatus = realtimeModel.connectionStatus.value;
   const canMutate = useControlCanMutate();
 
   const autoResolveEnabled = useControlAutoResolveEnabled();
@@ -146,10 +145,10 @@ function PlaybackTransportState({
   resetPlayback: ReturnType<typeof useResetPlaybackMutation>;
   seekPlayback: ReturnType<typeof useSeekPlaybackMutation>;
 }) {
-  const currentEventId = currentEventIdSignal.value;
+  const currentEventId = playbackModel.currentEventId.value;
   const currentIndex =
     currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
-  const playbackStatus = playbackStatusSignal.value;
+  const playbackStatus = playbackModel.status.value;
 
   const prevAction = useAction({
     handler: () => {

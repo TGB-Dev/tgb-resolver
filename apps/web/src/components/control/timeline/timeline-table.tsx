@@ -1,13 +1,14 @@
 import { Box, Center, Spinner, Text } from "@chakra-ui/react";
-import { type RefObject, useCallback, useEffect, useRef } from "react";
+import { useSignalEffect } from "@preact/signals-react";
+import { type RefObject, useCallback, useRef } from "react";
 
 import {
   useControlIsLive,
   useControlShowQuery,
+  useControlShowRows,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
-import { rowsSignal } from "@/features/control/show-store";
-import { playbackSignal } from "@/models/playback-state";
+import { playbackModel } from "@/models";
 
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
 
@@ -28,7 +29,7 @@ function scrollEventToTop(parent: HTMLDivElement | null, currentEventId: number 
 
 export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   const showQuery = useControlShowQuery();
-  const rows = rowsSignal.value;
+  const rows = useControlShowRows();
   const isLive = useControlIsLive();
   const seekPlayback = useSeekPlaybackMutation();
   const onSeek = useCallback((id: number) => seekPlayback.mutate(id), [seekPlayback.mutate]);
@@ -37,7 +38,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   if (apiRef) {
     apiRef.current = {
       scrollToCurrent: () => {
-        scrollEventToTop(parentRef.current, playbackSignal.peek().currentEventId);
+        scrollEventToTop(parentRef.current, playbackModel.currentCueId.peek());
       },
     };
   }
@@ -86,12 +87,15 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
 }
 
 function CurrentEventScroller({ parentRef }: { parentRef: RefObject<HTMLDivElement | null> }) {
-  const currentEventId = playbackSignal.value.currentEventId;
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => scrollEventToTop(parentRef.current, currentEventId));
+  // useSignalEffect (a React hook) re-runs whenever the tracked signals change —
+  // unlike a bare .value read inside a null-returning component, which the
+  // @preact/signals-react babel transform does not instrument, so the scroll
+  // would otherwise never fire after the initial mount.
+  useSignalEffect(() => {
+    const target = playbackModel.currentCueId.value;
+    const raf = requestAnimationFrame(() => scrollEventToTop(parentRef.current, target));
     return () => cancelAnimationFrame(raf);
-  }, [currentEventId, parentRef]);
+  });
 
   return null;
 }

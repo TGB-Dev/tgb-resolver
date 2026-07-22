@@ -19,8 +19,8 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, TimelineTableColumnCo
     minW: "5ch",
   },
   newScore: {
-    minW: "6ch",
-    maxW: "6ch",
+    minW: "7ch",
+    maxW: "7ch",
   },
   newRank: {
     minW: "6ch",

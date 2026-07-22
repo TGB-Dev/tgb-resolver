@@ -3,7 +3,7 @@ import { useSignal } from "@preact/signals-react";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 
 import { useImportShowMutation } from "@/features/control/hooks";
-import { floatingPanelModel } from "@/models/floating-panel";
+import { floatingPanelModel } from "@/models";
 
 export function ImportShowPanel() {
   const file = useSignal<File | null>(null);
