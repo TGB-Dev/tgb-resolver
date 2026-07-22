@@ -19,16 +19,16 @@
     "typecheck": "pnpm run check-types"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.101.2",
+    "@tanstack/react-query": "^5.101.3",
     "ofetch": "^1.5.1",
     "valibot": "^1.4.2"
   },
   "devDependencies": {
-    "@tgb-resolver/server": "workspace:*",
     "@hey-api/openapi-ts": "^0.99.0",
+    "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.1.1",
-    "bumpp": "^11.1.0",
-    "tsdown": "^0.22.8",
+    "bumpp": "^12.0.0",
+    "tsdown": "^0.22.12",
     "typescript": "6.0.3",
     "vitest": "^4.1.10"
   },

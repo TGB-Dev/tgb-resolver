@@ -22,10 +22,10 @@
     "@tgb-resolver/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@tgb-resolver/server": "workspace:*",
     "@microsoft/signalr": "^10.0.0",
+    "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.1.1",
-    "tsdown": "^0.22.8",
+    "tsdown": "^0.22.12",
     "typescript": "6.0.3",
     "vitest": "^4.1.10"
   },
