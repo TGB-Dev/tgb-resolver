@@ -24,7 +24,7 @@ public sealed class AppJsonSerializerTests
       new AssetCollectionSnapshot([], []),
       [
         new TimelineEventSnapshot(1, 1, TimelineEventType.Res, 0, false, "Intro",
-          new ResolveEventPayloadSnapshot(1, 1, 100, 1, 0, VerdictRunResult.Accepted, 0),
+          new ResolveEventPayloadSnapshot(1, 1, 100, 0, 1, 0, VerdictRunResult.Accepted, 0),
           null, null, null, null)
       ]);
 

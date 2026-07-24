@@ -35,10 +35,11 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
           userId: event.resolve.userId ?? 0,
           problemId: event.resolve.problemId ?? 0,
           newTotalScore: event.resolve.newTotalScore ?? 0,
+          newTotalPenalty: event.resolve.newTotalPenalty ?? 0,
           newRank: event.resolve.newRank ?? 0,
           newProblemScore: event.resolve.newProblemScore ?? 0,
           verdict: (event.resolve.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
-          submissionSeconds: event.resolve.submissionSeconds ?? 0,
+          timeSinceStart: event.resolve.timeSinceStart ?? 0,
         },
       });
       continue;
@@ -52,10 +53,11 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
           userId: event.pre.userId ?? 0,
           problemId: event.pre.problemId ?? 0,
           newTotalScore: event.pre.newTotalScore ?? 0,
+          newTotalPenalty: event.pre.newTotalPenalty ?? 0,
           newRank: event.pre.newRank ?? 0,
           newProblemScore: event.pre.newProblemScore ?? 0,
           verdict: (event.pre.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
-          submissionSeconds: event.pre.submissionSeconds ?? 0,
+          timeSinceStart: event.pre.timeSinceStart ?? 0,
         },
       });
       continue;
@@ -127,6 +129,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
         preFreezeSnapshot: (snapshot.contest?.preFreezeSnapshot ?? []).map((entry) => ({
           userId: entry.userId ?? 0,
           totalScore: entry.totalScore ?? 0,
+          totalPenalty: (entry as { totalPenalty?: number }).totalPenalty ?? 0,
           rank: entry.rank ?? 0,
           problems: (entry.problems ?? []).map((problem) => ({
             problemId: problem.problemId ?? 0,

@@ -86,6 +86,8 @@ export type ResolveEventPayloadSnapshot = {
     ProblemId: number;
     /** Transpiled from double */
     NewTotalScore: number;
+    /** Transpiled from double */
+    NewTotalPenalty: number;
     /** Transpiled from int */
     NewRank: number;
     /** Transpiled from double */
@@ -93,7 +95,7 @@ export type ResolveEventPayloadSnapshot = {
     /** Transpiled from TGB.Resolver.IcpcXmlParser.VerdictRunResult */
     Verdict: VerdictRunResult;
     /** Transpiled from double */
-    SubmissionSeconds: number;
+    TimeSinceStart: number;
 }
 
 /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.MediaEventPayloadSnapshot */

@@ -685,6 +685,9 @@ components:
         totalScore:
           type: number
           format: double
+        totalPenalty:
+          type: number
+          format: double
         rank:
           type: integer
           format: int32
@@ -728,6 +731,7 @@ components:
       - InternalError
       - ShortCircuited
       - Aborted
+      - Pending
       enum:
       - Unknown
       - Accepted
@@ -741,6 +745,7 @@ components:
       - InternalError
       - ShortCircuited
       - Aborted
+      - Pending
     AutomationSnapshot:
       type: object
       additionalProperties: false
@@ -908,6 +913,9 @@ components:
         newTotalScore:
           type: number
           format: double
+        newTotalPenalty:
+          type: number
+          format: double
         newRank:
           type: integer
           format: int32
@@ -916,7 +924,7 @@ components:
           format: double
         verdict:
           $ref: '#/components/schemas/VerdictRunResult'
-        submissionSeconds:
+        timeSinceStart:
           type: number
           format: double
     MediaEventPayloadSnapshot:

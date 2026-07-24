@@ -72,6 +72,7 @@ public static class IcpcResolverEngine
         run.Team,
         run.Problem,
         after.Score,
+        after.Penalty,
         after.Rank,
         problemScore,
         run.Verdict,
@@ -99,6 +100,7 @@ public static class IcpcResolverEngine
       return new FreezeSnapshotEntry(
         team.Id,
         standing.Score,
+        standing.Penalty,
         standing.Rank,
         problemResults,
         lastRun?.Id,
@@ -227,7 +229,7 @@ public static class IcpcResolverEngine
           priorPenalty = team.PenaltySeconds;
         }
 
-        return new TeamStanding(team.TeamId, team.Score, rank);
+        return new TeamStanding(team.TeamId, team.Score, team.PenaltySeconds, rank);
       }).ToArray();
     }
 
@@ -286,7 +288,7 @@ public static class IcpcResolverEngine
     double Score,
     double PenaltySeconds);
 
-  private sealed record TeamStanding(int TeamId, double Score, int Rank);
+  private sealed record TeamStanding(int TeamId, double Score, double Penalty, int Rank);
 }
 
 public sealed record IcpcResolution(
@@ -303,7 +305,8 @@ public sealed record IcpcResolveEvent(
   int UserId,
   int ProblemId,
   double NewTotalScore,
+  double NewTotalPenalty,
   int NewRank,
   double NewProblemScore,
   VerdictRunResult Verdict,
-  double SubmissionSeconds);
+  double TimeSinceStart);

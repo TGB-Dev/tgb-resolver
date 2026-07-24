@@ -135,8 +135,8 @@ public sealed class ShowRawRepository(
     {
       var payload = new ResolveEventPayload(
         resolve.UserId, resolve.ProblemId,
-        resolve.NewTotalScore, resolve.NewRank, resolve.NewProblemScore,
-        resolve.Verdict, resolve.SubmissionSeconds);
+        resolve.NewTotalScore, resolve.NewTotalPenalty, resolve.NewRank, resolve.NewProblemScore,
+        resolve.Verdict, resolve.TimeSinceStart);
 
       // Pre-resolve cue immediately precedes its resolve event so the
       // frontend can focus on the upcoming resolution.
@@ -176,12 +176,12 @@ public sealed class ShowRawRepository(
           new UserDefinition(2, "bob", "Bob Team")
         ],
         [
-          new FreezeSnapshotEntry(1, 100, 1,
+          new FreezeSnapshotEntry(1, 100, 0, 1,
           [
             new ProblemFreezeResult(1, 100, VerdictRunResult.Accepted),
             new ProblemFreezeResult(2, 0, VerdictRunResult.Unknown)
           ], 3831, 1390.506239),
-          new FreezeSnapshotEntry(2, 80, 2,
+          new FreezeSnapshotEntry(2, 80, 0, 2,
           [
             new ProblemFreezeResult(1, 80, VerdictRunResult.Accepted),
             new ProblemFreezeResult(2, 0, VerdictRunResult.Unknown)
@@ -190,14 +190,14 @@ public sealed class ShowRawRepository(
       Timeline =
       [
         new TimelineEvent(1, 1, TimelineEventType.Res, 0, false, null,
-          new ResolveEventPayload(1, 1, 100, 1, 0, VerdictRunResult.Accepted, 1094.180335), null,
+          new ResolveEventPayload(1, 1, 100, 0, 1, 0, VerdictRunResult.Accepted, 1094.180335), null,
           null, null, null),
         new TimelineEvent(2, 2, TimelineEventType.Sfx, 0.5, false, "Opening Sting",
           null, null, new MediaEventPayload("sting", 2.5), null, null),
         new TimelineEvent(3, 3, TimelineEventType.Img, 1, false, "Title Board",
           null, new MediaEventPayload("award-board", 5), null, null, null),
         new TimelineEvent(4, 4, TimelineEventType.Res, 0, false, "Bob Reveal",
-          new ResolveEventPayload(2, 2, 180, 2, 0, VerdictRunResult.Accepted, 1932.430581),
+          new ResolveEventPayload(2, 2, 180, 0, 2, 0, VerdictRunResult.Accepted, 1932.430581),
           null, null, null, null)
       ]
     };

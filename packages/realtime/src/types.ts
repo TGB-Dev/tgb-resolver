@@ -44,6 +44,7 @@ export interface ProblemFreezeResult {
 export interface FreezeSnapshotEntry {
   userId: number;
   totalScore: number;
+  totalPenalty: number;
   rank: number;
   problems: ProblemFreezeResult[];
   lastRunId: number | null;
@@ -110,10 +111,11 @@ export interface ResolvePayload {
   userId: number;
   problemId: number;
   newTotalScore: number;
+  newTotalPenalty: number;
   newRank: number;
   newProblemScore: number;
   verdict: VerdictRunResult;
-  submissionSeconds: number;
+  timeSinceStart: number;
 }
 
 export interface ResolveEvent extends EventBase {

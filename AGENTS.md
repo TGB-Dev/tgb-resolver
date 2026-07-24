@@ -64,6 +64,18 @@ usage. Conventions:
 - **Allowed React hooks:** `useQuery`/`useMutation` (TanStack Query — async cache),
   `useRef` (imperative refs), `useEffect` (lifecycle wiring), `useSignal` (component-
   local signal), `useComputed`/`useSignalEffect`/`effect`, `startTransition`.
+- **`useComputed(callback)`** — creates a `ReadonlySignal` that lazily re-evaluates
+  `callback` whenever any signal read inside it changes. The callback is updated via
+  ref on every render (no stale closures). Never pass a dependency array; signals are
+  tracked automatically. Import from `@preact/signals-react`.
+- **`useLiveSignal(value)`** — creates a `Signal` that stays synchronized with a
+  non-signal React value (e.g. React Query `data`). Uses `useLayoutEffect` internally
+  to sync. Import from `@preact/signals-react/utils`.
+- **`<For each={signalOrArray}>{(item, index) => ...}</For>`** — renders a list with
+  automatic vnode caching by item identity. Prevents re-creation of unchanged items
+  when the list updates. Accepts a signal, plain array, or function. `fallback` prop
+  shown when empty. Import from `@preact/signals-react/utils`. Use instead of
+  `array.map(...)` for reactive/cached list rendering.
 - Declare a store with `createModel<T>(() => ({ field: signal(...), action() {} }))`
   then `export const xModel = new XModel();`. Read with `xModel.field.value` or render
   display-only signals directly in JSX: `<>{xModel.field}</>`.

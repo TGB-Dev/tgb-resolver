@@ -84,6 +84,7 @@ export type UserDefinitionSnapshot = {
 export type FreezeSnapshotEntrySnapshot = {
     userId?: number;
     totalScore?: number;
+    totalPenalty?: number;
     rank?: number;
     problems?: Array<ProblemFreezeResultSnapshot>;
     lastRunId?: number | null;
@@ -144,7 +145,11 @@ export enum VerdictRunResult {
     /**
      * Aborted
      */
-    ABORTED = 'Aborted'
+    ABORTED = 'Aborted',
+    /**
+     * Pending
+     */
+    PENDING = 'Pending'
 }
 
 export type AutomationSnapshot = {
@@ -242,10 +247,11 @@ export type ResolveEventPayloadSnapshot = {
     userId?: number;
     problemId?: number;
     newTotalScore?: number;
+    newTotalPenalty?: number;
     newRank?: number;
     newProblemScore?: number;
     verdict?: VerdictRunResult;
-    submissionSeconds?: number;
+    timeSinceStart?: number;
 };
 
 export type MediaEventPayloadSnapshot = {

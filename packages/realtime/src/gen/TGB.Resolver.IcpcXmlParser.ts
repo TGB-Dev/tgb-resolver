@@ -16,5 +16,6 @@ export enum VerdictRunResult {
     InternalError = "InternalError",
     ShortCircuited = "ShortCircuited",
     Aborted = "Aborted",
+    Pending = "Pending",
 }
 

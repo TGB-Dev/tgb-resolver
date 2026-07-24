@@ -30,6 +30,7 @@ describe("mapShowStateSnapshotToShowFile", () => {
           {
             userId: 1,
             totalScore: 100,
+            totalPenalty: 0,
             rank: 1,
             problems: [{ problemId: 1, score: 100, verdict: VerdictRunResult.ACCEPTED }],
             lastRunId: 5,
@@ -77,10 +78,11 @@ describe("mapShowStateSnapshotToShowFile", () => {
             userId: 1,
             problemId: 1,
             newTotalScore: 100,
+            newTotalPenalty: 0,
             newRank: 1,
             newProblemScore: 100,
             verdict: VerdictRunResult.ACCEPTED,
-            submissionSeconds: 12,
+            timeSinceStart: 12,
           },
         },
         {
@@ -132,7 +134,7 @@ describe("mapShowStateSnapshotToShowFile", () => {
           newRank: 1,
           newProblemScore: 100,
           verdict: VerdictRunResult.ACCEPTED,
-          submissionSeconds: 12,
+          timeSinceStart: 12,
         }),
       }),
       expect.objectContaining({

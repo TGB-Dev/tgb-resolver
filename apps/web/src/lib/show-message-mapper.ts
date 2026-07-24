@@ -27,10 +27,11 @@ export function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): Timel
           userId: r.UserId,
           problemId: r.ProblemId,
           newTotalScore: r.NewTotalScore,
+          newTotalPenalty: r.NewTotalPenalty,
           newRank: r.NewRank,
           newProblemScore: r.NewProblemScore,
           verdict: r.Verdict as unknown as VerdictRunResult,
-          submissionSeconds: r.SubmissionSeconds,
+          timeSinceStart: r.TimeSinceStart,
         },
       };
     }
@@ -44,10 +45,11 @@ export function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): Timel
           userId: r.UserId,
           problemId: r.ProblemId,
           newTotalScore: r.NewTotalScore,
+          newTotalPenalty: r.NewTotalPenalty,
           newRank: r.NewRank,
           newProblemScore: r.NewProblemScore,
           verdict: r.Verdict as unknown as VerdictRunResult,
-          submissionSeconds: r.SubmissionSeconds,
+          timeSinceStart: r.TimeSinceStart,
         },
       };
     }
@@ -83,10 +85,11 @@ export function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): Timel
           userId: 0,
           problemId: 0,
           newTotalScore: 0,
+          newTotalPenalty: 0,
           newRank: 0,
           newProblemScore: 0,
           verdict: VerdictRunResult.UNKNOWN,
-          submissionSeconds: 0,
+          timeSinceStart: 0,
         },
       };
   }

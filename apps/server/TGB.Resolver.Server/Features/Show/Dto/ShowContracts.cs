@@ -35,6 +35,7 @@ public sealed record UserDefinitionSnapshot(int Id, string Username, string Real
 public sealed record FreezeSnapshotEntrySnapshot(
   int UserId,
   double TotalScore,
+  double TotalPenalty,
   int Rank,
   IReadOnlyList<ProblemFreezeResultSnapshot> Problems,
   int? LastRunId,
@@ -98,10 +99,11 @@ public sealed record ResolveEventPayloadSnapshot(
   int UserId,
   int ProblemId,
   double NewTotalScore,
+  double NewTotalPenalty,
   int NewRank,
   double NewProblemScore,
   VerdictRunResult Verdict,
-  double SubmissionSeconds);
+  double TimeSinceStart);
 
 [TranspilationSource]
 public sealed record MediaEventPayloadSnapshot(

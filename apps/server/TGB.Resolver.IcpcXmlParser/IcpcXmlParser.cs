@@ -171,5 +171,6 @@ public enum VerdictRunResult
   CompileError,
   InternalError,
   ShortCircuited,
-  Aborted
+  Aborted,
+  Pending
 }

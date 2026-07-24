@@ -43,7 +43,8 @@ export const vVerdictRunResult = v.picklist([
     'CompileError',
     'InternalError',
     'ShortCircuited',
-    'Aborted'
+    'Aborted',
+    'Pending'
 ]);
 
 export const vProblemFreezeResultSnapshot = v.strictObject({
@@ -55,6 +56,7 @@ export const vProblemFreezeResultSnapshot = v.strictObject({
 export const vFreezeSnapshotEntrySnapshot = v.strictObject({
     userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     totalScore: v.optional(v.number()),
+    totalPenalty: v.optional(v.number()),
     rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     problems: v.optional(v.array(vProblemFreezeResultSnapshot)),
     lastRunId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
@@ -136,10 +138,11 @@ export const vResolveEventPayloadSnapshot = v.strictObject({
     userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     newTotalScore: v.optional(v.number()),
+    newTotalPenalty: v.optional(v.number()),
     newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     newProblemScore: v.optional(v.number()),
     verdict: v.optional(vVerdictRunResult),
-    submissionSeconds: v.optional(v.number())
+    timeSinceStart: v.optional(v.number())
 });
 
 export const vMediaEventPayloadSnapshot = v.strictObject({

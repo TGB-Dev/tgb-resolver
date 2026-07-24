@@ -51,6 +51,7 @@ public sealed record UserDefinition(
 public sealed record FreezeSnapshotEntry(
   int UserId,
   double TotalScore,
+  double TotalPenalty,
   int Rank,
   IReadOnlyList<ProblemFreezeResult> Problems,
   int? LastRunId,
@@ -109,17 +110,18 @@ public sealed record TimelineEvent(
 /// <summary>
 ///   Resolve (and pre-resolve) payload. References the team and problem by id;
 ///   display names are resolved from the contest's <see cref="UserDefinition" />
-///   and <see cref="ProblemDefinition" /> maps. <see cref="SubmissionSeconds" />
+///   and <see cref="ProblemDefinition" /> maps. <see cref="TimeSinceStart" />
 ///   is the submission time from contest start (the ICPC &lt;time&gt; field).
 /// </summary>
 public sealed record ResolveEventPayload(
   int UserId,
   int ProblemId,
   double NewTotalScore,
+  double NewTotalPenalty,
   int NewRank,
   double NewProblemScore,
   VerdictRunResult Verdict,
-  double SubmissionSeconds);
+  double TimeSinceStart);
 
 public sealed record MediaEventPayload(
   string AssetId,

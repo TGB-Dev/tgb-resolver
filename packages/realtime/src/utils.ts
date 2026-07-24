@@ -16,7 +16,7 @@ import {
   TimelineMode,
   type TimelineTableItem,
   type UserDefinition,
-  type VerdictRunResult,
+  VerdictRunResult,
 } from "./types";
 
 export function isResolveEvent(event: TimelineEvent): boolean {
@@ -313,6 +313,7 @@ export interface LeaderboardEntry {
   realName: string;
   rank: number;
   totalScore: number;
+  totalPenalty: number;
   problems: LeaderboardProblemResult[];
 }
 
@@ -329,6 +330,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     number,
     {
       score: number;
+      penalty: number;
       rank: number;
       problems: Map<number, { score: number; verdict: VerdictRunResult }>;
     }
@@ -339,7 +341,12 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     for (const problem of entry.problems ?? []) {
       problems.set(problem.problemId, { score: problem.score, verdict: problem.verdict });
     }
-    entries.set(entry.userId, { score: entry.totalScore, rank: entry.rank, problems });
+    entries.set(entry.userId, {
+      score: entry.totalScore,
+      penalty: entry.totalPenalty,
+      rank: entry.rank,
+      problems,
+    });
   }
 
   const ordered = sortTimeline(show.timeline);
@@ -348,14 +355,26 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
   const targetPosition = target?.position ?? Number.POSITIVE_INFINITY;
 
   for (const event of ordered) {
-    if (event.type !== TimelineEventType.RES) continue;
     if (event.position > targetPosition) break;
+
+    if (event.type === TimelineEventType.PRE) {
+      const state = entries.get(event.payload.userId);
+      if (!state) continue;
+      state.problems.set(event.payload.problemId, {
+        score: state.problems.get(event.payload.problemId)?.score ?? 0,
+        verdict: VerdictRunResult.PENDING,
+      });
+      continue;
+    }
+
+    if (event.type !== TimelineEventType.RES) continue;
 
     const state = entries.get(event.payload.userId);
     if (!state) continue;
 
     state.score = event.payload.newTotalScore;
     state.rank = event.payload.newRank;
+    state.penalty = event.payload.newTotalPenalty;
     state.problems.set(event.payload.problemId, {
       score: event.payload.newProblemScore,
       verdict: event.payload.verdict,
@@ -381,8 +400,15 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
         realName: user?.realName ?? "",
         rank: state.rank,
         totalScore: state.score,
+        totalPenalty: state.penalty,
         problems,
       };
     })
-    .sort((a, b) => a.rank - b.rank || b.totalScore - a.totalScore || a.userId - b.userId);
+    .sort(
+      (a, b) =>
+        b.totalScore - a.totalScore ||
+        a.totalPenalty - b.totalPenalty ||
+        a.rank - b.rank ||
+        a.userId - b.userId,
+    );
 }
