@@ -61,7 +61,7 @@ test("hydrate populates the indexed map and position-sorted ids", () => {
   showModel.hydrateFromSnapshot(makeShow(3, [event(1, 5), event(2, 1), event(3, 3)]));
 
   expect(showModel.dataVersion.value).toBe(3);
-  expect(showModel.showEvents.value.size).toBe(3);
+  expect(Object.keys(showModel.showEvents.value).length).toBe(3);
   expect(showModel.showOrderedIds.value).toEqual([2, 3, 1]);
 });
 
@@ -76,7 +76,7 @@ test("applies a granular add when the version is the next one", () => {
 
   expect(applied).toBe(true);
   expect(showModel.dataVersion.value).toBe(2);
-  expect(showModel.showEvents.value.has(2)).toBe(true);
+  expect(2 in showModel.showEvents.value).toBe(true);
   expect(showModel.showOrderedIds.value).toEqual([1, 2]);
 });
 
@@ -96,7 +96,7 @@ test("applies a granular update in place without touching order", () => {
 
   expect(applied).toBe(true);
   expect(showModel.dataVersion.value).toBe(2);
-  expect((showModel.showEvents.value.get(1) as PlaySfxEvent).payload.sfxId).toBe("updated");
+  expect((showModel.showEvents.value[1] as PlaySfxEvent).payload.sfxId).toBe("updated");
   expect(showModel.showOrderedIds.value).toEqual([1, 2]);
 });
 
@@ -110,7 +110,7 @@ test("applies a granular remove", () => {
   });
 
   expect(applied).toBe(true);
-  expect(showModel.showEvents.value.has(1)).toBe(false);
+  expect(1 in showModel.showEvents.value).toBe(false);
   expect(showModel.showOrderedIds.value).toEqual([2]);
 });
 
@@ -138,7 +138,7 @@ test("rejects an out-of-order diff and reports the gap for repair-refetch", () =
 
   expect(applied).toBe(false);
   expect(showModel.dataVersion.value).toBe(1);
-  expect(showModel.showEvents.value.has(99)).toBe(false);
+  expect(99 in showModel.showEvents.value).toBe(false);
 });
 
 test("rows folds the store into table items in order", () => {

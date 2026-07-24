@@ -1,9 +1,10 @@
-import { Box, DataList, Editable, Grid, type GridProps } from "@chakra-ui/react";
+import { Box, DataList, Editable } from "@chakra-ui/react";
 import { useComputed } from "@preact/signals-react";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 
+import { GridTableRow } from "@/components/ui/grid-table";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useRenameControlEventMutation } from "@/features/control/hooks";
 import { playbackModel } from "@/models";
@@ -43,7 +44,7 @@ export const ControlTimelineTableItem = memo(
       >
         <CurrentEventIndicator isCurrent={isCurrent} durationInSeconds={durationInSeconds} />
 
-        <ControlTimelineTableGridRow>
+        <GridTableRow templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}>
           <Tooltip
             content={`Seek to #${payload.id}`}
             openDelay={0}
@@ -87,7 +88,7 @@ export const ControlTimelineTableItem = memo(
               : payload.triggerOffsetSeconds}
           </Box>
           <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
-        </ControlTimelineTableGridRow>
+        </GridTableRow>
       </Box>
     );
   },
@@ -95,7 +96,12 @@ export const ControlTimelineTableItem = memo(
 
 export function ControlTimelineTableHeader() {
   return (
-    <ControlTimelineTableGridRow h="auto" bg="bg.subtle" py={2}>
+    <GridTableRow
+      templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}
+      h="auto"
+      bg="bg.subtle"
+      py={2}
+    >
       <Tooltip content="Event ID" openDelay={0}>
         <Box textAlign="end">No.</Box>
       </Tooltip>
@@ -134,28 +140,7 @@ export function ControlTimelineTableHeader() {
       <Tooltip content="Whether this event requires manual interaction to proceed." openDelay={0}>
         <Box>Man.?</Box>
       </Tooltip>
-    </ControlTimelineTableGridRow>
-  );
-}
-
-function ControlTimelineTableGridRow({ children, ...props }: GridProps) {
-  return (
-    <Grid
-      w="full"
-      templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}
-      gapX={2}
-      minH={8}
-      alignItems="center"
-      css={{
-        "& > *": {
-          zIndex: 10,
-          alignItems: "center",
-        },
-      }}
-      {...props}
-    >
-      {children}
-    </Grid>
+    </GridTableRow>
   );
 }
 

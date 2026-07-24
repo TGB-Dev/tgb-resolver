@@ -40,13 +40,13 @@ export function ControlMainInfoTab() {
             </Text>
           </Box>
 
-          {events.size > 0 && (
+          {Object.keys(events).length > 0 && (
             <Box>
               <Text fontSize="sm" color="fg.muted">
                 Timeline
               </Text>
               <Text fontFamily="mono" fontSize="md">
-                {events.size} event{events.size !== 1 ? "s" : ""} |{" "}
+                {Object.keys(events).length} event{Object.keys(events).length !== 1 ? "s" : ""} |{" "}
                 {showModel.showOrderedIds.value.length} ordered
               </Text>
             </Box>

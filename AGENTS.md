@@ -48,6 +48,16 @@ Workspace packages: `@tgb-resolver/*`.
 - **syncpack**: explicit pinned versions for typescript/biome/vite; React/TanStack allowed to drift;
   `@tgb-resolver/*` ignored
 - **Env**: `.env` → `VITE_API_URL` (default `http://localhost:5001`). Copy from `.env.example`
+- **`Record<K, V>` over `Map<K, V>`** for immutable look-up structures (returned values,
+  lookup tables, index maps like `userById`, `problemById`). Only use `Map<K, V>` when the
+  structure requires mutability after creation. `Record` reduces GC pressure, allocations,
+  and is 5-10× faster for creation and look-ups.
+- **Grid over Table** for tabular layouts — render a list of CSS Grid rows instead of an
+  HTML `<table>`. This scopes reflows to individual rows and avoids the costly style
+  propagation across many cells. Use the shared `GridTableRow` component and
+  `gridTableTemplate()` helper from `apps/web/src/components/ui/grid-table.tsx`. Reference
+  implementation: `apps/web/src/components/control/timeline/timeline-table.tsx` (generalize
+  for any future table including the leaderboard).
 
 ### Frontend state (Preact Signals)
 

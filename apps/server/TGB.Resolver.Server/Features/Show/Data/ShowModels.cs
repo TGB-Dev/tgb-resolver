@@ -92,7 +92,7 @@ public sealed record ShowAsset(
   string OriginalName,
   string ContentType,
   long SizeBytes,
-  string Xxh364);
+  string Xxh3);
 
 public sealed record TimelineEvent(
   int Id,

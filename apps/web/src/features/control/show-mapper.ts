@@ -168,7 +168,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
           originalName: asset.originalName ?? "",
           contentType: asset.contentType ?? "",
           sizeBytes: asset.sizeBytes ?? 0,
-          xxh364: asset.xxh364 ?? "",
+          xxh3: asset.xxh3 ?? "",
         })),
         sfx: (snapshot.assets?.sfx ?? []).map((asset) => ({
           id: asset.id ?? "",
@@ -177,7 +177,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
           originalName: asset.originalName ?? "",
           contentType: asset.contentType ?? "",
           sizeBytes: asset.sizeBytes ?? 0,
-          xxh364: asset.xxh364 ?? "",
+          xxh3: asset.xxh3 ?? "",
         })),
       },
       timeline,

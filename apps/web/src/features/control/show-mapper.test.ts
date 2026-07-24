@@ -64,7 +64,7 @@ describe("mapShowStateSnapshotToShowFile", () => {
             originalName: "hero.png",
             contentType: "image/png",
             sizeBytes: 100,
-            xxh364: "abc",
+            xxh3: "abc",
           },
         ],
         sfx: [],

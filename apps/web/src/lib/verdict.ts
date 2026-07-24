@@ -27,6 +27,7 @@ const verdictShortCodes: Record<VerdictRunResult, string> = {
   [VerdictRunResult.INTERNAL_ERROR]: "IE",
   [VerdictRunResult.SHORT_CIRCUITED]: "SC",
   [VerdictRunResult.ABORTED]: "AB",
+  [VerdictRunResult.PENDING]: "PD",
   [VerdictRunResult.UNKNOWN]: "?",
 };
 

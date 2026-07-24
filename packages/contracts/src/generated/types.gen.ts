@@ -201,7 +201,7 @@ export type ShowAssetSnapshot = {
     originalName?: string;
     contentType?: string;
     sizeBytes?: number;
-    xxh364?: string;
+    xxh3?: string;
 };
 
 export type TimelineEventSnapshot = {

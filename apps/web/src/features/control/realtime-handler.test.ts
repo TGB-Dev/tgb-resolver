@@ -152,7 +152,7 @@ describe("applyControlRealtimeMessage", () => {
       event: addedEvent,
     });
 
-    expect(showModel.showEvents.value.has(2)).toBe(true);
+    expect(2 in showModel.showEvents.value).toBe(true);
     expect(showModel.dataVersion.value).toBe(2);
   });
 
@@ -171,7 +171,7 @@ describe("applyControlRealtimeMessage", () => {
       event: addedEvent,
     });
 
-    expect(showModel.showEvents.value.has(2)).toBe(false);
+    expect(2 in showModel.showEvents.value).toBe(false);
     expect(invalidateSpy).toHaveBeenCalled();
   });
 

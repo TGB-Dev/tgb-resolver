@@ -78,7 +78,7 @@ public sealed record ShowAssetSnapshot(
   string OriginalName,
   string ContentType,
   long SizeBytes,
-  string Xxh364);
+  string Xxh3);
 
 [TranspilationSource]
 public sealed record TimelineEventSnapshot(

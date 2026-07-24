@@ -24,7 +24,7 @@ interface ShowDerivedContext {
 }
 
 interface ShowModelState {
-  showEvents: Signal<Map<number, TimelineEvent>>;
+  showEvents: Signal<Record<number, TimelineEvent>>;
   showOrderedIds: Signal<number[]>;
   showMode: Signal<ShowMode>;
   dataVersion: Signal<number>;
@@ -42,7 +42,7 @@ interface ShowModelState {
 }
 
 const ShowModel = createModel<ShowModelState>(() => {
-  const showEvents = signal<Map<number, TimelineEvent>>(new Map());
+  const showEvents = signal<Record<number, TimelineEvent>>({});
   const showOrderedIds = signal<number[]>([]);
   const showContext = signal<ShowDerivedContext | null>(null);
   const showMode = signal<ShowMode>(ShowMode.EDITING);
@@ -52,7 +52,7 @@ const ShowModel = createModel<ShowModelState>(() => {
 
   const rows = computed<TimelineTableItem[]>(() => {
     const ctx = showContext.value;
-    const events = showOrderedIds.value.map((id) => showEvents.value.get(id));
+    const events = showOrderedIds.value.map((id) => showEvents.value[id]);
     if (!ctx || events.some((e) => e == null)) return [];
     const built = toTimelineTableItems({
       schemaVersion: 1,
@@ -81,11 +81,12 @@ const ShowModel = createModel<ShowModelState>(() => {
 
   function hydrateFromSnapshot(show: ShowFile): void {
     showFile.value = show;
-    const map = new Map<number, TimelineEvent>();
-    for (const event of show.timeline ?? []) map.set(event.id, event);
-    const ids = [...map.keys()].sort(
-      (a, b) => (map.get(a)?.position ?? 0) - (map.get(b)?.position ?? 0),
+    const map = Object.fromEntries(
+      (show.timeline ?? []).map((event) => [event.id, event] as const),
     );
+    const ids = Object.keys(map)
+      .map(Number)
+      .sort((a, b) => (map[a]?.position ?? 0) - (map[b]?.position ?? 0));
     showEvents.value = map;
     showOrderedIds.value = ids;
     showContext.value = {
@@ -110,19 +111,17 @@ const ShowModel = createModel<ShowModelState>(() => {
     switch (message.type) {
       case ShowMessageType.TimelineEventAdded:
       case ShowMessageType.TimelineEventUpdated: {
-        const next = new Map(showEvents.value);
-        next.set(message.event.id, message.event);
+        const next = { ...showEvents.value, [message.event.id]: message.event };
         showEvents.value = next;
         if (!showOrderedIds.value.includes(message.event.id)) {
           showOrderedIds.value = [...showOrderedIds.value, message.event.id].sort(
-            (a, b) => (next.get(a)?.position ?? 0) - (next.get(b)?.position ?? 0),
+            (a, b) => (next[a]?.position ?? 0) - (next[b]?.position ?? 0),
           );
         }
         break;
       }
       case ShowMessageType.TimelineEventRemoved: {
-        const next = new Map(showEvents.value);
-        next.delete(message.eventId);
+        const { [message.eventId]: _, ...next } = showEvents.value;
         showEvents.value = next;
         showOrderedIds.value = showOrderedIds.value.filter((id) => id !== message.eventId);
         break;

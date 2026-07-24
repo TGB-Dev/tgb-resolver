@@ -1,9 +1,6 @@
-interface TimelineTableColumnConfigItem {
-  minW?: string;
-  maxW?: string;
-}
+import { type GridTableColumnConfig, gridTableTemplate } from "@/components/ui/grid-table";
 
-export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, TimelineTableColumnConfigItem> = {
+export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig> = {
   id: {
     minW: "5ch",
     maxW: "5ch",
@@ -40,16 +37,6 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, TimelineTableColumnCo
   },
 };
 
-export const TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS = Object.values(TIMELINE_TABLE_COLUMNS_CONFIG)
-  .map(({ minW, maxW }) => {
-    if (minW && maxW) {
-      return `minmax(${minW}, ${maxW})`;
-    } else if (minW) {
-      return `minmax(${minW}, 1fr)`;
-    } else if (maxW) {
-      return `minmax(0, ${maxW})`;
-    } else {
-      return "1fr";
-    }
-  })
-  .join(" ");
+export const TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS = gridTableTemplate(
+  TIMELINE_TABLE_COLUMNS_CONFIG,
+);

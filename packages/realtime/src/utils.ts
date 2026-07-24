@@ -132,8 +132,8 @@ export function toTimelineTableItem(
   event: TimelineEvent,
   playback?: ShowPlaybackState,
   autoResolveSpeedMs?: number,
-  userMap?: Map<number, UserDefinition>,
-  problemMap?: Map<number, ProblemDefinition>,
+  userMap?: Record<number, UserDefinition>,
+  problemMap?: Record<number, ProblemDefinition>,
 ): TimelineTableItem {
   const activeSegment = playback?.activeSegment;
   const isCurrentResolve = playback?.currentResolveEventId === event.id;
@@ -145,8 +145,8 @@ export function toTimelineTableItem(
 
   switch (event.type) {
     case TimelineEventType.RES: {
-      const user = userMap?.get(event.payload.userId);
-      const problem = problemMap?.get(event.payload.problemId);
+      const user = userMap?.[event.payload.userId];
+      const problem = problemMap?.[event.payload.problemId];
       const resolvePlaceholderName = user?.realName ?? user?.username ?? "";
       return {
         id: event.id,
@@ -206,8 +206,8 @@ export function toTimelineTableItem(
     }
     case TimelineEventType.PRE: {
       const resolvePlaceholderName = `PRE-RES`;
-      const user = userMap?.get(event.payload.userId);
-      const problem = problemMap?.get(event.payload.problemId);
+      const user = userMap?.[event.payload.userId];
+      const problem = problemMap?.[event.payload.problemId];
       return {
         id: event.id,
         type: event.type,
@@ -249,29 +249,31 @@ export function toTimelineTableItem(
 }
 
 function buildContestLookups(show: ShowFile): {
-  userById: Map<number, UserDefinition>;
-  problemById: Map<number, ProblemDefinition>;
+  userById: Record<number, UserDefinition>;
+  problemById: Record<number, ProblemDefinition>;
 } {
-  const userById = new Map<number, UserDefinition>();
-  for (const user of show.contest.users ?? []) userById.set(user.id, user);
-  const problemById = new Map<number, ProblemDefinition>();
-  for (const problem of show.contest.problems ?? []) problemById.set(problem.id, problem);
+  const userById = Object.fromEntries(
+    (show.contest.users ?? []).map((user) => [user.id, user] as const),
+  );
+  const problemById = Object.fromEntries(
+    (show.contest.problems ?? []).map((problem) => [problem.id, problem] as const),
+  );
   return { userById, problemById };
 }
 
 export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
   const { userById, problemById } = buildContestLookups(show);
-  const initialFromSnapshot = new Map<number, { score: number; rank: number }>();
-  for (const entry of show.contest.preFreezeSnapshot ?? []) {
-    if (!initialFromSnapshot.has(entry.userId)) {
-      initialFromSnapshot.set(entry.userId, {
-        score: entry.totalScore ?? 0,
-        rank: entry.rank ?? 0,
-      });
-    }
-  }
+  const initialFromSnapshot = (show.contest.preFreezeSnapshot ?? []).reduce(
+    (acc, entry) => {
+      if (!(entry.userId in acc)) {
+        acc[entry.userId] = { score: entry.totalScore ?? 0, rank: entry.rank ?? 0 };
+      }
+      return acc;
+    },
+    {} as Record<number, { score: number; rank: number }>,
+  );
 
-  const teamStates = new Map(initialFromSnapshot);
+  const teamStates = { ...initialFromSnapshot };
 
   return sortTimeline(show.timeline).map((event) => {
     const item = toTimelineTableItem(
@@ -284,15 +286,15 @@ export function toTimelineTableItems(show: ShowFile): TimelineTableItem[] {
 
     if (event.type === TimelineEventType.RES) {
       const userId = event.payload.userId;
-      const previous = teamStates.get(userId);
+      const previous = teamStates[userId];
       if (previous) {
         item.oldScore = previous.score;
         item.oldRank = previous.rank;
       }
-      teamStates.set(userId, {
+      teamStates[userId] = {
         score: event.payload.newTotalScore,
         rank: event.payload.newRank,
-      });
+      };
     }
 
     return item;
@@ -383,12 +385,12 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
 
   return [...entries.entries()]
     .map(([userId, state]) => {
-      const user = userById.get(userId);
+      const user = userById[userId];
       const problems = [...state.problems.entries()]
         .map(([problemId, result]) => ({
           problemId,
-          label: problemById.get(problemId)?.label ?? "",
-          name: problemById.get(problemId)?.name ?? "",
+          label: problemById[problemId]?.label ?? "",
+          name: problemById[problemId]?.name ?? "",
           score: result.score,
           verdict: result.verdict,
         }))
