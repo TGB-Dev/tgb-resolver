@@ -428,6 +428,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
         problems,
       };
 
+      const cached = entryCache.get(userId);
       if (cached && entriesEqual(cached, entry)) return cached;
 
       entryCache.set(userId, entry);

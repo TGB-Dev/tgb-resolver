@@ -1,5 +1,6 @@
 import { useSignalEffect } from "@preact/signals-react";
-import { useLiveSignal } from "@preact/signals-react/utils";
+import { For, useLiveSignal } from "@preact/signals-react/utils";
+import { memo } from "react";
 
 import { useControlShowQuery } from "@/features/control/hooks";
 import { leaderboardModel, playbackModel } from "@/models";
@@ -7,15 +8,14 @@ import { leaderboardModel, playbackModel } from "@/models";
 import LeaderboardRow from "./leaderboard-row";
 import LeaderboardTable from "./leaderboard-table";
 
-function Row({ userId }: { userId: number }) {
+const Row = memo(function Row({ userId }: { userId: number }) {
   const data = leaderboardModel.getSignal(userId).value;
   if (data == null) return null;
   return <LeaderboardRow data={data} />;
-}
+});
 
 function LeaderboardRows() {
-  const ids = leaderboardModel.userIds.value;
-  return ids.map((uid) => <Row key={uid} userId={uid} />);
+  return <For each={leaderboardModel.userIds}>{(uid) => <Row userId={uid} />}</For>;
 }
 
 export function Resolve() {
