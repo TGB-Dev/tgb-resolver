@@ -12,7 +12,16 @@ const verdictColors: Partial<Record<VerdictRunResult, string>> = {
   [VerdictRunResult.INTERNAL_ERROR]: "fg.warning",
   [VerdictRunResult.SHORT_CIRCUITED]: "fg.muted",
   [VerdictRunResult.ABORTED]: "fg.error",
+  [VerdictRunResult.PENDING]: "white",
   [VerdictRunResult.UNKNOWN]: "fg.muted",
+};
+
+const verdictBorderColors: Partial<Record<VerdictRunResult, string>> = {
+  [VerdictRunResult.PENDING]: "cyan.400",
+};
+
+const verdictBgColors: Partial<Record<VerdictRunResult, string>> = {
+  [VerdictRunResult.PENDING]: "purple.700",
 };
 
 const verdictShortCodes: Record<VerdictRunResult, string> = {
@@ -32,7 +41,18 @@ const verdictShortCodes: Record<VerdictRunResult, string> = {
 };
 
 export function verdictColorCode(verdict?: VerdictRunResult): string {
-  return verdict ? (verdictColors[verdict] ?? "gray.400") : "gray.400";
+  const fallback = "gray.400";
+  return verdict ? (verdictColors[verdict] ?? fallback) : fallback;
+}
+
+export function verdictBorderCode(verdict?: VerdictRunResult): string {
+  if (verdict && verdictBorderColors[verdict]) return verdictBorderColors[verdict]!;
+  return verdictColorCode(verdict).replace("fg.", "border.");
+}
+
+export function verdictBgCode(verdict?: VerdictRunResult): string {
+  if (verdict && verdictBgColors[verdict]) return verdictBgColors[verdict]!;
+  return verdictColorCode(verdict).replace("fg.", "bg.");
 }
 
 export function verdictShortCode(verdict?: VerdictRunResult): string {

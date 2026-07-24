@@ -9,18 +9,21 @@ interface LeaderboardTableProps {
 
 const LeaderboardTable: FC<LeaderboardTableProps> = ({ problems, children }) => {
   return (
-    <Table.Root>
+    <Table.Root size="sm">
       <Table.Header>
         <Table.Row>
           <Table.ColumnHeader>Rank</Table.ColumnHeader>
           <Table.ColumnHeader>User</Table.ColumnHeader>
+
           {problems?.map((problem) => (
             <Table.ColumnHeader key={problem.id}>{problem.label}</Table.ColumnHeader>
           ))}
+
           <Table.ColumnHeader>Score</Table.ColumnHeader>
           <Table.ColumnHeader>Penalty</Table.ColumnHeader>
         </Table.Row>
       </Table.Header>
+
       <Table.Body>{children}</Table.Body>
     </Table.Root>
   );

@@ -1,0 +1,39 @@
+import { createModel, type Signal, signal } from "@preact/signals-react";
+import type { LeaderboardEntry, ShowFile } from "@tgb-resolver/realtime";
+import { deriveLeaderboard } from "@tgb-resolver/realtime";
+
+interface LeaderboardModelState {
+  userIds: Signal<number[]>;
+  getSignal: (userId: number) => Signal<LeaderboardEntry | null>;
+  sync: (show: ShowFile, upToEventId?: number) => void;
+}
+
+const LeaderboardModel = createModel<LeaderboardModelState>(() => {
+  const userIds = signal<number[]>([]);
+  const signals = new Map<number, Signal<LeaderboardEntry | null>>();
+
+  function getSignal(userId: number): Signal<LeaderboardEntry | null> {
+    let sig = signals.get(userId);
+    if (!sig) {
+      sig = signal<LeaderboardEntry | null>(null);
+      signals.set(userId, sig);
+    }
+    return sig;
+  }
+
+  function sync(show: ShowFile, upToEventId?: number): void {
+    const rows = deriveLeaderboard(show, upToEventId);
+    for (const row of rows) {
+      getSignal(row.userId).value = row;
+    }
+    const prevIds = userIds.peek();
+    const newIds = rows.map((r) => r.userId);
+    if (prevIds.length !== newIds.length || prevIds.some((id, i) => id !== newIds[i])) {
+      userIds.value = newIds;
+    }
+  }
+
+  return { userIds, getSignal, sync };
+});
+
+export const leaderboardModel = new LeaderboardModel();

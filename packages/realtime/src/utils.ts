@@ -319,6 +319,23 @@ export interface LeaderboardEntry {
   problems: LeaderboardProblemResult[];
 }
 
+let lastShow: ShowFile | undefined;
+let entryCache = new Map<number, LeaderboardEntry>();
+
+function problemsEqual(a: LeaderboardProblemResult[], b: LeaderboardProblemResult[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((p, i) => p.score === b[i]?.score && p.verdict === b[i]?.verdict);
+}
+
+function entriesEqual(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
+  return (
+    a.rank === b.rank &&
+    a.totalScore === b.totalScore &&
+    a.totalPenalty === b.totalPenalty &&
+    problemsEqual(a.problems, b.problems)
+  );
+}
+
 /// <summary>
 ///   Derives the live leaderboard (the audience / resolving view) from the
 ///   centralized problem + user maps and the freeze snapshot, folded forward
@@ -327,6 +344,11 @@ export interface LeaderboardEntry {
 ///   never need the denormalized strings.
 /// </summary>
 export function deriveLeaderboard(show: ShowFile, upToEventId?: number): LeaderboardEntry[] {
+  if (lastShow !== show) {
+    lastShow = show;
+    entryCache = new Map();
+  }
+
   const { userById, problemById } = buildContestLookups(show);
   const entries = new Map<
     number,
@@ -396,7 +418,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
         }))
         .sort((a, b) => a.problemId - b.problemId);
 
-      return {
+      const entry: LeaderboardEntry = {
         userId,
         username: user?.username ?? "",
         realName: user?.realName ?? "",
@@ -405,6 +427,11 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
         totalPenalty: state.penalty,
         problems,
       };
+
+      if (cached && entriesEqual(cached, entry)) return cached;
+
+      entryCache.set(userId, entry);
+      return entry;
     })
     .sort(
       (a, b) =>
