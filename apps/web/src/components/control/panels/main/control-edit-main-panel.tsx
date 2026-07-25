@@ -1,8 +1,9 @@
 import { Tabs } from "@chakra-ui/react";
 import { useSignal } from "@preact/signals-react";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { Info, Logs, ScanEye, Settings } from "lucide-react";
+import { Images, Info, Logs, ScanEye, Settings } from "lucide-react";
 
+import { ControlMainAssetsTab } from "./tabs/control-main-assets-tab";
 import { ControlMainCueTab } from "./tabs/control-main-cue-tab";
 import { ControlMainInfoTab } from "./tabs/control-main-info-tab";
 import { ControlMainPreviewTab } from "./tabs/control-main-preview-tab";
@@ -10,6 +11,7 @@ import { ControlMainSettingsTab } from "./tabs/control-main-settings-tab";
 
 enum ControlEditMainPanelTabs {
   PREVIEW = "preview",
+  ASSETS = "assets",
   CUE = "cue",
   INFO = "info",
   SETTINGS = "settings",
@@ -22,12 +24,15 @@ export function ControlEditMainPanel() {
     tab.value = ControlEditMainPanelTabs.PREVIEW;
   });
   useHotkey("Mod+2", () => {
-    tab.value = ControlEditMainPanelTabs.CUE;
+    tab.value = ControlEditMainPanelTabs.ASSETS;
   });
   useHotkey("Mod+3", () => {
-    tab.value = ControlEditMainPanelTabs.INFO;
+    tab.value = ControlEditMainPanelTabs.CUE;
   });
   useHotkey("Mod+4", () => {
+    tab.value = ControlEditMainPanelTabs.INFO;
+  });
+  useHotkey("Mod+5", () => {
     tab.value = ControlEditMainPanelTabs.SETTINGS;
   });
 
@@ -47,19 +52,23 @@ export function ControlEditMainPanel() {
       gridTemplateRows="auto 1fr"
     >
       <Tabs.List>
-        <Tabs.Trigger value="preview">
+        <Tabs.Trigger value={ControlEditMainPanelTabs.PREVIEW}>
           <ScanEye />
           Preview
         </Tabs.Trigger>
-        <Tabs.Trigger value="cue">
+        <Tabs.Trigger value={ControlEditMainPanelTabs.ASSETS}>
+          <Images />
+          Assets
+        </Tabs.Trigger>
+        <Tabs.Trigger value={ControlEditMainPanelTabs.CUE}>
           <Logs />
           Cue
         </Tabs.Trigger>
-        <Tabs.Trigger value="info">
+        <Tabs.Trigger value={ControlEditMainPanelTabs.INFO}>
           <Info />
           Info
         </Tabs.Trigger>
-        <Tabs.Trigger value="settings">
+        <Tabs.Trigger value={ControlEditMainPanelTabs.SETTINGS}>
           <Settings />
           Settings
         </Tabs.Trigger>
@@ -67,6 +76,9 @@ export function ControlEditMainPanel() {
 
       <Tabs.Content value={ControlEditMainPanelTabs.PREVIEW} minH={0}>
         <ControlMainPreviewTab />
+      </Tabs.Content>
+      <Tabs.Content value={ControlEditMainPanelTabs.ASSETS}>
+        <ControlMainAssetsTab />
       </Tabs.Content>
       <Tabs.Content value={ControlEditMainPanelTabs.CUE}>
         <ControlMainCueTab />
