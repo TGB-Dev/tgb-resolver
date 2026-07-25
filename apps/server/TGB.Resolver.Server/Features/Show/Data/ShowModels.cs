@@ -74,17 +74,26 @@ public sealed record PlaybackState(
   long? StartedAt);
 
 public sealed record AssetCollection(
-  IReadOnlyList<ShowAsset> Images,
-  IReadOnlyList<ShowAsset> Sfx);
+  IReadOnlyList<ShowAsset> Items)
+{
+  public IReadOnlyList<FolderNode> Folders { get; init; } = [];
+}
 
 public sealed record ShowAsset(
   string Id,
-  string Kind,
   string FileName,
   string OriginalName,
   string ContentType,
   long SizeBytes,
-  string Xxh3);
+  string Xxh3)
+{
+  public string? FolderId { get; init; }
+}
+
+public sealed record FolderNode(
+  string Id,
+  string Name,
+  IReadOnlyList<FolderNode> Children);
 
 public sealed record TimelineEvent(
   int Id,

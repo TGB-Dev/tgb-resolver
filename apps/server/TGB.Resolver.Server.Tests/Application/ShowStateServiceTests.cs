@@ -94,6 +94,146 @@ public sealed class ShowStateServiceTests
     await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
   }
 
+  [Test]
+  public async Task CreateFolder_AddsRootFolder()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var snapshot = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "My Folder"));
+
+    await Assert.That(snapshot.Assets.Folders).HasSingleItem();
+    await Assert.That(snapshot.Assets.Folders[0].Name).IsEqualTo("My Folder");
+  }
+
+  [Test]
+  public async Task CreateFolder_AddsNestedFolder()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var root = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Root"));
+
+    var snapshot = await service.CreateFolderAsync(
+      new CreateFolderRequest(root.ShowVersion, root.Assets.Folders[0].Id, "Child"));
+
+    await Assert.That(snapshot.Assets.Folders).HasSingleItem();
+    await Assert.That(snapshot.Assets.Folders[0].Children).HasSingleItem();
+    await Assert.That(snapshot.Assets.Folders[0].Children[0].Name).IsEqualTo("Child");
+  }
+
+  [Test]
+  public async Task RenameFolder_UpdatesName()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var created = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Old Name"));
+
+    var snapshot = await service.RenameEntryAsync(
+      new RenameEntryRequest(created.ShowVersion, created.Assets.Folders[0].Id, true, "New Name"));
+
+    await Assert.That(snapshot.Assets.Folders[0].Name).IsEqualTo("New Name");
+  }
+
+  [Test]
+  public async Task RenameFolder_UpdatesNestedSubfolderName()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var root = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Root"));
+    var child = await service.CreateFolderAsync(
+      new CreateFolderRequest(root.ShowVersion, root.Assets.Folders[0].Id, "Old Subfolder"));
+
+    var subfolderId = child.Assets.Folders[0].Children[0].Id;
+    var snapshot = await service.RenameEntryAsync(
+      new RenameEntryRequest(child.ShowVersion, subfolderId, true, "New Subfolder Name"));
+
+    await Assert.That(snapshot.Assets.Folders[0].Children[0].Name).IsEqualTo("New Subfolder Name");
+  }
+
+  [Test]
+  public async Task DeleteFolder_RemovesLeafFolder()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var created = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "To Delete"));
+
+    var snapshot = await service.DeleteEntryAsync(
+      new DeleteEntryRequest(created.ShowVersion, created.Assets.Folders[0].Id, true));
+
+    await Assert.That(snapshot.Assets.Folders).IsEmpty();
+  }
+
+  [Test]
+  public async Task DeleteFolder_ClearsFolderIdOnAssets()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var created = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Folder"));
+
+    var assetId = "asset-1";
+    var bytes = Convert.ToBase64String([0x01, 0x02, 0x03]);
+    var withAsset = await service.UpsertAssetAsync(assetId,
+      new UpsertAssetRequest(created.ShowVersion, "test.png", "image/png", bytes)
+      {
+        FolderId = created.Assets.Folders[0].Id
+      });
+
+    var snapshot = await service.DeleteEntryAsync(
+      new DeleteEntryRequest(withAsset.ShowVersion, created.Assets.Folders[0].Id, true));
+
+    await Assert.That(snapshot.Assets.Folders).IsEmpty();
+    await Assert.That(snapshot.Assets.Items).HasSingleItem();
+    await Assert.That(snapshot.Assets.Items[0].FolderId).IsNull();
+  }
+
+  [Test]
+  public async Task MoveAsset_ChangesFolderId()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var folder = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Target"));
+
+    var assetId = "asset-1";
+    var bytes = Convert.ToBase64String([0x01, 0x02, 0x03]);
+    var withAsset = await service.UpsertAssetAsync(assetId,
+      new UpsertAssetRequest(folder.ShowVersion, "test.png", "image/png", bytes));
+
+    var snapshot = await service.MoveAssetAsync(
+      new MoveAssetRequest(withAsset.ShowVersion, assetId, folder.Assets.Folders[0].Id));
+
+    await Assert.That(snapshot.Assets.Items[0].FolderId).IsEqualTo(folder.Assets.Folders[0].Id);
+  }
+
+  [Test]
+  public async Task MoveAsset_ClearsFolderId_WhenTargetIsEmpty()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var folder = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Folder"));
+
+    var assetId = "asset-1";
+    var bytes = Convert.ToBase64String([0x01, 0x02, 0x03]);
+    var withAsset = await service.UpsertAssetAsync(assetId,
+      new UpsertAssetRequest(folder.ShowVersion, "test.png", "image/png", bytes)
+      {
+        FolderId = folder.Assets.Folders[0].Id
+      });
+
+    // Move to root (empty TargetFolderId means root via the request model)
+    var snapshot = await service.MoveAssetAsync(
+      new MoveAssetRequest(withAsset.ShowVersion, assetId, string.Empty));
+
+    await Assert.That(snapshot.Assets.Items[0].FolderId).IsEqualTo(string.Empty);
+  }
+
   private static async Task<(ShowStateService Service, IHubContext<ShowHub, IShowHubClient> Hub)>
     CreateServiceAsync()
   {

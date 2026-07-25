@@ -214,7 +214,7 @@ public sealed class ShowRawRepository(
       new ContestState(0, 0, [], [], []),
       new AutomationState(false, 3_000, false),
       new PlaybackState(PlaybackStatus.Idle, null, [], null),
-      new AssetCollection([], []),
+      new AssetCollection([]),
       []);
   }
 }

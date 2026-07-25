@@ -67,8 +67,7 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
       activeEventIds: [],
     },
     assets: {
-      images: [],
-      sfx: [],
+      items: [],
     },
     timeline: [],
     ...partial,
@@ -91,8 +90,8 @@ export function normalizeShow(show: ShowFile): ShowFile {
 
 export function getAssetCollections(show: ShowFile): Record<string, ShowAsset[]> {
   return {
-    image: show.assets.images ?? [],
-    sfx: show.assets.sfx ?? [],
+    image: (show.assets.items ?? []).filter((a) => a.contentType?.startsWith("image/")),
+    sfx: (show.assets.items ?? []).filter((a) => !a.contentType?.startsWith("image/")),
   };
 }
 

@@ -59,17 +59,26 @@ public sealed record PlaybackStateSnapshot(
   long? StartedAt);
 
 public sealed record AssetCollectionSnapshot(
-  IReadOnlyList<ShowAssetSnapshot> Images,
-  IReadOnlyList<ShowAssetSnapshot> Sfx);
+  IReadOnlyList<ShowAssetSnapshot> Items)
+{
+  public IReadOnlyList<FolderNodeSnapshot> Folders { get; init; } = [];
+}
 
 public sealed record ShowAssetSnapshot(
   string Id,
-  string Kind,
   string FileName,
   string OriginalName,
   string ContentType,
   long SizeBytes,
-  string Xxh3);
+  string Xxh3)
+{
+  public string? FolderId { get; init; }
+}
+
+public sealed record FolderNodeSnapshot(
+  string Id,
+  string Name,
+  IReadOnlyList<FolderNodeSnapshot> Children);
 
 [TranspilationSource]
 public sealed record TimelineEventSnapshot(

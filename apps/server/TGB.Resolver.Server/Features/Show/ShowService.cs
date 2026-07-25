@@ -1,3 +1,4 @@
+using System.IO.Hashing;
 using Microsoft.AspNetCore.SignalR;
 using NodaTime;
 using NodaTime.HighPerformance;
@@ -358,29 +359,43 @@ public sealed class ShowStateService(
     var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
-      var asset = new ShowAsset(assetId, request.Kind, request.FileName, request.FileName,
-        request.ContentType, Convert.FromBase64String(request.Bytes).LongLength, assetId);
-      var images = state.Assets.Images.Where(a => a.Id != assetId).ToList();
-      var sfx = state.Assets.Sfx.Where(a => a.Id != assetId).ToList();
-
-      if (string.Equals(request.Kind, "image", StringComparison.OrdinalIgnoreCase))
-        images.Add(asset);
-      else if (string.Equals(request.Kind, "sfx", StringComparison.OrdinalIgnoreCase))
-        sfx.Add(asset);
-      else
-        throw new InvalidOperationException("Asset kind must be image or sfx.");
+      var rawBytes = Convert.FromBase64String(request.Bytes);
+      var xxh3 = Convert.ToHexString(XxHash3.Hash(rawBytes));
+      var asset = new ShowAsset(assetId, request.FileName, request.FileName,
+        request.ContentType, rawBytes.LongLength, xxh3)
+      {
+        FolderId = request.FolderId
+      };
+      var items = state.Assets.Items.Where(a => a.Id != assetId).ToList();
+      items.Add(asset);
 
       return state with
       {
-        Assets = new AssetCollection(images, sfx)
+        Assets = new AssetCollection(items) { Folders = state.Assets.Folders }
       };
     }, cancellationToken);
 
     return ShowContractMapper.ToContract(updated);
   }
 
-  public async Task<ShowStateSnapshot> DeleteAssetAsync(string assetId,
-    VersionedCommandRequest request, CancellationToken cancellationToken = default)
+  public async Task<ShowStateSnapshot> DeleteEntryAsync(DeleteEntryRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    return request.IsDirectory
+      ? await DeleteFolderInternalAsync(request, cancellationToken)
+      : await DeleteAssetInternalAsync(request, cancellationToken);
+  }
+
+  public async Task<ShowStateSnapshot> RenameEntryAsync(RenameEntryRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    return request.IsDirectory
+      ? await RenameFolderInternalAsync(request, cancellationToken)
+      : await RenameAssetInternalAsync(request, cancellationToken);
+  }
+
+  private async Task<ShowStateSnapshot> DeleteAssetInternalAsync(DeleteEntryRequest request,
+    CancellationToken cancellationToken)
   {
     var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
     {
@@ -388,12 +403,208 @@ public sealed class ShowStateService(
       return state with
       {
         Assets = new AssetCollection(
-          state.Assets.Images.Where(a => a.Id != assetId).ToArray(),
-          state.Assets.Sfx.Where(a => a.Id != assetId).ToArray())
+            state.Assets.Items.Where(a => a.Id != request.Id).ToArray())
+          { Folders = state.Assets.Folders }
       };
     }, cancellationToken);
 
     return ShowContractMapper.ToContract(updated);
+  }
+
+  private async Task<ShowStateSnapshot> RenameAssetInternalAsync(RenameEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var items = state.Assets.Items
+        .Select(a => a.Id == request.Id ? a with { FileName = request.NewName } : a)
+        .ToArray();
+      return state with
+      {
+        Assets = new AssetCollection(items) { Folders = state.Assets.Folders }
+      };
+    }, cancellationToken);
+
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  public async Task<ShowStateSnapshot> CreateFolderAsync(CreateFolderRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var folderId = Guid.NewGuid().ToString("N");
+      var folder = new FolderNode(folderId, request.Name, []);
+      var folders = string.IsNullOrEmpty(request.ParentFolderId)
+        ? [.. state.Assets.Folders, folder]
+        : InsertFolderNode(state.Assets.Folders, request.ParentFolderId, folder).Nodes;
+      return state with
+      {
+        Assets = state.Assets with
+        {
+          Folders = folders
+        }
+      };
+    }, cancellationToken);
+
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  private async Task<ShowStateSnapshot> RenameFolderInternalAsync(RenameEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var folders =
+        RenameFolderNode(state.Assets.Folders, request.Id, request.NewName).Nodes;
+      return state with
+      {
+        Assets = state.Assets with
+        {
+          Folders = folders
+        }
+      };
+    }, cancellationToken);
+
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  private async Task<ShowStateSnapshot> DeleteFolderInternalAsync(DeleteEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var folderIdsToClear = CollectDescendantFolderIds(state.Assets.Folders, request.Id);
+      var folders = RemoveFolderNode(state.Assets.Folders, request.Id).Nodes;
+      var items = state.Assets.Items
+        .Select(a => a.FolderId is not null && folderIdsToClear.Contains(a.FolderId)
+          ? a with { FolderId = null }
+          : a)
+        .ToArray();
+      return state with
+      {
+        Assets = new AssetCollection(items) { Folders = folders }
+      };
+    }, cancellationToken);
+
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  public async Task<ShowStateSnapshot> MoveAssetAsync(MoveAssetRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var items = state.Assets.Items
+        .Select(a => a.Id == request.AssetId ? a with { FolderId = request.TargetFolderId } : a)
+        .ToArray();
+      return state with
+      {
+        Assets = new AssetCollection(items) { Folders = state.Assets.Folders }
+      };
+    }, cancellationToken);
+
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  private static (IReadOnlyList<FolderNode> Nodes, bool Changed) InsertFolderNode(
+    IReadOnlyList<FolderNode> nodes, string parentId, FolderNode newNode)
+  {
+    var list = nodes.ToList();
+    for (var i = 0; i < list.Count; i++)
+    {
+      if (list[i].Id == parentId)
+      {
+        list[i] = list[i] with
+        {
+          Children = [.. list[i].Children, newNode]
+        };
+        return (list, true);
+      }
+
+      var (updatedChildren, changed) = InsertFolderNode(list[i].Children, parentId, newNode);
+      if (!changed) continue;
+      list[i] = list[i] with { Children = updatedChildren };
+      return (list, true);
+    }
+
+    return (nodes, false);
+  }
+
+  private static (IReadOnlyList<FolderNode> Nodes, bool Changed) RenameFolderNode(
+    IReadOnlyList<FolderNode> nodes, string folderId, string newName)
+  {
+    var list = nodes.ToList();
+    for (var i = 0; i < list.Count; i++)
+    {
+      if (list[i].Id == folderId)
+      {
+        list[i] = list[i] with { Name = newName };
+        return (list, true);
+      }
+
+      var (updatedChildren, changed) = RenameFolderNode(list[i].Children, folderId, newName);
+      if (!changed) continue;
+      list[i] = list[i] with { Children = updatedChildren };
+      return (list, true);
+    }
+
+    return (nodes, false);
+  }
+
+  private static (IReadOnlyList<FolderNode> Nodes, bool Changed) RemoveFolderNode(
+    IReadOnlyList<FolderNode> nodes, string folderId)
+  {
+    var list = nodes.ToList();
+    for (var i = list.Count - 1; i >= 0; i--)
+    {
+      if (list[i].Id == folderId)
+      {
+        list.RemoveAt(i);
+        return (list, true);
+      }
+
+      var (updatedChildren, changed) = RemoveFolderNode(list[i].Children, folderId);
+      if (!changed) continue;
+      list[i] = list[i] with { Children = updatedChildren };
+      return (list, true);
+    }
+
+    return (nodes, false);
+  }
+
+  private static HashSet<string> CollectDescendantFolderIds(
+    IReadOnlyList<FolderNode> nodes, string folderId)
+  {
+    var result = new HashSet<string> { folderId };
+    foreach (var node in nodes)
+      if (node.Id == folderId)
+        CollectAllFolderIds(node, result);
+      else
+        CollectDescendantFolderIds(node.Children, folderId, result);
+    return result;
+  }
+
+  private static void CollectAllFolderIds(FolderNode node, HashSet<string> ids)
+  {
+    ids.Add(node.Id);
+    foreach (var child in node.Children)
+      CollectAllFolderIds(child, ids);
+  }
+
+  private static void CollectDescendantFolderIds(
+    IReadOnlyList<FolderNode> nodes, string folderId, HashSet<string> result)
+  {
+    foreach (var node in nodes)
+      if (node.Id == folderId)
+        CollectAllFolderIds(node, result);
+      else
+        CollectDescendantFolderIds(node.Children, folderId, result);
   }
 
   public async Task<ShowStateSnapshot> SetLiveModeAsync(bool enabled,

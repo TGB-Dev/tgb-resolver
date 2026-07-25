@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.IO.Hashing;
 using System.Text;
 using TGB.Resolver.Server.Commons.Serialization;
 using TGB.Resolver.Server.Features.Assets;
@@ -28,10 +29,17 @@ public static class ShowBundleArchive
     {
       await WriteEntryAsync(archive, ShowJsonEntryName, Encoding.UTF8.GetBytes(showJson),
         cancellationToken);
-      foreach (var asset in state.Assets.Images)
-        await PackAssetAsync(archive, assetStore, asset, cancellationToken);
-      foreach (var asset in state.Assets.Sfx)
-        await PackAssetAsync(archive, assetStore, asset, cancellationToken);
+      foreach (var asset in state.Assets.Items)
+      {
+        try
+        {
+          await PackAssetAsync(archive, assetStore, asset, cancellationToken);
+        }
+        catch (FileNotFoundException)
+        {
+          // Ignore missing assets so the bundle can still be generated successfully
+        }
+      }
     }
 
     return output.ToArray();
@@ -56,24 +64,36 @@ public static class ShowBundleArchive
       showJson = await reader.ReadToEndAsync(cancellationToken);
     }
 
+    var show = serializer.Deserialize<ShowState>(showJson);
+    var assetById = show.Assets.Items.ToDictionary(a => a.Id);
+
     foreach (var entry in archive.Entries)
     {
       if (!TryGetAssetId(entry.FullName, out var assetId)) continue;
       await using var entryStream = await entry.OpenAsync(cancellationToken);
       using var buffer = new MemoryStream();
       await entryStream.CopyToAsync(buffer, cancellationToken);
-      await assetStore.SaveAsync(assetId, buffer.ToArray(), cancellationToken);
+      var bytes = buffer.ToArray();
+      if (assetById.TryGetValue(assetId, out var meta))
+      {
+        var actualHash = Convert.ToHexString(XxHash3.Hash(bytes));
+        if (!string.Equals(actualHash, meta.Xxh3, StringComparison.OrdinalIgnoreCase))
+          throw new InvalidOperationException(
+            $"Asset {assetId} hash mismatch: expected {meta.Xxh3}, got {actualHash}.");
+      }
+
+      await assetStore.SaveAsync(assetId, bytes, cancellationToken);
     }
 
-    var show = serializer.Deserialize<ShowState>(showJson);
     return ShowStateNormalizer.Normalize(show);
   }
 
   private static async Task PackAssetAsync(
     ZipArchive archive, AssetStore assetStore, ShowAsset asset, CancellationToken cancellationToken)
   {
-    var (bytes, _) = await assetStore.ReadAsync(asset.Id, cancellationToken);
-    var entry = archive.CreateEntry($"{AssetFolder}/{asset.Kind}/{asset.Id}");
+    var bytes = await assetStore.ReadAsync(asset.Id, cancellationToken);
+    var category = asset.ContentType.Split('/')[0];
+    var entry = archive.CreateEntry($"{AssetFolder}/{category}/{asset.Id}");
     await using var entryStream = await entry.OpenAsync(cancellationToken);
     await entryStream.WriteAsync(bytes, cancellationToken);
   }

@@ -73,7 +73,7 @@ const ShowModel = createModel<ShowModelState>(() => {
         fullAutoEnabled: false,
       },
       playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
-      assets: { images: [], sfx: [] },
+      assets: { items: [] },
       timeline: events as TimelineEvent[],
     });
     return built;

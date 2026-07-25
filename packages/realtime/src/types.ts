@@ -92,11 +92,6 @@ export interface ClockSyncResponse {
   serverTransmittedAtUnixMs: number;
 }
 
-export enum AssetKind {
-  Image = "image",
-  Sfx = "sfx",
-}
-
 export interface EventBase {
   id: number;
   position: number;

@@ -10,13 +10,13 @@ public sealed class AssetStore(IHostEnvironment environment)
     return File.WriteAllBytesAsync(PathFor(id), bytes, cancellationToken);
   }
 
-  public async Task<(byte[] Bytes, string ContentType)> ReadAsync(string id,
+  public async Task<byte[]> ReadAsync(string id,
     CancellationToken cancellationToken = default)
   {
     var path = PathFor(id);
     return !File.Exists(path)
       ? throw new FileNotFoundException("Asset does not exist.", id)
-      : (await File.ReadAllBytesAsync(path, cancellationToken), "application/octet-stream");
+      : await File.ReadAllBytesAsync(path, cancellationToken);
   }
 
   public Task DeleteAsync(string id)
