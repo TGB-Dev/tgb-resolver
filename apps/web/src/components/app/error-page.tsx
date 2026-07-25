@@ -10,11 +10,11 @@ export function NotFoundPage() {
         <Text as="span" color="fg.muted" mx={2}>
           |
         </Text>{" "}
-        Không tìm thấy
+        Not found
       </Text>
 
       <Text fontSize="sm" color="fg.muted">
-        Trang bạn đang tìm hiện không tồn tại.
+        This page is not available or does not exist. Please check the URL or return to the homepage.
       </Text>
     </VStack>
   );
@@ -49,10 +49,10 @@ export function ErrorPage({ error }: { error: Error }) {
       >
         <Stack gap={1}>
           <Text fontSize="lg" fontWeight="medium" color="fg.error">
-            Có lỗi xảy ra
+            Error
           </Text>
           <Text fontSize="sm" color="fg.muted">
-            Vui lòng thử lại sau hoặc liên hệ với bộ phận kỹ thuật để được hỗ trợ thêm.
+            Please retry or contact support if the issue persists. You can copy the error details below for reference.
           </Text>
         </Stack>
 
@@ -65,7 +65,7 @@ export function ErrorPage({ error }: { error: Error }) {
             w="fit-content"
           >
             <Icon as={Copy} w={3} h={3} mr={1} />
-            {isCopied ? "Đã sao chép" : "Sao chép lỗi"}
+            {isCopied ? "Copied" : "Copy Error"}
           </Button>
 
           <Text fontSize="sm" fontWeight="bold" color="fg">
