@@ -46,12 +46,12 @@ export function verdictColorCode(verdict?: VerdictRunResult): string {
 }
 
 export function verdictBorderCode(verdict?: VerdictRunResult): string {
-  if (verdict && verdictBorderColors[verdict]) return verdictBorderColors[verdict]!;
+  if (verdict && verdictBorderColors[verdict]) return verdictBorderColors[verdict];
   return verdictColorCode(verdict).replace("fg.", "border.");
 }
 
 export function verdictBgCode(verdict?: VerdictRunResult): string {
-  if (verdict && verdictBgColors[verdict]) return verdictBgColors[verdict]!;
+  if (verdict && verdictBgColors[verdict]) return verdictBgColors[verdict];
   return verdictColorCode(verdict).replace("fg.", "bg.");
 }
 

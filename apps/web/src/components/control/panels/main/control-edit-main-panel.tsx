@@ -65,7 +65,7 @@ export function ControlEditMainPanel() {
         </Tabs.Trigger>
       </Tabs.List>
 
-      <Tabs.Content value={ControlEditMainPanelTabs.PREVIEW}>
+      <Tabs.Content value={ControlEditMainPanelTabs.PREVIEW} minH={0}>
         <ControlMainPreviewTab />
       </Tabs.Content>
       <Tabs.Content value={ControlEditMainPanelTabs.CUE}>

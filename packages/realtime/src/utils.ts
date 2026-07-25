@@ -405,40 +405,54 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     });
   }
 
-  return [...entries.entries()]
+  const sorted: LeaderboardEntry[] = [...entries.entries()]
     .map(([userId, state]) => {
       const user = userById[userId];
-      const problems = [...state.problems.entries()]
-        .map(([problemId, result]) => ({
-          problemId,
-          label: problemById[problemId]?.label ?? "",
-          name: problemById[problemId]?.name ?? "",
-          score: result.score,
-          verdict: result.verdict,
-        }))
-        .sort((a, b) => a.problemId - b.problemId);
-
-      const entry: LeaderboardEntry = {
+      return {
         userId,
         username: user?.username ?? "",
         realName: user?.realName ?? "",
-        rank: state.rank,
+        rank: 0,
         totalScore: state.score,
         totalPenalty: state.penalty,
-        problems,
+        problems: [...state.problems.entries()]
+          .map(([problemId, result]) => ({
+            problemId,
+            label: problemById[problemId]?.label ?? "",
+            name: problemById[problemId]?.name ?? "",
+            score: result.score,
+            verdict: result.verdict,
+          }))
+          .sort((a, b) => a.problemId - b.problemId),
       };
-
-      const cached = entryCache.get(userId);
-      if (cached && entriesEqual(cached, entry)) return cached;
-
-      entryCache.set(userId, entry);
-      return entry;
     })
     .sort(
       (a, b) =>
-        b.totalScore - a.totalScore ||
-        a.totalPenalty - b.totalPenalty ||
-        a.rank - b.rank ||
-        a.userId - b.userId,
+        b.totalScore - a.totalScore || a.totalPenalty - b.totalPenalty || a.userId - b.userId,
     );
+
+  let rank = 0;
+  let priorScore: number | null = null;
+  let priorPenalty: number | null = null;
+
+  return sorted.map((entry, index) => {
+    if (
+      priorScore === null ||
+      priorPenalty === null ||
+      Math.abs(entry.totalScore - priorScore) > 1e-9 ||
+      Math.abs(entry.totalPenalty - priorPenalty) > 1e-9
+    ) {
+      rank = index + 1;
+      priorScore = entry.totalScore;
+      priorPenalty = entry.totalPenalty;
+    }
+
+    entry.rank = rank;
+
+    const cached = entryCache.get(entry.userId);
+    if (cached && entriesEqual(cached, entry)) return cached;
+
+    entryCache.set(entry.userId, entry);
+    return entry;
+  });
 }
