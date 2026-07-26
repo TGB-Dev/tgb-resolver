@@ -599,12 +599,13 @@ public sealed class ShowStateService(
     // Trigger offset always wins
     if (nextEvent.TriggerOffsetSeconds is not null)
     {
-      orchestrator.ScheduleAdvance(Math.Max(1, (long)(nextEvent.TriggerOffsetSeconds.Value * 1000)));
+      orchestrator.ScheduleAdvance(Math.Max(1,
+        (long)(nextEvent.TriggerOffsetSeconds.Value * 1000)));
       return;
     }
 
     // No explicit offset — check auto modes
-    if (!state.Automation.FullAutoEnabled && !state.Automation.AutoResolveEnabled)
+    if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
       return;
 
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
