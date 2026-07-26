@@ -20,7 +20,7 @@ public sealed class AppJsonSerializerTests
       new ShowMetaSnapshot("Demo Show", "demo-show", ShowSource.Manual),
       new ContestSnapshot(18_000, 3_600, [], [], []),
       new AutomationSnapshot(false, 3_000, false),
-      new PlaybackStateSnapshot(PlaybackStatus.Running, 1, 1, null, 120_000, 1),
+      new PlaybackStateSnapshot(PlaybackStatus.Running, 1, [1], 120_000),
       new AssetCollectionSnapshot([], []),
       [
         new TimelineEventSnapshot(1, 1, TimelineEventType.Res, 0, false, "Intro",

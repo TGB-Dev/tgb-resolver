@@ -160,11 +160,9 @@ export type AutomationSnapshot = {
 
 export type PlaybackStateSnapshot = {
     status?: PlaybackStatus;
-    currentResolveEventId?: number | null;
     currentEventId?: number | null;
-    activeSegment?: ActivePlaybackSegmentSnapshot | null;
+    activeEventIds?: Array<number>;
     startedAt?: number | null;
-    executionSequence?: number;
 };
 
 export enum PlaybackStatus {
@@ -181,13 +179,6 @@ export enum PlaybackStatus {
      */
     PAUSED = 'Paused'
 }
-
-export type ActivePlaybackSegmentSnapshot = {
-    resolveEventId?: number;
-    nextResolveEventId?: number | null;
-    inlineEventIds?: Array<number>;
-    currentInlineIndex?: number;
-};
 
 export type AssetCollectionSnapshot = {
     images?: Array<ShowAssetSnapshot>;

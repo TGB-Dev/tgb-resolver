@@ -547,7 +547,7 @@ public sealed class ShowStateService(
     }
 
     var nextEvent = ordered[currentIndex + 1];
-    var startedAt = NowMs();
+    var nextStartedAt = NowMs();
 
     var updated2 = await repository.MutateControlStateAsync(
       s => s with
@@ -556,7 +556,7 @@ public sealed class ShowStateService(
           PlaybackStatus.Running,
           nextEvent.Id,
           [nextEvent.Id],
-          startedAt)
+          nextStartedAt)
       },
       cancellationToken);
 
