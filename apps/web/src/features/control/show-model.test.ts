@@ -30,7 +30,7 @@ function makeShow(showVersion: number, events: TimelineEvent[]): ShowFile {
       autoResolveSpeedMs: 3_000,
       fullAutoEnabled: false,
     },
-    playback: { status: PlaybackStatus.IDLE, executionSequence: 0 },
+    playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
     assets: { images: [], sfx: [] },
     timeline: events,
   };
@@ -161,5 +161,5 @@ test("rows does not recompute when only playback changes", () => {
   // Same array reference => the table body does not re-render on a tick.
   expect(after).toBe(before);
   // Rows carry no playback-derived current flags anymore.
-  expect(after.every((r) => !r.isCurrentResolve && !r.isCurrentInlineEvent)).toBe(true);
+  expect(after.every((r) => !r.isActive)).toBe(true);
 });

@@ -1,5 +1,4 @@
 import { Box, DataList, Editable } from "@chakra-ui/react";
-import { useComputed } from "@preact/signals-react";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
 import { memo, useCallback, useState } from "react";
@@ -7,7 +6,6 @@ import { memo, useCallback, useState } from "react";
 import { GridTableRow } from "@/components/ui/grid-table";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useRenameControlEventMutation } from "@/features/control/hooks";
-import { playbackModel } from "@/models";
 
 import { CurrentEventIndicator } from "./CurrentEventIndicator";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
@@ -27,7 +25,7 @@ interface ControlTimelineTableItemProps {
 export const ControlTimelineTableItem = memo(
   ({ payload, isLive, onSeek }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
-    const isCurrent = useComputed(() => playbackModel.currentCueId.value === payload.id).value;
+    const isCurrent = payload.isActive;
 
     return (
       <Box
@@ -83,9 +81,9 @@ export const ControlTimelineTableItem = memo(
             {payload.durationSeconds}
           </Box>
           <Box textAlign="end" fontFamily="mono">
-            {payload.triggerOffsetSeconds !== undefined && payload.triggerOffsetSeconds >= 0
+            {payload.triggerOffsetSeconds != null && payload.triggerOffsetSeconds > 0
               ? `+${payload.triggerOffsetSeconds}`
-              : payload.triggerOffsetSeconds}
+              : ""}
           </Box>
           <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
         </GridTableRow>

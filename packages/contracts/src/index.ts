@@ -18,7 +18,6 @@ export {
   tgbResolverServerFeaturesShowStartPlaybackEndpoint as startPlayback,
 } from "./generated/sdk.gen";
 export type {
-  ActivePlaybackSegmentSnapshot,
   AssetCollectionSnapshot,
   AutomationSnapshot,
   ClientOptions,

@@ -7,30 +7,19 @@ import {
 } from "@preact/signals-react";
 import type { PlaybackStateSnapshot } from "@tgb-resolver/contracts";
 
-export interface ActiveSegmentState {
-  resolveEventId: number;
-  nextResolveEventId: number | null;
-  inlineEventIds: number[];
-  currentInlineIndex: number;
-}
-
 export interface PlaybackState {
   showVersion: number;
   status: string | null;
-  executionSequence: number | null;
-  currentResolveEventId: number | null;
   currentEventId: number | null;
-  activeSegment: ActiveSegmentState | null;
+  activeEventIds: number[];
   startedAt: number | null;
 }
 
 const defaultPlayback: PlaybackState = {
   showVersion: 0,
   status: "Idle",
-  executionSequence: 0,
-  currentResolveEventId: null,
   currentEventId: null,
-  activeSegment: null,
+  activeEventIds: [],
   startedAt: null,
 };
 
@@ -69,17 +58,8 @@ const PlaybackModel = createModel<PlaybackModelState>(() => {
     state.value = {
       showVersion,
       status: snapshot.status ?? null,
-      executionSequence: snapshot.executionSequence ?? null,
-      currentResolveEventId: snapshot.currentResolveEventId ?? null,
       currentEventId: snapshot.currentEventId ?? null,
-      activeSegment: snapshot.activeSegment
-        ? {
-            resolveEventId: snapshot.activeSegment.resolveEventId ?? 0,
-            nextResolveEventId: snapshot.activeSegment.nextResolveEventId ?? null,
-            inlineEventIds: snapshot.activeSegment.inlineEventIds ?? [],
-            currentInlineIndex: snapshot.activeSegment.currentInlineIndex ?? 0,
-          }
-        : null,
+      activeEventIds: snapshot.activeEventIds ?? [],
       startedAt: snapshot.startedAt ?? null,
     };
   }

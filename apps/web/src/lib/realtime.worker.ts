@@ -171,17 +171,8 @@ async function connectHub(url: string) {
         showVersion: message.ShowVersion,
         playback: {
           status: mapStatus(p.Status),
-          executionSequence: p.ExecutionSequence,
-          currentResolveEventId: p.CurrentResolveEventId ?? undefined,
           currentEventId: p.CurrentEventId ?? undefined,
-          activeSegment: p.ActiveSegment
-            ? {
-                resolveEventId: p.ActiveSegment.ResolveEventId,
-                nextResolveEventId: p.ActiveSegment.NextResolveEventId ?? undefined,
-                inlineEventIds: p.ActiveSegment.InlineEventIds,
-                currentInlineIndex: p.ActiveSegment.CurrentInlineIndex,
-              }
-            : undefined,
+          activeEventIds: p.ActiveEventIds ?? [],
           startedAt: p.StartedAt ?? undefined,
         },
       },
