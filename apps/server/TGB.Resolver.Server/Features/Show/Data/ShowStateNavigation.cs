@@ -30,19 +30,5 @@ internal static class ShowStateNavigation
       : ordered.Skip(idx + 1).FirstOrDefault(e => e.Type == TimelineEventType.Res);
   }
 
-  public static int[] InlineIdsBetween(this TimelineEvent[] ordered, int fromId, int? toId)
-  {
-    return ordered
-      .Where(e => e.Id > fromId && e.Id < (toId ?? int.MaxValue) && e.Type != TimelineEventType.Res)
-      .Select(e => e.Id)
-      .ToArray();
-  }
 
-  public static double CumulativeOffsetUpTo(this TimelineEvent[] ordered, int upToIndex)
-  {
-    double total = 0;
-    for (var i = 0; i < upToIndex; i++)
-      total += ordered[i].TriggerOffsetSeconds ?? 0;
-    return total;
-  }
 }
