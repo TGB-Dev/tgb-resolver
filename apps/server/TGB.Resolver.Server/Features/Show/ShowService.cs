@@ -422,43 +422,34 @@ public sealed class ShowStateService(
         if (state.Playback.Status == PlaybackStatus.Running)
           return state with
           {
-            Playback = state.Playback with
-            {
-              Status = PlaybackStatus.Paused,
-              ExecutionSequence = state.Playback.ExecutionSequence + 1
-            }
+            Playback = NewPlayback(
+              PlaybackStatus.Paused,
+              state.Playback.CurrentEventId,
+              state.Playback.ActiveEventIds,
+              state.Playback.StartedAt)
           };
 
         if (state.Playback.Status == PlaybackStatus.Paused)
           return state with
           {
-            Playback = state.Playback with
-            {
-              Status = PlaybackStatus.Running,
-              ExecutionSequence = state.Playback.ExecutionSequence + 1
-            }
+            Playback = NewPlayback(
+              PlaybackStatus.Running,
+              state.Playback.CurrentEventId,
+              state.Playback.ActiveEventIds,
+              state.Playback.StartedAt)
           };
 
         var ordered = state.Ordered();
-        var firstResolve = ordered.FirstOrDefault(e => e.Type == TimelineEventType.Res);
-        var nextResolve = firstResolve is not null
-          ? ordered.NextResolveAfter(firstResolve.Id)
-          : null;
-        var inlineIds = firstResolve is not null
-          ? ordered.InlineIdsBetween(firstResolve.Id, nextResolve?.Id)
-          : [];
+        var firstEvent = ordered.FirstOrDefault();
+        var startedAt = NowMs();
 
         return state with
         {
           Playback = NewPlayback(
             PlaybackStatus.Running,
-            firstResolve?.Id,
-            inlineIds.Length > 0 ? inlineIds[0] : firstResolve?.Id,
-            firstResolve is null
-              ? null
-              : new ActivePlaybackSegment(firstResolve.Id, nextResolve?.Id, inlineIds, 0),
-            NowMs(),
-            state.Playback.ExecutionSequence)
+            firstEvent?.Id,
+            firstEvent is not null ? [firstEvent.Id] : [],
+            firstEvent is not null ? startedAt : null)
         };
       },
       cancellationToken);
@@ -480,8 +471,7 @@ public sealed class ShowStateService(
       request.ShowVersion,
       state => state with
       {
-        Playback = NewPlayback(PlaybackStatus.Idle, null, null, null, null,
-          state.Playback.ExecutionSequence)
+        Playback = NewPlayback(PlaybackStatus.Idle, null, [], null)
       },
       cancellationToken);
 
@@ -502,23 +492,19 @@ public sealed class ShowStateService(
         if (targetIndex < 0)
           throw new InvalidOperationException($"Timeline event {request.EventId} does not exist.");
 
-        var resolve = ordered.ResolveBefore(request.EventId);
         return state with
         {
           Playback = NewPlayback(
             PlaybackStatus.Paused,
-            resolve?.Id,
             request.EventId,
-            null,
-            state.Playback.StartedAt,
-            state.Playback.ExecutionSequence)
+            [request.EventId],
+            state.Playback.StartedAt)
         };
       },
       cancellationToken);
 
     await BroadcastPlaybackAsync(updated);
-    if (updated.Playback.Status == PlaybackStatus.Running)
-      ScheduleNextAdvanceAsync(updated);
+    orchestrator.CancelAdvance();
     return ShowContractMapper.ToContract(updated);
   }
 
@@ -529,9 +515,30 @@ public sealed class ShowStateService(
       return;
 
     var ordered = state.Ordered();
-    var currentIndex = ordered.IndexOfEvent(state.Playback.CurrentEventId!.Value);
-    if (currentIndex < 0)
+    if (state.Playback.CurrentEventId is null)
+    {
+      var first = ordered.FirstOrDefault();
+      if (first is null) return;
+      var startedAt = NowMs();
+
+      var updated = await repository.MutateControlStateAsync(
+        s => s with
+        {
+          Playback = NewPlayback(
+            PlaybackStatus.Running,
+            first.Id,
+            [first.Id],
+            startedAt)
+        },
+        cancellationToken);
+
+      await BroadcastPlaybackAsync(updated);
+      ScheduleNextAdvanceAsync(updated);
       return;
+    }
+
+    var currentIndex = ordered.IndexOfEvent(state.Playback.CurrentEventId.Value);
+    if (currentIndex < 0) return;
 
     if (currentIndex >= ordered.Length - 1)
     {
@@ -540,24 +547,21 @@ public sealed class ShowStateService(
     }
 
     var nextEvent = ordered[currentIndex + 1];
-    var startedAt = state.Playback.StartedAt ?? NowMs();
-    var resolve = ordered.ResolveBefore(nextEvent.Id);
+    var startedAt = NowMs();
 
-    var updated = await repository.MutateControlStateAsync(
+    var updated2 = await repository.MutateControlStateAsync(
       s => s with
       {
         Playback = NewPlayback(
           PlaybackStatus.Running,
-          resolve?.Id,
           nextEvent.Id,
-          BuildActiveSegment(ordered, resolve?.Id, nextEvent.Id),
-          startedAt,
-          s.Playback.ExecutionSequence)
+          [nextEvent.Id],
+          startedAt)
       },
       cancellationToken);
 
-    await BroadcastPlaybackAsync(updated);
-    ScheduleNextAdvanceAsync(updated);
+    await BroadcastPlaybackAsync(updated2);
+    ScheduleNextAdvanceAsync(updated2);
   }
 
   public async Task RescheduleAdvanceAsync(CancellationToken cancellationToken = default)
@@ -572,30 +576,12 @@ public sealed class ShowStateService(
     var updated = await repository.MutateControlStateAsync(
       s => s with
       {
-        Playback = NewPlayback(PlaybackStatus.Idle, null, null, null, null,
-          s.Playback.ExecutionSequence)
+        Playback = NewPlayback(PlaybackStatus.Idle, null, [], null)
       },
       cancellationToken);
 
     await BroadcastPlaybackAsync(updated);
     orchestrator.CancelAdvance();
-  }
-
-  private static ActivePlaybackSegment? BuildActiveSegment(
-    TimelineEvent[] ordered, int? resolveId, int currentEventId)
-  {
-    if (resolveId is null) return null;
-    var resolveIdx = ordered.IndexOfEvent(resolveId.Value);
-    if (resolveIdx < 0) return null;
-
-    var nextResolve = ordered.NextResolveAfter(resolveId.Value);
-    var inlineIds = ordered.InlineIdsBetween(resolveId.Value, nextResolve?.Id);
-    var currentInlineIndex = inlineIds.Length > 0
-      ? Math.Clamp(Array.IndexOf(inlineIds, currentEventId), 0, inlineIds.Length - 1)
-      : 0;
-
-    return new ActivePlaybackSegment(resolveId.Value, nextResolve?.Id, inlineIds,
-      currentInlineIndex);
   }
 
   private void ScheduleNextAdvanceAsync(ShowState state)
@@ -605,46 +591,26 @@ public sealed class ShowStateService(
 
     var ordered = state.Ordered();
     var currentIndex = ordered.IndexOfEvent(state.Playback.CurrentEventId!.Value);
-
     if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
       return;
 
     var nextEvent = ordered[currentIndex + 1];
 
-    if (!state.Automation.FullAutoEnabled)
+    // Trigger offset always wins
+    if (nextEvent.TriggerOffsetSeconds is not null)
     {
-      if (nextEvent.RequireManualInteraction == true)
-        return;
-      if (nextEvent.Type == TimelineEventType.Res && !state.Automation.AutoResolveEnabled)
-        return;
+      orchestrator.ScheduleAdvance(Math.Max(1, (long)(nextEvent.TriggerOffsetSeconds.Value * 1000)));
+      return;
     }
 
-    // Use the current event's media duration for inline events. When autoplay is
-    // on, a resolve (or the pre-resolve immediately preceding it) dwells for the
-    // configured auto-resolve speed so the reveal is actually shown; otherwise
-    // fall back to trigger-offset-based timing.
-    var currentEvent = ordered[currentIndex];
-    var currentDurationSeconds = currentEvent.Type != TimelineEventType.Res
-      ? currentEvent.Image?.DurationSeconds ?? currentEvent.Sfx?.DurationSeconds
-      : null;
+    // No explicit offset — check auto modes
+    if (!state.Automation.FullAutoEnabled && !state.Automation.AutoResolveEnabled)
+      return;
 
-    var autoAdvanceRes =
-      state.Automation.FullAutoEnabled || state.Automation.AutoResolveEnabled;
+    if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
+      return;
 
-    long delayMs;
-    if (currentDurationSeconds is > 0)
-      delayMs = Math.Max(1, (long)(currentDurationSeconds.Value * 1000));
-    else if (autoAdvanceRes
-             && (currentEvent.Type == TimelineEventType.Res
-                 || nextEvent.Type == TimelineEventType.Res))
-      delayMs = state.Automation.AutoResolveSpeedMs;
-    else
-      delayMs = Math.Max(1,
-        (state.Playback.StartedAt ?? NowMs())
-        + (long)(ordered.CumulativeOffsetUpTo(currentIndex + 1) * 1000)
-        - NowMs());
-
-    orchestrator.ScheduleAdvance(delayMs);
+    orchestrator.ScheduleAdvance(state.Automation.AutoResolveSpeedMs);
   }
 
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
@@ -734,13 +700,10 @@ public sealed class ShowStateService(
 
   private static PlaybackState NewPlayback(
     PlaybackStatus status,
-    int? resolveEventId,
     int? currentEventId,
-    ActivePlaybackSegment? segment,
-    long? startedAt,
-    long executionSequence)
+    IReadOnlyList<int> activeEventIds,
+    long? startedAt)
   {
-    return new PlaybackState(status, resolveEventId, currentEventId, segment, startedAt,
-      executionSequence + 1);
+    return new PlaybackState(status, currentEventId, activeEventIds, startedAt);
   }
 }
