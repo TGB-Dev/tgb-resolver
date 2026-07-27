@@ -1,5 +1,4 @@
 import {
-  type ActivePlaybackSegmentSnapshot,
   type AssetCollectionSnapshot,
   type AutomationSnapshot,
   type PlaybackStateSnapshot,
@@ -16,7 +15,6 @@ import {
 import { ShowMessageType, ShowRefetchReason } from "./signalr";
 
 export type ShowPlaybackState = PlaybackStateSnapshot;
-export type ActivePlaybackSegment = ActivePlaybackSegmentSnapshot;
 export type ShowMeta = ShowMetaSnapshot;
 export type ShowAutomation = AutomationSnapshot;
 export type ShowAssets = AssetCollectionSnapshot;
@@ -198,16 +196,10 @@ export interface TimelineTableItem {
   requireManualInteraction?: boolean;
   durationSeconds?: number;
   assetId?: string;
-  isCurrentResolve?: boolean;
-  isCurrentInlineEvent?: boolean;
-  isInActiveSegment?: boolean;
+  isActive: boolean;
 }
 
-export interface PlaybackSegment {
-  resolveEventId: number;
-  nextResolveEventId?: number;
-  inlineEvents: Array<ShowImageEvent | PlaySfxEvent | PreResolveEvent>;
-}
+
 
 export enum ShowConnectionStatus {
   Idle = "idle",

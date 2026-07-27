@@ -1,5 +1,4 @@
 import {
-  type PlaybackSegment,
   PlaybackStatus,
   type PlaySfxEvent,
   type PreResolveEvent,
@@ -65,7 +64,7 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
     },
     playback: {
       status: PlaybackStatus.IDLE,
-      executionSequence: 0,
+      activeEventIds: [],
     },
     assets: {
       images: [],
@@ -85,7 +84,6 @@ export function normalizeShow(show: ShowFile): ShowFile {
     ...show,
     timeline: sortTimeline(show.timeline).map((event) => ({
       ...event,
-      triggerOffsetSeconds: event.triggerOffsetSeconds ?? 0,
       requireManualInteraction: event.requireManualInteraction ?? false,
     })),
   };
@@ -96,32 +94,6 @@ export function getAssetCollections(show: ShowFile): Record<string, ShowAsset[]>
     image: show.assets.images ?? [],
     sfx: show.assets.sfx ?? [],
   };
-}
-
-export function buildPlaybackSegments(show: ShowFile): PlaybackSegment[] {
-  const timeline = sortTimeline(show.timeline);
-  const resolveIndexes = timeline
-    .map((event, index) => (event.type === TimelineEventType.RES ? index : -1))
-    .filter((index) => index >= 0);
-
-  return resolveIndexes.map((resolveIndex, segmentIndex) => {
-    const resolveEvent = timeline[resolveIndex];
-    if (!resolveEvent) {
-      throw new Error(`Missing resolve event at index ${resolveIndex}`);
-    }
-    const nextResolveIndex = resolveIndexes[segmentIndex + 1];
-    const segmentTail =
-      nextResolveIndex === undefined
-        ? timeline.slice(resolveIndex + 1)
-        : timeline.slice(resolveIndex + 1, nextResolveIndex);
-
-    return {
-      resolveEventId: resolveEvent.id,
-      nextResolveEventId:
-        nextResolveIndex === undefined ? undefined : timeline[nextResolveIndex]?.id,
-      inlineEvents: segmentTail.filter(isNonResolveEvent),
-    };
-  });
 }
 
 function resolveDisplayName(customName: string | undefined, placeholderName: string) {
@@ -135,13 +107,8 @@ export function toTimelineTableItem(
   userMap?: Record<number, UserDefinition>,
   problemMap?: Record<number, ProblemDefinition>,
 ): TimelineTableItem {
-  const activeSegment = playback?.activeSegment;
-  const isCurrentResolve = playback?.currentResolveEventId === event.id;
-  const isCurrentInlineEvent = playback?.currentEventId === event.id && !isCurrentResolve;
-  const isInActiveSegment =
-    activeSegment?.resolveEventId === event.id ||
-    activeSegment?.inlineEventIds?.includes(event.id) ||
-    false;
+  const activeEventIds = playback?.activeEventIds ?? [];
+  const isActive = activeEventIds.includes(event.id);
 
   switch (event.type) {
     case TimelineEventType.RES: {
@@ -165,9 +132,7 @@ export function toTimelineTableItem(
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
         durationSeconds: autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined,
-        isCurrentResolve,
-        isCurrentInlineEvent,
-        isInActiveSegment,
+        isActive,
       };
     }
     case TimelineEventType.SFX: {
@@ -182,9 +147,7 @@ export function toTimelineTableItem(
         requireManualInteraction: event.requireManualInteraction,
         durationSeconds: event.payload.durationSeconds,
         assetId: event.payload.sfxId,
-        isCurrentResolve,
-        isCurrentInlineEvent,
-        isInActiveSegment,
+        isActive,
       };
     }
     case TimelineEventType.IMG: {
@@ -199,9 +162,7 @@ export function toTimelineTableItem(
         requireManualInteraction: event.requireManualInteraction,
         durationSeconds: event.payload.durationSeconds,
         assetId: event.payload.imageId,
-        isCurrentResolve,
-        isCurrentInlineEvent,
-        isInActiveSegment,
+        isActive,
       };
     }
     case TimelineEventType.PRE: {
@@ -225,9 +186,7 @@ export function toTimelineTableItem(
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
         durationSeconds: autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined,
-        isCurrentResolve,
-        isCurrentInlineEvent,
-        isInActiveSegment,
+        isActive,
       };
     }
     case TimelineEventType.CUS: {
@@ -240,9 +199,7 @@ export function toTimelineTableItem(
         placeholderName,
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
-        isCurrentResolve,
-        isCurrentInlineEvent,
-        isInActiveSegment,
+        isActive,
       };
     }
   }

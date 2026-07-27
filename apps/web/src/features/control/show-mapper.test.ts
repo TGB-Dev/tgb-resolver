@@ -45,14 +45,8 @@ describe("mapShowStateSnapshotToShowFile", () => {
       },
       playback: {
         status: PlaybackStatus.RUNNING,
-        currentResolveEventId: 10,
         currentEventId: 11,
-        activeSegment: {
-          resolveEventId: 10,
-          nextResolveEventId: 12,
-          inlineEventIds: [11],
-          currentInlineIndex: 0,
-        },
+        activeEventIds: [11],
         startedAt: 12345,
       },
       assets: {
@@ -108,8 +102,8 @@ describe("mapShowStateSnapshotToShowFile", () => {
       },
       playback: {
         status: PlaybackStatus.RUNNING,
-        currentResolveEventId: 10,
         currentEventId: 11,
+        activeEventIds: [11],
       },
       contest: {
         preFreezeSnapshot: [

@@ -69,17 +69,9 @@ public sealed record AutomationState(
 
 public sealed record PlaybackState(
   PlaybackStatus Status,
-  int? CurrentResolveEventId,
   int? CurrentEventId,
-  ActivePlaybackSegment? ActiveSegment,
-  long? StartedAt,
-  long ExecutionSequence);
-
-public sealed record ActivePlaybackSegment(
-  int ResolveEventId,
-  int? NextResolveEventId,
-  IReadOnlyList<int> InlineEventIds,
-  int CurrentInlineIndex);
+  IReadOnlyList<int> ActiveEventIds,
+  long? StartedAt);
 
 public sealed record AssetCollection(
   IReadOnlyList<ShowAsset> Images,

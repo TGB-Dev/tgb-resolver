@@ -14,7 +14,6 @@ export type {
 } from "./gen/TGB.Resolver.Server.Features.Realtime.js";
 export { ShowMessageType } from "./gen/TGB.Resolver.Server.Features.Realtime.js";
 export type {
-  ActivePlaybackSegmentSnapshot,
   ClockSyncRequest,
   ClockSyncResponse,
   PlaybackStateSnapshot,

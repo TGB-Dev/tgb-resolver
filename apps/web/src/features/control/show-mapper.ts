@@ -147,17 +147,8 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       },
       playback: {
         status: normalizePlaybackStatus(snapshot.playback?.status),
-        executionSequence: snapshot.playback?.executionSequence ?? 0,
-        currentResolveEventId: snapshot.playback?.currentResolveEventId ?? undefined,
         currentEventId: snapshot.playback?.currentEventId ?? undefined,
-        activeSegment: snapshot.playback?.activeSegment
-          ? {
-              resolveEventId: snapshot.playback.activeSegment.resolveEventId ?? 0,
-              nextResolveEventId: snapshot.playback.activeSegment.nextResolveEventId ?? undefined,
-              inlineEventIds: snapshot.playback.activeSegment.inlineEventIds ?? [],
-              currentInlineIndex: snapshot.playback.activeSegment.currentInlineIndex ?? 0,
-            }
-          : undefined,
+        activeEventIds: snapshot.playback?.activeEventIds ?? [],
         startedAt: snapshot.playback?.startedAt ?? undefined,
       },
       assets: {

@@ -54,18 +54,9 @@ public sealed record AutomationSnapshot(
 [TranspilationSource]
 public sealed record PlaybackStateSnapshot(
   PlaybackStatus Status,
-  int? CurrentResolveEventId,
   int? CurrentEventId,
-  ActivePlaybackSegmentSnapshot? ActiveSegment,
-  long? StartedAt,
-  long ExecutionSequence);
-
-[TranspilationSource]
-public sealed record ActivePlaybackSegmentSnapshot(
-  int ResolveEventId,
-  int? NextResolveEventId,
-  IReadOnlyList<int> InlineEventIds,
-  int CurrentInlineIndex);
+  IReadOnlyList<int> ActiveEventIds,
+  long? StartedAt);
 
 public sealed record AssetCollectionSnapshot(
   IReadOnlyList<ShowAssetSnapshot> Images,

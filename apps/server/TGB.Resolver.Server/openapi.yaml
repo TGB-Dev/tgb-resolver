@@ -763,25 +763,19 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/PlaybackStatus'
-        currentResolveEventId:
-          type: integer
-          format: int32
-          nullable: true
         currentEventId:
           type: integer
           format: int32
           nullable: true
-        activeSegment:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ActivePlaybackSegmentSnapshot'
+        activeEventIds:
+          type: array
+          items:
+            type: integer
+            format: int32
         startedAt:
           type: integer
           format: int64
           nullable: true
-        executionSequence:
-          type: integer
-          format: int64
     PlaybackStatus:
       type: string
       description: ''
@@ -793,25 +787,6 @@ components:
       - Idle
       - Running
       - Paused
-    ActivePlaybackSegmentSnapshot:
-      type: object
-      additionalProperties: false
-      properties:
-        resolveEventId:
-          type: integer
-          format: int32
-        nextResolveEventId:
-          type: integer
-          format: int32
-          nullable: true
-        inlineEventIds:
-          type: array
-          items:
-            type: integer
-            format: int32
-        currentInlineIndex:
-          type: integer
-          format: int32
     AssetCollectionSnapshot:
       type: object
       additionalProperties: false

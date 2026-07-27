@@ -64,7 +64,7 @@ public sealed class ShowStateServiceTests
     var snapshot = await service.SeekPlaybackAsync(new SeekPlaybackRequest(1, 3));
 
     await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
-    await Assert.That(snapshot.Playback.CurrentResolveEventId).IsEqualTo(1);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([3]);
   }
 
   [Test]

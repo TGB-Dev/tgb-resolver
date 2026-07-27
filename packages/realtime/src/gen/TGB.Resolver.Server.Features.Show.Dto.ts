@@ -29,27 +29,11 @@ export type PlaybackStateSnapshot = {
     /** Transpiled from TGB.Resolver.Server.Commons.Types.PlaybackStatus */
     Status: PlaybackStatus;
     /** Transpiled from int */
-    CurrentResolveEventId?: number;
-    /** Transpiled from int */
     CurrentEventId?: number;
-    /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ActivePlaybackSegmentSnapshot? */
-    ActiveSegment?: ActivePlaybackSegmentSnapshot;
+    /** Transpiled from System.Collections.Generic.IReadOnlyList<int> */
+    ActiveEventIds: number[];
     /** Transpiled from long */
     StartedAt?: number;
-    /** Transpiled from long */
-    ExecutionSequence: number;
-}
-
-/** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ActivePlaybackSegmentSnapshot */
-export type ActivePlaybackSegmentSnapshot = {
-    /** Transpiled from int */
-    ResolveEventId: number;
-    /** Transpiled from int */
-    NextResolveEventId?: number;
-    /** Transpiled from System.Collections.Generic.IReadOnlyList<int> */
-    InlineEventIds: number[];
-    /** Transpiled from int */
-    CurrentInlineIndex: number;
 }
 
 /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.TimelineEventSnapshot */

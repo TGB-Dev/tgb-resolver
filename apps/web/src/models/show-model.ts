@@ -72,7 +72,7 @@ const ShowModel = createModel<ShowModelState>(() => {
         autoResolveSpeedMs: ctx.autoResolveSpeedMs,
         fullAutoEnabled: false,
       },
-      playback: { status: PlaybackStatus.IDLE, executionSequence: 0 },
+      playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
       assets: { images: [], sfx: [] },
       timeline: events as TimelineEvent[],
     });

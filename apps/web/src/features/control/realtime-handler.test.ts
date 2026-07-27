@@ -29,7 +29,7 @@ const baseShow: ShowFile = {
     preFreezeSnapshot: [],
   },
   automation: { autoResolveEnabled: false, autoResolveSpeedMs: 3000, fullAutoEnabled: false },
-  playback: { status: PlaybackStatus.IDLE, executionSequence: 0 },
+  playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
   assets: { images: [], sfx: [] },
   timeline: [
     {
@@ -64,15 +64,15 @@ describe("applyControlRealtimeMessage", () => {
       showVersion: 2,
       playback: {
         status: PlaybackStatus.RUNNING,
-        executionSequence: 1,
-        currentResolveEventId: 4,
+        currentEventId: 4,
+        activeEventIds: [4],
       },
     });
 
     expect(playbackModel.state.value).toMatchObject({
       status: PlaybackStatus.RUNNING,
-      executionSequence: 1,
-      currentResolveEventId: 4,
+      currentEventId: 4,
+      activeEventIds: [4],
     });
   });
 
@@ -87,7 +87,7 @@ describe("applyControlRealtimeMessage", () => {
     await applyControlRealtimeMessage(queryClient, {
       type: ShowMessageType.PlaybackStateChanged,
       showVersion: 2,
-      playback: { status: PlaybackStatus.RUNNING, executionSequence: 1, currentResolveEventId: 4 },
+      playback: { status: PlaybackStatus.RUNNING, currentEventId: 4, activeEventIds: [4] },
     });
 
     expect(queryClient.getQueryData(controlShowQueryKey())).toEqual(initial);
@@ -109,8 +109,8 @@ describe("applyControlRealtimeMessage", () => {
     playbackModel.update({
       showVersion: 2,
       status: "Running",
-      executionSequence: 5,
-      currentResolveEventId: 42,
+      currentEventId: 42,
+      activeEventIds: [42],
     });
 
     await applyControlRealtimeMessage(new QueryClient(), {
@@ -118,8 +118,7 @@ describe("applyControlRealtimeMessage", () => {
       showVersion: 3,
     });
 
-    expect(playbackModel.state.value.currentResolveEventId).toBe(42);
-    expect(playbackModel.state.value.executionSequence).toBe(5);
+    expect(playbackModel.state.value.currentEventId).toBe(42);
     expect(playbackModel.state.value.showVersion).toBe(2);
   });
 
@@ -178,24 +177,16 @@ describe("applyControlRealtimeMessage", () => {
   test("syncs playback from snapshot data", () => {
     playbackModel.syncFromSnapshot(5, {
       status: PlaybackStatus.RUNNING,
-      executionSequence: 3,
-      currentResolveEventId: 7,
       currentEventId: 8,
-      activeSegment: {
-        resolveEventId: 7,
-        nextResolveEventId: 10,
-        inlineEventIds: [8, 9],
-        currentInlineIndex: 0,
-      },
+      activeEventIds: [8],
       startedAt: 1000,
     });
 
     expect(playbackModel.state.value).toMatchObject({
       showVersion: 5,
       status: PlaybackStatus.RUNNING,
-      executionSequence: 3,
-      currentResolveEventId: 7,
       currentEventId: 8,
+      activeEventIds: [8],
     });
   });
 });
