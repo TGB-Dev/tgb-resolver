@@ -5,12 +5,16 @@ import { deriveLeaderboard } from "@tgb-resolver/realtime";
 interface LeaderboardModelState {
   userIds: Signal<number[]>;
   getSignal: (userId: number) => Signal<LeaderboardEntry | null>;
+  currentBottomView: Signal<number>;
+  currentResolvedUserId: Signal<number>;
   sync: (show: ShowFile, upToEventId?: number) => void;
 }
 
 const LeaderboardModel = createModel<LeaderboardModelState>(() => {
   const userIds = signal<number[]>([]);
   const signals = new Map<number, Signal<LeaderboardEntry | null>>();
+  const currentBottomView = signal<number>(0);
+  const currentResolvedUserId = signal<number>(0);
 
   function getSignal(userId: number): Signal<LeaderboardEntry | null> {
     let sig = signals.get(userId);
@@ -33,7 +37,7 @@ const LeaderboardModel = createModel<LeaderboardModelState>(() => {
     }
   }
 
-  return { userIds, getSignal, sync };
+  return { userIds, getSignal, sync, currentBottomView, currentResolvedUserId };
 });
 
 export const leaderboardModel = new LeaderboardModel();

@@ -1,3 +1,4 @@
+import { Box } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Resolve } from "@/components/resolve/resolve";
@@ -10,7 +11,9 @@ export const Route = createFileRoute("/")({
 function Home() {
   return (
     <ControlRealtimeProvider>
-      <Resolve />
+      <Box h="dvh" overflowY="auto" css={{ overflowAnchor: "none" }}>
+        <Resolve />
+      </Box>
     </ControlRealtimeProvider>
   );
 }
