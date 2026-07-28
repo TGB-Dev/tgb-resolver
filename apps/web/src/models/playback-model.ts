@@ -31,6 +31,7 @@ interface PlaybackModelState {
   update: (state: Partial<PlaybackState>) => void;
   reset: (showVersion?: number) => void;
   syncFromSnapshot: (showVersion: number, snapshot: PlaybackStateSnapshot) => void;
+  syncVersion: (showVersion: number) => void;
 }
 
 const PlaybackModel = createModel<PlaybackModelState>(() => {
@@ -64,6 +65,10 @@ const PlaybackModel = createModel<PlaybackModelState>(() => {
     };
   }
 
+  function syncVersion(showVersion: number) {
+    state.value = { ...state.value, showVersion };
+  }
+
   return {
     state,
     currentEventId,
@@ -72,6 +77,7 @@ const PlaybackModel = createModel<PlaybackModelState>(() => {
     update,
     reset,
     syncFromSnapshot,
+    syncVersion,
   };
 });
 

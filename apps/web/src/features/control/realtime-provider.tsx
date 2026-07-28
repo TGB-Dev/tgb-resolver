@@ -47,6 +47,13 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
 
     showModel.hydrateFromSnapshot(showQuery.data);
 
+    // Always sync the data version from REST; the version number is not
+    // part of playback state and must track the current data version so
+    // that subsequent mutations send the correct expectedShowVersion.
+    // ShowReplaced (clear/import) never broadcasts PlaybackStateChanged,
+    // so without this the version would go permanently stale.
+    playbackModel.syncVersion(showQuery.data.showVersion ?? 0);
+
     // Seed playback state from REST on the very first data load only.
     // SignalR is the sole authoritative source for real-time playback
     // updates; subsequent REST refetches (reconnect, bigRefetch, stale)
