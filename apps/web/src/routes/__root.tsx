@@ -1,9 +1,9 @@
 import { Container } from "@chakra-ui/react";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 
-import { Devtools } from "@/components/app/devtools";
-import { AppProvider } from "@/components/app/provider";
-import { Toaster } from "@/components/ui/toaster";
+import { Devtools } from "@/features/shared/app/devtools";
+import { AppProvider } from "@/features/shared/app/provider";
+import { Toaster } from "@/features/shared/ui/toaster";
 
 import "../styles.css";
 

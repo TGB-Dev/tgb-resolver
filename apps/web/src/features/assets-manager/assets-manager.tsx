@@ -2,7 +2,7 @@ import { Box, Splitter, useSplitter } from "@chakra-ui/react";
 import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
 import { useRef } from "react";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@/features/shared/ui/toaster";
 import { confirmActionModel } from "@/models";
 
 import { AssetsGridView } from "./assets-grid-view";

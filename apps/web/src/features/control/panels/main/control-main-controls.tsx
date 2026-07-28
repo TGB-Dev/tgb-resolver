@@ -16,7 +16,6 @@ import {
   WifiOff,
 } from "lucide-react";
 
-import { Tooltip } from "@/components/ui/tooltip";
 import {
   useControlAutoResolveEnabled,
   useControlAutoResolveSpeedMs,
@@ -29,6 +28,7 @@ import {
   useToggleLiveModeMutation,
   useUpdateAutomationMutation,
 } from "@/features/control/hooks";
+import { Tooltip } from "@/features/shared/ui/tooltip";
 import { useAction } from "@/lib/actions";
 import { playbackModel, realtimeModel } from "@/models";
 

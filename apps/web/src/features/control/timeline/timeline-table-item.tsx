@@ -3,9 +3,9 @@ import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 
-import { GridTableRow } from "@/components/ui/grid-table";
-import { Tooltip } from "@/components/ui/tooltip";
 import { useRenameControlEventMutation } from "@/features/control/hooks";
+import { GridTableRow } from "@/features/shared/ui/grid-table";
+import { Tooltip } from "@/features/shared/ui/tooltip";
 
 import { CurrentEventIndicator } from "./CurrentEventIndicator";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";

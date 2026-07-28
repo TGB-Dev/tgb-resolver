@@ -2,12 +2,12 @@ import { Grid, Splitter, useSplitter } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { ControlConfirmDialog } from "@/components/control/control-confirm-dialog";
-import { FloatingPanelHost } from "@/components/control/floating-panel-host";
-import { ControlMainPanel } from "@/components/control/panels/control-main-panel";
-import { ControlTimelinePanel } from "@/components/control/panels/control-timeline-panel";
-import { ControlStatusBar } from "@/components/control/status-bar/control-status-bar";
+import { ControlConfirmDialog } from "@/features/control/control-confirm-dialog";
+import { FloatingPanelHost } from "@/features/control/floating-panel-host";
+import { ControlMainPanel } from "@/features/control/panels/control-main-panel";
+import { ControlTimelinePanel } from "@/features/control/panels/control-timeline-panel";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
+import { ControlStatusBar } from "@/features/control/status-bar/control-status-bar";
 import { getServerNow } from "@/lib/realtime-client";
 import { controlNowModel } from "@/models";
 

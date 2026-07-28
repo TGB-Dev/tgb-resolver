@@ -1,4 +1,4 @@
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@/features/shared/ui/toaster";
 
 import { assetsManagerModel } from "./assets-manager-model";
 

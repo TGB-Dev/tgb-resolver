@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 
-import { ImportShowPanel } from "@/components/control/import-show-panel";
-import { InspectShowPanel } from "@/components/control/inspect-show-panel";
+import { ImportShowPanel } from "@/features/control/import-show-panel";
+import { InspectShowPanel } from "@/features/control/inspect-show-panel";
 
 export enum FloatingPanelType {
   ImportShow = "import-show",

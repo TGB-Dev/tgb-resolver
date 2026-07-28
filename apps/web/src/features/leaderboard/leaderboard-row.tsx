@@ -4,7 +4,7 @@ import type { LeaderboardEntry } from "@tgb-resolver/realtime";
 import { motion, type Variants } from "motion/react";
 import { memo, useMemo, useRef } from "react";
 
-import { useColorMode } from "@/components/ui/color-mode";
+import { useColorMode } from "@/features/shared/ui/color-mode";
 import { entryEqual } from "@/lib/leaderboard-comparators";
 import { leaderboardModel } from "@/models";
 import { animateScrollIntoView } from "@/utils/scroll";
@@ -12,6 +12,12 @@ import { animateScrollIntoView } from "@/utils/scroll";
 import { PenaltyCell, ScoreCell, SubmissionTimeCell, UsernameCell } from "./cells";
 import { ProblemCell } from "./problem-cell";
 import { RankCell } from "./rank-cell";
+
+// TODO: adjust animation timings to be relative to whole event's duration
+// TODO: submission count to show a contestant's effort on a problem, and we'll show the verdict on those individual attempt also
+// TODO: rank number anim
+// TODO: update with a pending, pending-active state, as currently it it's turning "unexpectedly" from Unknown to Pending
+// on PRE-RES, which is kinda bad on the UX side of things
 
 const MotionRow = motion.create(Table.Row);
 

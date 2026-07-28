@@ -1,4 +1,4 @@
-import { type GridTableColumnConfig, gridTableTemplate } from "@/components/ui/grid-table";
+import { type GridTableColumnConfig, gridTableTemplate } from "@/features/shared/ui/grid-table";
 
 export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig> = {
   id: {

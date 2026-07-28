@@ -1,6 +1,6 @@
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 
-import { useColorMode } from "@/components/ui/color-mode";
+import { useColorMode } from "@/features/shared/ui/color-mode";
 
 interface VerdictExplicitColorDef {
   fg: { light: string; dark: string };

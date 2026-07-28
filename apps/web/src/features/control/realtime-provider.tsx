@@ -6,7 +6,7 @@ import {
 import { ShowConnectionStatus, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
 import { type ReactNode, useEffect, useRef } from "react";
 
-import { BigRefetchOverlay } from "@/components/control/big-refetch-overlay";
+import { BigRefetchOverlay } from "@/features/control/big-refetch-overlay";
 import { connectRealtime } from "@/lib/realtime-client";
 import { playbackModel, realtimeModel, showModel } from "@/models";
 

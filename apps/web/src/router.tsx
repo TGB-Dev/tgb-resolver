@@ -1,6 +1,7 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 
-import { ErrorPage, NotFoundPage } from "./components/app/error-page";
+import { ErrorPage, NotFoundPage } from "@/features/shared/app/error-page";
+
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
