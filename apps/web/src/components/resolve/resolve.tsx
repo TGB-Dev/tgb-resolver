@@ -50,9 +50,9 @@ export function Resolve() {
       const userId = currentEvent.payload.userId;
       leaderboardModel.currentResolvedUserId.value = userId;
 
-      const resolvedUserRank = leaderboardModel.userIds.value.indexOf(userId);
-      if (resolvedUserRank >= 0) {
-        const viewIndex = Math.min(resolvedUserRank + 3, leaderboardModel.userIds.value.length - 1);
+      const rank = leaderboardModel.userIds.value.indexOf(userId);
+      if (rank >= 0) {
+        const viewIndex = Math.min(rank + 2, leaderboardModel.userIds.value.length - 1);
         leaderboardModel.currentBottomView.value = leaderboardModel.userIds.value[viewIndex];
       }
     } else {

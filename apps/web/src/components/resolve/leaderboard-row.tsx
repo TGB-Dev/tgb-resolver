@@ -1,9 +1,9 @@
-import { Box, Table, Text } from "@chakra-ui/react";
+import { Box, Table, Text, useToken } from "@chakra-ui/react";
 import { useSignalEffect } from "@preact/signals-react";
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 import type { LeaderboardEntry, LeaderboardProblemResult } from "@tgb-resolver/realtime";
-import { motion } from "motion/react";
-import { memo, useRef } from "react";
+import { motion, type Variants } from "motion/react";
+import { memo, useMemo, useRef } from "react";
 
 import { entryEqual, problemCellEqual } from "@/lib/leaderboard-comparators";
 import {
@@ -13,6 +13,9 @@ import {
   verdictShortCode,
 } from "@/lib/verdict";
 import { leaderboardModel } from "@/models";
+import { animateScrollIntoView } from "@/utils/scroll";
+
+import { useColorMode } from "../ui/color-mode";
 
 const MotionRow = motion.create(Table.Row);
 const MotionBox = motion.create(Box);
@@ -87,7 +90,26 @@ interface LeaderboardRowProps {
 
 const LeaderboardRow = memo<LeaderboardRowProps>(
   function LeaderboardRow({ data, isCurrentResolved }) {
-    const username = `${data.realName} (${data.username})`;
+    const [normalBg, darkBg, lightBg] = useToken("colors", ["bg", "yellow.700", "yellow.300/90"]);
+    const { colorMode } = useColorMode();
+
+    const variants: Variants = useMemo(
+      () => ({
+        dark: { backgroundColor: normalBg },
+        darkCurrent: { backgroundColor: darkBg },
+        light: { backgroundColor: normalBg },
+        lightCurrent: { backgroundColor: lightBg },
+      }),
+      [normalBg, darkBg, lightBg],
+    );
+
+    const currentVariant = useMemo(() => {
+      if (colorMode === "dark") {
+        return isCurrentResolved ? "darkCurrent" : "dark";
+      } else {
+        return isCurrentResolved ? "lightCurrent" : "light";
+      }
+    }, [colorMode, isCurrentResolved]);
 
     const ref = useRef<HTMLTableRowElement>(null);
 
@@ -95,18 +117,54 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
       const targetId = leaderboardModel.currentBottomView.value;
       if (targetId !== data.userId) return;
 
-      leaderboardModel.getSignal(targetId).value;
+      requestAnimationFrame(() => {
+        if (!ref.current) return;
 
-      const raf = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          ref.current?.scrollIntoView({ behavior: "auto", block: "end" });
-        });
+        let parent: HTMLElement | null = ref.current.parentElement;
+        while (parent) {
+          const style = getComputedStyle(parent);
+          if (
+            style.overflow === "auto" ||
+            style.overflow === "scroll" ||
+            style.overflowY === "auto" ||
+            style.overflowY === "scroll"
+          ) {
+            animateScrollIntoView(ref.current, parent, {
+              block: "end",
+              duration: 0.8,
+              ease: "easeInOut",
+            });
+            return;
+          }
+          parent = parent.parentElement;
+        }
       });
-      return () => cancelAnimationFrame(raf);
     });
 
+    // TODO: adjust the content of each row
+    // TODO: adjust column width
+    // TODO: adjust timings to be rational to whole event's duration
+    // TODO: adjust colors
+    const username = `${data.realName} (${data.username})`;
+
     return (
-      <MotionRow ref={ref} bg={isCurrentResolved ? "rgba(245, 158, 11, 0.12)" : undefined}>
+      <MotionRow
+        ref={ref}
+        layout="position"
+        layoutScroll
+        variants={variants}
+        animate={currentVariant}
+        transition={{
+          layout: {
+            duration: 0.8,
+            ease: "easeOut",
+          },
+          backgroundColor: {
+            duration: 0.15,
+            ease: "easeInOut",
+          },
+        }}
+      >
         <Table.Cell>{data.rank}</Table.Cell>
 
         <UsernameCell username={username} />
