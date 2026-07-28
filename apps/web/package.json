@@ -35,7 +35,7 @@
     "@tgb-resolver/realtime": "workspace:*",
     "@vitejs/plugin-react": "^6.0.4",
     "effect": "^3.22.0",
-    "lucide-react": "^1.26.0",
+    "lucide-react": "^1.27.0",
     "motion": "^12.42.2",
     "next-themes": "^0.4.6",
     "react": "^19.2.8",
