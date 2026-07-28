@@ -1,8 +1,8 @@
 import { Box } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Resolve } from "@/components/resolve/resolve";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
+import { Resolve } from "@/features/leaderboard/leaderboard";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -13,7 +13,7 @@ function Home() {
     <ControlRealtimeProvider>
       <Box position="relative">
         <Box h="dvh" overflowY="auto" css={{ overflowAnchor: "none" }}>
-          <Resolve />
+          <Resolve isBigScreen />
         </Box>
 
         {/* Overlay to prevent manual interaction to the resolve leaderboard by absorbing all the things */}

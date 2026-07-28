@@ -1,27 +1,41 @@
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 
-const verdictColors: Partial<Record<VerdictRunResult, string>> = {
-  [VerdictRunResult.ACCEPTED]: "fg.success",
-  [VerdictRunResult.WRONG_ANSWER]: "fg.error",
-  [VerdictRunResult.TIME_LIMIT_EXCEEDED]: "fg.warning",
-  [VerdictRunResult.MEMORY_LIMIT_EXCEEDED]: "fg.warning",
-  [VerdictRunResult.OUTPUT_LIMIT_EXCEEDED]: "fg.warning",
-  [VerdictRunResult.INVALID_RETURN]: "fg.error",
-  [VerdictRunResult.RUNTIME_ERROR]: "fg.error",
-  [VerdictRunResult.COMPILE_ERROR]: "fg.warning",
-  [VerdictRunResult.INTERNAL_ERROR]: "fg.warning",
-  [VerdictRunResult.SHORT_CIRCUITED]: "fg.muted",
-  [VerdictRunResult.ABORTED]: "fg.error",
-  [VerdictRunResult.PENDING]: "white",
-  [VerdictRunResult.UNKNOWN]: "fg.muted",
-};
+import { useColorMode } from "@/components/ui/color-mode";
 
-const verdictBorderColors: Partial<Record<VerdictRunResult, string>> = {
-  [VerdictRunResult.PENDING]: "cyan.400",
-};
+interface VerdictExplicitColorDef {
+  fg: { light: string; dark: string };
+  border: { light: string; dark: string };
+  bg: { light: string; dark: string };
+}
 
-const verdictBgColors: Partial<Record<VerdictRunResult, string>> = {
-  [VerdictRunResult.PENDING]: "purple.700",
+interface VerdictSemanticColorDef {
+  semanticToken: string;
+}
+
+type VerdictColorDef = VerdictExplicitColorDef | VerdictSemanticColorDef;
+
+const verdictColorDefs: Record<VerdictRunResult, VerdictColorDef> = {
+  [VerdictRunResult.ACCEPTED]: {
+    semanticToken: "success",
+  },
+  [VerdictRunResult.WRONG_ANSWER]: {
+    semanticToken: "error",
+  },
+  [VerdictRunResult.TIME_LIMIT_EXCEEDED]: { semanticToken: "warning" },
+  [VerdictRunResult.MEMORY_LIMIT_EXCEEDED]: { semanticToken: "warning" },
+  [VerdictRunResult.OUTPUT_LIMIT_EXCEEDED]: { semanticToken: "warning" },
+  [VerdictRunResult.INVALID_RETURN]: { semanticToken: "error" },
+  [VerdictRunResult.RUNTIME_ERROR]: { semanticToken: "error" },
+  [VerdictRunResult.COMPILE_ERROR]: { semanticToken: "warning" },
+  [VerdictRunResult.INTERNAL_ERROR]: { semanticToken: "warning" },
+  [VerdictRunResult.SHORT_CIRCUITED]: { semanticToken: "muted" },
+  [VerdictRunResult.ABORTED]: { semanticToken: "error" },
+  [VerdictRunResult.PENDING]: {
+    fg: { light: "white", dark: "white" },
+    border: { light: "cyan.400", dark: "cyan.400" },
+    bg: { light: "purple.700", dark: "purple.700" },
+  },
+  [VerdictRunResult.UNKNOWN]: { semanticToken: "muted" },
 };
 
 const verdictShortCodes: Record<VerdictRunResult, string> = {
@@ -40,21 +54,41 @@ const verdictShortCodes: Record<VerdictRunResult, string> = {
   [VerdictRunResult.UNKNOWN]: "?",
 };
 
-export function verdictColorCode(verdict?: VerdictRunResult): string {
-  const fallback = "gray.400";
-  return verdict ? (verdictColors[verdict] ?? fallback) : fallback;
-}
-
-export function verdictBorderCode(verdict?: VerdictRunResult): string {
-  if (verdict && verdictBorderColors[verdict]) return verdictBorderColors[verdict];
-  return verdictColorCode(verdict).replace("fg.", "border.");
-}
-
-export function verdictBgCode(verdict?: VerdictRunResult): string {
-  if (verdict && verdictBgColors[verdict]) return verdictBgColors[verdict];
-  return verdictColorCode(verdict).replace("fg.", "bg.");
-}
-
 export function verdictShortCode(verdict?: VerdictRunResult): string {
   return verdict ? (verdictShortCodes[verdict] ?? "?") : "?";
+}
+
+interface UseVerdictColorReturn {
+  fg: string;
+  border: string;
+  bg: string;
+}
+
+export function useVerdictColor(
+  verdict: VerdictRunResult = VerdictRunResult.UNKNOWN,
+): UseVerdictColorReturn {
+  const { colorMode } = useColorMode();
+  const colorDef = verdictColorDefs[verdict] ?? { semanticToken: "muted" };
+
+  if ("semanticToken" in colorDef) {
+    return {
+      fg: `fg.${colorDef.semanticToken}`,
+      border: `border.${colorDef.semanticToken}`,
+      bg: `bg.${colorDef.semanticToken}`,
+    };
+  }
+
+  if (colorMode === "dark") {
+    return {
+      fg: colorDef.fg.dark,
+      border: colorDef.border.dark,
+      bg: colorDef.bg.dark,
+    };
+  }
+
+  return {
+    fg: colorDef.fg.light,
+    border: colorDef.border.light,
+    bg: colorDef.bg.light,
+  };
 }

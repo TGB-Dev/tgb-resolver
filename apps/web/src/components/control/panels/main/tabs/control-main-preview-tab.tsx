@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react";
 
-import { Resolve } from "@/components/resolve/resolve";
+import { Resolve } from "@/features/leaderboard/leaderboard";
 
 export function ControlMainPreviewTab() {
   return (

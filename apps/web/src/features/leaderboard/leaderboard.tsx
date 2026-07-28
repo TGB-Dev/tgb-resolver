@@ -6,8 +6,9 @@ import { memo } from "react";
 import { useControlShowQuery } from "@/features/control/hooks";
 import { leaderboardModel, playbackModel } from "@/models";
 
-import LeaderboardRow from "./leaderboard-row";
-import LeaderboardTable from "./leaderboard-table";
+import { LeaderboardProvider } from "./leaderboard-provider";
+import { LeaderboardRow } from "./leaderboard-row";
+import { LeaderboardTable } from "./leaderboard-table";
 
 const Row = memo(function Row({ userId }: { userId: number }) {
   const data = leaderboardModel.getSignal(userId).value;
@@ -26,7 +27,11 @@ function LeaderboardRows() {
 
 const SCROLL_POSITION_KEY = "tgb-resolver:leaderboard-scroll-position";
 
-export function Resolve() {
+interface ResolveProps {
+  isBigScreen?: boolean;
+}
+
+export function Resolve({ isBigScreen }: ResolveProps) {
   const data = useLiveSignal(useControlShowQuery().data);
 
   useSignalEffect(() => {
@@ -80,8 +85,10 @@ export function Resolve() {
   if (data.value == null) return null;
 
   return (
-    <LeaderboardTable problems={data.value.contest.problems}>
-      <LeaderboardRows />
-    </LeaderboardTable>
+    <LeaderboardProvider isBigScreen={isBigScreen}>
+      <LeaderboardTable problems={data.value.contest.problems}>
+        <LeaderboardRows />
+      </LeaderboardTable>
+    </LeaderboardProvider>
   );
 }

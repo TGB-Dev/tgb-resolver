@@ -3,7 +3,7 @@ import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import type { ReactNode } from "react";
 
-import { verdictColorCode, verdictShortCode } from "@/lib/verdict";
+import { useVerdictColor, verdictShortCode } from "@/lib/verdict";
 
 interface CueContentProps {
   cue: TimelineTableItem | undefined;
@@ -71,6 +71,7 @@ interface ResolveContentProps {
 
 function ResolveContent({ cue, textProps, nameOverride }: ResolveContentProps): ReactNode {
   const resolvedName = cue.customName ?? nameOverride ?? cue.name;
+  const { fg } = useVerdictColor(cue.verdict);
 
   if (!cue.problem) {
     return <Text fontFamily="mono">{resolvedName}</Text>;
@@ -90,7 +91,7 @@ function ResolveContent({ cue, textProps, nameOverride }: ResolveContentProps): 
   return (
     <Text as="span">
       {resolvedName} |{" "}
-      <Text {...textProps} color={verdictColorCode(cue.verdict)}>
+      <Text {...textProps} color={fg}>
         {verdictShortCode(cue.verdict)}
       </Text>{" "}
       |{" "}

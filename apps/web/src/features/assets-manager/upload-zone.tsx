@@ -28,13 +28,13 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
   }
 
   async function collectFilesAndFolders(
-    entry: any,
+    entry: FileSystemEntry,
     pathParts: string[],
     result: { isFile: boolean; file?: File; pathParts: string[] }[],
   ): Promise<void> {
     if (entry.isFile) {
       return new Promise((resolve) => {
-        entry.file((file: File) => {
+        (entry as FileSystemFileEntry).file((file: File) => {
           result.push({ isFile: true, file, pathParts });
           resolve();
         });
@@ -42,10 +42,10 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
     } else if (entry.isDirectory) {
       const newPathParts = [...pathParts, entry.name];
       result.push({ isFile: false, pathParts: newPathParts });
-      const reader = entry.createReader();
+      const reader = (entry as FileSystemDirectoryEntry).createReader();
       return new Promise((resolve) => {
         const readEntries = () => {
-          reader.readEntries(async (entries: any[]) => {
+          reader.readEntries(async (entries: FileSystemEntry[]) => {
             if (entries.length > 0) {
               const promises = entries.map((child) =>
                 collectFilesAndFolders(child, newPathParts, result),

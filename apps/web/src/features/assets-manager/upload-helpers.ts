@@ -42,7 +42,10 @@ export async function processUploadBatch(
 
   toaster.promise(promise(), {
     success: { title: "Upload Complete", description: (d: string) => d },
-    error: { title: "Upload Incomplete", description: (e: any) => e.message },
+    error: {
+      title: "Upload Incomplete",
+      description: (e: unknown) => (e instanceof Error ? e.message : String(e)),
+    },
     loading: {
       title: "Uploading...",
       description: `Processing ${items.length} item${items.length !== 1 ? "s" : ""}`,
