@@ -523,10 +523,38 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /assets/folders:
+    post:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsCreateFolderEndpoint
+      requestBody:
+        x-name: CreateFolderRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /assets/entries/{id}:
     delete:
       tags:
       - Assets
-      operationId: TGBResolverServerFeaturesAssetsDeleteAssetEndpoint
+      operationId: TGBResolverServerFeaturesAssetsDeleteEntryEndpoint
       parameters:
       - name: id
         in: path
@@ -534,15 +562,80 @@ paths:
         schema:
           type: string
       requestBody:
-        x-name: VersionedCommandRequest
+        x-name: DeleteEntryRequest
         description: ''
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/VersionedCommandRequest'
+              $ref: '#/components/schemas/DeleteEntryRequest'
           application/json:
             schema:
-              $ref: '#/components/schemas/VersionedCommandRequest'
+              $ref: '#/components/schemas/DeleteEntryRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsRenameEntryEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        x-name: RenameEntryRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameEntryRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /assets/{assetId}/move:
+    patch:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsMoveAssetEndpoint
+      parameters:
+      - name: assetId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        x-name: MoveAssetRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveAssetRequest'
         required: true
         x-position: 1
       responses:
@@ -791,21 +884,19 @@ components:
       type: object
       additionalProperties: false
       properties:
-        images:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/ShowAssetSnapshot'
-        sfx:
+        folders:
           type: array
           items:
-            $ref: '#/components/schemas/ShowAssetSnapshot'
+            $ref: '#/components/schemas/FolderNodeSnapshot'
     ShowAssetSnapshot:
       type: object
       additionalProperties: false
       properties:
         id:
-          type: string
-        kind:
           type: string
         fileName:
           type: string
@@ -818,6 +909,21 @@ components:
           format: int64
         xxh3:
           type: string
+        folderId:
+          type: string
+          nullable: true
+    FolderNodeSnapshot:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FolderNodeSnapshot'
     TimelineEventSnapshot:
       type: object
       additionalProperties: false
@@ -1155,8 +1261,6 @@ components:
           type: integer
           format: int32
           minimum: 0
-        kind:
-          type: string
         fileName:
           type: string
           maxLength: 255
@@ -1168,6 +1272,67 @@ components:
           minLength: 1
           nullable: false
         bytes:
+          type: string
+          minLength: 1
+          nullable: false
+        folderId:
+          type: string
+          nullable: true
+    CreateFolderRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+          minimum: 0
+        parentFolderId:
+          type: string
+        name:
+          type: string
+          maxLength: 100
+          minLength: 0
+          nullable: false
+    DeleteEntryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+          minimum: 0
+        isDirectory:
+          type: boolean
+    RenameEntryRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - newName
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+          minimum: 0
+        isDirectory:
+          type: boolean
+        newName:
+          type: string
+          maxLength: 100
+          minLength: 0
+          nullable: false
+    MoveAssetRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - targetFolderId
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+          minimum: 0
+        targetFolderId:
           type: string
           minLength: 1
           nullable: false

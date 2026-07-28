@@ -31,7 +31,7 @@ function makeShow(showVersion: number, events: TimelineEvent[]): ShowFile {
       fullAutoEnabled: false,
     },
     playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
-    assets: { images: [], sfx: [] },
+    assets: { items: [] },
     timeline: events,
   };
 }

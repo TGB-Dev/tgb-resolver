@@ -104,10 +104,6 @@ public sealed class UpsertAssetRequestValidator : Validator<UpsertAssetRequest>
   public UpsertAssetRequestValidator()
   {
     RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
-    RuleFor(x => x.Kind)
-      .Must(k => string.Equals(k, "image", StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(k, "sfx", StringComparison.OrdinalIgnoreCase))
-      .WithMessage("Asset kind must be 'image' or 'sfx'.");
     RuleFor(x => x.Bytes)
       .NotEmpty().WithMessage("Asset data is required.")
       .Must(IsValidBase64).WithMessage("Asset data must be a valid Base64 string.");
@@ -131,5 +127,43 @@ public sealed class UpsertAssetRequestValidator : Validator<UpsertAssetRequest>
     {
       return false;
     }
+  }
+}
+
+public sealed class CreateFolderRequestValidator : Validator<CreateFolderRequest>
+{
+  public CreateFolderRequestValidator()
+  {
+    RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
+    RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+  }
+}
+
+public sealed class DeleteEntryRequestValidator : Validator<DeleteEntryRequest>
+{
+  public DeleteEntryRequestValidator()
+  {
+    RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
+    RuleFor(x => x.Id).NotEmpty();
+  }
+}
+
+public sealed class RenameEntryRequestValidator : Validator<RenameEntryRequest>
+{
+  public RenameEntryRequestValidator()
+  {
+    RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
+    RuleFor(x => x.Id).NotEmpty();
+    RuleFor(x => x.NewName).NotEmpty().MaximumLength(100);
+  }
+}
+
+public sealed class MoveAssetRequestValidator : Validator<MoveAssetRequest>
+{
+  public MoveAssetRequestValidator()
+  {
+    RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
+    RuleFor(x => x.AssetId).NotEmpty();
+    RuleFor(x => x.TargetFolderId).NotEmpty();
   }
 }

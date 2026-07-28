@@ -12,7 +12,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       <HotkeysProvider
         defaultOptions={{
           hotkey: { preventDefault: true },
-          hotkeySequence: { timeout: 1500 },
+          hotkeySequence: { timeout: 1500, preventDefault: true },
         }}
       >
         <ChakraProvider>{children}</ChakraProvider>

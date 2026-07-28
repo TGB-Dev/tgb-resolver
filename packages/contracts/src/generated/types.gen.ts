@@ -181,18 +181,24 @@ export enum PlaybackStatus {
 }
 
 export type AssetCollectionSnapshot = {
-    images?: Array<ShowAssetSnapshot>;
-    sfx?: Array<ShowAssetSnapshot>;
+    items?: Array<ShowAssetSnapshot>;
+    folders?: Array<FolderNodeSnapshot>;
 };
 
 export type ShowAssetSnapshot = {
     id?: string;
-    kind?: string;
     fileName?: string;
     originalName?: string;
     contentType?: string;
     sizeBytes?: number;
     xxh3?: string;
+    folderId?: string | null;
+};
+
+export type FolderNodeSnapshot = {
+    id?: string;
+    name?: string;
+    children?: Array<FolderNodeSnapshot>;
 };
 
 export type TimelineEventSnapshot = {
@@ -357,10 +363,32 @@ export type SetTimelineModeRequest = {
 
 export type UpsertAssetRequest = {
     showVersion?: number;
-    kind?: string;
     fileName: string;
     contentType: string;
     bytes: string;
+    folderId?: string | null;
+};
+
+export type CreateFolderRequest = {
+    showVersion?: number;
+    parentFolderId?: string;
+    name: string;
+};
+
+export type DeleteEntryRequest = {
+    showVersion?: number;
+    isDirectory?: boolean;
+};
+
+export type RenameEntryRequest = {
+    showVersion?: number;
+    isDirectory?: boolean;
+    newName: string;
+};
+
+export type MoveAssetRequest = {
+    showVersion?: number;
+    targetFolderId: string;
 };
 
 export type GetData = {
@@ -796,33 +824,6 @@ export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses = {
 
 export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses];
 
-export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointData = {
-    body: VersionedCommandRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/assets/{id}';
-};
-
-export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointError = TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsDeleteAssetEndpointErrors];
-
-export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse = TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsDeleteAssetEndpointResponses];
-
 export type TgbResolverServerFeaturesAssetsGetAssetEndpointData = {
     body?: never;
     path: {
@@ -867,3 +868,109 @@ export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponses = {
 };
 
 export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponse = TgbResolverServerFeaturesAssetsPutAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsPutAssetEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointData = {
+    body: CreateFolderRequest;
+    path?: never;
+    query?: never;
+    url: '/assets/folders';
+};
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointError = TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointData = {
+    body: DeleteEntryRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/entries/{id}';
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointError = TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse = TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointData = {
+    body: RenameEntryRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/entries/{id}';
+};
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointError = TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointResponse = TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsMoveAssetEndpointData = {
+    body: MoveAssetRequest;
+    path: {
+        assetId: string;
+    };
+    query?: never;
+    url: '/assets/{assetId}/move';
+};
+
+export type TgbResolverServerFeaturesAssetsMoveAssetEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsMoveAssetEndpointError = TgbResolverServerFeaturesAssetsMoveAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsMoveAssetEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses];

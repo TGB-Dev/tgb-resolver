@@ -14,7 +14,8 @@ export function NotFoundPage() {
       </Text>
 
       <Text fontSize="sm" color="fg.muted">
-        This page is not available or does not exist. Please check the URL or return to the homepage.
+        This page is not available or does not exist. Please check the URL or return to the
+        homepage.
       </Text>
     </VStack>
   );
@@ -52,7 +53,8 @@ export function ErrorPage({ error }: { error: Error }) {
             Error
           </Text>
           <Text fontSize="sm" color="fg.muted">
-            Please retry or contact support if the issue persists. You can copy the error details below for reference.
+            Please retry or contact support if the issue persists. You can copy the error details
+            below for reference.
           </Text>
         </Stack>
 

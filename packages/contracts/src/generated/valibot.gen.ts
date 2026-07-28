@@ -96,7 +96,6 @@ export const vPlaybackStateSnapshot = v.strictObject({
 
 export const vShowAssetSnapshot = v.strictObject({
     id: v.optional(v.string()),
-    kind: v.optional(v.string()),
     fileName: v.optional(v.string()),
     originalName: v.optional(v.string()),
     contentType: v.optional(v.string()),
@@ -105,12 +104,19 @@ export const vShowAssetSnapshot = v.strictObject({
         v.string(),
         v.bigint()
     ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
-    xxh3: v.optional(v.string())
+    xxh3: v.optional(v.string()),
+    folderId: v.nullish(v.string())
+});
+
+export const vFolderNodeSnapshot: v.GenericSchema = v.strictObject({
+    id: v.optional(v.string()),
+    name: v.optional(v.string()),
+    children: v.optional(v.array(v.lazy(() => vFolderNodeSnapshot)))
 });
 
 export const vAssetCollectionSnapshot = v.strictObject({
-    images: v.optional(v.array(vShowAssetSnapshot)),
-    sfx: v.optional(v.array(vShowAssetSnapshot))
+    items: v.optional(v.array(vShowAssetSnapshot)),
+    folders: v.optional(v.array(vFolderNodeSnapshot))
 });
 
 export const vTimelineEventType = v.picklist([
@@ -254,10 +260,32 @@ export const vSetTimelineModeRequest = v.strictObject({
 
 export const vUpsertAssetRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    kind: v.optional(v.string()),
     fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
     contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
-    bytes: v.pipe(v.string(), v.minLength(1))
+    bytes: v.pipe(v.string(), v.minLength(1)),
+    folderId: v.nullish(v.string())
+});
+
+export const vCreateFolderRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    parentFolderId: v.optional(v.string()),
+    name: v.pipe(v.string(), v.minLength(0), v.maxLength(100))
+});
+
+export const vDeleteEntryRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    isDirectory: v.optional(v.boolean())
+});
+
+export const vRenameEntryRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    isDirectory: v.optional(v.boolean()),
+    newName: v.pipe(v.string(), v.minLength(0), v.maxLength(100))
+});
+
+export const vMoveAssetRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    targetFolderId: v.pipe(v.string(), v.minLength(1))
 });
 
 export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequest;
@@ -405,17 +433,6 @@ export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointBody = vSetTim
  */
 export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = vShowStateSnapshot;
 
-export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointBody = vVersionedCommandRequest;
-
-export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointPath = v.object({
-    id: v.string()
-});
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesAssetsDeleteAssetEndpointResponse = vShowStateSnapshot;
-
 export const vTgbResolverServerFeaturesAssetsGetAssetEndpointPath = v.object({
     id: v.string()
 });
@@ -435,3 +452,43 @@ export const vTgbResolverServerFeaturesAssetsPutAssetEndpointPath = v.object({
  * Success
  */
 export const vTgbResolverServerFeaturesAssetsPutAssetEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointBody = vCreateFolderRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointBody = vDeleteEntryRequest;
+
+export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointBody = vRenameEntryRequest;
+
+export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointBody = vMoveAssetRequest;
+
+export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointPath = v.object({
+    assetId: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = vShowStateSnapshot;

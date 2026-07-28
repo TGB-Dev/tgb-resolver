@@ -50,10 +50,9 @@ describe("mapShowStateSnapshotToShowFile", () => {
         startedAt: 12345,
       },
       assets: {
-        images: [
+        items: [
           {
             id: "hero",
-            kind: "image",
             fileName: "hero.png",
             originalName: "hero.png",
             contentType: "image/png",
@@ -61,7 +60,6 @@ describe("mapShowStateSnapshotToShowFile", () => {
             xxh3: "abc",
           },
         ],
-        sfx: [],
       },
       timeline: [
         {

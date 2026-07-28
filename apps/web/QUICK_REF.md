@@ -15,6 +15,7 @@ signals straight in JSX: `<>{model.field}</>`. Call actions as methods.
 | `confirmActionModel` | `open`, `title`, `message`, `confirmLabel`, `cancelLabel` | `confirmAction(p)`, `resolveConfirmAction(ok)` |
 | `fullscreenModel` | `isFullscreen` | `toggleFullscreen()` |
 | `floatingPanelModel` | `active`, `isDirty` | `openFloatingPanel(...)`, `closeFloatingPanel(b)`, `requestFloatingPanelClose(r?)`, `setDirty(b)` |
+| `assetsManagerModel` | `folderTree`, `selectedEntryId`, `selectedIds`, `viewMode`, `expandedFolderIds`, `entries` (computed) | `selectEntry(id)`, `clearSelection()`, `handleEntryClick(e, idx)`, `setViewMode(m)`, `toggleFolder(id)`, `createFolder(pid, name)`, `uploadAsset(fid, file)`, `renameEntry(id, isDir, name)`, `deleteEntry(id, isDir)`, `applyShowState(data)`, `setInvalidateCache(fn)` |
 
 ## Declare a new store (`src/models/my-model.ts`)
 

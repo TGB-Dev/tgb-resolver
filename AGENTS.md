@@ -59,12 +59,26 @@ Workspace packages: `@tgb-resolver/*`.
   implementation: `apps/web/src/components/control/timeline/timeline-table.tsx` (generalize
   for any future table including the leaderboard).
 
-### Frontend state (Preact Signals)
+### Unity FsEntry pattern (Assets Manager)
 
-All **global / shared / cross-component** state lives in `apps/web/src/models/` as
-`createModel` singletons (Zustand/Pinia-style). One barrel re-exports them:
-`apps/web/src/models/index.ts`. See `apps/web/QUICK_REF.md` for the full list and
-usage. Conventions:
+The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) with
+`isDirectory: boolean` discriminant. All server endpoints and client state mirror this:
+
+- **Server**: `DELETE /assets/entries/{id}`, `PATCH /assets/entries/{id}` accept
+  `{ showVersion, isDirectory }` in the body — single endpoint for both folders and files.
+- **Contracts**: `deleteEntryEndpoint`, `renameEntryEndpoint` replacing separate
+  folder/asset endpoints.
+- **Client model** (`assets-manager-model.ts`): `selectedEntryId` (navigation cursor),
+  `selectedIds: Signal<Set<string>>` (multi-select), `entries` (computed — merges child
+  folders + belonging files). `FsEntry` defined in `apps/web/src/features/assets-manager/types.ts`.
+- **Views**: single `EntryCard`/`EntryRow` (grid/list), single `EntryMenu` (context menu).
+  No bifurcated folder vs asset components.
+- **Tree view**: `Folder`/`FolderOpen` icons (no chevron), click toggles expand. `useComputed`
+  per-node for reactive subscriptions.
+- **Selection semantics**: single-click → select/highlight, double-click → navigate/open.
+  Modifier + click for multi-select; click outside deselects all.
+
+### Frontend state (Preact Signals)
 
 - Import signals **only** from `@preact/signals-react` (never `@preact/signals`).
 - **BANNED for shared state:** React `useState`, `useReducer`, `createContext`,

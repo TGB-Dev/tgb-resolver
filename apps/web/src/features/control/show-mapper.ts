@@ -7,7 +7,7 @@ import {
   TimelineMode,
   VerdictRunResult,
 } from "@tgb-resolver/contracts";
-import { AssetKind, createEmptyShow, normalizeShow, type ShowFile } from "@tgb-resolver/realtime";
+import { createEmptyShow, normalizeShow, type ShowFile } from "@tgb-resolver/realtime";
 
 function normalizePlaybackStatus(status?: string): PlaybackStatus {
   if (status === PlaybackStatus.RUNNING) return PlaybackStatus.RUNNING;
@@ -152,23 +152,14 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
         startedAt: snapshot.playback?.startedAt ?? undefined,
       },
       assets: {
-        images: (snapshot.assets?.images ?? []).map((asset) => ({
+        items: (snapshot.assets?.items ?? []).map((asset) => ({
           id: asset.id ?? "",
-          kind: AssetKind.Image,
           fileName: asset.fileName ?? "",
           originalName: asset.originalName ?? "",
           contentType: asset.contentType ?? "",
           sizeBytes: asset.sizeBytes ?? 0,
           xxh3: asset.xxh3 ?? "",
-        })),
-        sfx: (snapshot.assets?.sfx ?? []).map((asset) => ({
-          id: asset.id ?? "",
-          kind: AssetKind.Sfx,
-          fileName: asset.fileName ?? "",
-          originalName: asset.originalName ?? "",
-          contentType: asset.contentType ?? "",
-          sizeBytes: asset.sizeBytes ?? 0,
-          xxh3: asset.xxh3 ?? "",
+          folderId: asset.folderId ?? undefined,
         })),
       },
       timeline,

@@ -2,6 +2,11 @@ export * from "./generated/@tanstack/react-query.gen";
 export { client as generatedClient } from "./generated/client.gen";
 export type { Options } from "./generated/sdk.gen";
 export {
+  tgbResolverServerFeaturesAssetsCreateFolderEndpoint as createFolderEndpoint,
+  tgbResolverServerFeaturesAssetsDeleteEntryEndpoint as deleteEntryEndpoint,
+  tgbResolverServerFeaturesAssetsMoveAssetEndpoint as moveAssetEndpoint,
+  tgbResolverServerFeaturesAssetsPutAssetEndpoint as uploadAssetEndpoint,
+  tgbResolverServerFeaturesAssetsRenameEntryEndpoint as renameEntryEndpoint,
   tgbResolverServerFeaturesShowClearShowEndpoint as clearShow,
   tgbResolverServerFeaturesShowDisableLiveModeEndpoint as disableLiveMode,
   tgbResolverServerFeaturesShowEnableLiveModeEndpoint as enableLiveMode,
@@ -23,6 +28,7 @@ export type {
   ClientOptions,
   ContestSnapshot,
   CreateTimelineEventRequest,
+  FolderNodeSnapshot,
   FreezeSnapshotEntrySnapshot,
   ImportBundleRequest,
   ImportXmlRequest,
