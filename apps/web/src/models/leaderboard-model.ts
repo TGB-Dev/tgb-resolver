@@ -2,6 +2,8 @@ import { createModel, type Signal, signal } from "@preact/signals-react";
 import type { LeaderboardEntry, ShowFile } from "@tgb-resolver/realtime";
 import { deriveLeaderboard } from "@tgb-resolver/realtime";
 
+import { entryEqual } from "@/lib/leaderboard-comparators";
+
 interface LeaderboardModelState {
   userIds: Signal<number[]>;
   getSignal: (userId: number) => Signal<LeaderboardEntry | null>;
@@ -28,7 +30,11 @@ const LeaderboardModel = createModel<LeaderboardModelState>(() => {
   function sync(show: ShowFile, upToEventId?: number): void {
     const rows = deriveLeaderboard(show, upToEventId);
     for (const row of rows) {
-      getSignal(row.userId).value = row;
+      const sig = getSignal(row.userId);
+      const current = sig.peek();
+      if (current == null || !entryEqual(current, row)) {
+        sig.value = row;
+      }
     }
     const prevIds = userIds.peek();
     const newIds = rows.map((r) => r.userId);

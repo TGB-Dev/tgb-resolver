@@ -5,6 +5,7 @@ import type { LeaderboardEntry, LeaderboardProblemResult } from "@tgb-resolver/r
 import { motion } from "motion/react";
 import { memo, useRef } from "react";
 
+import { entryEqual, problemCellEqual } from "@/lib/leaderboard-comparators";
 import {
   verdictBgCode,
   verdictBorderCode,
@@ -15,22 +16,6 @@ import { leaderboardModel } from "@/models";
 
 const MotionRow = motion.create(Table.Row);
 const MotionBox = motion.create(Box);
-
-function entryEqual(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
-  if (a.rank !== b.rank || a.totalScore !== b.totalScore || a.totalPenalty !== b.totalPenalty)
-    return false;
-  if (a.problems.length !== b.problems.length) return false;
-  return a.problems.every(
-    (p, i) =>
-      p.problemId === b.problems[i].problemId &&
-      p.score === b.problems[i].score &&
-      p.verdict === b.problems[i].verdict,
-  );
-}
-
-function problemCellEqual(a: LeaderboardProblemResult, b: LeaderboardProblemResult): boolean {
-  return a.score === b.score && a.verdict === b.verdict;
-}
 
 const ProblemCell = memo<{ problem: LeaderboardProblemResult }>(
   function ProblemCell({ problem }) {
@@ -87,6 +72,14 @@ const ProblemCell = memo<{ problem: LeaderboardProblemResult }>(
   (prev, next) => problemCellEqual(prev.problem, next.problem),
 );
 
+const UsernameCell = memo<{ username: string }>(({ username }) => (
+  <Table.Cell>{username}</Table.Cell>
+));
+
+const ScoreCell = memo<{ score: number }>(({ score }) => <Table.Cell>{score}</Table.Cell>);
+
+const PenaltyCell = memo<{ penalty: number }>(({ penalty }) => <Table.Cell>{penalty}</Table.Cell>);
+
 interface LeaderboardRowProps {
   data: LeaderboardEntry;
   isCurrentResolved: boolean;
@@ -104,9 +97,6 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
 
       leaderboardModel.getSignal(targetId).value;
 
-      // Double-RAF: wait for motion layout FLIP to settle before scrolling.
-      // A single RAF fires mid-animation and captures the animated (not final)
-      // position, causing the entry to scroll off-screen after the FLIP settles.
       const raf = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           ref.current?.scrollIntoView({ behavior: "auto", block: "end" });
@@ -116,27 +106,17 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
     });
 
     return (
-      <MotionRow
-        ref={ref}
-        layout="position"
-        transition={{
-          layout: {
-            duration: 0.8,
-            ease: "easeInOut",
-          },
-        }}
-        bg={isCurrentResolved ? "rgba(245, 158, 11, 0.12)" : undefined}
-      >
+      <MotionRow ref={ref} bg={isCurrentResolved ? "rgba(245, 158, 11, 0.12)" : undefined}>
         <Table.Cell>{data.rank}</Table.Cell>
 
-        <Table.Cell>{username}</Table.Cell>
+        <UsernameCell username={username} />
 
         {data.problems.map((problem) => (
           <ProblemCell key={problem.problemId} problem={problem} />
         ))}
 
-        <Table.Cell>{data.totalScore}</Table.Cell>
-        <Table.Cell>{data.totalPenalty}</Table.Cell>
+        <ScoreCell score={data.totalScore} />
+        <PenaltyCell penalty={data.totalPenalty} />
       </MotionRow>
     );
   },
