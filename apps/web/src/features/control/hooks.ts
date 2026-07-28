@@ -176,9 +176,7 @@ export function useOptimizeShowMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
+    onSuccess: () => {},
   });
 }
 
@@ -264,9 +262,7 @@ export function useRenameControlEventMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
+    onSuccess: () => {},
   });
 }
 
