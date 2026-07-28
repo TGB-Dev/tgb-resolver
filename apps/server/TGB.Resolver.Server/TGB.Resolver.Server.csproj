@@ -19,8 +19,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
     <PackageReference Include="NodaTime" Version="3.3.3" />
     <!-- Temporary workaround until vulnerability fixed: https://github.com/dotnet/efcore/issues/38257 -->
+    <!-- The issue itself is closed, but WTH, the bundled version is still vulnerable??? -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" VersionOverride="3.0.3">
-      <Version>3.0.4</Version>
+      <Version>3.0.5</Version>
     </PackageReference>
     <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
     <PackageReference Include="NSwag.MSBuild" Version="14.7.1">
