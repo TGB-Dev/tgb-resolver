@@ -24,6 +24,8 @@ function LeaderboardRows() {
   );
 }
 
+const SCROLL_POSITION_KEY = "tgb-resolver:leaderboard-scroll-position";
+
 export function Resolve() {
   const data = useLiveSignal(useControlShowQuery().data);
 
@@ -37,16 +39,21 @@ export function Resolve() {
     if (currentEventId == null) {
       leaderboardModel.currentResolvedUserId.value = 0;
       leaderboardModel.currentBottomView.value = 0;
+
+      const saved = localStorage.getItem(SCROLL_POSITION_KEY);
+      if (saved) {
+        const userId = Number(saved);
+        if (leaderboardModel.userIds.value.includes(userId)) {
+          leaderboardModel.currentBottomView.value = userId;
+        }
+      }
       return;
     }
 
     const currentEvent = d.timeline.find((e) => e.id === currentEventId);
     if (currentEvent == null) return;
 
-    if (
-      currentEvent.type === TimelineEventType.RES ||
-      currentEvent.type === TimelineEventType.PRE
-    ) {
+    if (currentEvent.type === TimelineEventType.PRE) {
       const userId = currentEvent.payload.userId;
       leaderboardModel.currentResolvedUserId.value = userId;
 
@@ -55,9 +62,18 @@ export function Resolve() {
         const viewIndex = Math.min(rank + 2, leaderboardModel.userIds.value.length - 1);
         leaderboardModel.currentBottomView.value = leaderboardModel.userIds.value[viewIndex];
       }
+    } else if (currentEvent.type === TimelineEventType.RES) {
+      leaderboardModel.currentResolvedUserId.value = currentEvent.payload.userId;
     } else {
       leaderboardModel.currentResolvedUserId.value = 0;
       leaderboardModel.currentBottomView.value = 0;
+    }
+  });
+
+  useSignalEffect(() => {
+    const targetId = leaderboardModel.currentBottomView.value;
+    if (targetId > 0) {
+      localStorage.setItem(SCROLL_POSITION_KEY, String(targetId));
     }
   });
 
