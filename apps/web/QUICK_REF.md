@@ -1,21 +1,26 @@
 # Web State QUICK_REF
 
-Global state = Preact Signals `createModel` stores in `src/models/`, re-exported from
-`src/models/index.ts`. Import from `@/models`. Read with `.value`; render display-only
-signals straight in JSX: `<>{model.field}</>`. Call actions as methods.
+Global state = Preact Signals `createModel` stores. Core models live in `src/models/`,
+re-exported from `src/models/index.ts`. Import from `@/models`. Feature-specific models
+(e.g. `assetsManagerModel`) live in their feature directory — import directly from
+`@/features/assets-manager/assets-manager-model`.
+
+Read with `.value`; render display-only signals straight in JSX: `<>{model.field}</>`.
+Call actions as methods.
 
 ## What state is available
 
-| Model (from `@/models`) | Public fields (signals) | Actions |
-|---|---|---|
-| `realtimeModel` | `connectionStatus`, `bigRefetching` | — |
-| `showModel` | `showEvents`, `showOrderedIds`, `showMode`, `dataVersion`, `showMeta`, `showFile`, `rows` (computed) | `hydrateFromSnapshot(show)`, `tryApplyShowMessage(msg)` |
-| `playbackModel` | `state`, `currentEventId` (computed), `currentCueId` (computed), `status` (computed) | `update(p)`, `reset(v?)`, `syncFromSnapshot(v, snap)` |
-| `controlNowModel` | `now` | `setNow(n)` |
-| `confirmActionModel` | `open`, `title`, `message`, `confirmLabel`, `cancelLabel` | `confirmAction(p)`, `resolveConfirmAction(ok)` |
-| `fullscreenModel` | `isFullscreen` | `toggleFullscreen()` |
-| `floatingPanelModel` | `active`, `isDirty` | `openFloatingPanel(...)`, `closeFloatingPanel(b)`, `requestFloatingPanelClose(r?)`, `setDirty(b)` |
-| `assetsManagerModel` | `folderTree`, `selectedEntryId`, `selectedIds`, `viewMode`, `expandedFolderIds`, `entries` (computed) | `selectEntry(id)`, `clearSelection()`, `handleEntryClick(e, idx)`, `setViewMode(m)`, `toggleFolder(id)`, `createFolder(pid, name)`, `uploadAsset(fid, file)`, `renameEntry(id, isDir, name)`, `deleteEntry(id, isDir)`, `applyShowState(data)`, `setInvalidateCache(fn)` |
+| Model | Location | Public fields (signals) | Actions |
+|---|---|---|---|
+| `realtimeModel` | `@/models` | `connectionStatus`, `bigRefetching` | — |
+| `showModel` | `@/models` | `showEvents`, `showOrderedIds`, `showMode`, `dataVersion`, `showMeta`, `showFile`, `rows` (computed) | `hydrateFromSnapshot(show)`, `tryApplyShowMessage(msg)` |
+| `playbackModel` | `@/models` | `state`, `currentEventId` (computed), `currentCueId` (computed), `status` (computed) | `update(p)`, `reset(v?)`, `syncFromSnapshot(v, snap)` |
+| `controlNowModel` | `@/models` | `now` | `setNow(n)` |
+| `confirmActionModel` | `@/models` | `open`, `title`, `message`, `confirmLabel`, `cancelLabel`, `showInput`, `inputLabel`, `inputValue` | `confirmAction(p)`, `promptAction(p)`, `resolveConfirmAction(ok)`, `setInputValue(v)` |
+| `fullscreenModel` | `@/models` | `isFullscreen` | `toggleFullscreen()` |
+| `floatingPanelModel` | `@/models` | `active`, `isDirty` | `openFloatingPanel(...)`, `closeFloatingPanel(b)`, `requestFloatingPanelClose(r?)`, `setDirty(b)` |
+| `leaderboardModel` | `@/models` | `userIds`, `currentBottomView`, `currentResolvedUserId`, `getSignal(id)` | `sync(show, upToEventId?)` |
+| `assetsManagerModel` | `@/features/assets-manager` | `folderTree`, `selectedEntryId`, `selectedIds`, `viewMode`, `expandedFolderIds`, `entries` (computed), `focusedPanel` | `selectEntry(id)`, `clearSelection()`, `handleEntryClick(e, idx)`, `setViewMode(m)`, `toggleFolder(id)`, `expandAll()`, `collapseAll()`, `createFolder(pid, name)`, `uploadAsset(fid, file)`, `renameEntry(id, isDir, name)`, `deleteEntry(id, isDir)`, `findEntry(id)`, `findEntryName(id)`, `applyShowState(data)`, `setInvalidateCache(fn)`, `ensureFolderPath(root, parts)` |
 
 ## Declare a new store (`src/models/my-model.ts`)
 

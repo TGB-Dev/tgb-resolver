@@ -13,7 +13,7 @@ function makeSnapshot(overrides?: Partial<ShowStateSnapshot>): ShowStateSnapshot
     showVersion: 1,
     meta: { title: "t", source: ShowSource.MANUAL },
     mode: ShowMode.EDITING,
-    playback: { status: PlaybackStatus.IDLE, executionSequence: 0 },
+    playback: { status: PlaybackStatus.IDLE },
     timeline: [],
     assets: {
       folders: [

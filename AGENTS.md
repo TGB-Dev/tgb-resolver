@@ -13,20 +13,21 @@
 - `pnpm turbo run nuget:outdated --filter=@tgb-resolver/server` — list outdated NuGet packages
 - `pnpm turbo run nuget:update --filter=@tgb-resolver/server` — upgrade NuGet packages to latest
   compatible
-- `pnpm hooks:install` — enable native `.githooks/pre-commit` (one-time)
+- `pnpm hooks:install` — point git at `.githooks` path (Husky manages hooks via `.husky/`; only
+  needed if you opt out of Husky)
 - `pnpm turbo run quality --filter=@tgb-resolver/server` — ReSharper `cleanupcode` + `inspectcode`
   SARIF report (slow, .NET-only quality pass)
 - OpenAPI `openapi.yaml` is generated automatically by the server `build` (runs
   `dotnet build -p:GenerateOpenApiDocument=true`); no separate command needed.
 
-Pre-commit hook runs: `biome check --write --staged` → `sync:check || sync` → `build` → `test`.
+Pre-commit hook runs: `sync:check || sync` → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
 
 ## Structure
 
 | Path                  | Role                                                                                                               |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------|
 | `apps/server/`        | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format               |
-| `apps/web/`           | TanStack Start SPA (React 19, Vite, Chakra UI 3, Preact Signals). Dev port 3000                                    |
+| `apps/web/`           | TanStack Router SPA (React 19, Vite, Chakra UI 3, Preact Signals). Dev port 3000                                    |
 | `packages/contracts/` | OpenAPI-generated TS HTTP client + TanStack Query + Valibot schemas. Generated from `apps/server/.../openapi.yaml` |
 | `packages/realtime/`  | Client-side clock sync, timeline and domain helpers. Re-exports contracts enums; must not redeclare them           |
 
@@ -43,10 +44,10 @@ Workspace packages: `@tgb-resolver/*`.
   `dotnet build -p:GenerateOpenApiDocument=true`);
   `pnpm turbo run build --filter=@tgb-resolver/server` regenerates `openapi.yaml`. No separate
   `openapi` task.
-- **Biome** (v2.5.4): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan
-  blank package blank alias blank path. Ignores `*.gen.ts` and `vite.config.ts`
-- **syncpack**: explicit pinned versions for typescript/biome/vite; React/TanStack allowed to drift;
-  `@tgb-resolver/*` ignored
+- **Biome** (v2.5.5): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan
+  blank package blank alias blank path. Ignores `*.gen.ts`
+- **syncpack**: checks dependency consistency across the workspace (no explicit config file;
+  runs with defaults)
 - **Env**: `.env` → `VITE_API_URL` (default `http://localhost:5001`). Copy from `.env.example`
 - **`Record<K, V>` over `Map<K, V>`** for immutable look-up structures (returned values,
   lookup tables, index maps like `userById`, `problemById`). Only use `Map<K, V>` when the
@@ -124,7 +125,7 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
 
 ## .NET specifics
 
-- Target: `net10.0`, SDK 10.0.301
+- Target: `net10.0`, SDK 10.0
 - Solution format: `.slnx` (new XML-based format), not `.sln`
 - Turborepo: `@tgb-resolver/server` package at `apps/server/package.json` wraps the .NET toolchain;
   `apps/server/turbo.json` declares .NET build outputs. Tasks: `build` (also emits `openapi.yaml`),
@@ -151,7 +152,7 @@ pre-commit flow. Do not hand-edit their generated output.
 - **`dotnet-tsrts`** (`typedsignalr.client.typescript.generator`) — generates the strongly-typed
   SignalR hub client (`packages/realtime/src/gen`) from the server's `IShowHubClient` interface. Run
   via `pnpm --filter @tgb-resolver/realtime generate`. This is the source of truth for the client
-  `HubConnectionBuilder` types; the `connection.on(...)` handlers in `api.ts` are written by hand on
+  `HubConnectionBuilder` types; the `connection.on(...)` handlers in `realtime.worker.ts` are written by hand on
   top of it.
 - **`tsdown`** — bundles `packages/contracts` and `packages/realtime` to `dist/`.
 - **`dotnet-outdated`** — NuGet dependency linter/upgrader, installed as a local tool in
@@ -163,8 +164,8 @@ pre-commit flow. Do not hand-edit their generated output.
   in the root workspace.
 - **ReSharper CLI** (`dotnet jb cleanupcode` + `inspectcode` → SARIF) — .NET-only quality pass via
   `pnpm turbo run quality --filter=@tgb-resolver/server`.
-- **Pre-commit hook** (`.githooks/pre-commit`) — `biome check --write --staged` →
-  `sync:check || sync` → `build` → `test`.
+- **Pre-commit hook** (`.husky/pre-commit`) — `sync:check || sync` →
+  `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
 
 <!-- turbo configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
@@ -232,7 +233,7 @@ Adding a new realtime message requires touching exactly five places, in order:
 
 ### Verification rules
 
-- Every `IShowHubClient` method MUST have a corresponding `connection.on(...)` in `api.ts`.
+- Every `IShowHubClient` method MUST have a corresponding `connection.on(...)` in `realtime.worker.ts`.
 - Every `connection.on(...)` handler MUST produce a `ShowWebSocketMessage` variant.
 - Every `ShowWebSocketMessage` variant MUST be handled in `applyControlRealtimeMessage`.
 - The `ShowWebSocketMessage` union type MUST NOT contain variants with no server counterpart.
