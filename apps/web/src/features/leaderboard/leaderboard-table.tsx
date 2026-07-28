@@ -32,6 +32,8 @@ export function LeaderboardTable({ problems, children }: LeaderboardTableProps) 
             borderBottomColor: "border",
           },
         }}
+        position="relative"
+        zIndex={9999}
       >
         <Table.Row
           css={{
