@@ -20,11 +20,13 @@
     "serve": "turbo run serve",
     "sync": "pnpm syncpack fix --dependency-types prod,dev,peer && pnpm syncpack format",
     "sync:check": "pnpm syncpack lint --dependency-types prod,dev,peer",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",
     "@types/node": "^26.1.1",
+    "husky": "^9.1.7",
     "knip": "^6.29.0",
     "syncpack": "^15.3.2",
     "turbo": "^2.10.6",

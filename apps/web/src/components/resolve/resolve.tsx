@@ -1,7 +1,6 @@
 import { useSignalEffect } from "@preact/signals-react";
 import { For, useLiveSignal } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
-import type { ResolvePayload } from "@tgb-resolver/realtime";
 import { memo } from "react";
 
 import { useControlShowQuery } from "@/features/control/hooks";
@@ -12,12 +11,17 @@ import LeaderboardTable from "./leaderboard-table";
 
 const Row = memo(function Row({ userId }: { userId: number }) {
   const data = leaderboardModel.getSignal(userId).value;
+  const isCurrentResolved = leaderboardModel.currentResolvedUserId.value === userId;
   if (data == null) return null;
-  return <LeaderboardRow data={data} />;
+  return <LeaderboardRow data={data} isCurrentResolved={isCurrentResolved} />;
 });
 
 function LeaderboardRows() {
-  return <For each={leaderboardModel.userIds}>{(uid) => <Row userId={uid} />}</For>;
+  return (
+    <For each={leaderboardModel.userIds} getKey={(uid) => uid}>
+      {(uid) => <Row userId={uid} />}
+    </For>
+  );
 }
 
 export function Resolve() {
@@ -26,35 +30,34 @@ export function Resolve() {
   useSignalEffect(() => {
     const d = data.value;
     if (d == null) return;
-    leaderboardModel.sync(d, playbackModel.currentEventId.value ?? undefined);
 
-    // Firstly, get current event
     const currentEventId = playbackModel.currentEventId.value;
-    if (currentEventId == null) return;
+    leaderboardModel.sync(d, currentEventId ?? 0);
 
-    const currentEvent = d.timeline[currentEventId - 1];
+    if (currentEventId == null) {
+      leaderboardModel.currentResolvedUserId.value = 0;
+      leaderboardModel.currentBottomView.value = 0;
+      return;
+    }
+
+    const currentEvent = d.timeline.find((e) => e.id === currentEventId);
     if (currentEvent == null) return;
 
-    if (currentEvent.type === TimelineEventType.PRE) {
-      const payload: ResolvePayload = currentEvent.payload;
-      leaderboardModel.currentResolvedUserId.value = payload.userId;
+    if (
+      currentEvent.type === TimelineEventType.RES ||
+      currentEvent.type === TimelineEventType.PRE
+    ) {
+      const userId = currentEvent.payload.userId;
+      leaderboardModel.currentResolvedUserId.value = userId;
 
-      const resolvedUserId = leaderboardModel.currentResolvedUserId.value;
-      const resolvedUserRank = leaderboardModel.userIds.value.indexOf(resolvedUserId);
-
-      if (resolvedUserRank != null) {
-        let rankIdx = 0;
-        // Offset by 3 for clarity
-        for (
-          let i = resolvedUserRank;
-          i < Math.min(resolvedUserRank + 3, leaderboardModel.userIds.value.length);
-          i++
-        ) {
-          rankIdx = i;
-        }
-
-        leaderboardModel.currentBottomView.value = leaderboardModel.userIds.value[rankIdx];
+      const resolvedUserRank = leaderboardModel.userIds.value.indexOf(userId);
+      if (resolvedUserRank >= 0) {
+        const viewIndex = Math.min(resolvedUserRank + 3, leaderboardModel.userIds.value.length - 1);
+        leaderboardModel.currentBottomView.value = leaderboardModel.userIds.value[viewIndex];
       }
+    } else {
+      leaderboardModel.currentResolvedUserId.value = 0;
+      leaderboardModel.currentBottomView.value = 0;
     }
   });
 

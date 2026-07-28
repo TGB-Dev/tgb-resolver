@@ -21,7 +21,10 @@ function entryEqual(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
     return false;
   if (a.problems.length !== b.problems.length) return false;
   return a.problems.every(
-    (p, i) => p.score === b.problems[i].score && p.verdict === b.problems[i].verdict,
+    (p, i) =>
+      p.problemId === b.problems[i].problemId &&
+      p.score === b.problems[i].score &&
+      p.verdict === b.problems[i].verdict,
   );
 }
 
@@ -86,12 +89,12 @@ const ProblemCell = memo<{ problem: LeaderboardProblemResult }>(
 
 interface LeaderboardRowProps {
   data: LeaderboardEntry;
+  isCurrentResolved: boolean;
 }
 
 const LeaderboardRow = memo<LeaderboardRowProps>(
-  function LeaderboardRow({ data }) {
+  function LeaderboardRow({ data, isCurrentResolved }) {
     const username = `${data.realName} (${data.username})`;
-    const isCurrentResolved = data.userId === leaderboardModel.currentResolvedUserId.value;
 
     const ref = useRef<HTMLTableRowElement>(null);
 
@@ -101,8 +104,13 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
 
       leaderboardModel.getSignal(targetId).value;
 
+      // Double-RAF: wait for motion layout FLIP to settle before scrolling.
+      // A single RAF fires mid-animation and captures the animated (not final)
+      // position, causing the entry to scroll off-screen after the FLIP settles.
       const raf = requestAnimationFrame(() => {
-        ref.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        requestAnimationFrame(() => {
+          ref.current?.scrollIntoView({ behavior: "auto", block: "end" });
+        });
       });
       return () => cancelAnimationFrame(raf);
     });
@@ -132,7 +140,8 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
       </MotionRow>
     );
   },
-  (prev, next) => entryEqual(prev.data, next.data),
+  (prev, next) =>
+    entryEqual(prev.data, next.data) && prev.isCurrentResolved === next.isCurrentResolved,
 );
 
 export default LeaderboardRow;

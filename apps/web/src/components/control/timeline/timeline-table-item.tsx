@@ -18,14 +18,14 @@ function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "pla
 
 interface ControlTimelineTableItemProps {
   payload: TimelineTableItem;
+  isCurrent: boolean;
   isLive: boolean;
   onSeek: (id: number) => void;
 }
 
 export const ControlTimelineTableItem = memo(
-  ({ payload, isLive, onSeek }: ControlTimelineTableItemProps) => {
+  ({ payload, isCurrent, isLive, onSeek }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
-    const isCurrent = payload.isActive;
 
     return (
       <Box

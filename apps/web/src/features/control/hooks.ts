@@ -116,9 +116,7 @@ export function useStartPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      if (data.playback) playbackModel.syncFromSnapshot(data.showVersion ?? 0, data.playback);
-    },
+    onSuccess: () => {},
   });
 }
 
@@ -138,9 +136,7 @@ export function useResetPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      if (data.playback) playbackModel.syncFromSnapshot(data.showVersion ?? 0, data.playback);
-    },
+    onSuccess: () => {},
   });
 }
 
@@ -160,9 +156,7 @@ export function useSeekPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      if (data.playback) playbackModel.syncFromSnapshot(data.showVersion ?? 0, data.playback);
-    },
+    onSuccess: () => {},
   });
 }
 

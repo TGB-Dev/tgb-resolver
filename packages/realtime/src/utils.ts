@@ -281,7 +281,10 @@ let entryCache = new Map<number, LeaderboardEntry>();
 
 function problemsEqual(a: LeaderboardProblemResult[], b: LeaderboardProblemResult[]): boolean {
   if (a.length !== b.length) return false;
-  return a.every((p, i) => p.score === b[i]?.score && p.verdict === b[i]?.verdict);
+  return a.every(
+    (p, i) =>
+      p.problemId === b[i]?.problemId && p.score === b[i]?.score && p.verdict === b[i]?.verdict,
+  );
 }
 
 function entriesEqual(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
@@ -333,7 +336,9 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
   const ordered = sortTimeline(show.timeline);
   const target =
     upToEventId !== undefined ? ordered.find((event) => event.id === upToEventId) : undefined;
-  const targetPosition = target?.position ?? Number.POSITIVE_INFINITY;
+  const targetPosition =
+    target?.position ??
+    (upToEventId !== undefined ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY);
 
   for (const event of ordered) {
     if (event.position > targetPosition) break;

@@ -596,17 +596,17 @@ public sealed class ShowStateService(
 
     var nextEvent = ordered[currentIndex + 1];
 
-    // Trigger offset always wins
+    // No auto-advance when both auto modes are off
+    if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
+      return;
+
+    // Trigger offset wins when autoplay is on
     if (nextEvent.TriggerOffsetSeconds is not null)
     {
       orchestrator.ScheduleAdvance(Math.Max(1,
         (long)(nextEvent.TriggerOffsetSeconds.Value * 1000)));
       return;
     }
-
-    // No explicit offset — check auto modes
-    if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
-      return;
 
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;

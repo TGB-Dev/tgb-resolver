@@ -77,6 +77,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
           <ControlTimelineTableItem
             key={payload.id}
             payload={payload}
+            isCurrent={playbackModel.currentCueId.value === payload.id}
             isLive={isLive}
             onSeek={onSeek}
           />

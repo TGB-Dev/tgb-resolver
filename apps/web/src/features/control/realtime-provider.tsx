@@ -4,7 +4,7 @@ import {
   tgbResolverServerFeaturesShowGetShowEndpointOptions,
 } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { BigRefetchOverlay } from "@/components/control/big-refetch-overlay";
 import { connectRealtime } from "@/lib/realtime-client";
@@ -38,13 +38,24 @@ export function ControlRealtimeProvider({ children }: { children: ReactNode }) {
     return disconnect;
   }, [queryClient]);
 
+  const syncPlaybackRef = useRef(false);
+
   useEffect(() => {
     if (!showQuery.data?.playback) {
       return;
     }
 
     showModel.hydrateFromSnapshot(showQuery.data);
-    playbackModel.syncFromSnapshot(showQuery.data.showVersion ?? 0, showQuery.data.playback);
+
+    // Seed playback state from REST on the very first data load only.
+    // SignalR is the sole authoritative source for real-time playback
+    // updates; subsequent REST refetches (reconnect, bigRefetch, stale)
+    // carry stale state that would race past SignalR messages.
+    if (!syncPlaybackRef.current) {
+      syncPlaybackRef.current = true;
+      playbackModel.syncFromSnapshot(showQuery.data.showVersion ?? 0, showQuery.data.playback);
+    }
+
     realtimeModel.bigRefetching.value = false;
   }, [showQuery.data]);
 
