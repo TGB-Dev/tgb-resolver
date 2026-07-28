@@ -141,16 +141,22 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
       });
     });
 
-    // TODO: adjust the content of each row
+    // TODO: adjust the content of each row, and the cell's stylings
     // TODO: adjust column width
-    // TODO: adjust timings to be rational to whole event's duration
-    // TODO: adjust colors
+    // TODO: adjust animation timings to be relative to whole event's duration
+    // TODO: adjust colors (some are bad on light, some are on dark, some on both)
     // TODO: add submission time column
+    // TODO: submission count to show a contestant's effort on a problem, and we'll show the verdict on those individual attempt also
+    // TODO: rank number anim
+    // TODO: adjust scaling for big screen
+    // TODO: update with a pending, pending-active state, as currently it it's turning "unexpectedly" from Unknown to Pending
+    // on PRE-RES, which is kinda bad on the UX side of things
     const username = `${data.realName} (${data.username})`;
 
     return (
       <MotionRow
         ref={ref}
+        position="relative"
         layout="position"
         layoutScroll
         variants={variants}
@@ -165,6 +171,7 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
             ease: "easeInOut",
           },
         }}
+        zIndex={isCurrentResolved ? 5 : 0}
       >
         <Table.Cell>{data.rank}</Table.Cell>
 

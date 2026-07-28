@@ -194,8 +194,6 @@ export interface TimelineTableItem {
   isActive: boolean;
 }
 
-
-
 export enum ShowConnectionStatus {
   Idle = "idle",
   Connecting = "connecting",

@@ -1,9 +1,12 @@
 import {
+  createDriftState,
+  type DriftState,
   projectServerNow,
   RealtimeWorkerRequestType,
   RealtimeWorkerResponseType,
   ShowConnectionStatus,
   type ShowWebSocketMessage,
+  updateDrift,
 } from "@tgb-resolver/realtime";
 
 import { API_BASE_URL } from "@/lib/api";
@@ -13,9 +16,10 @@ export { ShowConnectionStatus };
 
 let serverClockAtSyncMs = Date.now();
 let monotonicAtSyncMs = performance.now();
+let drift: DriftState = createDriftState();
 
 export function getServerNow(): number {
-  return projectServerNow(serverClockAtSyncMs, monotonicAtSyncMs, performance.now());
+  return projectServerNow(serverClockAtSyncMs, monotonicAtSyncMs, performance.now(), drift.rate);
 }
 
 export interface RealtimeClientCallbacks {
@@ -75,6 +79,7 @@ export function createRealtimeClient(
       case RealtimeWorkerResponseType.ServerNow: {
         serverClockAtSyncMs = data.serverClockAtSyncMs as number;
         monotonicAtSyncMs = data.monotonicAtSyncMs as number;
+        drift = updateDrift(drift, serverClockAtSyncMs, monotonicAtSyncMs);
         break;
       }
       case RealtimeWorkerResponseType.Error: {

@@ -10,7 +10,7 @@ import {
   RealtimeWorkerResponseType,
   ShowMessageType,
   type ShowReplacedMessage,
-  selectClockEstimate,
+  selectRobustEstimate,
   type TimelineEventAddedMessage,
   type TimelineEventRemovedMessage,
   type TimelineEventUpdatedMessage,
@@ -21,7 +21,7 @@ import { Effect, Fiber, Schedule } from "effect";
 import { mapMode, mapStatus, mapTimelineEvent } from "@/lib/show-message-mapper";
 
 const MAX_RECONNECT_ATTEMPTS = 8;
-const CLOCK_SYNC_SAMPLES = 8;
+const CLOCK_SYNC_SAMPLES = 5;
 
 let connection: ReturnType<HubConnectionBuilder["build"]> | null = null;
 let reconnectAttempt = 0;
@@ -63,7 +63,7 @@ async function syncClock() {
     );
   }
 
-  const estimate = selectClockEstimate(samples, performance.now());
+  const estimate = selectRobustEstimate(samples, performance.now(), 3, 200);
   if (estimate) {
     post({
       type: RealtimeWorkerResponseType.ServerNow,
@@ -81,7 +81,7 @@ function startClockSync() {
         try: syncClock,
         catch: (error) => error,
       }).pipe(Effect.ignore),
-      Schedule.fixed("10 seconds"),
+      Schedule.fixed("5 seconds"),
     ),
   );
 }
