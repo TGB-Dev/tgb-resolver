@@ -145,6 +145,7 @@ const LeaderboardRow = memo<LeaderboardRowProps>(
     // TODO: adjust column width
     // TODO: adjust timings to be rational to whole event's duration
     // TODO: adjust colors
+    // TODO: add submission time column
     const username = `${data.realName} (${data.username})`;
 
     return (

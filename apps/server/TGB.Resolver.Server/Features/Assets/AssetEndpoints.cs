@@ -71,7 +71,8 @@ public sealed class DeleteEntryEndpoint(AssetStore assetStore, ShowStateService 
     var entryId = Route<string>("id") ?? string.Empty;
     if (!request.IsDirectory)
       await assetStore.DeleteAsync(entryId);
-    await Send.OkAsync(await showStateService.DeleteEntryAsync(request with { Id = entryId }, ct), ct);
+    await Send.OkAsync(await showStateService.DeleteEntryAsync(request with { Id = entryId }, ct),
+      ct);
   }
 }
 
@@ -87,7 +88,8 @@ public sealed class RenameEntryEndpoint(ShowStateService showStateService)
   public override async Task HandleAsync(RenameEntryRequest request, CancellationToken ct)
   {
     var entryId = Route<string>("id") ?? string.Empty;
-    await Send.OkAsync(await showStateService.RenameEntryAsync(request with { Id = entryId }, ct), ct);
+    await Send.OkAsync(await showStateService.RenameEntryAsync(request with { Id = entryId }, ct),
+      ct);
   }
 }
 

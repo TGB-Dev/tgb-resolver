@@ -30,7 +30,6 @@ public static class ShowBundleArchive
       await WriteEntryAsync(archive, ShowJsonEntryName, Encoding.UTF8.GetBytes(showJson),
         cancellationToken);
       foreach (var asset in state.Assets.Items)
-      {
         try
         {
           await PackAssetAsync(archive, assetStore, asset, cancellationToken);
@@ -39,7 +38,6 @@ public static class ShowBundleArchive
         {
           // Ignore missing assets so the bundle can still be generated successfully
         }
-      }
     }
 
     return output.ToArray();

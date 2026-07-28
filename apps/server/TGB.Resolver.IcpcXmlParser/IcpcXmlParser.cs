@@ -172,5 +172,6 @@ public enum VerdictRunResult
   InternalError,
   ShortCircuited,
   Aborted,
+  // ReSharper disable once UnusedMember.Global
   Pending
 }

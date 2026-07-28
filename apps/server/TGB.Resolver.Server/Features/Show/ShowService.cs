@@ -215,7 +215,7 @@ public sealed class ShowStateService(
       var media = new MediaEventPayload(assetId, request.Payload?.DurationSeconds);
       var created = new TimelineEvent(
         nextId, position, request.Type,
-        request.TriggerOffsetSeconds ?? 0, request.RequireManualInteraction ?? false,
+        request.TriggerOffsetSeconds, request.RequireManualInteraction ?? false,
         request.CustomName, null, isImg ? media : null, isImg ? null : media, null,
         request.Type == TimelineEventType.Cus ? request.Custom : null);
 
@@ -758,7 +758,6 @@ public sealed class ShowStateService(
     }
 
     var nextEvent = ordered[currentIndex + 1];
-    var nextStartedAt = NowMs();
 
     var updated2 = await repository.MutateControlStateAsync(
       s => s with
@@ -767,7 +766,7 @@ public sealed class ShowStateService(
           PlaybackStatus.Running,
           nextEvent.Id,
           [nextEvent.Id],
-          nextStartedAt)
+          state.Playback.StartedAt)
       },
       cancellationToken);
 
@@ -805,13 +804,14 @@ public sealed class ShowStateService(
     if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
       return;
 
+    var currentEvent = ordered[currentIndex];
     var nextEvent = ordered[currentIndex + 1];
 
     // No auto-advance when both auto modes are off
     if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
       return;
 
-    // Trigger offset wins when autoplay is on
+    // Next event's trigger offset: explicit per-event override
     if (nextEvent.TriggerOffsetSeconds is not null)
     {
       orchestrator.ScheduleAdvance(Math.Max(1,
@@ -821,6 +821,15 @@ public sealed class ShowStateService(
 
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
+
+    // Use current event's media duration for IMG/SFX when available
+    var mediaPayload = currentEvent.Image ?? currentEvent.Sfx;
+    if (mediaPayload?.DurationSeconds is not null)
+    {
+      orchestrator.ScheduleAdvance(Math.Max(1,
+        (long)(mediaPayload.DurationSeconds.Value * 1000)));
+      return;
+    }
 
     orchestrator.ScheduleAdvance(state.Automation.AutoResolveSpeedMs);
   }

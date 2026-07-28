@@ -11,5 +11,4 @@ internal static class ShowStateNavigation
   {
     return Array.FindIndex(ordered, e => e.Id == eventId);
   }
-
 }
