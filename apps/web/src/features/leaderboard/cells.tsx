@@ -38,18 +38,19 @@ export const PenaltyCell = memo(({ penalty }: PenaltyCellProps) => (
 ));
 
 interface SubmissionTimeCellProps {
-  submissionTimeSinceStartMs: number;
+  submissionTimeSinceStartSeconds: number;
 }
 
 export const SubmissionTimeCell = memo(
-  ({ submissionTimeSinceStartMs }: SubmissionTimeCellProps) => {
+  ({ submissionTimeSinceStartSeconds }: SubmissionTimeCellProps) => {
     const timeString = useMemo(() => {
-      const seconds = Math.floor(submissionTimeSinceStartMs / 1000) % 60;
-      const minutes = Math.floor(submissionTimeSinceStartMs / (1000 * 60)) % 60;
-      const hours = Math.floor(submissionTimeSinceStartMs / (1000 * 60 * 60));
+      const totalSeconds = Math.floor(submissionTimeSinceStartSeconds);
+      const seconds = totalSeconds % 60;
+      const minutes = Math.floor(totalSeconds / 60) % 60;
+      const hours = Math.floor(totalSeconds / (60 * 60));
 
       return `${hours.toString().padStart(1, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    }, [submissionTimeSinceStartMs]);
+    }, [submissionTimeSinceStartSeconds]);
 
     return (
       <Table.Cell fontFamily="mono" fontWeight="bold" fontStyle="italic" textAlign="end">

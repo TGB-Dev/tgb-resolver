@@ -263,6 +263,7 @@ export interface LeaderboardProblemResult {
   name: string;
   score: number;
   verdict: VerdictRunResult;
+  timeSinceStart: number;
 }
 
 export interface LeaderboardEntry {
@@ -273,6 +274,7 @@ export interface LeaderboardEntry {
   totalScore: number;
   totalPenalty: number;
   problems: LeaderboardProblemResult[];
+  lastSubmittedSeconds: number | null;
 }
 
 let lastShow: ShowFile | undefined;
@@ -282,7 +284,10 @@ function problemsEqual(a: LeaderboardProblemResult[], b: LeaderboardProblemResul
   if (a.length !== b.length) return false;
   return a.every(
     (p, i) =>
-      p.problemId === b[i]?.problemId && p.score === b[i]?.score && p.verdict === b[i]?.verdict,
+      p.problemId === b[i]?.problemId &&
+      p.score === b[i]?.score &&
+      p.verdict === b[i]?.verdict &&
+      p.timeSinceStart === b[i]?.timeSinceStart,
   );
 }
 
@@ -291,6 +296,7 @@ function entriesEqual(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
     a.rank === b.rank &&
     a.totalScore === b.totalScore &&
     a.totalPenalty === b.totalPenalty &&
+    a.lastSubmittedSeconds === b.lastSubmittedSeconds &&
     problemsEqual(a.problems, b.problems)
   );
 }
@@ -315,20 +321,29 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
       score: number;
       penalty: number;
       rank: number;
-      problems: Map<number, { score: number; verdict: VerdictRunResult }>;
+      problems: Map<number, { score: number; verdict: VerdictRunResult; timeSinceStart: number }>;
+      lastSubmittedSeconds: number | null;
     }
   >();
 
   for (const entry of show.contest.preFreezeSnapshot ?? []) {
-    const problems = new Map<number, { score: number; verdict: VerdictRunResult }>();
+    const problems = new Map<
+      number,
+      { score: number; verdict: VerdictRunResult; timeSinceStart: number }
+    >();
     for (const problem of entry.problems ?? []) {
-      problems.set(problem.problemId, { score: problem.score, verdict: problem.verdict });
+      problems.set(problem.problemId, {
+        score: problem.score,
+        verdict: problem.verdict,
+        timeSinceStart: 0,
+      });
     }
     entries.set(entry.userId, {
       score: entry.totalScore,
       penalty: entry.totalPenalty,
       rank: entry.rank,
       problems,
+      lastSubmittedSeconds: entry.lastSubmittedSeconds,
     });
   }
 
@@ -345,9 +360,11 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     if (event.type === TimelineEventType.PRE) {
       const state = entries.get(event.payload.userId);
       if (!state) continue;
+      const prev = state.problems.get(event.payload.problemId);
       state.problems.set(event.payload.problemId, {
-        score: state.problems.get(event.payload.problemId)?.score ?? 0,
+        score: prev?.score ?? 0,
         verdict: VerdictRunResult.PENDING,
+        timeSinceStart: prev?.timeSinceStart ?? 0,
       });
       continue;
     }
@@ -363,6 +380,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     state.problems.set(event.payload.problemId, {
       score: event.payload.newProblemScore,
       verdict: event.payload.verdict,
+      timeSinceStart: event.payload.timeSinceStart,
     });
   }
 
@@ -376,6 +394,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
         rank: 0,
         totalScore: state.score,
         totalPenalty: state.penalty,
+        lastSubmittedSeconds: state.lastSubmittedSeconds,
         problems: [...state.problems.entries()]
           .map(([problemId, result]) => ({
             problemId,
@@ -383,6 +402,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
             name: problemById[problemId]?.name ?? "",
             score: result.score,
             verdict: result.verdict,
+            timeSinceStart: result.timeSinceStart,
           }))
           .sort((a, b) => a.problemId - b.problemId),
       };

@@ -104,8 +104,13 @@ export const LeaderboardRow = memo(
         <ScoreCell score={data.totalScore} />
         <PenaltyCell penalty={data.totalPenalty} />
 
-        {/* TODO: to be wired to real data */}
-        <SubmissionTimeCell submissionTimeSinceStartMs={0} />
+        <SubmissionTimeCell
+          submissionTimeSinceStartSeconds={Math.max(
+            ...data.problems.map((p) => p.timeSinceStart),
+            data.lastSubmittedSeconds ?? 0,
+            0,
+          )}
+        />
       </MotionRow>
     );
   },
