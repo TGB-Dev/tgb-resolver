@@ -28,6 +28,11 @@ Pre-commit hook runs: `sync:check || sync` → `test` → `biome check --write -
 |-----------------------|--------------------------------------------------------------------------------------------------------------------|
 | `apps/server/`        | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format               |
 | `apps/web/`           | TanStack Router SPA (React 19, Vite, Chakra UI 3, Preact Signals). Dev port 3000                                    |
+| `apps/web/src/features/` | 4 feature-sliced UI modules, each owning their own models |
+| `apps/web/src/features/control/` | Models: playback, control-now, floating-panel (+types). UI: timeline, transport, cue tab |
+| `apps/web/src/features/leaderboard/` | Models: leaderboard. UI: grid/table views |
+| `apps/web/src/features/assets-manager/` | Models: assets-manager. UI: folder/file browser with tree view |
+| `apps/web/src/features/shared/` | Models: show, realtime, confirm-action, fullscreen. UI: shared components |
 | `packages/contracts/` | OpenAPI-generated TS HTTP client + TanStack Query + Valibot schemas. Generated from `apps/server/.../openapi.yaml` |
 | `packages/realtime/`  | Client-side clock sync, timeline and domain helpers. Re-exports contracts enums; must not redeclare them           |
 

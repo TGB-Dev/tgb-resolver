@@ -1,7 +1,7 @@
 import { Text } from "@chakra-ui/react";
 import { type ReadonlySignal, useComputed } from "@preact/signals-react";
 
-import { playbackModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
 
 function formatHms(date: Date): string {
   return date.toLocaleTimeString("en-GB", { hour12: false });

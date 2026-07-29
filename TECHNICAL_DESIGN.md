@@ -32,6 +32,17 @@ a relative timeline with a main panel showing the current, next, and prior cues.
 - `packages/contracts/`: OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
 - `packages/realtime/`: client-side clock sync, timeline, and domain helpers
 
+### Client-side architecture
+
+The frontend (`apps/web/`) organizes state and UI into feature-sliced modules under `src/features/`:
+
+- **`control/`** — playback model, timeline cursor, floating panel model + types. All control-domain state.
+- **`leaderboard/`** — leaderboard state model.
+- **`assets-manager/`** — folder/file browser model (already feature-local).
+- **`shared/`** — cross-cutting models: show state, realtime connection, confirm dialogs, fullscreen toggle.
+
+All models use `@preact/signals-react` — never React `useState`/`useReducer`/`createContext` for shared state. Import directly from a feature's model path (e.g. `@/features/control/playback-model`, `@/features/shared/show-model`).
+
 ## Engineering conventions
 
 Use string-valued enums for finite domain vocabularies in TypeScript and .NET.

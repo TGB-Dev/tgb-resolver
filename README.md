@@ -74,6 +74,11 @@ Pre-commit runs: `sync:check || sync` → `test` → `biome check --write --stag
 apps/
   server/     .NET 10 solution (server + parser + tests)
   web/        TanStack Router SPA frontend
+              src/features/   — 4 feature dirs each owning their own models
+                control/        — playback, timeline, transport, cue tab models
+                leaderboard/    — leaderboard grid/table models
+                assets-manager/ — folder/file asset browser model
+                shared/         — cross-feature models (show, realtime, confirm, fullscreen)
 packages/
   contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
   realtime/    Client-side clock sync, timeline and domain helpers

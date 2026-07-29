@@ -11,7 +11,8 @@ import {
 } from "@tgb-resolver/realtime";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { playbackModel, showModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
+import { showModel } from "@/features/shared/show-model";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-handler";
 

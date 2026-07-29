@@ -28,9 +28,10 @@ import {
   useToggleLiveModeMutation,
   useUpdateAutomationMutation,
 } from "@/features/control/hooks";
+import { playbackModel } from "@/features/control/playback-model";
+import { realtimeModel } from "@/features/shared/realtime-model";
 import { Tooltip } from "@/features/shared/ui/tooltip";
 import { useAction } from "@/lib/actions";
-import { playbackModel, realtimeModel } from "@/models";
 
 export function ControlMainControls() {
   const startPlayback = useStartPlaybackMutation();

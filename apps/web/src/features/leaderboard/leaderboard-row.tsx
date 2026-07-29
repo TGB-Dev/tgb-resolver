@@ -4,10 +4,10 @@ import type { LeaderboardEntry } from "@tgb-resolver/realtime";
 import { motion, type Variants } from "motion/react";
 import { memo, useMemo, useRef } from "react";
 
+import { leaderboardModel } from "@/features/leaderboard/leaderboard-model";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 import { useColorMode } from "@/features/shared/ui/color-mode";
 import { entryEqual } from "@/lib/leaderboard-comparators";
-import { leaderboardModel } from "@/models";
 
 import { TgbResolverEasings } from "../shared/anim/easings";
 import { PenaltyCell, ScoreCell, SubmissionTimeCell, UsernameCell } from "./cells";

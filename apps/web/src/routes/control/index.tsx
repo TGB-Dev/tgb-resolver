@@ -3,13 +3,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { ControlConfirmDialog } from "@/features/control/control-confirm-dialog";
+import { controlNowModel } from "@/features/control/control-now-model";
 import { FloatingPanelHost } from "@/features/control/floating-panel-host";
 import { ControlMainPanel } from "@/features/control/panels/control-main-panel";
 import { ControlTimelinePanel } from "@/features/control/panels/control-timeline-panel";
 import { ControlRealtimeProvider } from "@/features/control/realtime-provider";
 import { ControlStatusBar } from "@/features/control/status-bar/control-status-bar";
 import { getServerNow } from "@/lib/realtime-client";
-import { controlNowModel } from "@/models";
 
 export const Route = createFileRoute("/control/")({
   component: RouteComponent,

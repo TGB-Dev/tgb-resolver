@@ -1,9 +1,8 @@
 # Web State QUICK_REF
 
-Global state = Preact Signals `createModel` stores. Core models live in `src/models/`,
-re-exported from `src/models/index.ts`. Import from `@/models`. Feature-specific models
-(e.g. `assetsManagerModel`) live in their feature directory — import directly from
-`@/features/assets-manager/assets-manager-model`.
+Global state = Preact Signals `createModel` stores. All models live in their feature
+directories (`src/features/*/`). Import directly from the feature path
+(e.g. `@/features/shared/show-model`, `@/features/control/playback-model`).
 
 Read with `.value`; render display-only signals straight in JSX: `<>{model.field}</>`.
 Call actions as methods.
@@ -12,17 +11,30 @@ Call actions as methods.
 
 | Model | Location | Public fields (signals) | Actions |
 |---|---|---|---|
-| `realtimeModel` | `@/models` | `connectionStatus`, `bigRefetching` | — |
-| `showModel` | `@/models` | `showEvents`, `showOrderedIds`, `showMode`, `dataVersion`, `showMeta`, `showFile`, `rows` (computed) | `hydrateFromSnapshot(show)`, `tryApplyShowMessage(msg)` |
-| `playbackModel` | `@/models` | `state`, `currentEventId` (computed), `currentCueId` (computed), `status` (computed) | `update(p)`, `reset(v?)`, `syncFromSnapshot(v, snap)` |
-| `controlNowModel` | `@/models` | `now` | `setNow(n)` |
-| `confirmActionModel` | `@/models` | `open`, `title`, `message`, `confirmLabel`, `cancelLabel`, `showInput`, `inputLabel`, `inputValue` | `confirmAction(p)`, `promptAction(p)`, `resolveConfirmAction(ok)`, `setInputValue(v)` |
-| `fullscreenModel` | `@/models` | `isFullscreen` | `toggleFullscreen()` |
-| `floatingPanelModel` | `@/models` | `active`, `isDirty` | `openFloatingPanel(...)`, `closeFloatingPanel(b)`, `requestFloatingPanelClose(r?)`, `setDirty(b)` |
-| `leaderboardModel` | `@/models` | `userIds`, `currentBottomView`, `currentResolvedUserId`, `getSignal(id)` | `sync(show, upToEventId?)` |
-| `assetsManagerModel` | `@/features/assets-manager` | `folderTree`, `selectedEntryId`, `selectedIds`, `viewMode`, `expandedFolderIds`, `entries` (computed), `focusedPanel` | `selectEntry(id)`, `clearSelection()`, `handleEntryClick(e, idx)`, `setViewMode(m)`, `toggleFolder(id)`, `expandAll()`, `collapseAll()`, `createFolder(pid, name)`, `uploadAsset(fid, file)`, `renameEntry(id, isDir, name)`, `deleteEntry(id, isDir)`, `findEntry(id)`, `findEntryName(id)`, `applyShowState(data)`, `setInvalidateCache(fn)`, `ensureFolderPath(root, parts)` |
+| `realtimeModel` | `@/features/shared/realtime-model` | `connectionStatus`, `bigRefetching` | — |
+| `showModel` | `@/features/shared/show-model` | `showEvents`, `showOrderedIds`, `showMode`, `dataVersion`, `showMeta`, `showFile`, `rows` (computed) | `hydrateFromSnapshot(show)`, `tryApplyShowMessage(msg)` |
+| `playbackModel` | `@/features/control/playback-model` | `state`, `currentEventId` (computed), `currentCueId` (computed), `status` (computed) | `update(p)`, `reset(v?)`, `syncFromSnapshot(v, snap)` |
+| `controlNowModel` | `@/features/control/control-now-model` | `now` | `setNow(n)` |
+| `confirmActionModel` | `@/features/shared/confirm-action-model` | `open`, `title`, `message`, `confirmLabel`, `cancelLabel`, `showInput`, `inputLabel`, `inputValue` | `confirmAction(p)`, `promptAction(p)`, `resolveConfirmAction(ok)`, `setInputValue(v)` |
+| `fullscreenModel` | `@/features/shared/full-screen-model` | `isFullscreen` | `toggleFullscreen()` |
+| `floatingPanelModel` | `@/features/control/floating-panel-model` | `active`, `isDirty` | `openFloatingPanel(...)`, `closeFloatingPanel(b)`, `requestFloatingPanelClose(r?)`, `setDirty(b)` |
+| `leaderboardModel` | `@/features/leaderboard/leaderboard-model` | `userIds`, `currentBottomView`, `currentResolvedUserId`, `getSignal(id)` | `sync(show, upToEventId?)` |
+| `assetsManagerModel` | `@/features/assets-manager/assets-manager-model` | `folderTree`, `selectedEntryId`, `selectedIds`, `viewMode`, `expandedFolderIds`, `entries` (computed), `focusedPanel` | `selectEntry(id)`, `clearSelection()`, `handleEntryClick(e, idx)`, `setViewMode(m)`, `toggleFolder(id)`, `expandAll()`, `collapseAll()`, `createFolder(pid, name)`, `uploadAsset(fid, file)`, `renameEntry(id, isDir, name)`, `deleteEntry(id, isDir)`, `findEntry(id)`, `findEntryName(id)`, `applyShowState(data)`, `setInvalidateCache(fn)`, `ensureFolderPath(root, parts)` |
 
-## Declare a new store (`src/models/my-model.ts`)
+Other model files: `floating-panel-types.ts` (`@/features/control`).
+
+## Feature directories (model locations)
+
+Models live alongside their feature code. The table below shows where each feature's models reside.
+
+| Directory | Role |
+|---|---|
+| `@/features/control/` | Control panel UI (timeline, transport, cue tab) |
+| `@/features/leaderboard/` | Leaderboard grid/table views |
+| `@/features/assets-manager/` | Folder/file asset browser with tree view |
+| `@/features/shared/` | Shared UI components used across features |
+
+## Declare a new store (`src/features/<feature>/my-model.ts`)
 
 ```ts
 import { createModel, signal, computed, type ReadonlySignal, type Signal } from "@preact/signals-react";
@@ -48,12 +60,12 @@ const MyModel = createModel<MyModelState>(() => {
 export const myModel = new MyModel();
 ```
 
-Then add `export { myModel } from "./my-model";` to `src/models/index.ts`.
+Then import directly from the feature path: `import { myModel } from "@/features/<feature>/my-model";`.
 
 ## Subscribe in a component
 
 ```tsx
-import { myModel } from "@/models";
+import { myModel } from "@/features/control/playback-model";
 
 function Counter() {
   // reading .value auto-subscribes this component (preact/signals-react transform)

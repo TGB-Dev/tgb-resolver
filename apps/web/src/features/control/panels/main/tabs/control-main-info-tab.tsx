@@ -1,8 +1,9 @@
 import { Box, Button, Code, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import { ShowMode } from "@tgb-resolver/realtime";
 
-import { floatingPanelModel, showModel } from "@/models";
-import { FloatingPanelType } from "@/models/floating-panel-types";
+import { floatingPanelModel } from "@/features/control/floating-panel-model";
+import { FloatingPanelType } from "@/features/control/floating-panel-types";
+import { showModel } from "@/features/shared/show-model";
 
 export function ControlMainInfoTab() {
   const mode = showModel.showMode.value;

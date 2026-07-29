@@ -1,6 +1,6 @@
 import { Box, Code, Text } from "@chakra-ui/react";
 
-import { showModel } from "@/models";
+import { showModel } from "@/features/shared/show-model";
 
 export function InspectShowPanel() {
   const file = showModel.showFile.value;

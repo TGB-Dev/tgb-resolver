@@ -7,8 +7,10 @@ import { ShowConnectionStatus, type ShowWebSocketMessage } from "@tgb-resolver/r
 import { type ReactNode, useEffect, useRef } from "react";
 
 import { BigRefetchOverlay } from "@/features/control/big-refetch-overlay";
+import { playbackModel } from "@/features/control/playback-model";
+import { realtimeModel } from "@/features/shared/realtime-model";
+import { showModel } from "@/features/shared/show-model";
 import { connectRealtime } from "@/lib/realtime-client";
-import { playbackModel, realtimeModel, showModel } from "@/models";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-handler";
 import { mapShowStateSnapshotToShowFile } from "./show-mapper";

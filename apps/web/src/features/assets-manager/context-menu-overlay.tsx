@@ -1,6 +1,6 @@
 import { Box, Button, Portal, Separator, Text } from "@chakra-ui/react";
 
-import { confirmActionModel } from "@/models";
+import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
 import { assetsManagerModel } from "./assets-manager-model";
 import { processUploadBatch } from "./upload-helpers";

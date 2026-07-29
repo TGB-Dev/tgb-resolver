@@ -1,6 +1,6 @@
 import { Box, Spinner, Text, VStack } from "@chakra-ui/react";
 
-import { realtimeModel } from "@/models";
+import { realtimeModel } from "@/features/shared/realtime-model";
 
 export function BigRefetchOverlay() {
   if (!realtimeModel.bigRefetching.value) {

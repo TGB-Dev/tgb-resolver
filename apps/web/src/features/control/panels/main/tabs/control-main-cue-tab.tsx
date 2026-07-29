@@ -1,7 +1,7 @@
 import { Grid } from "@chakra-ui/react";
 
 import { useControlShowRows } from "@/features/control/hooks";
-import { playbackModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
 
 import { CueContent } from "./cue-content";
 import { CUE_CONFIG, Cue, CueItem } from "./cue-item";

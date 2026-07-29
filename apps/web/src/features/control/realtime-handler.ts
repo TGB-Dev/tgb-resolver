@@ -5,7 +5,9 @@ import {
 } from "@tgb-resolver/contracts";
 import { ShowMessageType, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
 
-import { playbackModel, realtimeModel, showModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
+import { realtimeModel } from "@/features/shared/realtime-model";
+import { showModel } from "@/features/shared/show-model";
 
 export function controlShowQueryKey() {
   return tgbResolverServerFeaturesShowGetShowEndpointQueryKey({ client: generatedClient });

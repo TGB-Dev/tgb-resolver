@@ -23,7 +23,9 @@ import {
 import { FILE_EXTENSION, type TimelineTableItem } from "@tgb-resolver/realtime";
 import { Effect, Schedule } from "effect";
 
-import { playbackModel, realtimeModel, showModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
+import { realtimeModel } from "@/features/shared/realtime-model";
+import { showModel } from "@/features/shared/show-model";
 
 import { controlShowQueryKey } from "./realtime-handler";
 import { mapShowStateSnapshotToShowFile } from "./show-mapper";

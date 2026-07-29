@@ -9,7 +9,8 @@ import {
 } from "@tgb-resolver/realtime";
 import { beforeEach, expect, test } from "vitest";
 
-import { playbackModel, showModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
+import { showModel } from "@/features/shared/show-model";
 
 function makeShow(showVersion: number, events: TimelineEvent[]): ShowFile {
   return {

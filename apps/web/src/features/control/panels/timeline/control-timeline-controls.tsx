@@ -1,6 +1,8 @@
 import { Button, HStack, Show } from "@chakra-ui/react";
 import { Blocks, Crosshair, FileDown, FileUp, Trash2 } from "lucide-react";
 
+import { floatingPanelModel } from "@/features/control/floating-panel-model";
+import { FloatingPanelType } from "@/features/control/floating-panel-types";
 import {
   useClearShowMutation,
   useControlCanMutate,
@@ -8,8 +10,7 @@ import {
   useExportShowAction,
   useOptimizeShowMutation,
 } from "@/features/control/hooks";
-import { confirmActionModel, floatingPanelModel } from "@/models";
-import { FloatingPanelType } from "@/models/floating-panel-types";
+import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
 interface ControlTimelineControlsProps {
   onJumpToCurrent?: () => void;

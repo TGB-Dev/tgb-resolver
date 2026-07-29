@@ -3,8 +3,9 @@ import { type ReadonlySignal, useComputed, useSignal } from "@preact/signals-rea
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+import { controlNowModel } from "@/features/control/control-now-model";
 import { useControlShowRows } from "@/features/control/hooks";
-import { controlNowModel, playbackModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
 
 function formatRemaining(ms: number) {
   const clamped = Math.max(0, ms);

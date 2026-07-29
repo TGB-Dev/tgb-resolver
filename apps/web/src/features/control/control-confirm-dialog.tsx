@@ -1,6 +1,6 @@
 import { Button, Dialog, Field, Input, Portal } from "@chakra-ui/react";
 
-import { confirmActionModel } from "@/models";
+import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
 export function ControlConfirmDialog() {
   const open = confirmActionModel.open.value;

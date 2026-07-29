@@ -4,7 +4,8 @@ import { TimelineEventType } from "@tgb-resolver/contracts";
 import { memo } from "react";
 
 import { useControlShowQuery } from "@/features/control/hooks";
-import { leaderboardModel, playbackModel } from "@/models";
+import { playbackModel } from "@/features/control/playback-model";
+import { leaderboardModel } from "@/features/leaderboard/leaderboard-model";
 
 import { LeaderboardProvider } from "./leaderboard-provider";
 import { LeaderboardRow } from "./leaderboard-row";

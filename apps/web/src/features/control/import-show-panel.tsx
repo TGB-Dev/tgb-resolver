@@ -2,8 +2,8 @@ import { Button, Field, FileUpload, HStack, Input, Stack, Text } from "@chakra-u
 import { useSignal } from "@preact/signals-react";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 
+import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { useImportShowMutation } from "@/features/control/hooks";
-import { floatingPanelModel } from "@/models";
 
 export function ImportShowPanel() {
   const file = useSignal<File | null>(null);

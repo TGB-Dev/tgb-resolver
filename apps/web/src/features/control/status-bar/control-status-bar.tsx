@@ -1,8 +1,8 @@
 import { Button, Grid, HStack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 
+import { controlNowModel } from "@/features/control/control-now-model";
 import { ColorModeButton } from "@/features/shared/ui/color-mode";
-import { controlNowModel } from "@/models";
 
 import { ControlFullScreenButton } from "./control-full-screen-button";
 import { ControlCurrentTime, ControlElapsedTime } from "./control-time";

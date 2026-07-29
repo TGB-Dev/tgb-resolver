@@ -8,8 +8,8 @@ import {
   useControlShowRows,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
+import { playbackModel } from "@/features/control/playback-model";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
-import { playbackModel } from "@/models";
 
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
 
