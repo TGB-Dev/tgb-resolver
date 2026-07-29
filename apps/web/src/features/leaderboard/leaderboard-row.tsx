@@ -10,9 +10,8 @@ import { useColorMode } from "@/features/shared/ui/color-mode";
 import { entryEqual } from "@/lib/leaderboard-comparators";
 
 import { TgbResolverEasings } from "../shared/anim/easings";
-import { PenaltyCell, ScoreCell, SubmissionTimeCell, UsernameCell } from "./cells";
+import { PenaltyCell, RankCell, ScoreCell, SubmissionTimeCell, UsernameCell } from "./cells";
 import { ProblemCell } from "./problem-cell";
-import { RankCell } from "./rank-cell";
 
 // TODO: adjust animation timings to be relative to whole event's duration
 // TODO: submission count to show a contestant's effort on a problem, and we'll show the verdict on those individual attempt also
@@ -100,7 +99,7 @@ export const LeaderboardRow = memo(
         }}
         zIndex={isCurrentResolved ? 5 : 0}
       >
-        <RankCell rank={data.rank} />
+        <RankCell rank={data.rank} isCurrentResolved={isCurrentResolved} />
 
         <UsernameCell realName={data.realName} username={data.username} />
 

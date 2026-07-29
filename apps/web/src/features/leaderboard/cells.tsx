@@ -1,5 +1,51 @@
 import { Table, Text, VStack } from "@chakra-ui/react";
+import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
+import { motion } from "motion/react";
 import { memo, useMemo } from "react";
+
+import { TgbResolverEasings } from "../shared/anim/easings";
+import { useIsBigScreen } from "./leaderboard-provider";
+
+const MotionText = motion.create(Text);
+
+interface RankCellProps {
+  rank: number;
+  isCurrentResolved?: boolean;
+}
+
+export const RankCell = memo(({ rank, isCurrentResolved }: RankCellProps) => {
+  const isBigScreen = useIsBigScreen().value;
+
+  return (
+    <Table.Cell>
+      {isCurrentResolved ? (
+        <MotionText
+          key={rank}
+          // TODO: tune this? The idea is to emphasize the rank update
+          animate={{
+            scale: [1, 2.5, 1],
+            rotate: [0, 15, 0],
+            x: [0, -24, 0],
+            y: [0, -12, 0],
+          }}
+          transition={{
+            duration: 0.3, // TODO: make this relative to the whole event's duration
+            ease: TgbResolverEasings.swiftOut,
+          }}
+          fontFamily="mono"
+          fontSize={isBigScreen ? "3xl" : undefined}
+          textAlign="end"
+        >
+          <NumberFlow value={rank} />
+        </MotionText>
+      ) : (
+        <Text fontFamily="mono" fontSize={isBigScreen ? "3xl" : undefined} textAlign="end">
+          <NumberFlow value={rank} />
+        </Text>
+      )}
+    </Table.Cell>
+  );
+});
 
 interface UsernameCellProps {
   username: string;
@@ -22,8 +68,8 @@ interface ScoreCellProps {
 }
 
 export const ScoreCell = memo(({ score }: ScoreCellProps) => (
-  <Table.Cell fontFamily="mono" textAlign="end">
-    {score}
+  <Table.Cell fontFamily="mono" textAlign="end" fontVariantNumeric="tabular-nums">
+    <NumberFlow value={score} />
   </Table.Cell>
 ));
 
@@ -32,8 +78,8 @@ interface PenaltyCellProps {
 }
 
 export const PenaltyCell = memo(({ penalty }: PenaltyCellProps) => (
-  <Table.Cell fontFamily="mono" textAlign="end">
-    {penalty}
+  <Table.Cell fontFamily="mono" textAlign="end" fontVariantNumeric="tabular-nums">
+    <NumberFlow value={penalty} />
   </Table.Cell>
 ));
 
@@ -43,19 +89,44 @@ interface SubmissionTimeCellProps {
 
 export const SubmissionTimeCell = memo(
   ({ submissionTimeSinceStartSeconds }: SubmissionTimeCellProps) => {
-    const timeString = useMemo(() => {
+    const { seconds, minutes, hours } = useMemo(() => {
       const totalSeconds = Math.floor(submissionTimeSinceStartSeconds);
       const seconds = totalSeconds % 60;
       const minutes = Math.floor(totalSeconds / 60) % 60;
       const hours = Math.floor(totalSeconds / (60 * 60));
 
-      return `${hours.toString().padStart(1, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      return {
+        seconds,
+        minutes,
+        hours,
+      };
     }, [submissionTimeSinceStartSeconds]);
 
     return (
-      <Table.Cell fontFamily="mono" fontWeight="bold" fontStyle="italic" textAlign="end">
-        {timeString}
-      </Table.Cell>
+      <NumberFlowGroup>
+        <Table.Cell
+          fontFamily="mono"
+          fontWeight="bold"
+          fontStyle="italic"
+          textAlign="end"
+          alignItems="baseline"
+          fontVariantNumeric="tabular-nums"
+        >
+          <NumberFlow trend={-1} value={hours} format={{ minimumIntegerDigits: 1 }} />
+          <NumberFlow
+            prefix=":"
+            value={minutes}
+            digits={{ 1: { max: 5 } }}
+            format={{ minimumIntegerDigits: 2 }}
+          />
+          <NumberFlow
+            prefix=":"
+            value={seconds}
+            digits={{ 1: { max: 5 } }}
+            format={{ minimumIntegerDigits: 2 }}
+          />
+        </Table.Cell>
+      </NumberFlowGroup>
     );
   },
 );
