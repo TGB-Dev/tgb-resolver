@@ -8,6 +8,7 @@ import {
   useControlShowRows,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
+import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 import { playbackModel } from "@/models";
 
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
@@ -24,7 +25,7 @@ function scrollEventToTop(parent: HTMLDivElement | null, currentEventId: number 
   if (!parent || currentEventId == null) return;
   const el = parent.querySelector<HTMLElement>(`[data-event-id="${currentEventId}"]`);
   if (!el) return;
-  el.scrollIntoView({ block: "start", behavior: "auto" });
+  animateScrollIntoView(el, parent, { block: "start", duration: 0.15 });
 }
 
 export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {

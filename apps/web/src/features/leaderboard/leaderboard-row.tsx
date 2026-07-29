@@ -4,11 +4,12 @@ import type { LeaderboardEntry } from "@tgb-resolver/realtime";
 import { motion, type Variants } from "motion/react";
 import { memo, useMemo, useRef } from "react";
 
+import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 import { useColorMode } from "@/features/shared/ui/color-mode";
 import { entryEqual } from "@/lib/leaderboard-comparators";
 import { leaderboardModel } from "@/models";
-import { animateScrollIntoView } from "@/utils/scroll";
 
+import { TgbResolverEasings } from "../shared/anim/easings";
 import { PenaltyCell, ScoreCell, SubmissionTimeCell, UsernameCell } from "./cells";
 import { ProblemCell } from "./problem-cell";
 import { RankCell } from "./rank-cell";
@@ -70,7 +71,7 @@ export const LeaderboardRow = memo(
             animateScrollIntoView(ref.current, parent, {
               block: "end",
               duration: 0.8,
-              ease: "easeInOut",
+              ease: TgbResolverEasings.inOutQuad,
             });
             return;
           }
@@ -90,11 +91,11 @@ export const LeaderboardRow = memo(
         transition={{
           layout: {
             duration: 0.8,
-            ease: "easeOut",
+            ease: TgbResolverEasings.swiftOut,
           },
           backgroundColor: {
             duration: 0.15,
-            ease: "easeInOut",
+            ease: TgbResolverEasings.inOutQuad,
           },
         }}
         zIndex={isCurrentResolved ? 5 : 0}

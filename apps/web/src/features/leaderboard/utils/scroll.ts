@@ -1,5 +1,7 @@
 import { type AnimationPlaybackControls, animate, type KeyframeOptions } from "motion/react";
 
+import { TgbResolverEasings } from "@/features/shared/anim/easings";
+
 interface ScrollOptions {
   block?: "start" | "center" | "end";
   duration?: number;
@@ -11,12 +13,12 @@ export function animateScrollIntoView(
   container: HTMLElement,
   options: ScrollOptions = {},
 ): AnimationPlaybackControls {
-  const { block = "end", duration = 0.5, ease = "easeOut" } = options;
+  const { block = "end", duration = 0.5, ease = TgbResolverEasings.swiftOut } = options;
 
   const containerRect = container.getBoundingClientRect();
   const elementRect = element.getBoundingClientRect();
 
-  // Extract active CSS translateY from Framer Motion's FLIP transform
+  // Extract active CSS translateY from motion/react's FLIP transform
   const transform = window.getComputedStyle(element).transform;
   let translateY = 0;
   if (transform && transform !== "none") {
@@ -43,7 +45,7 @@ export function animateScrollIntoView(
   const maxScroll = container.scrollHeight - container.clientHeight;
   targetScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll));
 
-  // Animate container.scrollTop smoothly
+  // Return animate's controls
   return animate(container.scrollTop, targetScrollTop, {
     duration,
     ease,

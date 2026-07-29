@@ -7,6 +7,7 @@ import { memo } from "react";
 import { problemCellEqual } from "@/lib/leaderboard-comparators";
 import { useVerdictColor, verdictShortCode } from "@/lib/verdict";
 
+import { TgbResolverEasings } from "../shared/anim/easings";
 import { useIsBigScreen } from "./leaderboard-provider";
 
 const MotionBox = motion.create(Box);
@@ -42,7 +43,7 @@ export const ProblemCell = memo(
             transition={{
               duration: 2,
               repeat: Infinity,
-              ease: "easeInOut",
+              ease: TgbResolverEasings.inOutQuad,
             }}
           >
             <Text lineHeight="1.3" fontFamily="mono" color={fg}>
