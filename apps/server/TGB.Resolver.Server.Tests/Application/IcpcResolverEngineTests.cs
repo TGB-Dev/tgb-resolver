@@ -92,7 +92,24 @@ public sealed class IcpcResolverEngineTests
     var result = IcpcResolverEngine.Convert(xml, ["CONTEST_1"]);
 
     await AssertTeams(result.PreFreezeSnapshot, ExpectedFrozenBoard);
+    await AssertSubmissionCounts(result.PreFreezeSnapshot);
     await AssertEvents(result.ResolveEvents, ExpectedResolveEvents);
+  }
+
+  private static async Task AssertSubmissionCounts(
+    IReadOnlyList<FreezeSnapshotEntry> entries)
+  {
+    var team5Prob1 = entries
+      .Single(e => e.UserId == 5)
+      .Problems.Single(p => p.ProblemId == 1);
+    await Assert.That(team5Prob1.PreFreezeSubmissionCount).IsGreaterThan(0);
+    await Assert.That(team5Prob1.PostFreezeSubmissionCount).IsEqualTo(0);
+
+    var team42Prob6 = entries
+      .Single(e => e.UserId == 42)
+      .Problems.Single(p => p.ProblemId == 6);
+    await Assert.That(team42Prob6.PreFreezeSubmissionCount).IsEqualTo(2);
+    await Assert.That(team42Prob6.PostFreezeSubmissionCount).IsEqualTo(3);
   }
 
   private static async Task AssertTeams(

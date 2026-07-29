@@ -35,7 +35,8 @@ const verdictColorDefs: Record<VerdictRunResult, VerdictColorDef> = {
     border: { light: "cyan.400", dark: "cyan.400" },
     bg: { light: "purple.700", dark: "purple.700" },
   },
-  [VerdictRunResult.UNKNOWN]: { semanticToken: "muted" },
+  [VerdictRunResult.UNKNOWN]: { semanticToken: "subtle" },
+  [VerdictRunResult.UNRESOLVED]: { semanticToken: "muted" },
 };
 
 const verdictShortCodes: Record<VerdictRunResult, string> = {
@@ -51,7 +52,8 @@ const verdictShortCodes: Record<VerdictRunResult, string> = {
   [VerdictRunResult.SHORT_CIRCUITED]: "SC",
   [VerdictRunResult.ABORTED]: "AB",
   [VerdictRunResult.PENDING]: "PD",
-  [VerdictRunResult.UNKNOWN]: "?",
+  [VerdictRunResult.UNKNOWN]: " ",
+  [VerdictRunResult.UNRESOLVED]: "?",
 };
 
 export function verdictShortCode(verdict?: VerdictRunResult): string {

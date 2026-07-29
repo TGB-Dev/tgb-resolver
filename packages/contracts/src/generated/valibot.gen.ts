@@ -44,13 +44,16 @@ export const vVerdictRunResult = v.picklist([
     'InternalError',
     'ShortCircuited',
     'Aborted',
+    'Unresolved',
     'Pending'
 ]);
 
 export const vProblemFreezeResultSnapshot = v.strictObject({
     problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     score: v.optional(v.number()),
-    verdict: v.optional(vVerdictRunResult)
+    verdict: v.optional(vVerdictRunResult),
+    preFreezeSubmissionCount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    postFreezeSubmissionCount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
 });
 
 export const vFreezeSnapshotEntrySnapshot = v.strictObject({

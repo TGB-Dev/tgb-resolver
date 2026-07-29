@@ -135,6 +135,8 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
             problemId: problem.problemId ?? 0,
             score: problem.score ?? 0,
             verdict: (problem.verdict as VerdictRunResult) ?? VerdictRunResult.UNKNOWN,
+            preFreezeSubmissionCount: problem.preFreezeSubmissionCount ?? 0,
+            postFreezeSubmissionCount: problem.postFreezeSubmissionCount ?? 0,
           })),
           lastRunId: entry.lastRunId ?? null,
           lastSubmittedSeconds: entry.lastSubmittedSeconds ?? null,

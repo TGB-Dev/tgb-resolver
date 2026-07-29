@@ -84,10 +84,20 @@ public static class IcpcResolverEngine
       var problemResults = problemDefs.Select(problemDef =>
       {
         var result = frozen.ResultFor(team.Id, problemDef.Id);
+        var teamProblemRuns = runs
+          .Where(r => r.Team == team.Id && r.Problem == problemDef.Id)
+          .ToArray();
+        var preFreezeCount = teamProblemRuns.Count(r => r.Time < freezeAtSeconds);
+        var postFreezeCount = teamProblemRuns.Count(r => r.Time >= freezeAtSeconds);
+
         var verdict = VerdictRunResult.Unknown;
         if (result.LastAlteringRunId is { } runId && frozen.RunById(runId) is { } run)
           verdict = run.Verdict;
-        return new ProblemFreezeResult(problemDef.Id, result.Points, verdict);
+        else if (postFreezeCount > 0)
+          verdict = VerdictRunResult.Unresolved;
+
+        return new ProblemFreezeResult(problemDef.Id, result.Points, verdict, preFreezeCount,
+          postFreezeCount);
       }).ToArray();
 
       var lastRun = runs

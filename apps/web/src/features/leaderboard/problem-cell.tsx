@@ -20,57 +20,53 @@ export const ProblemCell = memo(
   ({ problem }: ProblemCellProps) => {
     const isBigScreen = useIsBigScreen().value;
     const isPending = problem.verdict === VerdictRunResult.PENDING;
+    const isUnknown = problem.verdict === VerdictRunResult.UNKNOWN;
 
     const { bg, fg, border } = useVerdictColor(problem.verdict);
     const [bgColor, borderColor] = useToken("colors", [bg, border]);
 
+    const textColor = isUnknown ? fg : undefined;
+    const score = isUnknown ? " " : problem.score;
+
+    const pendingMotionProps = isPending
+      ? {
+          initial: { borderColor: bgColor },
+          animate: { borderColor: [bgColor, borderColor, bgColor] },
+          transition: {
+            duration: 2,
+            repeat: Infinity,
+            ease: TgbResolverEasings.inOutQuad,
+          },
+        }
+      : { borderColor };
+
     return (
       <Table.Cell px={1}>
-        {isPending ? (
-          <MotionBox
-            borderWidth={2}
-            bg={bg}
-            rounded="sm"
-            px={1.5}
-            py={0.5}
-            textAlign="center"
-            initial={{
-              borderColor: bgColor,
-            }}
-            animate={{
-              borderColor: [bgColor, borderColor, bgColor],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: TgbResolverEasings.inOutQuad,
-            }}
+        <MotionBox
+          flex={1}
+          display="flex"
+          flexDir="column"
+          justifyContent="center"
+          borderWidth={2}
+          bg={bg}
+          rounded="sm"
+          px={1.5}
+          py={0.5}
+          textAlign="center"
+          {...pendingMotionProps}
+        >
+          <Text lineHeight="1.3" fontFamily="mono" color={textColor} whiteSpaceCollapse="preserve">
+            {score}
+          </Text>
+          <Text
+            fontSize={isBigScreen ? "md" : "xs"}
+            lineHeight="1.2"
+            color={fg}
+            whiteSpaceCollapse="preserve"
           >
-            <Text lineHeight="1.3" fontFamily="mono" color={fg}>
-              {problem.score}
-            </Text>
-            <Text fontSize={isBigScreen ? "md" : "xs"} lineHeight="1.2" color={fg}>
-              {verdictShortCode(problem.verdict)}
-            </Text>
-          </MotionBox>
-        ) : (
-          <Box
-            borderWidth={2}
-            borderColor={border}
-            bg={bg}
-            rounded="sm"
-            px={1.5}
-            py={0.5}
-            textAlign="center"
-          >
-            <Text lineHeight="1.3" fontFamily="mono">
-              {problem.score}
-            </Text>
-            <Text fontSize={isBigScreen ? "md" : "xs"} lineHeight="1.2" color={fg}>
-              {verdictShortCode(problem.verdict)}
-            </Text>
-          </Box>
-        )}
+            {verdictShortCode(problem.verdict)}
+          </Text>
+        </MotionBox>
       </Table.Cell>
     );
   },

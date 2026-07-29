@@ -95,6 +95,8 @@ export type ProblemFreezeResultSnapshot = {
     problemId?: number;
     score?: number;
     verdict?: VerdictRunResult;
+    preFreezeSubmissionCount?: number;
+    postFreezeSubmissionCount?: number;
 };
 
 export enum VerdictRunResult {
@@ -146,6 +148,10 @@ export enum VerdictRunResult {
      * Aborted
      */
     ABORTED = 'Aborted',
+    /**
+     * Unresolved
+     */
+    UNRESOLVED = 'Unresolved',
     /**
      * Pending
      */

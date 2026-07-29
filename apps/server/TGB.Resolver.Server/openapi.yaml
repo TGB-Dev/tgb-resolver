@@ -808,6 +808,12 @@ components:
           format: double
         verdict:
           $ref: '#/components/schemas/VerdictRunResult'
+        preFreezeSubmissionCount:
+          type: integer
+          format: int32
+        postFreezeSubmissionCount:
+          type: integer
+          format: int32
     VerdictRunResult:
       type: string
       description: ''
@@ -824,6 +830,7 @@ components:
       - InternalError
       - ShortCircuited
       - Aborted
+      - Unresolved
       - Pending
       enum:
       - Unknown
@@ -838,6 +845,7 @@ components:
       - InternalError
       - ShortCircuited
       - Aborted
+      - Unresolved
       - Pending
     AutomationSnapshot:
       type: object

@@ -178,13 +178,13 @@ public sealed class ShowRawRepository(
         [
           new FreezeSnapshotEntry(1, 100, 0, 1,
           [
-            new ProblemFreezeResult(1, 100, VerdictRunResult.Accepted),
-            new ProblemFreezeResult(2, 0, VerdictRunResult.Unknown)
+            new ProblemFreezeResult(1, 100, VerdictRunResult.Accepted, 0, 0),
+            new ProblemFreezeResult(2, 0, VerdictRunResult.Unknown, 0, 0)
           ], 3831, 1390.506239),
           new FreezeSnapshotEntry(2, 80, 0, 2,
           [
-            new ProblemFreezeResult(1, 80, VerdictRunResult.Accepted),
-            new ProblemFreezeResult(2, 0, VerdictRunResult.Unknown)
+            new ProblemFreezeResult(1, 80, VerdictRunResult.Accepted, 0, 0),
+            new ProblemFreezeResult(2, 0, VerdictRunResult.Unknown, 0, 0)
           ], 3940, 2985.246934)
         ]),
       Timeline =

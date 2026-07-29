@@ -37,6 +37,8 @@ export interface ProblemFreezeResult {
   problemId: number;
   score: number;
   verdict: VerdictRunResult;
+  preFreezeSubmissionCount: number;
+  postFreezeSubmissionCount: number;
 }
 
 export interface FreezeSnapshotEntry {

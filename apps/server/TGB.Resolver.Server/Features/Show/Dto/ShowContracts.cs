@@ -44,7 +44,9 @@ public sealed record FreezeSnapshotEntrySnapshot(
 public sealed record ProblemFreezeResultSnapshot(
   int ProblemId,
   double Score,
-  VerdictRunResult Verdict);
+  VerdictRunResult Verdict,
+  int PreFreezeSubmissionCount,
+  int PostFreezeSubmissionCount);
 
 public sealed record AutomationSnapshot(
   bool AutoResolveEnabled,

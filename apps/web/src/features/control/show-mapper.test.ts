@@ -32,7 +32,15 @@ describe("mapShowStateSnapshotToShowFile", () => {
             totalScore: 100,
             totalPenalty: 0,
             rank: 1,
-            problems: [{ problemId: 1, score: 100, verdict: VerdictRunResult.ACCEPTED }],
+            problems: [
+              {
+                problemId: 1,
+                score: 100,
+                verdict: VerdictRunResult.ACCEPTED,
+                preFreezeSubmissionCount: 0,
+                postFreezeSubmissionCount: 0,
+              },
+            ],
             lastRunId: 5,
             lastSubmittedSeconds: 12,
           },
@@ -109,7 +117,15 @@ describe("mapShowStateSnapshotToShowFile", () => {
             userId: 1,
             totalScore: 100,
             rank: 1,
-            problems: [{ problemId: 1, score: 100, verdict: VerdictRunResult.ACCEPTED }],
+            problems: [
+              {
+                problemId: 1,
+                score: 100,
+                verdict: VerdictRunResult.ACCEPTED,
+                preFreezeSubmissionCount: 0,
+                postFreezeSubmissionCount: 0,
+              },
+            ],
           }),
         ],
       },
