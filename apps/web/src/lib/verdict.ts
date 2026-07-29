@@ -1,18 +1,39 @@
+import type { BoxProps } from "@chakra-ui/react";
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 
 import { useColorMode } from "@/features/shared/ui/color-mode";
 
+// Derived from https://www.chakra-ui.com/docs/theming/colors
+
+// Haven't found a cleaner solution, but it works
+export type ChakraColor = BoxProps["color"];
+type SemanticToken =
+  | ""
+  | "subtle"
+  | "muted"
+  | "emphasized"
+  | "inverted"
+  | "panel"
+  | "error"
+  | "warning"
+  | "success"
+  | "info";
+
 interface VerdictExplicitColorDef {
-  fg: { light: string; dark: string };
-  border: { light: string; dark: string };
-  bg: { light: string; dark: string };
+  fg: { light: ChakraColor; dark: ChakraColor };
+  border: { light: ChakraColor; dark: ChakraColor };
+  bg: { light: ChakraColor; dark: ChakraColor };
 }
 
 interface VerdictSemanticColorDef {
-  semanticToken: string;
+  semanticToken: SemanticToken;
 }
 
-type VerdictColorDef = VerdictExplicitColorDef | VerdictSemanticColorDef;
+interface SingleColorDef {
+  color: ChakraColor;
+}
+
+type VerdictColorDef = VerdictExplicitColorDef | VerdictSemanticColorDef | SingleColorDef;
 
 const verdictColorDefs: Record<VerdictRunResult, VerdictColorDef> = {
   [VerdictRunResult.ACCEPTED]: {
@@ -35,8 +56,12 @@ const verdictColorDefs: Record<VerdictRunResult, VerdictColorDef> = {
     border: { light: "cyan.400", dark: "cyan.400" },
     bg: { light: "purple.700", dark: "purple.700" },
   },
-  [VerdictRunResult.UNKNOWN]: { semanticToken: "subtle" },
-  [VerdictRunResult.UNRESOLVED]: { semanticToken: "muted" },
+  [VerdictRunResult.UNKNOWN]: {
+    semanticToken: "subtle",
+  },
+  [VerdictRunResult.UNRESOLVED]: {
+    color: "cyan",
+  },
 };
 
 const verdictShortCodes: Record<VerdictRunResult, string> = {
@@ -51,7 +76,7 @@ const verdictShortCodes: Record<VerdictRunResult, string> = {
   [VerdictRunResult.INTERNAL_ERROR]: "IE",
   [VerdictRunResult.SHORT_CIRCUITED]: "SC",
   [VerdictRunResult.ABORTED]: "AB",
-  [VerdictRunResult.PENDING]: "PD",
+  [VerdictRunResult.PENDING]: "?",
   [VerdictRunResult.UNKNOWN]: " ",
   [VerdictRunResult.UNRESOLVED]: "?",
 };
@@ -61,9 +86,9 @@ export function verdictShortCode(verdict?: VerdictRunResult): string {
 }
 
 interface UseVerdictColorReturn {
-  fg: string;
-  border: string;
-  bg: string;
+  fg: ChakraColor;
+  border: ChakraColor;
+  bg: ChakraColor;
 }
 
 export function useVerdictColor(
@@ -77,6 +102,14 @@ export function useVerdictColor(
       fg: `fg.${colorDef.semanticToken}`,
       border: `border.${colorDef.semanticToken}`,
       bg: `bg.${colorDef.semanticToken}`,
+    };
+  }
+
+  if ("color" in colorDef) {
+    return {
+      fg: `${colorDef.color}.contrast`,
+      border: `${colorDef.color}.border`,
+      bg: `${colorDef.color}.solid`,
     };
   }
 
