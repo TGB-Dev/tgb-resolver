@@ -1,4 +1,4 @@
-import { Table, useToken } from "@chakra-ui/react";
+import { useToken } from "@chakra-ui/react";
 import { useSignalEffect } from "@preact/signals-react";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
 import { motion, type Variants } from "motion/react";
@@ -19,7 +19,7 @@ import { ProblemCell } from "./problem-cell";
 // TODO: update with a pending, pending-active state, as currently it it's turning "unexpectedly" from Unknown to Pending
 // on PRE-RES, which is kinda bad on the UX side of things
 
-const MotionRow = motion.create(Table.Row);
+const MotionRow = motion.create("tr");
 
 interface LeaderboardRowProps {
   data: LeaderboardEntry;
@@ -50,6 +50,11 @@ export const LeaderboardRow = memo(
     }, [colorMode, isCurrentResolved]);
 
     const ref = useRef<HTMLTableRowElement>(null);
+    const submissionTimeSinceStartSeconds = Math.max(
+      ...data.problems.map((p) => p.timeSinceStart),
+      data.lastSubmittedSeconds ?? 0,
+      0,
+    );
 
     useSignalEffect(() => {
       const targetId = leaderboardModel.currentBottomView.value;
@@ -82,7 +87,10 @@ export const LeaderboardRow = memo(
     return (
       <MotionRow
         ref={ref}
-        position="relative"
+        style={{
+          position: "relative",
+          zIndex: isCurrentResolved ? 5 : 0,
+        }}
         layout="position"
         layoutScroll
         variants={variants}
@@ -97,7 +105,6 @@ export const LeaderboardRow = memo(
             ease: TgbResolverEasings.inOutQuad,
           },
         }}
-        zIndex={isCurrentResolved ? 5 : 0}
       >
         <RankCell rank={data.rank} isCurrentResolved={isCurrentResolved} />
 
@@ -110,13 +117,7 @@ export const LeaderboardRow = memo(
         <ScoreCell score={data.totalScore} />
         <PenaltyCell penalty={data.totalPenalty} />
 
-        <SubmissionTimeCell
-          submissionTimeSinceStartSeconds={Math.max(
-            ...data.problems.map((p) => p.timeSinceStart),
-            data.lastSubmittedSeconds ?? 0,
-            0,
-          )}
-        />
+        <SubmissionTimeCell submissionTimeSinceStartSeconds={submissionTimeSinceStartSeconds} />
       </MotionRow>
     );
   },

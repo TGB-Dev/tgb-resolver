@@ -1,8 +1,10 @@
 import { Center, Grid, Table, Text } from "@chakra-ui/react";
 import type { ProblemDefinition } from "@tgb-resolver/realtime";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { useIsBigScreen } from "./leaderboard-provider";
+
+const END_ALIGN_STYLE: CSSProperties = { textAlign: "end" };
 
 interface LeaderboardTableProps {
   problems: ProblemDefinition[] | undefined;
@@ -15,6 +17,7 @@ export function LeaderboardTable({ problems, children }: LeaderboardTableProps) 
   return (
     <Table.Root
       size={isBigScreen ? "lg" : "sm"}
+      native
       stickyHeader
       css={{
         "& *": isBigScreen && {
@@ -23,31 +26,23 @@ export function LeaderboardTable({ problems, children }: LeaderboardTableProps) 
         },
         borderCollapse: "separate",
         borderSpacing: 0,
+        "& thead": {
+          position: "relative",
+          zIndex: 999,
+        },
+        "& thead th": {
+          borderBottomWidth: 2,
+          borderBottomColor: "border",
+        },
       }}
     >
-      <Table.Header
-        css={{
-          "& th": {
-            borderBottomWidth: 2,
-            borderBottomColor: "border",
-          },
-        }}
-        position="relative"
-        zIndex={999}
-      >
-        <Table.Row
-          css={{
-            "& th": {
-              borderBottomWidth: 2,
-              borderBottomColor: "border",
-            },
-          }}
-        >
-          <Table.ColumnHeader textAlign="end">Rank</Table.ColumnHeader>
-          <Table.ColumnHeader>User</Table.ColumnHeader>
+      <thead>
+        <tr>
+          <th style={END_ALIGN_STYLE}>Rank</th>
+          <th>User</th>
 
           {problems?.map((problem) => (
-            <Table.ColumnHeader key={problem.id} w={isBigScreen ? 56 : "8ch"} maxH={8} h={8}>
+            <th key={problem.id} style={{ width: isBigScreen ? "14rem" : "8ch", height: "2rem" }}>
               {isBigScreen ? (
                 <Grid templateRows="1fr 2fr" h="full" gap={2}>
                   <Center>
@@ -62,16 +57,16 @@ export function LeaderboardTable({ problems, children }: LeaderboardTableProps) 
                   <Text fontFamily="mono">{problem.label}</Text>
                 </Center>
               )}
-            </Table.ColumnHeader>
+            </th>
           ))}
 
-          <Table.ColumnHeader textAlign="end">Score</Table.ColumnHeader>
-          <Table.ColumnHeader textAlign="end">Penalty</Table.ColumnHeader>
-          <Table.ColumnHeader textAlign="end">Time</Table.ColumnHeader>
-        </Table.Row>
-      </Table.Header>
+          <th style={END_ALIGN_STYLE}>Score</th>
+          <th style={END_ALIGN_STYLE}>Penalty</th>
+          <th style={END_ALIGN_STYLE}>Time</th>
+        </tr>
+      </thead>
 
-      <Table.Body>{children}</Table.Body>
+      <tbody>{children}</tbody>
     </Table.Root>
   );
 }

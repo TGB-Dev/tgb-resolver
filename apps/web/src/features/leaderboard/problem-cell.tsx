@@ -1,4 +1,4 @@
-import { Box, type BoxProps, Table, Text, useToken } from "@chakra-ui/react";
+import { Box, type BoxProps, Text, useToken } from "@chakra-ui/react";
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 import type { LeaderboardProblemResult } from "@tgb-resolver/realtime";
 import { motion } from "motion/react";
@@ -32,16 +32,12 @@ interface ProblemCellProps {
 
 export const ProblemCell = memo(
   ({ problem }: ProblemCellProps) => {
-    const isPending = useMemo(
-      () => problem.verdict === VerdictRunResult.PENDING,
-      [problem.verdict],
-    );
-    const isUnknown = useMemo(
-      () => problem.verdict === VerdictRunResult.UNKNOWN,
-      [problem.verdict],
-    );
-    const isUnresolved = useMemo(
-      () => problem.verdict === VerdictRunResult.UNRESOLVED,
+    const { isPending, isUnknown, isUnresolved } = useMemo(
+      () => ({
+        isPending: problem.verdict === VerdictRunResult.PENDING,
+        isUnknown: problem.verdict === VerdictRunResult.UNKNOWN,
+        isUnresolved: problem.verdict === VerdictRunResult.UNRESOLVED,
+      }),
       [problem.verdict],
     );
 
@@ -82,28 +78,27 @@ export const ProblemCell = memo(
       [bg, border],
     );
 
+    const cellContent = (
+      <ScoreVerdictCell
+        score={score}
+        verdict={problem.verdict}
+        scoreFg={scoreFg}
+        verdictFg={verdictFg}
+      />
+    );
+
     return (
-      <Table.Cell px={1}>
+      <td style={{ paddingInline: "0.25rem" }}>
         {isPending ? (
           <MotionBox {...SHARED_CELL_PROPS} {...motionBoxProps}>
-            <ScoreVerdictCell
-              score={score}
-              verdict={problem.verdict}
-              scoreFg={scoreFg}
-              verdictFg={verdictFg}
-            />
+            {cellContent}
           </MotionBox>
         ) : (
           <Box {...SHARED_CELL_PROPS} {...boxProps}>
-            <ScoreVerdictCell
-              score={score}
-              verdict={problem.verdict}
-              scoreFg={scoreFg}
-              verdictFg={verdictFg}
-            />
+            {cellContent}
           </Box>
         )}
-      </Table.Cell>
+      </td>
     );
   },
   (prev, next) => problemCellEqual(prev.problem, next.problem),
