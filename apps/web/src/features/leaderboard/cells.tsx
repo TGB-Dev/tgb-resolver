@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { memo, useMemo } from "react";
 
 import { TgbResolverEasings } from "../shared/anim/easings";
+import { animationsModel } from "./animations-model";
 import { useIsBigScreen } from "./leaderboard-provider";
 
 const MotionText = motion.create(Text);
@@ -15,6 +16,7 @@ interface RankCellProps {
 
 export const RankCell = memo(({ rank, isCurrentResolved }: RankCellProps) => {
   const isBigScreen = useIsBigScreen().value;
+  const skip = animationsModel.skipNumberAnimations.value;
 
   return (
     <Table.Cell>
@@ -34,11 +36,11 @@ export const RankCell = memo(({ rank, isCurrentResolved }: RankCellProps) => {
           fontSize={isBigScreen ? "3xl" : undefined}
           textAlign="end"
         >
-          <NumberFlow value={rank} />
+          <NumberFlow animated={!skip} value={rank} />
         </MotionText>
       ) : (
         <Text fontFamily="mono" fontSize={isBigScreen ? "3xl" : undefined} textAlign="end">
-          <NumberFlow value={rank} />
+          <NumberFlow animated={!skip} value={rank} />
         </Text>
       )}
     </Table.Cell>
@@ -65,21 +67,29 @@ interface ScoreCellProps {
   score: number;
 }
 
-export const ScoreCell = memo(({ score }: ScoreCellProps) => (
-  <Table.Cell fontFamily="mono" textAlign="end" fontVariantNumeric="tabular-nums">
-    <NumberFlow value={score} />
-  </Table.Cell>
-));
+export const ScoreCell = memo(({ score }: ScoreCellProps) => {
+  const skip = animationsModel.skipNumberAnimations.value;
+
+  return (
+    <Table.Cell fontFamily="mono" textAlign="end" fontVariantNumeric="tabular-nums">
+      <NumberFlow animated={!skip} value={score} />
+    </Table.Cell>
+  );
+});
 
 interface PenaltyCellProps {
   penalty: number;
 }
 
-export const PenaltyCell = memo(({ penalty }: PenaltyCellProps) => (
-  <Table.Cell fontFamily="mono" textAlign="end" fontVariantNumeric="tabular-nums">
-    <NumberFlow value={penalty} />
-  </Table.Cell>
-));
+export const PenaltyCell = memo(({ penalty }: PenaltyCellProps) => {
+  const skip = animationsModel.skipNumberAnimations.value;
+
+  return (
+    <Table.Cell fontFamily="mono" textAlign="end" fontVariantNumeric="tabular-nums">
+      <NumberFlow animated={!skip} value={penalty} />
+    </Table.Cell>
+  );
+});
 
 interface SubmissionTimeCellProps {
   submissionTimeSinceStartSeconds: number;
@@ -87,6 +97,7 @@ interface SubmissionTimeCellProps {
 
 export const SubmissionTimeCell = memo(
   ({ submissionTimeSinceStartSeconds }: SubmissionTimeCellProps) => {
+    const skip = animationsModel.skipNumberAnimations.value;
     const { seconds, minutes, hours } = useMemo(() => {
       const totalSeconds = Math.floor(submissionTimeSinceStartSeconds);
       const seconds = totalSeconds % 60;
@@ -110,14 +121,21 @@ export const SubmissionTimeCell = memo(
           alignItems="baseline"
           fontVariantNumeric="tabular-nums"
         >
-          <NumberFlow trend={-1} value={hours} format={{ minimumIntegerDigits: 1 }} />
           <NumberFlow
+            animated={!skip}
+            trend={-1}
+            value={hours}
+            format={{ minimumIntegerDigits: 1 }}
+          />
+          <NumberFlow
+            animated={!skip}
             prefix=":"
             value={minutes}
             digits={{ 1: { max: 5 } }}
             format={{ minimumIntegerDigits: 2 }}
           />
           <NumberFlow
+            animated={!skip}
             prefix=":"
             value={seconds}
             digits={{ 1: { max: 5 } }}
