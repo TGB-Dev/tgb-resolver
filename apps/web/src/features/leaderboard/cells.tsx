@@ -21,15 +21,13 @@ export const RankCell = memo(({ rank, isCurrentResolved }: RankCellProps) => {
       {isCurrentResolved ? (
         <MotionText
           key={rank}
-          // TODO: tune this? The idea is to emphasize the rank update
           animate={{
             scale: [1, 2.5, 1],
-            rotate: [0, 15, 0],
             x: [0, -24, 0],
             y: [0, -12, 0],
           }}
           transition={{
-            duration: 0.3, // TODO: make this relative to the whole event's duration
+            duration: 0.5,
             ease: TgbResolverEasings.swiftOut,
           }}
           fontFamily="mono"
