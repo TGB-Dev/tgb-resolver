@@ -144,8 +144,8 @@ describe("applyControlRealtimeMessage", () => {
     const addedEvent: TimelineEvent = {
       id: 2,
       position: 2,
-      type: TimelineEventType.SFX,
-      payload: { sfxId: "x", durationSeconds: 1 },
+      type: TimelineEventType.CUS,
+      payload: { extId: "timer", extPayload: { minutes: 1 } },
     };
 
     await applyControlRealtimeMessage(new QueryClient(), {
@@ -163,8 +163,8 @@ describe("applyControlRealtimeMessage", () => {
     const addedEvent: TimelineEvent = {
       id: 2,
       position: 2,
-      type: TimelineEventType.SFX,
-      payload: { sfxId: "x", durationSeconds: 1 },
+      type: TimelineEventType.CUS,
+      payload: { extId: "timer", extPayload: { minutes: 1 } },
     };
 
     await applyControlRealtimeMessage(new QueryClient(), {

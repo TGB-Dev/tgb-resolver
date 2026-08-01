@@ -215,12 +215,8 @@ export type TimelineEventSnapshot = {
     requireManualInteraction?: boolean | null;
     customName?: string | null;
     resolve?: ResolveEventPayloadSnapshot | null;
-    image?: MediaEventPayloadSnapshot | null;
-    sfx?: MediaEventPayloadSnapshot | null;
     pre?: ResolveEventPayloadSnapshot | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export enum TimelineEventType {
@@ -228,14 +224,6 @@ export enum TimelineEventType {
      * Res
      */
     RES = 'Res',
-    /**
-     * Img
-     */
-    IMG = 'Img',
-    /**
-     * Sfx
-     */
-    SFX = 'Sfx',
     /**
      * Pre
      */
@@ -257,9 +245,11 @@ export type ResolveEventPayloadSnapshot = {
     timeSinceStart?: number;
 };
 
-export type MediaEventPayloadSnapshot = {
-    assetId?: string;
-    durationSeconds?: number | null;
+export type CustomEventPayloadSnapshot = {
+    extId?: string;
+    extPayload?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 export type SetAutomationRequest = {
@@ -314,34 +304,20 @@ export type ResolveEventRenameRequest = {
 
 export type NonResolveEventPatchRequest = {
     showVersion?: number;
-    type?: TimelineEventType | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
-    payload?: MediaEventPatchPayload | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
-};
-
-export type MediaEventPatchPayload = {
-    imageId?: string | null;
-    sfxId?: string | null;
-    durationSeconds?: number | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export type CreateTimelineEventRequest = {
     showVersion?: number;
-    type?: TimelineEventType;
     relativeToEventId?: number;
     before?: boolean;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
-    payload?: MediaEventPatchPayload | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export type MoveTimelineEventRequest = {
@@ -353,13 +329,9 @@ export type MoveTimelineEventRequest = {
 export type PatchTimelineEventRequest = {
     showVersion?: number;
     customName?: string | null;
-    type?: TimelineEventType | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
-    payload?: MediaEventPatchPayload | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export type SetTimelineModeRequest = {

@@ -140,11 +140,11 @@ public sealed class ShowRawRepository(
 
       // Pre-resolve cue immediately precedes its resolve event so the
       // frontend can focus on the upcoming resolution.
-      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, null, false, null, null, null,
-        null, payload, null));
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, null, false, null, null,
+        payload, null));
       id++;
-      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, null, false, null, payload, null,
-        null, null, null));
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, null, false, null, payload,
+        null, null));
       id++;
     }
 
@@ -190,15 +190,20 @@ public sealed class ShowRawRepository(
       Timeline =
       [
         new TimelineEvent(1, 1, TimelineEventType.Res, null, false, null,
-          new ResolveEventPayload(1, 1, 100, 0, 1, 0, VerdictRunResult.Accepted, 1094.180335), null,
-          null, null, null),
-        new TimelineEvent(2, 2, TimelineEventType.Sfx, 0.5, false, "Opening Sting",
-          null, null, new MediaEventPayload("sting", 2.5), null, null),
-        new TimelineEvent(3, 3, TimelineEventType.Img, 1, false, "Title Board",
-          null, new MediaEventPayload("award-board", 5), null, null, null),
-        new TimelineEvent(4, 4, TimelineEventType.Res, null, false, "Bob Reveal",
+          new ResolveEventPayload(1, 1, 100, 0, 1, 0, VerdictRunResult.Accepted, 1094.180335),
+          null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Pre, 0.5, false, null,
+          null, new ResolveEventPayload(2, 2, 180, 0, 2, 0, VerdictRunResult.Accepted,
+            1932.430581), null),
+        new TimelineEvent(3, 3, TimelineEventType.Res, null, false, "Bob Reveal",
           new ResolveEventPayload(2, 2, 180, 0, 2, 0, VerdictRunResult.Accepted, 1932.430581),
-          null, null, null, null)
+          null, null),
+        new TimelineEvent(4, 4, TimelineEventType.Cus, 1, false, "Countdown",
+          null, null, new CustomEventPayload("timer",
+            new Dictionary<string, object?>
+            {
+              ["minutes"] = 5
+            }))
       ]
     };
   }

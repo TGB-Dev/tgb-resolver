@@ -9,6 +9,7 @@ import type { ShowMetaSnapshot } from "@tgb-resolver/contracts";
 import type { ShowFile, TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
 import {
   PlaybackStatus,
+  SHOW_SCHEMA_VERSION,
   ShowMessageType,
   ShowMode,
   ShowSource,
@@ -55,7 +56,7 @@ const ShowModel = createModel<ShowModelState>(() => {
     const events = showOrderedIds.value.map((id) => showEvents.value[id]);
     if (!ctx || events.some((e) => e == null)) return [];
     const built = toTimelineTableItems({
-      schemaVersion: 1,
+      schemaVersion: SHOW_SCHEMA_VERSION,
       showVersion: 0,
       mode: showMode.value,
       timelineMode: TimelineMode.RW,

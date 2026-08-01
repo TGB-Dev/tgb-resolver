@@ -27,8 +27,6 @@ public enum PlaybackStatus
 public enum TimelineEventType
 {
   Res,
-  Img,
-  Sfx,
   Pre,
   Cus
 }

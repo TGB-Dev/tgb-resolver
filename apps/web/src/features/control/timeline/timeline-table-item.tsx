@@ -151,18 +151,13 @@ function ControlTimelineEventTypeHeaderTooltip() {
       </DataList.Item>
 
       <DataList.Item>
-        <DataList.ItemLabel>SFX</DataList.ItemLabel>
-        <DataList.ItemValue>Play SFX</DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>IMG</DataList.ItemLabel>
-        <DataList.ItemValue>Show Image</DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
         <DataList.ItemLabel>PRE</DataList.ItemLabel>
         <DataList.ItemValue>Pre-Resolve (preview upcoming resolve)</DataList.ItemValue>
+      </DataList.Item>
+
+      <DataList.Item>
+        <DataList.ItemLabel>CUS</DataList.ItemLabel>
+        <DataList.ItemValue>Custom event (frontend extension registry)</DataList.ItemValue>
       </DataList.Item>
     </DataList.Root>
   );

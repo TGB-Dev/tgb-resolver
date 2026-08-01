@@ -17,6 +17,8 @@ namespace TGB.Resolver.Server.Commons.Serialization;
 [JsonSerializable(typeof(ShowStateSnapshot))]
 [JsonSerializable(typeof(PlaybackStateSnapshot))]
 [JsonSerializable(typeof(TimelineEventSnapshot))]
+[JsonSerializable(typeof(CustomEventPayload))]
+[JsonSerializable(typeof(CustomEventPayloadSnapshot))]
 [JsonSerializable(typeof(StoredShowState))]
 [JsonSerializable(typeof(ClockSyncRequest))]
 [JsonSerializable(typeof(ClockSyncResponse))]

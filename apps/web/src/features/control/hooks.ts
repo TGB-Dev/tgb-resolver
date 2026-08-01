@@ -250,14 +250,11 @@ export function useRenameControlEventMutation() {
           return data as ShowStateSnapshot;
         }
 
-        const eventType =
-          payload.type === TimelineEventType.IMG ? TimelineEventType.IMG : TimelineEventType.SFX;
         const { data } = await patchNonResolveEvent({
           client: generatedClient,
           path: { id: payload.eventId },
           body: {
             showVersion: playbackModel.state.value.showVersion,
-            type: eventType,
             customName: payload.customName.trim(),
           },
         });

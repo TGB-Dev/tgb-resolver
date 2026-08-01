@@ -12,39 +12,28 @@ public sealed record ResolveEventRenameRequest(int ShowVersion, string CustomNam
 
 public sealed record NonResolveEventPatchRequest(
   int ShowVersion,
-  TimelineEventType? Type,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
   string? CustomName,
-  MediaEventPatchPayload? Payload,
-  Dictionary<string, object?>? Custom);
-
-public sealed record MediaEventPatchPayload(
-  string? ImageId,
-  string? SfxId,
-  double? DurationSeconds);
+  CustomEventPayloadSnapshot? Custom);
 
 public sealed record CreateTimelineEventRequest(
   int ShowVersion,
-  TimelineEventType Type,
   int RelativeToEventId,
   bool Before,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
   string? CustomName,
-  MediaEventPatchPayload? Payload,
-  Dictionary<string, object?>? Custom);
+  CustomEventPayloadSnapshot? Custom);
 
 public sealed record MoveTimelineEventRequest(int ShowVersion, int RelativeToEventId, bool Before);
 
 public sealed record PatchTimelineEventRequest(
   int ShowVersion,
   string? CustomName,
-  TimelineEventType? Type,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
-  MediaEventPatchPayload? Payload,
-  Dictionary<string, object?>? Custom);
+  CustomEventPayloadSnapshot? Custom);
 
 public sealed record SetTimelineModeRequest(int ShowVersion, TimelineMode TimelineMode);
 

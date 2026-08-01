@@ -1,4 +1,4 @@
-import type { PlaySfxEvent, ShowFile, TimelineEvent } from "@tgb-resolver/realtime";
+import type { CustomEvent, ShowFile, TimelineEvent } from "@tgb-resolver/realtime";
 import {
   PlaybackStatus,
   ShowMessageType,
@@ -40,13 +40,13 @@ function makeShow(showVersion: number, events: TimelineEvent[]): ShowFile {
 function event(
   id: number,
   position: number,
-  type: TimelineEventType.SFX = TimelineEventType.SFX,
+  type: TimelineEventType.CUS = TimelineEventType.CUS,
 ): TimelineEvent {
   return {
     id,
     position,
     type,
-    payload: { sfxId: `s${id}`, durationSeconds: 1 },
+    payload: { extId: `ext${id}`, extPayload: { key: "value" } },
   };
 }
 
@@ -90,14 +90,14 @@ test("applies a granular update in place without touching order", () => {
     event: {
       id: 1,
       position: 1,
-      type: TimelineEventType.SFX,
-      payload: { sfxId: "updated", durationSeconds: 9 },
+      type: TimelineEventType.CUS,
+      payload: { extId: "updated", extPayload: { key: "value" } },
     },
   });
 
   expect(applied).toBe(true);
   expect(showModel.dataVersion.value).toBe(2);
-  expect((showModel.showEvents.value[1] as PlaySfxEvent).payload.sfxId).toBe("updated");
+  expect((showModel.showEvents.value[1] as CustomEvent).payload.extId).toBe("updated");
   expect(showModel.showOrderedIds.value).toEqual([1, 2]);
 });
 

@@ -87,10 +87,10 @@ describe("mapShowStateSnapshotToShowFile", () => {
         },
         {
           id: 11,
-          type: TimelineEventType.SFX,
-          sfx: {
-            assetId: "sting",
-            durationSeconds: 2,
+          type: TimelineEventType.CUS,
+          custom: {
+            extId: "timer",
+            extPayload: { minutes: 2 },
           },
         },
       ],
@@ -147,10 +147,10 @@ describe("mapShowStateSnapshotToShowFile", () => {
       }),
       expect.objectContaining({
         id: 11,
-        type: TimelineEventType.SFX,
+        type: TimelineEventType.CUS,
         payload: expect.objectContaining({
-          sfxId: "sting",
-          durationSeconds: 2,
+          extId: "timer",
+          extPayload: { minutes: 2 },
         }),
       }),
     ]);

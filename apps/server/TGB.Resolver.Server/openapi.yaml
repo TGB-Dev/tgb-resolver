@@ -958,35 +958,23 @@ components:
           nullable: true
           oneOf:
           - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
-        image:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
-        sfx:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MediaEventPayloadSnapshot'
         pre:
           nullable: true
           oneOf:
           - $ref: '#/components/schemas/ResolveEventPayloadSnapshot'
         custom:
-          type: object
           nullable: true
-          additionalProperties: {}
+          oneOf:
+          - $ref: '#/components/schemas/CustomEventPayloadSnapshot'
     TimelineEventType:
       type: string
       description: ''
       x-enumNames:
       - Res
-      - Img
-      - Sfx
       - Pre
       - Cus
       enum:
       - Res
-      - Img
-      - Sfx
       - Pre
       - Cus
     ResolveEventPayloadSnapshot:
@@ -1016,16 +1004,16 @@ components:
         timeSinceStart:
           type: number
           format: double
-    MediaEventPayloadSnapshot:
+    CustomEventPayloadSnapshot:
       type: object
       additionalProperties: false
       properties:
-        assetId:
+        extId:
           type: string
-        durationSeconds:
-          type: number
-          format: double
+        extPayload:
+          type: object
           nullable: true
+          additionalProperties: {}
     SetAutomationRequest:
       type: object
       additionalProperties: false
@@ -1130,10 +1118,6 @@ components:
         showVersion:
           type: integer
           format: int32
-        type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TimelineEventType'
         triggerOffsetSeconds:
           type: number
           format: double
@@ -1144,28 +1128,10 @@ components:
         customName:
           type: string
           nullable: true
-        payload:
+        custom:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/MediaEventPatchPayload'
-        custom:
-          type: object
-          nullable: true
-          additionalProperties: {}
-    MediaEventPatchPayload:
-      type: object
-      additionalProperties: false
-      properties:
-        imageId:
-          type: string
-          nullable: true
-        sfxId:
-          type: string
-          nullable: true
-        durationSeconds:
-          type: number
-          format: double
-          nullable: true
+          - $ref: '#/components/schemas/CustomEventPayloadSnapshot'
     CreateTimelineEventRequest:
       type: object
       additionalProperties: false
@@ -1174,8 +1140,6 @@ components:
           type: integer
           format: int32
           minimum: 0
-        type:
-          $ref: '#/components/schemas/TimelineEventType'
         relativeToEventId:
           type: integer
           format: int32
@@ -1195,14 +1159,10 @@ components:
           maxLength: 100
           minLength: 0
           nullable: true
-        payload:
+        custom:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/MediaEventPatchPayload'
-        custom:
-          type: object
-          nullable: true
-          additionalProperties: {}
+          - $ref: '#/components/schemas/CustomEventPayloadSnapshot'
     MoveTimelineEventRequest:
       type: object
       additionalProperties: false
@@ -1228,10 +1188,6 @@ components:
         customName:
           type: string
           nullable: true
-        type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TimelineEventType'
         triggerOffsetSeconds:
           type: number
           format: double
@@ -1239,14 +1195,10 @@ components:
         requireManualInteraction:
           type: boolean
           nullable: true
-        payload:
+        custom:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/MediaEventPatchPayload'
-        custom:
-          type: object
-          nullable: true
-          additionalProperties: {}
+          - $ref: '#/components/schemas/CustomEventPayloadSnapshot'
     SetTimelineModeRequest:
       type: object
       additionalProperties: false

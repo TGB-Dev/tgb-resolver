@@ -51,7 +51,6 @@ public sealed class ShowStateService(
       {
         var normalized = state.Timeline
           .Where(e => e.Type == TimelineEventType.Res || e.Type == TimelineEventType.Pre
-                                                      || e.Image is not null || e.Sfx is not null
                                                       || e.Custom is not null)
           .Select((e, i) => e with { Position = i + 1 })
           .ToArray();
@@ -154,32 +153,15 @@ public sealed class ShowStateService(
           {
             if (e.Id != eventId || e.Type == TimelineEventType.Res) return e;
 
-            var (type, target, _) = request.Type switch
-            {
-              TimelineEventType.Img => (TimelineEventType.Img, e.Image, e.Sfx),
-              TimelineEventType.Sfx => (TimelineEventType.Sfx, e.Sfx, e.Image),
-              _ => (e.Type, null, null)
-            };
-            var custom = request.Type == TimelineEventType.Cus
-              ? request.Custom
-              : e.Custom;
-            var assetId = request.Type == TimelineEventType.Img
-              ? request.Payload?.ImageId ?? target?.AssetId ?? string.Empty
-              : request.Payload?.SfxId ?? target?.AssetId ?? string.Empty;
-            var media = new MediaEventPayload(
-              assetId,
-              request.Payload?.DurationSeconds ?? target?.DurationSeconds);
-
             return e with
             {
-              Type = type,
               TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
               request.RequireManualInteraction ?? e.RequireManualInteraction,
               CustomName = request.CustomName ?? e.CustomName,
-              Image = type == TimelineEventType.Img ? media : null,
-              Sfx = type == TimelineEventType.Sfx ? media : null,
-              Custom = type == TimelineEventType.Cus ? custom : null
+              Custom = e.Type == TimelineEventType.Cus
+                ? ToData(request.Custom) ?? e.Custom
+                : e.Custom
             };
           }).ToArray()
         };
@@ -192,9 +174,6 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
     CreateTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    if (request.Type == TimelineEventType.Res)
-      throw new InvalidOperationException("Resolve events are created only by XML import.");
-
     var updated = await repository.MutateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
@@ -208,16 +187,10 @@ public sealed class ShowStateService(
         ? e with { Position = e.Position + 1 }
         : e);
 
-      var isImg = request.Type == TimelineEventType.Img;
-      var assetId = isImg
-        ? request.Payload?.ImageId ?? string.Empty
-        : request.Payload?.SfxId ?? string.Empty;
-      var media = new MediaEventPayload(assetId, request.Payload?.DurationSeconds);
       var created = new TimelineEvent(
-        nextId, position, request.Type,
+        nextId, position, TimelineEventType.Cus,
         request.TriggerOffsetSeconds, request.RequireManualInteraction ?? false,
-        request.CustomName, null, isImg ? media : null, isImg ? null : media, null,
-        request.Type == TimelineEventType.Cus ? request.Custom : null);
+        request.CustomName, null, null, ToData(request.Custom));
 
       return state with
       {
@@ -249,24 +222,9 @@ public sealed class ShowStateService(
             .ToArray()
         };
 
-      var type = request.Type switch
-      {
-        TimelineEventType.Img => TimelineEventType.Img,
-        TimelineEventType.Sfx => TimelineEventType.Sfx,
-        TimelineEventType.Cus => TimelineEventType.Cus,
-        _ => current.Type
-      };
-      var isImg = type == TimelineEventType.Img;
-      var isCus = type == TimelineEventType.Cus;
-      var custom = isCus ? request.Custom ?? current.Custom : null;
-      var assetId = isImg
-        ? request.Payload?.ImageId ?? current.Image?.AssetId ?? string.Empty
-        : request.Payload?.SfxId ?? current.Sfx?.AssetId ?? string.Empty;
-      var media = new MediaEventPayload(
-        assetId,
-        request.Payload?.DurationSeconds
-        ?? current.Image?.DurationSeconds
-        ?? current.Sfx?.DurationSeconds);
+      var custom = current.Type == TimelineEventType.Cus
+        ? ToData(request.Custom) ?? current.Custom
+        : null;
 
       return state with
       {
@@ -275,14 +233,11 @@ public sealed class ShowStateService(
           .Select(e => e.Id == eventId
             ? e with
             {
-              Type = type,
               CustomName = request.CustomName ?? e.CustomName,
               TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
               request.RequireManualInteraction ?? e.RequireManualInteraction,
-              Image = isImg ? media : null,
-              Sfx = isImg ? null : media,
-              Custom = isCus ? custom : null
+              Custom = custom
             }
             : e)
           .ToArray()
@@ -804,7 +759,6 @@ public sealed class ShowStateService(
     if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
       return;
 
-    var currentEvent = ordered[currentIndex];
     var nextEvent = ordered[currentIndex + 1];
 
     // No auto-advance when both auto modes are off
@@ -821,15 +775,6 @@ public sealed class ShowStateService(
 
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
-
-    // Use current event's media duration for IMG/SFX when available
-    var mediaPayload = currentEvent.Image ?? currentEvent.Sfx;
-    if (mediaPayload?.DurationSeconds is not null)
-    {
-      orchestrator.ScheduleAdvance(Math.Max(1,
-        (long)(mediaPayload.DurationSeconds.Value * 1000)));
-      return;
-    }
 
     orchestrator.ScheduleAdvance(state.Automation.AutoResolveSpeedMs);
   }
@@ -926,5 +871,10 @@ public sealed class ShowStateService(
     long? startedAt)
   {
     return new PlaybackState(status, currentEventId, activeEventIds, startedAt);
+  }
+
+  private static CustomEventPayload? ToData(CustomEventPayloadSnapshot? payload)
+  {
+    return payload is null ? null : new CustomEventPayload(payload.ExtId, payload.ExtPayload);
   }
 }

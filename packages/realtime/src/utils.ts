@@ -1,12 +1,11 @@
 import {
+  type CustomEvent,
   PlaybackStatus,
-  type PlaySfxEvent,
   type PreResolveEvent,
   type ProblemDefinition,
   SHOW_SCHEMA_VERSION,
   type ShowAsset,
   type ShowFile,
-  type ShowImageEvent,
   ShowMode,
   type ShowPlaybackState,
   ShowSource,
@@ -22,21 +21,11 @@ export function isResolveEvent(event: TimelineEvent): boolean {
   return event.type === TimelineEventType.RES;
 }
 
-export function isShowImageEvent(event: TimelineEvent): event is ShowImageEvent {
-  return event.type === TimelineEventType.IMG;
-}
-
-export function isPlaySfxEvent(event: TimelineEvent): event is PlaySfxEvent {
-  return event.type === TimelineEventType.SFX;
-}
-
 export function isPreResolveEvent(event: TimelineEvent): event is PreResolveEvent {
   return event.type === TimelineEventType.PRE;
 }
 
-export function isNonResolveEvent(
-  event: TimelineEvent,
-): event is ShowImageEvent | PlaySfxEvent | PreResolveEvent {
+export function isNonResolveEvent(event: TimelineEvent): event is PreResolveEvent | CustomEvent {
   return event.type !== TimelineEventType.RES;
 }
 
@@ -134,36 +123,6 @@ export function toTimelineTableItem(
         isActive,
       };
     }
-    case TimelineEventType.SFX: {
-      const sfxPlaceholderName = `SFX ${event.payload.sfxId}`;
-      return {
-        id: event.id,
-        type: event.type,
-        name: resolveDisplayName(event.customName, sfxPlaceholderName),
-        customName: event.customName,
-        placeholderName: sfxPlaceholderName,
-        triggerOffsetSeconds: event.triggerOffsetSeconds,
-        requireManualInteraction: event.requireManualInteraction,
-        durationSeconds: event.payload.durationSeconds,
-        assetId: event.payload.sfxId,
-        isActive,
-      };
-    }
-    case TimelineEventType.IMG: {
-      const imagePlaceholderName = `IMG ${event.payload.imageId}`;
-      return {
-        id: event.id,
-        type: event.type,
-        name: resolveDisplayName(event.customName, imagePlaceholderName),
-        customName: event.customName,
-        placeholderName: imagePlaceholderName,
-        triggerOffsetSeconds: event.triggerOffsetSeconds,
-        requireManualInteraction: event.requireManualInteraction,
-        durationSeconds: event.payload.durationSeconds,
-        assetId: event.payload.imageId,
-        isActive,
-      };
-    }
     case TimelineEventType.PRE: {
       const resolvePlaceholderName = `PRE-RES`;
       const user = userMap?.[event.payload.userId];
@@ -189,7 +148,9 @@ export function toTimelineTableItem(
       };
     }
     case TimelineEventType.CUS: {
-      const placeholderName = `Custom event`;
+      const placeholderName = event.payload.extId
+        ? `Custom ${event.payload.extId}`
+        : `Custom event`;
       return {
         id: event.id,
         type: event.type,

@@ -105,10 +105,17 @@ public sealed record TimelineEvent(
   bool? RequireManualInteraction,
   string? CustomName,
   ResolveEventPayload? Resolve,
-  MediaEventPayload? Image,
-  MediaEventPayload? Sfx,
   ResolveEventPayload? Pre,
-  Dictionary<string, object?>? Custom);
+  CustomEventPayload? Custom);
+
+/// <summary>
+///   Custom (extension) event payload. The frontend extension registry resolves
+///   <see cref="ExtId" /> to an extension and hands it <see cref="ExtPayload" />
+///   verbatim; the server only stores and forwards the opaque blob.
+/// </summary>
+public sealed record CustomEventPayload(
+  string ExtId,
+  Dictionary<string, object?>? ExtPayload);
 
 /// <summary>
 ///   Resolve (and pre-resolve) payload. References the team and problem by id;
@@ -125,7 +132,3 @@ public sealed record ResolveEventPayload(
   double NewProblemScore,
   VerdictRunResult Verdict,
   double TimeSinceStart);
-
-public sealed record MediaEventPayload(
-  string AssetId,
-  double? DurationSeconds);

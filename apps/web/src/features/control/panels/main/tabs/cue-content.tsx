@@ -42,24 +42,6 @@ export function CueContent({ cue, contentSize }: CueContentProps) {
 
   const resolvedName = cue.customName ?? cue.name;
 
-  if (cue.type === TimelineEventType.IMG) {
-    return (
-      <Text as="span">
-        {resolvedName}
-        {cue.durationSeconds !== undefined ? ` (${cue.durationSeconds}s)` : null}
-      </Text>
-    );
-  }
-
-  if (cue.type === TimelineEventType.SFX) {
-    return (
-      <Text as="span">
-        {resolvedName}
-        {cue.durationSeconds !== undefined ? ` (${cue.durationSeconds}s)` : null}
-      </Text>
-    );
-  }
-
   return <Text fontFamily="mono">{resolvedName}</Text>;
 }
 

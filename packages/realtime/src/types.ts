@@ -118,22 +118,6 @@ export interface ResolveEvent extends EventBase {
   payload: ResolvePayload;
 }
 
-export interface ShowImageEvent extends EventBase {
-  type: TimelineEventType.IMG;
-  payload: {
-    imageId: string;
-    durationSeconds?: number;
-  };
-}
-
-export interface PlaySfxEvent extends EventBase {
-  type: TimelineEventType.SFX;
-  payload: {
-    sfxId: string;
-    durationSeconds?: number;
-  };
-}
-
 export interface PreResolveEvent extends EventBase {
   type: TimelineEventType.PRE;
   payload: ResolvePayload;
@@ -141,15 +125,13 @@ export interface PreResolveEvent extends EventBase {
 
 export interface CustomEvent extends EventBase {
   type: TimelineEventType.CUS;
-  payload: Record<string, unknown>;
+  payload: {
+    extId: string;
+    extPayload?: Record<string, unknown>;
+  };
 }
 
-export type TimelineEvent =
-  | ResolveEvent
-  | ShowImageEvent
-  | PlaySfxEvent
-  | PreResolveEvent
-  | CustomEvent;
+export type TimelineEvent = ResolveEvent | PreResolveEvent | CustomEvent;
 
 export interface ShowFile {
   schemaVersion: typeof SHOW_SCHEMA_VERSION;
@@ -192,7 +174,6 @@ export interface TimelineTableItem {
   triggerOffsetSeconds?: number;
   requireManualInteraction?: boolean;
   durationSeconds?: number;
-  assetId?: string;
   isActive: boolean;
 }
 
