@@ -6,6 +6,7 @@ import {
 import { ShowMessageType, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
 
 import { playbackModel } from "@/features/control/playback-model";
+import { animationsModel } from "@/features/leaderboard/animations-model";
 import { realtimeModel } from "@/features/shared/realtime-model";
 import { showModel } from "@/features/shared/show-model";
 
@@ -20,6 +21,7 @@ export function applyControlRealtimeMessage(
   switch (message.type) {
     case ShowMessageType.PlaybackStateChanged:
       // Playback carries the (unchanged) DATA showVersion; never refetch, never drift the data version.
+      animationsModel.previousEventId.value = playbackModel.state.value.currentEventId;
       playbackModel.syncFromSnapshot(message.showVersion, message.playback);
       return;
 

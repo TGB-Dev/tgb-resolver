@@ -12,6 +12,7 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { playbackModel } from "@/features/control/playback-model";
+import { animationsModel } from "@/features/leaderboard/animations-model";
 import { showModel } from "@/features/shared/show-model";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-handler";
@@ -54,6 +55,7 @@ const baseShow: ShowFile = {
 beforeEach(() => {
   playbackModel.reset();
   showModel.hydrateFromSnapshot(baseShow);
+  animationsModel.reset();
 });
 
 describe("applyControlRealtimeMessage", () => {
@@ -189,5 +191,60 @@ describe("applyControlRealtimeMessage", () => {
       currentEventId: 8,
       activeEventIds: [8],
     });
+  });
+
+  test("flags animation skip on a far seek", async () => {
+    const queryClient = new QueryClient();
+    showModel.showOrderedIds.value = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    playbackModel.syncFromSnapshot(1, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 1,
+      activeEventIds: [1],
+    });
+
+    await applyControlRealtimeMessage(queryClient, {
+      type: ShowMessageType.PlaybackStateChanged,
+      showVersion: 2,
+      playback: { status: PlaybackStatus.IDLE, currentEventId: 11, activeEventIds: [11] },
+    });
+
+    expect(animationsModel.skipNumberAnimations.value).toBe(true);
+    expect(playbackModel.state.value.currentEventId).toBe(11);
+  });
+
+  test("does not flag animation skip on an adjacent seek", async () => {
+    const queryClient = new QueryClient();
+    showModel.showOrderedIds.value = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    playbackModel.syncFromSnapshot(1, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 1,
+      activeEventIds: [1],
+    });
+
+    await applyControlRealtimeMessage(queryClient, {
+      type: ShowMessageType.PlaybackStateChanged,
+      showVersion: 2,
+      playback: { status: PlaybackStatus.IDLE, currentEventId: 2, activeEventIds: [2] },
+    });
+
+    expect(animationsModel.skipNumberAnimations.value).toBe(false);
+  });
+
+  test("flags animation skip when the cursor resets to null", async () => {
+    const queryClient = new QueryClient();
+    showModel.showOrderedIds.value = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    playbackModel.syncFromSnapshot(1, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 5,
+      activeEventIds: [5],
+    });
+
+    await applyControlRealtimeMessage(queryClient, {
+      type: ShowMessageType.PlaybackStateChanged,
+      showVersion: 2,
+      playback: { status: PlaybackStatus.IDLE, currentEventId: null, activeEventIds: [] },
+    });
+
+    expect(animationsModel.skipNumberAnimations.value).toBe(true);
   });
 });
