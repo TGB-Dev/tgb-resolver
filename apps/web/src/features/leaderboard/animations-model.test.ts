@@ -1,6 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { PlaybackStatus } from "@tgb-resolver/contracts";
+import { beforeEach, describe, expect, test } from "vitest";
 
-import { shouldSkipSeek } from "./animations-model";
+import { playbackModel } from "@/features/control/playback-model";
+import { showModel } from "@/features/shared/show-model";
+
+import { animationsModel, shouldSkipSeek } from "./animations-model";
 
 describe("shouldSkipSeek", () => {
   const ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -42,5 +46,74 @@ describe("shouldSkipSeek", () => {
   test("respects a custom threshold", () => {
     expect(shouldSkipSeek(ids, 1, 4, 3)).toBe(true);
     expect(shouldSkipSeek(ids, 1, 3, 3)).toBe(false);
+  });
+});
+
+describe("animationsModel", () => {
+  const ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  beforeEach(() => {
+    animationsModel.reset();
+    playbackModel.reset();
+    showModel.showOrderedIds.value = ids;
+  });
+
+  test("is false by default", () => {
+    expect(animationsModel.skipNumberAnimations.value).toBe(false);
+  });
+
+  test("is true after a far seek", () => {
+    playbackModel.syncFromSnapshot(1, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 1,
+      activeEventIds: [1],
+    });
+    animationsModel.previousEventId.value = 1;
+    playbackModel.syncFromSnapshot(2, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 11,
+      activeEventIds: [11],
+    });
+
+    expect(animationsModel.skipNumberAnimations.value).toBe(true);
+  });
+
+  test("is false after an adjacent seek", () => {
+    playbackModel.syncFromSnapshot(1, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 1,
+      activeEventIds: [1],
+    });
+    animationsModel.previousEventId.value = 1;
+    playbackModel.syncFromSnapshot(2, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 2,
+      activeEventIds: [2],
+    });
+
+    expect(animationsModel.skipNumberAnimations.value).toBe(false);
+  });
+
+  test("is true when the cursor resets to null", () => {
+    playbackModel.syncFromSnapshot(1, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: 5,
+      activeEventIds: [5],
+    });
+    animationsModel.previousEventId.value = 5;
+    playbackModel.syncFromSnapshot(2, {
+      status: PlaybackStatus.IDLE,
+      currentEventId: null,
+      activeEventIds: [],
+    });
+
+    expect(animationsModel.skipNumberAnimations.value).toBe(true);
+  });
+
+  test("reset clears previousEventId", () => {
+    animationsModel.previousEventId.value = 3;
+    animationsModel.reset();
+
+    expect(animationsModel.previousEventId.value).toBeNull();
   });
 });
