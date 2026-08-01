@@ -24,10 +24,10 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.5",
-    "@types/node": "^26.1.1",
+    "@biomejs/biome": "2.5.6",
+    "@types/node": "^26.1.2",
     "husky": "^9.1.7",
-    "knip": "^6.29.0",
+    "knip": "^6.30.0",
     "syncpack": "^15.3.2",
     "turbo": "^2.10.7",
     "typescript": "6.0.3",
