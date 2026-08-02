@@ -977,6 +977,10 @@ components:
           format: int32
         type:
           $ref: '#/components/schemas/TimelineEventType'
+        durationSeconds:
+          type: number
+          format: double
+          nullable: true
         triggerOffsetSeconds:
           type: number
           format: double
@@ -1180,6 +1184,10 @@ components:
           exclusiveMinimum: true
         before:
           type: boolean
+        durationSeconds:
+          type: number
+          format: double
+          nullable: true
         triggerOffsetSeconds:
           type: number
           format: double
@@ -1218,6 +1226,12 @@ components:
         showVersion:
           type: integer
           format: int32
+        durationSeconds:
+          type: number
+          format: double
+          nullable: true
+        useDefaultDuration:
+          type: boolean
         customName:
           type: string
           nullable: true
@@ -1225,6 +1239,8 @@ components:
           type: number
           format: double
           nullable: true
+        clearTriggerOffset:
+          type: boolean
         requireManualInteraction:
           type: boolean
           nullable: true

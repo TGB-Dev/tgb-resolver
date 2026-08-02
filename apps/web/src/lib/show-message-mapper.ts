@@ -11,6 +11,7 @@ export function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): Timel
   const base = {
     id: src.Id,
     position: src.Position,
+    durationSeconds: src.DurationSeconds,
     triggerOffsetSeconds: src.TriggerOffsetSeconds,
     requireManualInteraction: src.RequireManualInteraction,
     customName: src.CustomName,

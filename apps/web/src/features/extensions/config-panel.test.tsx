@@ -20,11 +20,11 @@ vi.mock("./patch", async (importOriginal) => {
   return { ...actual, usePatchExtensionPayload: vi.fn() };
 });
 
-const timerEvent: TimelineEvent = {
+const imageEvent: TimelineEvent = {
   id: 7,
   position: 1,
   type: TimelineEventType.CUS,
-  payload: { extId: "timer", extPayload: { durationSeconds: 10, autoHide: true } },
+  payload: { extId: "img", extPayload: { assetId: "asset-1", fit: "cover" } },
 };
 
 const queryClient = new QueryClient();
@@ -51,14 +51,14 @@ function makeUi(panel: FloatingPanelHandle): ReactNode {
   return (
     <ChakraProvider value={system}>
       <QueryClientProvider client={queryClient}>
-        <ExtensionConfigPanel panel={panel} eventId={timerEvent.id} />
+        <ExtensionConfigPanel panel={panel} eventId={imageEvent.id} />
       </QueryClientProvider>
     </ChakraProvider>
   );
 }
 
 beforeEach(() => {
-  showModel.showEvents.value = { [timerEvent.id]: timerEvent };
+  showModel.showEvents.value = { [imageEvent.id]: imageEvent };
   patchPayload.mockReset();
   patchPayload.mockResolvedValue(undefined);
   vi.mocked(usePatchExtensionPayload).mockReturnValue(patchPayload);
@@ -73,8 +73,8 @@ describe("ExtensionConfigPanel", () => {
   test("renders the config form seeded from extPayload", () => {
     render(makeUi(createPanel()));
 
-    expect(screen.getByRole("spinbutton")).toHaveValue("10");
-    expect(screen.getByText("Auto-hide").closest("label")).toHaveAttribute("data-state", "checked");
+    expect(screen.getByLabelText("Asset")).toHaveValue("asset-1");
+    expect(screen.getByLabelText("Fit Mode")).toHaveValue("cover");
   });
 
   test("saving patches the full merged payload and closes the panel", async () => {
@@ -82,15 +82,15 @@ describe("ExtensionConfigPanel", () => {
     const panel = createPanel();
     render(makeUi(panel));
 
-    const input = screen.getByRole("spinbutton");
+    const input = screen.getByLabelText("Fit Mode");
     await user.clear(input);
-    await user.type(input, "30");
+    await user.type(input, "contain");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(panel.close).toHaveBeenCalledWith(true));
-    expect(patchPayload).toHaveBeenCalledWith(timerEvent.id, "timer", {
-      durationSeconds: 30,
-      autoHide: true,
+    expect(patchPayload).toHaveBeenCalledWith(imageEvent.id, "img", {
+      assetId: "asset-1",
+      fit: "contain",
     });
   });
 
@@ -100,9 +100,9 @@ describe("ExtensionConfigPanel", () => {
     patchPayload.mockRejectedValue(new Error("boom"));
     const view = render(makeUi(panel));
 
-    const input = screen.getByRole("spinbutton");
+    const input = screen.getByLabelText("Fit Mode");
     await user.clear(input);
-    await user.type(input, "30");
+    await user.type(input, "contain");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(panel.close).not.toHaveBeenCalled());
@@ -112,7 +112,7 @@ describe("ExtensionConfigPanel", () => {
 
   test("shows an empty state when the event is not a CUS event", () => {
     showModel.showEvents.value = {
-      [timerEvent.id]: { ...timerEvent, type: TimelineEventType.RES } as unknown as TimelineEvent,
+      [imageEvent.id]: { ...imageEvent, type: TimelineEventType.RES } as unknown as TimelineEvent,
     };
     render(makeUi(createPanel()));
 
@@ -121,7 +121,7 @@ describe("ExtensionConfigPanel", () => {
 
   test("shows an empty state when the extension has no config form", () => {
     showModel.showEvents.value = {
-      [timerEvent.id]: { ...timerEvent, payload: { extId: "unknown-ext" } },
+      [imageEvent.id]: { ...imageEvent, payload: { extId: "unknown-ext" } },
     };
     render(makeUi(createPanel()));
 

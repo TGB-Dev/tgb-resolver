@@ -23,11 +23,10 @@ export function FloatingPanelHost() {
 
   return (
     <>
-      {panels.map((panel, index) => {
+      {panels.map((panel) => {
         const PanelComponent = floatingPanelComponents[panel.type];
         const config = floatingPanelConfig[panel.type];
         const resizable = config?.resizable ?? true;
-        const offset = 32 * index;
 
         return (
           <FloatingPanel.Root
@@ -36,9 +35,8 @@ export function FloatingPanelHost() {
             closeOnEscape
             open
             resizable={resizable}
-            defaultSize={config?.size}
+            defaultSize={config?.size ?? { width: 640, height: 480 }}
             minSize={config?.minSize}
-            defaultPosition={{ x: 24 + offset, y: 24 + offset }}
             onOpenChange={(details) => {
               if (!details.open) {
                 void floatingPanelModel.requestFloatingPanelClose(panel);

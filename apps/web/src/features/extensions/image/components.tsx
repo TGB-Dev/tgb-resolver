@@ -17,6 +17,7 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
 
   useEffect(() => {
     setHasError(false);
+    setObjectUrl(null);
     if (!assetId) return undefined;
 
     const buffer = getPreloadedAsset(assetId);

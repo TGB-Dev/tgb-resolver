@@ -87,6 +87,7 @@ public sealed record TimelineEventSnapshot(
   int Id,
   int Position,
   TimelineEventType Type,
+  double? DurationSeconds,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
   string? CustomName,

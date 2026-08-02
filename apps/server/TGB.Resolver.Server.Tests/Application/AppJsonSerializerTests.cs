@@ -23,7 +23,7 @@ public sealed class AppJsonSerializerTests
       new PlaybackStateSnapshot(PlaybackStatus.Running, 1, [1], 120_000),
       new AssetCollectionSnapshot([]),
       [
-        new TimelineEventSnapshot(1, 1, TimelineEventType.Res, 0, false, "Intro",
+        new TimelineEventSnapshot(1, 1, TimelineEventType.Res, null, 0, false, "Intro",
           new ResolveEventPayloadSnapshot(1, 1, 100, 0, 1, 0, VerdictRunResult.Accepted, 0),
           null, null)
       ]);

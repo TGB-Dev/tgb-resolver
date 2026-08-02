@@ -21,6 +21,7 @@ public sealed record CreateTimelineEventRequest(
   int ShowVersion,
   int RelativeToEventId,
   bool Before,
+  double? DurationSeconds,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
   string? CustomName,
@@ -30,8 +31,11 @@ public sealed record MoveTimelineEventRequest(int ShowVersion, int RelativeToEve
 
 public sealed record PatchTimelineEventRequest(
   int ShowVersion,
+  double? DurationSeconds,
+  bool UseDefaultDuration,
   string? CustomName,
   double? TriggerOffsetSeconds,
+  bool ClearTriggerOffset,
   bool? RequireManualInteraction,
   CustomEventPayloadSnapshot? Custom);
 

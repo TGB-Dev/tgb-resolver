@@ -13,13 +13,13 @@ const config = defineConfig(async () => {
     },
     resolve: {
       alias: {
-        "@": resolve(__dirname, "./src"),
+        "@": resolve(import.meta.dirname, "./src"),
       },
     },
     server: {
       host: "127.0.0.1",
     },
-    envDir: resolve(__dirname, "../.."),
+    envDir: resolve(import.meta.dirname, "../.."),
     plugins: [
       tanstackRouter({ target: "react", autoCodeSplitting: true }),
       viteReact(),

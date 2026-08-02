@@ -3,6 +3,8 @@ import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { useCallback, useEffect, useState } from "react";
 
+import { floatingPanelModel } from "@/features/control/floating-panel-model";
+import { FloatingPanelType } from "@/features/control/floating-panel-types";
 import { useDeleteTimelineEventMutation } from "@/features/control/hooks";
 import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
@@ -25,12 +27,13 @@ export function useTimelineRowContextMenu() {
     setState({ isOpen: false, x: 0, y: 0, target: null });
   }, []);
 
-  function open(e: React.MouseEvent, payload: TimelineTableItem) {
+  const open = useCallback((e: React.MouseEvent, payload: TimelineTableItem) => {
     e.preventDefault();
     e.stopPropagation();
 
     const menuWidth = 170;
-    const menuHeight = 56;
+    const menuItemHeight = 48;
+    const menuHeight = menuItemHeight * 2 + 8;
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
     setState({
@@ -39,7 +42,7 @@ export function useTimelineRowContextMenu() {
       y: Math.max(8, y),
       target: payload,
     });
-  }
+  }, []);
 
   useEffect(() => {
     if (!state.isOpen) {
@@ -71,6 +74,9 @@ export function TimelineRowContextMenu({
   if (!state.isOpen || !state.target || state.target.type !== TimelineEventType.CUS) {
     return null;
   }
+  const eventPosition = state.target.position;
+
+  const eventId = state.target.id;
 
   return (
     <Portal>
@@ -95,19 +101,37 @@ export function TimelineRowContextMenu({
           justifyContent="flex-start"
           px={3}
           borderRadius="none"
+          onClick={() => {
+            onClose();
+            floatingPanelModel.openFloatingPanel(
+              FloatingPanelType.ExtensionConfig,
+              `Edit Event #${eventPosition}`,
+              { eventId },
+            );
+          }}
+        >
+          Edit
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          w="full"
+          justifyContent="flex-start"
+          px={3}
+          borderRadius="none"
           color="fg.error"
           _hover={{ bg: "bg.error", color: "fg.error" }}
           onClick={async () => {
             onClose();
             const accepted = await confirmActionModel.confirmAction({
               title: "Delete Event",
-              message: `Delete custom event #${state.target?.id}?`,
+              message: `Delete custom event #${eventPosition}?`,
               confirmLabel: "Delete",
               cancelLabel: "Cancel",
             });
 
             if (accepted) {
-              await deleteTimelineEvent.mutateAsync(state.target?.id);
+              await deleteTimelineEvent.mutateAsync(eventId);
             }
           }}
         >

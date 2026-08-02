@@ -105,6 +105,7 @@ export function toTimelineTableItem(
       const resolvePlaceholderName = user?.realName ?? user?.username ?? "";
       return {
         id: event.id,
+        position: event.position,
         type: event.type,
         name: resolveDisplayName(event.customName, resolvePlaceholderName),
         customName: event.customName,
@@ -119,7 +120,9 @@ export function toTimelineTableItem(
         verdict: event.payload.verdict,
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
-        durationSeconds: autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined,
+        durationSeconds:
+          event.durationSeconds ??
+          (autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined),
         isActive,
       };
     }
@@ -129,6 +132,7 @@ export function toTimelineTableItem(
       const problem = problemMap?.[event.payload.problemId];
       return {
         id: event.id,
+        position: event.position,
         type: event.type,
         name: resolveDisplayName(event.customName, resolvePlaceholderName),
         customName: event.customName,
@@ -143,7 +147,9 @@ export function toTimelineTableItem(
         verdict: event.payload.verdict,
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
-        durationSeconds: autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined,
+        durationSeconds:
+          event.durationSeconds ??
+          (autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined),
         isActive,
       };
     }
@@ -153,12 +159,16 @@ export function toTimelineTableItem(
         : `Custom event`;
       return {
         id: event.id,
+        position: event.position,
         type: event.type,
         name: resolveDisplayName(event.customName, placeholderName),
         customName: event.customName,
         placeholderName,
         extId: event.payload.extId,
         extPayload: event.payload.extPayload,
+        durationSeconds:
+          event.durationSeconds ??
+          (autoResolveSpeedMs !== undefined ? autoResolveSpeedMs / 1000 : undefined),
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
         isActive,

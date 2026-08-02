@@ -148,6 +148,7 @@ export const vTimelineEventSnapshot = v.strictObject({
     id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     position: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     type: v.optional(vTimelineEventType),
+    durationSeconds: v.nullish(v.number()),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
     customName: v.nullish(v.string()),
@@ -220,6 +221,7 @@ export const vCreateTimelineEventRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     before: v.optional(v.boolean()),
+    durationSeconds: v.nullish(v.number()),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
     customName: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(100))),
@@ -234,8 +236,11 @@ export const vMoveTimelineEventRequest = v.strictObject({
 
 export const vPatchTimelineEventRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    durationSeconds: v.nullish(v.number()),
+    useDefaultDuration: v.optional(v.boolean()),
     customName: v.nullish(v.string()),
     triggerOffsetSeconds: v.nullish(v.number()),
+    clearTriggerOffset: v.optional(v.boolean()),
     requireManualInteraction: v.nullish(v.boolean()),
     custom: v.nullish(vCustomEventPayloadSnapshot)
 });

@@ -1,4 +1,5 @@
-import { Box, DataList, Editable, IconButton } from "@chakra-ui/react";
+import { Box, Button, DataList, Editable, IconButton } from "@chakra-ui/react";
+import { For } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check, GripVertical, Plus } from "lucide-react";
@@ -7,7 +8,11 @@ import { memo, useCallback, useState } from "react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import { useRenameControlEventMutation } from "@/features/control/hooks";
+import {
+  usePatchTimelineEventMutation,
+  useRenameControlEventMutation,
+} from "@/features/control/hooks";
+import { extensionRegistry } from "@/features/extensions";
 import { GridTableRow } from "@/features/shared/ui/grid-table";
 import { Tooltip } from "@/features/shared/ui/tooltip";
 
@@ -42,15 +47,21 @@ export const ControlTimelineTableItem = memo(
   }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
     const isReorderable = payload.type === TimelineEventType.CUS && !isLive;
+    const type =
+      payload.type !== TimelineEventType.CUS
+        ? payload.type
+        : !payload.extId
+          ? "UNK"
+          : extensionRegistry.extensionWithExtId(payload.extId)?.shortName || "UNK";
 
     const handleCreate = (before: boolean) => {
       if (onCreateEvent) {
         onCreateEvent(payload.id, before);
       } else {
         floatingPanelModel.openFloatingPanel(
-          FloatingPanelType.InspectShow,
-          `Create Event (${before ? "Before" : "After"} #${payload.id})`,
-          { relativeToEventId: payload.id, before, targetEvent: payload },
+          FloatingPanelType.CreateEvent,
+          `Create Event (${before ? "Before" : "After"} #${payload.position})`,
+          { relativeToEventId: payload.id, before },
         );
       }
     };
@@ -66,7 +77,7 @@ export const ControlTimelineTableItem = memo(
           color: isCurrent ? "fg.inverted" : "fg",
         }}
         onContextMenu={(e) => onOpenContextMenu?.(e, payload)}
-        bg={payload.id & 1 ? "bg" : "bg.emphasized"}
+        bg={payload.position & 1 ? "bg" : "bg.emphasized"}
         css={{
           "& .add-btn-wrapper": {
             opacity: 0,
@@ -80,7 +91,7 @@ export const ControlTimelineTableItem = memo(
 
         <GridTableRow templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}>
           <Tooltip
-            content={`Seek to #${payload.id}`}
+            content={`Seek to event #${payload.position}`}
             openDelay={0}
             positioning={{ placement: "left" }}
           >
@@ -90,11 +101,11 @@ export const ControlTimelineTableItem = memo(
               cursor="pointer"
               onClick={() => onSeek(payload.id)}
             >
-              {payload.id}
+              {payload.position}
             </Box>
           </Tooltip>
           <Box fontFamily="mono" textTransform="uppercase">
-            {payload.type}
+            {type}
           </Box>
           <Box minW={0}>
             {!isLive ? (
@@ -113,15 +124,23 @@ export const ControlTimelineTableItem = memo(
           <Box textAlign="end" fontFamily="mono">
             {payload.newRank}
           </Box>
-          <Box textAlign="end" fontFamily="mono">
-            {payload.durationSeconds}
-          </Box>
-          <Box textAlign="end" fontFamily="mono">
-            {payload.triggerOffsetSeconds != null && payload.triggerOffsetSeconds > 0
-              ? `+${payload.triggerOffsetSeconds}`
-              : ""}
-          </Box>
-          <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
+          {!isLive ? (
+            <ControlTimelineNumberEditable payload={payload} field="durationSeconds" />
+          ) : (
+            <Box textAlign="end" fontFamily="mono">
+              {payload.durationSeconds}
+            </Box>
+          )}
+          {!isLive ? (
+            <ControlTimelineNumberEditable payload={payload} field="triggerOffsetSeconds" />
+          ) : (
+            <Box textAlign="end" fontFamily="mono">
+              {payload.triggerOffsetSeconds != null && payload.triggerOffsetSeconds > 0
+                ? `+${payload.triggerOffsetSeconds}`
+                : ""}
+            </Box>
+          )}
+          <ControlTimelineManualInteraction payload={payload} editable={!isLive} />
 
           <Box display="flex" alignItems="center" justifyContent="center" h="full">
             <IconButton
@@ -146,7 +165,7 @@ export const ControlTimelineTableItem = memo(
 
         {!isLive ? (
           <>
-            <Tooltip content={`Add event before #${payload.id}`} openDelay={0}>
+            <Tooltip content={`Add event before #${payload.position}`} openDelay={0}>
               <IconButton
                 aria-label="Add event before"
                 size="2xs"
@@ -167,7 +186,7 @@ export const ControlTimelineTableItem = memo(
               </IconButton>
             </Tooltip>
 
-            <Tooltip content={`Add event after #${payload.id}`} openDelay={0}>
+            <Tooltip content={`Add event after #${payload.position}`} openDelay={0}>
               <IconButton
                 aria-label="Add event after"
                 size="2xs"
@@ -246,6 +265,102 @@ export function ControlTimelineTableHeader() {
   );
 }
 
+function ControlTimelineManualInteraction({
+  payload,
+  editable,
+}: {
+  payload: TimelineTableItem;
+  editable: boolean;
+}) {
+  const patchEvent = usePatchTimelineEventMutation();
+  return (
+    <Button
+      aria-label="Toggle manual interaction"
+      variant="ghost"
+      minW={0}
+      w="full"
+      h="full"
+      p={0}
+      justifyContent="flex-start"
+      disabled={!editable}
+      cursor={editable ? "pointer" : undefined}
+      title={editable ? "Double-click to toggle manual interaction" : undefined}
+      onDoubleClick={() => {
+        void patchEvent.mutateAsync({
+          eventId: payload.id,
+          requireManualInteraction: !payload.requireManualInteraction,
+        });
+      }}
+    >
+      {payload.requireManualInteraction ? <Check size={18} /> : null}
+    </Button>
+  );
+}
+
+function ControlTimelineNumberEditable({
+  payload,
+  field,
+}: {
+  payload: TimelineTableItem;
+  field: "durationSeconds" | "triggerOffsetSeconds";
+}) {
+  const patchEvent = usePatchTimelineEventMutation();
+  const [editing, setEditing] = useState(false);
+  const [draftValue, setDraftValue] = useState("");
+  const current = payload[field];
+  if (!editing)
+    return (
+      <Box
+        w="full"
+        h="full"
+        textAlign="end"
+        fontFamily="mono"
+        cursor="text"
+        onDoubleClick={() => {
+          setDraftValue(current == null ? "" : String(current));
+          setEditing(true);
+        }}
+      >
+        {field === "triggerOffsetSeconds" && current != null && current > 0
+          ? `+${current}`
+          : (current ?? "")}
+      </Box>
+    );
+  return (
+    <Editable.Root
+      defaultEdit
+      submitMode="both"
+      w="full"
+      h="full"
+      value={draftValue}
+      onValueChange={({ value }) => setDraftValue(value)}
+      onValueCommit={({ value }) => {
+        const normalizedValue = value.trim();
+        if (normalizedValue.length === 0) {
+          void patchEvent.mutateAsync({
+            eventId: payload.id,
+            ...(field === "durationSeconds"
+              ? { useDefaultDuration: true }
+              : { clearTriggerOffset: true }),
+          });
+        } else {
+          const next = Number(normalizedValue);
+          if (
+            Number.isFinite(next) &&
+            (field !== "durationSeconds" || next >= 0) &&
+            next !== current
+          )
+            void patchEvent.mutateAsync({ eventId: payload.id, [field]: next });
+        }
+        setEditing(false);
+      }}
+      onValueRevert={() => setEditing(false)}
+    >
+      <Editable.Input autoFocus textAlign="end" fontFamily="mono" />
+    </Editable.Root>
+  );
+}
+
 function ControlTimelineEventTypeHeaderTooltip() {
   return (
     <DataList.Root>
@@ -260,9 +375,18 @@ function ControlTimelineEventTypeHeaderTooltip() {
       </DataList.Item>
 
       <DataList.Item>
-        <DataList.ItemLabel>CUS</DataList.ItemLabel>
-        <DataList.ItemValue>Custom event (frontend extension registry)</DataList.ItemValue>
+        <DataList.ItemLabel>UNK</DataList.ItemLabel>
+        <DataList.ItemValue>Unknown</DataList.ItemValue>
       </DataList.Item>
+
+      <For each={extensionRegistry.extensionList}>
+        {(extension) => (
+          <DataList.Item key={extension.extId}>
+            <DataList.ItemLabel>{extension.shortName}</DataList.ItemLabel>
+            <DataList.ItemValue>{extension.description}</DataList.ItemValue>
+          </DataList.Item>
+        )}
+      </For>
     </DataList.Root>
   );
 }

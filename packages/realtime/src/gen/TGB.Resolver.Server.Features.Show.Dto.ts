@@ -45,6 +45,8 @@ export type TimelineEventSnapshot = {
     /** Transpiled from TGB.Resolver.Server.Commons.Types.TimelineEventType */
     Type: TimelineEventType;
     /** Transpiled from double */
+    DurationSeconds?: number;
+    /** Transpiled from double */
     TriggerOffsetSeconds?: number;
     /** Transpiled from bool */
     RequireManualInteraction?: boolean;

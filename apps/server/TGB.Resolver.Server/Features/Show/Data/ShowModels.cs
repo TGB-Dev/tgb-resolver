@@ -101,6 +101,7 @@ public sealed record TimelineEvent(
   int Id,
   int Position,
   TimelineEventType Type,
+  double? DurationSeconds,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
   string? CustomName,

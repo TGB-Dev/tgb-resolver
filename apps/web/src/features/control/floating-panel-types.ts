@@ -1,5 +1,6 @@
-import type { ComponentType } from "react";
+import { type ComponentType, createElement } from "react";
 
+import { CreateEventPanel } from "@/features/control/create-event-panel";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-model";
 import { ImportShowPanel } from "@/features/control/import-show-panel";
 import { InspectShowPanel } from "@/features/control/inspect-show-panel";
@@ -13,6 +14,7 @@ export enum FloatingPanelType {
   ImportShow = "import-show",
   InspectShow = "inspect-show",
   ExtensionConfig = "extension-config",
+  CreateEvent = "create-event",
 }
 
 export interface FloatingPanelConfig {
@@ -40,10 +42,29 @@ export const floatingPanelConfig: Record<FloatingPanelType, FloatingPanelConfig>
     resizable: true,
     maximizable: true,
   },
+  [FloatingPanelType.CreateEvent]: {
+    size: { width: 640, height: 480 },
+    minSize: { width: 420, height: 320 },
+    resizable: true,
+    maximizable: true,
+  },
 };
 
 export const floatingPanelComponents: Record<FloatingPanelType, FloatingPanelComponent> = {
   [FloatingPanelType.ImportShow]: ImportShowPanel as FloatingPanelComponent,
   [FloatingPanelType.InspectShow]: InspectShowPanel as FloatingPanelComponent,
   [FloatingPanelType.ExtensionConfig]: ExtensionConfigPanel as unknown as FloatingPanelComponent,
+  [FloatingPanelType.CreateEvent]: CreateEventFloatingPanel,
 };
+
+function CreateEventFloatingPanel({
+  panel,
+  relativeToEventId,
+  before,
+}: { panel: FloatingPanelHandle } & Record<string, unknown>) {
+  if (typeof relativeToEventId !== "number" || typeof before !== "boolean") {
+    return null;
+  }
+
+  return createElement(CreateEventPanel, { panel, relativeToEventId, before });
+}

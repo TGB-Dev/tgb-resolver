@@ -140,10 +140,10 @@ public sealed class ShowRawRepository(
 
       // Pre-resolve cue immediately precedes its resolve event so the
       // frontend can focus on the upcoming resolution.
-      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, null, false, null, null,
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, null, null, false, null, null,
         payload, null));
       id++;
-      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, null, false, null, payload,
+      events.Add(new TimelineEvent(id, id, TimelineEventType.Res, null, null, false, null, payload,
         null, null));
       id++;
     }
@@ -189,16 +189,16 @@ public sealed class ShowRawRepository(
         ]),
       Timeline =
       [
-        new TimelineEvent(1, 1, TimelineEventType.Res, null, false, null,
+        new TimelineEvent(1, 1, TimelineEventType.Res, null, null, false, null,
           new ResolveEventPayload(1, 1, 100, 0, 1, 0, VerdictRunResult.Accepted, 1094.180335),
           null, null),
-        new TimelineEvent(2, 2, TimelineEventType.Pre, 0.5, false, null,
+        new TimelineEvent(2, 2, TimelineEventType.Pre, null, 0.5, false, null,
           null, new ResolveEventPayload(2, 2, 180, 0, 2, 0, VerdictRunResult.Accepted,
             1932.430581), null),
-        new TimelineEvent(3, 3, TimelineEventType.Res, null, false, "Bob Reveal",
+        new TimelineEvent(3, 3, TimelineEventType.Res, null, null, false, "Bob Reveal",
           new ResolveEventPayload(2, 2, 180, 0, 2, 0, VerdictRunResult.Accepted, 1932.430581),
           null, null),
-        new TimelineEvent(4, 4, TimelineEventType.Cus, 1, false, "Countdown",
+        new TimelineEvent(4, 4, TimelineEventType.Cus, null, 1, false, "Countdown",
           null, null, new CustomEventPayload("timer",
             new Dictionary<string, object?>
             {

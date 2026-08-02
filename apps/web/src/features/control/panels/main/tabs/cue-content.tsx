@@ -3,6 +3,7 @@ import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import type { ReactNode } from "react";
 
+import { extensionRegistry } from "@/features/extensions";
 import { useVerdictColor, verdictShortCode } from "@/lib/verdict";
 
 interface CueContentProps {
@@ -38,6 +39,11 @@ export function CueContent({ cue, contentSize }: CueContentProps) {
         | <ResolveContent cue={cue} textProps={textProps} nameOverride={teamName} />
       </Text>
     );
+  }
+
+  if (cue.type === TimelineEventType.CUS) {
+    const extension = extensionRegistry.extensionWithExtId(cue.extId ?? "");
+    if (extension) return <Text fontFamily="mono">{extension.formatCueMessage(cue)}</Text>;
   }
 
   const resolvedName = cue.customName ?? cue.name;

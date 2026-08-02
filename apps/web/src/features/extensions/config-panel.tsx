@@ -12,8 +12,29 @@ import { showModel } from "@/features/shared/show-model";
 import { extensionRegistry } from "./base/registry";
 import { usePatchExtensionPayload } from "./patch";
 import { sharedRendererRegistry } from "./renderers";
+import { toTgbFormInstance } from "./tgb-form-instance";
 
 type CustomTimelineEvent = Extract<TimelineEvent, { type: TimelineEventType.CUS }>;
+
+function unwrapRestoredValue(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  if (!isRecord(value)) return value;
+  const record = value;
+  if (Object.keys(record).length === 1 && "value" in record)
+    return unwrapRestoredValue(record.value);
+  return value;
+}
+
+function isRecord(value: object): value is Record<string, unknown> {
+  return Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null;
+}
+
+function restoredPayload(payload: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (!payload) return {};
+  return Object.fromEntries(
+    Object.entries(payload).map(([key, value]) => [key, unwrapRestoredValue(value)]),
+  );
+}
 
 interface ExtensionConfigPanelProps {
   panel: FloatingPanelHandle;
@@ -71,7 +92,10 @@ function ExtensionConfigForm({
 
   const baseline = useMemo(
     () =>
-      ({ ...getDefaultValues(configForm), ...event.payload.extPayload }) as Record<string, unknown>,
+      ({ ...getDefaultValues(configForm), ...restoredPayload(event.payload.extPayload) }) as Record<
+        string,
+        unknown
+      >,
     [configForm, event],
   );
 
@@ -108,7 +132,7 @@ function ExtensionConfigForm({
     <Stack gap={4} h="full">
       <TgbForm
         definition={configForm}
-        instance={form as unknown as Record<string, unknown>}
+        instance={toTgbFormInstance(form)}
         renderers={sharedRendererRegistry}
       />
       <HStack justify="end">

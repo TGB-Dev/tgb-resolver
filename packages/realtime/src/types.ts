@@ -89,6 +89,7 @@ export const FILE_EXTENSION = ".tgbresolver";
 export interface EventBase {
   id: number;
   position: number;
+  durationSeconds?: number;
   triggerOffsetSeconds?: number;
   requireManualInteraction?: boolean;
   customName?: string;
@@ -136,7 +137,7 @@ export type ShowWebSocketMessage =
   | { type: ShowMessageType.PlaybackStateChanged; showVersion: number; playback: ShowPlaybackState }
   | { type: ShowMessageType.LiveModeChanged; showVersion: number; mode: ShowMode };
 
-export interface TimelineTableItem extends Omit<EventBase, "position"> {
+export interface TimelineTableItem extends EventBase {
   type: TimelineEventType;
   name: string;
   placeholderName: string;

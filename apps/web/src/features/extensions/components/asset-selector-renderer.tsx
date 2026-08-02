@@ -37,6 +37,14 @@ export function getDroppedAssetId(
   return text && isSelectable(text) ? text : "";
 }
 
+function validationErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const { message } = error as { message?: unknown };
+    if (typeof message === "string") return message;
+  }
+  return String(error);
+}
+
 export function AssetSelectorRenderer({
   field,
   label,
@@ -45,7 +53,7 @@ export function AssetSelectorRenderer({
   errors,
 }: ReactRendererProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const currentValue = String(field.state.value ?? "");
+  const currentValue = typeof field.state.value === "string" ? field.state.value : "";
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -71,9 +79,10 @@ export function AssetSelectorRenderer({
   };
 
   return (
-    <Field.Root invalid={errors.length > 0}>
+    <Field.Root w="full" invalid={errors.length > 0}>
       {label && <Field.Label>{label}</Field.Label>}
       <Box
+        w="full"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -90,6 +99,7 @@ export function AssetSelectorRenderer({
           <Box flex={1}>
             <Input
               size="sm"
+              w="full"
               value={currentValue}
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={
@@ -108,7 +118,7 @@ export function AssetSelectorRenderer({
       {description && <Field.HelperText>{description}</Field.HelperText>}
       {errors.length > 0 && (
         <Text color="fg.error" fontSize="sm">
-          {errors.map(String).join(", ")}
+          {errors.map(validationErrorMessage).join(", ")}
         </Text>
       )}
     </Field.Root>

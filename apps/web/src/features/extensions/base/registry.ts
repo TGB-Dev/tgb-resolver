@@ -1,8 +1,7 @@
 import type { RuntimeFormDefinition } from "@tgb-form/core";
-import { defineForm, FieldDataType } from "@tgb-form/core";
-import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
-import { type Extension, ExtensionType } from "./types";
+import { ImageExtension } from "../image";
+import type { Extension } from "./types";
 
 export class ExtensionRegistry {
   // Utilizing Record<K, V> for fast lookups than Map<K, V>.
@@ -27,33 +26,6 @@ export class ExtensionRegistry {
   }
 }
 
-const timerExtension: Extension = {
-  extId: "timer",
-  shortName: "Timer",
-  description: "Runs a configurable countdown timer.",
-  type: ExtensionType.ScriptOnly,
-  configForm: defineForm({
-    fields: {
-      durationSeconds: {
-        type: FieldDataType.Number,
-        defaultValue: 10,
-        label: "Duration (s)",
-        description: "How long the timer runs.",
-      },
-      autoHide: {
-        type: FieldDataType.Boolean,
-        defaultValue: true,
-        label: "Auto-hide",
-        description: "Hide the timer when it finishes.",
-      },
-    },
-  }),
-  execute: () => () => {},
-  formatCueMessage(event: TimelineTableItem) {
-    return event.customName ?? event.name;
-  },
-};
-
 export const extensionRegistry = new ExtensionRegistry({
-  [timerExtension.extId]: timerExtension,
+  [ImageExtension.extId]: ImageExtension,
 });

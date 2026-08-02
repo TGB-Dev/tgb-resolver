@@ -211,6 +211,7 @@ export type TimelineEventSnapshot = {
     id?: number;
     position?: number;
     type?: TimelineEventType;
+    durationSeconds?: number | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
@@ -314,6 +315,7 @@ export type CreateTimelineEventRequest = {
     showVersion?: number;
     relativeToEventId?: number;
     before?: boolean;
+    durationSeconds?: number | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
@@ -328,8 +330,11 @@ export type MoveTimelineEventRequest = {
 
 export type PatchTimelineEventRequest = {
     showVersion?: number;
+    durationSeconds?: number | null;
+    useDefaultDuration?: boolean;
     customName?: string | null;
     triggerOffsetSeconds?: number | null;
+    clearTriggerOffset?: boolean;
     requireManualInteraction?: boolean | null;
     custom?: CustomEventPayloadSnapshot | null;
 };

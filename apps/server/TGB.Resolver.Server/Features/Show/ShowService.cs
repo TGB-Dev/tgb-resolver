@@ -188,7 +188,7 @@ public sealed class ShowStateService(
         : e);
 
       var created = new TimelineEvent(
-        nextId, position, TimelineEventType.Cus,
+        nextId, position, TimelineEventType.Cus, request.DurationSeconds,
         request.TriggerOffsetSeconds, request.RequireManualInteraction ?? false,
         request.CustomName, null, null, ToData(request.Custom));
 
@@ -217,7 +217,18 @@ public sealed class ShowStateService(
           ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline
             .Select(e => e.Id == eventId
-              ? e with { CustomName = request.CustomName ?? e.CustomName }
+              ? e with
+              {
+                CustomName = request.CustomName ?? e.CustomName,
+                DurationSeconds = request.UseDefaultDuration
+                  ? null
+                  : request.DurationSeconds ?? e.DurationSeconds,
+                TriggerOffsetSeconds = request.ClearTriggerOffset
+                  ? null
+                  : request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
+                RequireManualInteraction =
+                request.RequireManualInteraction ?? e.RequireManualInteraction
+              }
               : e)
             .ToArray()
         };
@@ -234,7 +245,12 @@ public sealed class ShowStateService(
             ? e with
             {
               CustomName = request.CustomName ?? e.CustomName,
-              TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
+              DurationSeconds = request.UseDefaultDuration
+                ? null
+                : request.DurationSeconds ?? e.DurationSeconds,
+              TriggerOffsetSeconds = request.ClearTriggerOffset
+                ? null
+                : request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
               request.RequireManualInteraction ?? e.RequireManualInteraction,
               Custom = custom
@@ -280,8 +296,8 @@ public sealed class ShowStateService(
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(e => e.Id == eventId);
-      if (item.Type == TimelineEventType.Res)
-        throw new InvalidOperationException("Resolve events cannot be deleted.");
+      if (item.Type == TimelineEventType.Res || item.Type == TimelineEventType.Pre)
+        throw new InvalidOperationException("Resolve and pre-resolve events cannot be deleted.");
 
       return state with
       {
@@ -1052,7 +1068,8 @@ public sealed class ShowStateService(
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
 
-    orchestrator.ScheduleAdvance(state.Automation.AutoResolveSpeedMs);
+    orchestrator.ScheduleAdvance((long)((nextEvent.DurationSeconds ??
+                                         state.Automation.AutoResolveSpeedMs / 1000d) * 1000));
   }
 
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,

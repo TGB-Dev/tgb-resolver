@@ -27,6 +27,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
     const base = {
       id: event.id ?? 0,
       position: event.position ?? event.id ?? 0,
+      durationSeconds: event.durationSeconds ?? undefined,
       triggerOffsetSeconds: event.triggerOffsetSeconds ?? undefined,
       requireManualInteraction: event.requireManualInteraction ?? undefined,
       customName: event.customName ?? undefined,

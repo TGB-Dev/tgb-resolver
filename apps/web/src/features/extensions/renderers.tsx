@@ -2,21 +2,32 @@ import { Checkbox, Field, Input, NumberInput, Text } from "@chakra-ui/react";
 import { FieldDataType } from "@tgb-form/core";
 import { createReactRendererRegistry, type ReactRendererProps } from "@tgb-form/react";
 
+import { AssetSelectorRenderer } from "./components/asset-selector-renderer";
+
+function validationErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const { message } = error as { message?: unknown };
+    if (typeof message === "string") return message;
+  }
+  return String(error);
+}
+
 function FieldErrorText({ errors }: { errors: readonly unknown[] }) {
   if (errors.length === 0) return null;
   return (
     <Text color="fg.error" fontSize="sm">
-      {errors.map(String).join(", ")}
+      {errors.map(validationErrorMessage).join(", ")}
     </Text>
   );
 }
 
 function StringRenderer({ field, label, description, props, errors }: ReactRendererProps) {
   return (
-    <Field.Root>
+    <Field.Root w="full">
       {label && <Field.Label>{label}</Field.Label>}
       <Input
-        value={String(field.state.value ?? "")}
+        w="full"
+        value={typeof field.state.value === "string" ? field.state.value : ""}
         onChange={(event) => field.handleChange(event.target.value)}
         placeholder={typeof props?.placeholder === "string" ? props.placeholder : undefined}
       />
@@ -28,10 +39,11 @@ function StringRenderer({ field, label, description, props, errors }: ReactRende
 
 function NumberRenderer({ field, label, description, props, errors }: ReactRendererProps) {
   return (
-    <Field.Root>
+    <Field.Root w="full">
       {label && <Field.Label>{label}</Field.Label>}
       <NumberInput.Root
-        value={String(field.state.value ?? "")}
+        w="full"
+        value={typeof field.state.value === "number" ? String(field.state.value) : ""}
         min={typeof props?.min === "number" ? props.min : undefined}
         max={typeof props?.max === "number" ? props.max : undefined}
         step={typeof props?.step === "number" ? props.step : 1}
@@ -53,7 +65,7 @@ function NumberRenderer({ field, label, description, props, errors }: ReactRende
 
 function BooleanRenderer({ field, label, errors }: ReactRendererProps) {
   return (
-    <Field.Root>
+    <Field.Root w="full">
       <Checkbox.Root
         checked={Boolean(field.state.value)}
         onCheckedChange={(details) => field.handleChange(details.checked === true)}
@@ -75,6 +87,9 @@ function UnsupportedRenderer({ label }: ReactRendererProps) {
 }
 
 export const sharedRendererRegistry = createReactRendererRegistry({
+  byName: {
+    "asset-selector": AssetSelectorRenderer,
+  },
   byType: {
     [FieldDataType.String]: StringRenderer,
     [FieldDataType.Number]: NumberRenderer,

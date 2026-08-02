@@ -1,5 +1,5 @@
 import { Button, HStack, Show } from "@chakra-ui/react";
-import { Blocks, Crosshair, FileDown, FileUp, Trash2 } from "lucide-react";
+import { Crosshair, FileDown, FileUp, Trash2 } from "lucide-react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
@@ -8,7 +8,6 @@ import {
   useControlCanMutate,
   useControlIsLive,
   useExportShowAction,
-  useOptimizeShowMutation,
 } from "@/features/control/hooks";
 import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
@@ -17,7 +16,6 @@ interface ControlTimelineControlsProps {
 }
 
 export function ControlTimelineControls({ onJumpToCurrent }: ControlTimelineControlsProps) {
-  const optimizeCurrentShow = useOptimizeShowMutation();
   const clearCurrentShow = useClearShowMutation();
   const exportCurrentShow = useExportShowAction();
   const isLive = useControlIsLive();
@@ -45,11 +43,6 @@ export function ControlTimelineControls({ onJumpToCurrent }: ControlTimelineCont
         >
           <FileUp />
           Load
-        </Button>
-
-        <Button onClick={() => optimizeCurrentShow.mutate()} disabled={!canMutate}>
-          <Blocks />
-          Optimize
         </Button>
 
         <Button
