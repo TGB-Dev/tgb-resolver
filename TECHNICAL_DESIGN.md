@@ -36,10 +36,11 @@ a relative timeline with a main panel showing the current, next, and prior cues.
 
 The frontend (`apps/web/`) organizes state and UI into feature-sliced modules under `src/features/`:
 
-- **`control/`** — playback model, timeline cursor, floating panel model + types. All control-domain state.
+- **`control/`** — playback model, timeline cursor, multi-panel floating panel model + types (handle-based). All control-domain state.
 - **`leaderboard/`** — leaderboard state model.
 - **`assets-manager/`** — folder/file browser model (already feature-local).
 - **`shared/`** — cross-cutting models: show state, realtime connection, confirm dialogs, fullscreen toggle.
+- **`extensions/`** — extension base types, static registry (`extensionRegistry`), config UI, and the `patchExtensionPayload` server-patch API.
 
 All models use `@preact/signals-react` — never React `useState`/`useReducer`/`createContext` for shared state. Import directly from a feature's model path (e.g. `@/features/control/playback-model`, `@/features/shared/show-model`).
 

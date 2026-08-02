@@ -1,91 +1,124 @@
-import { batch, createModel, type ReadonlySignal, signal } from "@preact/signals-react";
+import { batch, computed, createModel, type ReadonlySignal, signal } from "@preact/signals-react";
+import { v7 as uuidv7 } from "uuid";
 
 import { confirmActionModel } from "../shared/confirm-action-model";
 import type { FloatingPanelType } from "./floating-panel-types";
 
-interface FloatingPanelRequest {
-  type: FloatingPanelType;
-  title: string;
-  props: Record<string, unknown>;
-  resolve: (accepted: boolean) => void;
+export interface FloatingPanelHandle {
+  readonly id: string;
+  readonly type: FloatingPanelType;
+  readonly title: ReadonlySignal<string>;
+  readonly props: ReadonlySignal<Record<string, unknown>>;
+  readonly result: Promise<boolean>;
+  isDirty: ReadonlySignal<boolean>;
+  isSaving: ReadonlySignal<boolean>;
+  setTitle(title: string): void;
+  setDirty(dirty: boolean): void;
+  setSaving(saving: boolean): void;
+  requestClose(reason?: "close" | "replace"): Promise<boolean>;
+  close(accepted: boolean): void;
 }
 
 interface FloatingPanelModel {
-  active: ReadonlySignal<FloatingPanelRequest | null>;
-  isDirty: ReadonlySignal<boolean>;
-  openFloatingPanel: (
+  panels: ReadonlySignal<FloatingPanelHandle[]>;
+  hasDirtyPanels: ReadonlySignal<boolean>;
+  openFloatingPanel(
     type: FloatingPanelType,
     title: string,
     props?: Record<string, unknown>,
-  ) => Promise<boolean>;
-  closeFloatingPanel: (accepted: boolean) => void;
-  requestFloatingPanelClose: (reason?: "close" | "replace") => Promise<boolean>;
-  setDirty: (isDirty: boolean) => void;
+  ): FloatingPanelHandle;
+  requestFloatingPanelClose(
+    handle: FloatingPanelHandle,
+    reason?: "close" | "replace",
+  ): Promise<boolean>;
+  closeFloatingPanel(handle: FloatingPanelHandle, accepted: boolean): void;
 }
 
 const FloatingPanelModel = createModel<FloatingPanelModel>(() => {
-  const active = signal<FloatingPanelRequest | null>(null);
-  const isDirty = signal(false);
+  const panels = signal<FloatingPanelHandle[]>([]);
+  const hasDirtyPanels = computed(() => panels.value.some((panel) => panel.isDirty.value));
+  let confirmQueue: Promise<boolean> = Promise.resolve(false);
+
+  function createHandle(
+    type: FloatingPanelType,
+    title: string,
+    props: Record<string, unknown>,
+  ): FloatingPanelHandle {
+    const id = uuidv7();
+    const titleSignal = signal(title);
+    const propsSignal = signal(props);
+    const isDirty = signal(false);
+    const isSaving = signal(false);
+    let resolveResult: ((accepted: boolean) => void) | null = null;
+    const result = new Promise<boolean>((resolve) => {
+      resolveResult = resolve;
+    });
+
+    const handle: FloatingPanelHandle = {
+      id,
+      type,
+      title: titleSignal,
+      props: propsSignal,
+      result,
+      isDirty,
+      isSaving,
+      setTitle(value) {
+        titleSignal.value = value;
+      },
+      setDirty(dirty) {
+        isDirty.value = dirty;
+      },
+      setSaving(saving) {
+        isSaving.value = saving;
+      },
+      async requestClose(reason = "close") {
+        if (isDirty.value) {
+          const confirm = confirmQueue.then(() =>
+            confirmActionModel.confirmAction({
+              title: "Discard changes?",
+              message:
+                reason === "replace"
+                  ? "Discard this panel and open another one?"
+                  : "Discard this panel?",
+              confirmLabel: "Discard",
+            }),
+          );
+          confirmQueue = confirm.catch(() => false);
+          const accepted = await confirm;
+          if (!accepted) return false;
+        }
+
+        handle.close(false);
+        return true;
+      },
+      close(accepted) {
+        resolveResult?.(accepted);
+        batch(() => {
+          panels.value = panels.value.filter((panel) => panel.id !== id);
+        });
+      },
+    };
+
+    return handle;
+  }
 
   return {
-    active,
-    isDirty,
-
-    setDirty(dirty: boolean) {
-      isDirty.value = dirty;
-    },
-
-    async openFloatingPanel(type, title, props = {}) {
-      if (!(await requestFloatingPanelCloseInner("replace"))) {
-        return false;
-      }
-
-      return new Promise((resolve) => {
-        batch(() => {
-          active.value = { type, title, props, resolve };
-          isDirty.value = false;
-        });
-      });
-    },
-
-    async requestFloatingPanelClose(reason = "close") {
-      return requestFloatingPanelCloseInner(reason);
-    },
-
-    closeFloatingPanel(accepted: boolean) {
-      active.value?.resolve(accepted);
+    panels,
+    hasDirtyPanels,
+    openFloatingPanel(type, title, props = {}) {
+      const handle = createHandle(type, title, props);
       batch(() => {
-        active.value = null;
-        isDirty.value = false;
+        panels.value = [...panels.value, handle];
       });
+      return handle;
+    },
+    requestFloatingPanelClose(handle, reason = "close") {
+      return handle.requestClose(reason);
+    },
+    closeFloatingPanel(handle, accepted) {
+      handle.close(accepted);
     },
   };
-
-  async function requestFloatingPanelCloseInner(reason: "close" | "replace") {
-    const current = active.value;
-    if (!current) return true;
-
-    if (isDirty.value) {
-      const accepted = await confirmActionModel.confirmAction({
-        title: "Discard changes?",
-        message:
-          reason === "replace" ? "Discard this panel and open another one?" : "Discard this panel?",
-        confirmLabel: "Discard",
-      });
-      if (!accepted) return false;
-    }
-
-    closeFloatingPanelInner(false);
-    return true;
-  }
-
-  function closeFloatingPanelInner(accepted: boolean) {
-    active.value?.resolve(accepted);
-    batch(() => {
-      active.value = null;
-      isDirty.value = false;
-    });
-  }
 });
 
 export const floatingPanelModel = new FloatingPanelModel();

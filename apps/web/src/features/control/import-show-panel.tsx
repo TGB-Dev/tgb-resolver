@@ -2,14 +2,12 @@ import { Button, Field, FileUpload, HStack, Input, Stack, Text } from "@chakra-u
 import { useSignal } from "@preact/signals-react";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 
-import { floatingPanelModel } from "@/features/control/floating-panel-model";
+import type { FloatingPanelHandle } from "@/features/control/floating-panel-model";
 import { useImportShowMutation } from "@/features/control/hooks";
 
-export function ImportShowPanel() {
+export function ImportShowPanel({ panel }: { panel: FloatingPanelHandle }) {
   const file = useSignal<File | null>(null);
   const excludedUsernames = useSignal("");
-  const setDirty = floatingPanelModel.setDirty;
-  const closeFloatingPanel = floatingPanelModel.closeFloatingPanel;
   const importShow = useImportShowMutation();
 
   const accept = async () => {
@@ -22,7 +20,7 @@ export function ImportShowPanel() {
         .map((s) => s.trim())
         .filter(Boolean),
     });
-    closeFloatingPanel(true);
+    panel.close(true);
   };
 
   return (
@@ -33,7 +31,7 @@ export function ImportShowPanel() {
         onFileChange={(details) => {
           const f = details.acceptedFiles[0] ?? null;
           file.value = f;
-          setDirty(Boolean(f) || excludedUsernames.value.length > 0);
+          panel.setDirty(Boolean(f) || excludedUsernames.value.length > 0);
         }}
       >
         <FileUpload.HiddenInput />
@@ -61,7 +59,7 @@ export function ImportShowPanel() {
           onChange={(event) => {
             const target = event.target as HTMLInputElement;
             excludedUsernames.value = target.value;
-            setDirty(Boolean(file.value) || target.value.length > 0);
+            panel.setDirty(Boolean(file.value) || target.value.length > 0);
           }}
           placeholder="team_a, team_b"
         />
@@ -71,7 +69,7 @@ export function ImportShowPanel() {
       {importShow.error ? <Text color="fg.error">{importShow.error.message}</Text> : null}
 
       <HStack justify="end">
-        <Button variant="outline" onClick={() => closeFloatingPanel(false)}>
+        <Button variant="outline" onClick={() => panel.close(false)}>
           Cancel
         </Button>
         <Button disabled={!file.value || importShow.isPending} onClick={() => void accept()}>

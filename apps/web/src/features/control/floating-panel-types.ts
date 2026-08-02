@@ -1,11 +1,18 @@
 import type { ComponentType } from "react";
 
+import type { FloatingPanelHandle } from "@/features/control/floating-panel-model";
 import { ImportShowPanel } from "@/features/control/import-show-panel";
 import { InspectShowPanel } from "@/features/control/inspect-show-panel";
+import { ExtensionConfigPanel } from "@/features/extensions/config-panel";
+
+export type FloatingPanelComponent = ComponentType<
+  { panel: FloatingPanelHandle } & Record<string, unknown>
+>;
 
 export enum FloatingPanelType {
   ImportShow = "import-show",
   InspectShow = "inspect-show",
+  ExtensionConfig = "extension-config",
 }
 
 export interface FloatingPanelConfig {
@@ -27,12 +34,16 @@ export const floatingPanelConfig: Record<FloatingPanelType, FloatingPanelConfig>
     resizable: true,
     maximizable: true,
   },
+  [FloatingPanelType.ExtensionConfig]: {
+    size: { width: 560, height: 480 },
+    minSize: { width: 360, height: 320 },
+    resizable: true,
+    maximizable: true,
+  },
 };
 
-export const floatingPanelComponents: Record<
-  FloatingPanelType,
-  ComponentType<Record<string, unknown>>
-> = {
-  [FloatingPanelType.ImportShow]: ImportShowPanel as ComponentType<Record<string, unknown>>,
-  [FloatingPanelType.InspectShow]: InspectShowPanel as ComponentType<Record<string, unknown>>,
+export const floatingPanelComponents: Record<FloatingPanelType, FloatingPanelComponent> = {
+  [FloatingPanelType.ImportShow]: ImportShowPanel as FloatingPanelComponent,
+  [FloatingPanelType.InspectShow]: InspectShowPanel as FloatingPanelComponent,
+  [FloatingPanelType.ExtensionConfig]: ExtensionConfigPanel as unknown as FloatingPanelComponent,
 };
