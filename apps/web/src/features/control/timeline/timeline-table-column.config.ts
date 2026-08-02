@@ -35,6 +35,10 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig
     minW: "5ch",
     maxW: "5ch",
   },
+  dragHandle: {
+    minW: "3ch",
+    maxW: "3ch",
+  },
 };
 
 export const TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS = gridTableTemplate(

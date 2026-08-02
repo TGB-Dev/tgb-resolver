@@ -7,6 +7,7 @@ import {
   generatedClient,
   importShowBundle,
   importShowXml,
+  moveTimelineEvent,
   optimizeShow,
   patchNonResolveEvent,
   renameResolveEvent,
@@ -256,6 +257,34 @@ export function useRenameControlEventMutation() {
           body: {
             showVersion: playbackModel.state.value.showVersion,
             customName: payload.customName.trim(),
+          },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: () => {},
+  });
+}
+
+export function useMoveTimelineEventMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      eventId: number;
+      relativeToEventId: number;
+      before: boolean;
+    }) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await moveTimelineEvent({
+          client: generatedClient,
+          path: { id: payload.eventId },
+          body: {
+            showVersion: playbackModel.state.value.showVersion,
+            relativeToEventId: payload.relativeToEventId,
+            before: payload.before,
           },
         });
         return data as ShowStateSnapshot;

@@ -14,6 +14,7 @@ export {
   tgbResolverServerFeaturesShowGetShowEndpoint as getShow,
   tgbResolverServerFeaturesShowImportBundleEndpoint as importShowBundle,
   tgbResolverServerFeaturesShowImportXmlEndpoint as importShowXml,
+  tgbResolverServerFeaturesShowMoveTimelineEventEndpoint as moveTimelineEvent,
   tgbResolverServerFeaturesShowOptimizeShowEndpoint as optimizeShow,
   tgbResolverServerFeaturesShowPatchNonResolveEventEndpoint as patchNonResolveEvent,
   tgbResolverServerFeaturesShowRenameResolveEventEndpoint as renameResolveEvent,

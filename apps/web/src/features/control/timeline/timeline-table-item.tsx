@@ -1,8 +1,12 @@
-import { Box, DataList, Editable } from "@chakra-ui/react";
+import { Box, DataList, Editable, IconButton } from "@chakra-ui/react";
+import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
-import { Check } from "lucide-react";
+import { Check, GripVertical, Plus } from "lucide-react";
+import type { DragControls } from "motion/react";
 import { memo, useCallback, useState } from "react";
 
+import { floatingPanelModel } from "@/features/control/floating-panel-model";
+import { FloatingPanelType } from "@/features/control/floating-panel-types";
 import { useRenameControlEventMutation } from "@/features/control/hooks";
 import { GridTableRow } from "@/features/shared/ui/grid-table";
 import { Tooltip } from "@/features/shared/ui/tooltip";
@@ -21,11 +25,33 @@ interface ControlTimelineTableItemProps {
   isCurrent: boolean;
   isLive: boolean;
   onSeek: (id: number) => void;
+  dragControls?: DragControls;
+  onCreateEvent?: (relativeToEventId: number, before: boolean) => void;
 }
 
 export const ControlTimelineTableItem = memo(
-  ({ payload, isCurrent, isLive, onSeek }: ControlTimelineTableItemProps) => {
+  ({
+    payload,
+    isCurrent,
+    isLive,
+    onSeek,
+    dragControls,
+    onCreateEvent,
+  }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
+    const isReorderable = payload.type === TimelineEventType.CUS && !isLive;
+
+    const handleCreate = (before: boolean) => {
+      if (onCreateEvent) {
+        onCreateEvent(payload.id, before);
+      } else {
+        floatingPanelModel.openFloatingPanel(
+          FloatingPanelType.InspectShow,
+          `Create Event (${before ? "Before" : "After"} #${payload.id})`,
+          { relativeToEventId: payload.id, before, targetEvent: payload },
+        );
+      }
+    };
 
     return (
       <Box
@@ -33,12 +59,19 @@ export const ControlTimelineTableItem = memo(
         minH={8}
         position="relative"
         borderBottomColor="border"
-        overflow="hidden"
         data-event-id={payload.id}
         _light={{
           color: isCurrent ? "fg.inverted" : "fg",
         }}
         bg={payload.id & 1 ? "bg" : "bg.emphasized"}
+        css={{
+          "& .add-btn-wrapper": {
+            opacity: 0,
+            transition: "opacity 0.15s ease-in-out",
+            pointerEvents: "none",
+          },
+          "&:hover .add-btn-wrapper": { opacity: 1, pointerEvents: "auto" },
+        }}
       >
         <CurrentEventIndicator isCurrent={isCurrent} durationInSeconds={durationInSeconds} />
 
@@ -86,7 +119,73 @@ export const ControlTimelineTableItem = memo(
               : ""}
           </Box>
           <Box>{payload.requireManualInteraction ? <Check size={18} /> : null}</Box>
+
+          <Box display="flex" alignItems="center" justifyContent="center" h="full">
+            <IconButton
+              aria-label="Drag to reorder event"
+              size="2xs"
+              variant="ghost"
+              disabled={!isReorderable}
+              cursor={isReorderable ? "grab" : "not-allowed"}
+              _active={{ cursor: isReorderable ? "grabbing" : "not-allowed" }}
+              onPointerDown={(e) => {
+                if (isReorderable) {
+                  dragControls?.start(e);
+                }
+              }}
+              color="fg.muted"
+              _hover={isReorderable ? { color: "fg" } : undefined}
+            >
+              <GripVertical size={14} />
+            </IconButton>
+          </Box>
         </GridTableRow>
+
+        {!isLive ? (
+          <>
+            <Tooltip content={`Add event before #${payload.id}`} openDelay={0}>
+              <IconButton
+                aria-label="Add event before"
+                size="2xs"
+                variant="subtle"
+                className="add-btn-wrapper"
+                position="absolute"
+                top={0}
+                right={0}
+                transform="translateY(-100%)"
+                borderTopRadius="md"
+                borderBottomRadius={0}
+                bg={payload.id & 1 ? "bg.subtle" : "bg.muted"}
+                _hover={{ bg: "bg.emphasized", color: "fg" }}
+                zIndex={20}
+                onClick={() => handleCreate(true)}
+              >
+                <Plus size={12} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip content={`Add event after #${payload.id}`} openDelay={0}>
+              <IconButton
+                aria-label="Add event after"
+                size="2xs"
+                variant="subtle"
+                className="add-btn-wrapper"
+                position="absolute"
+                bottom={0}
+                right={0}
+                transform="translateY(100%)"
+                borderTopRadius={0}
+                borderBottomRadius="md"
+                bg={payload.id & 1 ? "bg.subtle" : "bg.muted"}
+                _hover={{ bg: "bg.emphasized", color: "fg" }}
+                zIndex={20}
+                onClick={() => handleCreate(false)}
+              >
+                <Plus size={12} />
+              </IconButton>
+            </Tooltip>
+          </>
+        ) : null}
       </Box>
     );
   },
@@ -138,6 +237,8 @@ export function ControlTimelineTableHeader() {
       <Tooltip content="Whether this event requires manual interaction to proceed." openDelay={0}>
         <Box>Man.?</Box>
       </Tooltip>
+
+      <Box />
     </GridTableRow>
   );
 }

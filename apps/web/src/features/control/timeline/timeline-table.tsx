@@ -1,11 +1,15 @@
 import { Box, Center, Spinner, Text } from "@chakra-ui/react";
 import { useSignalEffect } from "@preact/signals-react";
+import { TimelineEventType } from "@tgb-resolver/contracts";
+import type { TimelineTableItem } from "@tgb-resolver/realtime";
+import { Reorder, useDragControls } from "motion/react";
 import { type RefObject, useCallback, useRef } from "react";
 
 import {
   useControlIsLive,
   useControlShowQuery,
   useControlShowRows,
+  useMoveTimelineEventMutation,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
 import { playbackModel } from "@/features/control/playback-model";
@@ -33,8 +37,43 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   const rows = useControlShowRows();
   const isLive = useControlIsLive();
   const seekPlayback = useSeekPlaybackMutation();
+  const moveEvent = useMoveTimelineEventMutation();
   const onSeek = useCallback((id: number) => seekPlayback.mutate(id), [seekPlayback.mutate]);
   const parentRef = useRef<HTMLDivElement>(null);
+
+  const handleReorder = useCallback(
+    (newRows: TimelineTableItem[]) => {
+      // Find the row that changed position
+      let movedItem: TimelineTableItem | null = null;
+      let targetIndex = -1;
+
+      for (let i = 0; i < newRows.length; i++) {
+        if (newRows[i].id !== rows[i]?.id) {
+          // Check if this item is a CUS event (only CUS events can be moved)
+          if (newRows[i].type === TimelineEventType.CUS) {
+            movedItem = newRows[i];
+            targetIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (!movedItem || targetIndex < 0) return;
+
+      // Determine relative destination
+      const before = targetIndex === 0;
+      const relativeToEventId = before ? newRows[1]?.id : newRows[targetIndex - 1]?.id;
+
+      if (relativeToEventId != null) {
+        moveEvent.mutate({
+          eventId: movedItem.id,
+          relativeToEventId,
+          before,
+        });
+      }
+    },
+    [rows, moveEvent],
+  );
 
   if (apiRef) {
     apiRef.current = {
@@ -74,17 +113,59 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
 
       <Box flex={1} minH={0} ref={parentRef} overflow="auto">
         <CurrentEventScroller parentRef={parentRef} />
-        {rows.map((payload) => (
-          <ControlTimelineTableItem
-            key={payload.id}
-            payload={payload}
-            isCurrent={playbackModel.currentCueId.value === payload.id}
-            isLive={isLive}
-            onSeek={onSeek}
-          />
-        ))}
+        <Reorder.Group
+          axis="y"
+          values={rows}
+          onReorder={handleReorder}
+          style={{ listStyle: "none", padding: 0, margin: 0 }}
+        >
+          {rows.map((payload) => (
+            <TimelineRowItem
+              key={payload.id}
+              payload={payload}
+              isCurrent={playbackModel.currentCueId.value === payload.id}
+              isLive={isLive}
+              onSeek={onSeek}
+            />
+          ))}
+        </Reorder.Group>
       </Box>
     </Box>
+  );
+}
+
+function TimelineRowItem({
+  payload,
+  isCurrent,
+  isLive,
+  onSeek,
+}: {
+  payload: TimelineTableItem;
+  isCurrent: boolean;
+  isLive: boolean;
+  onSeek: (id: number) => void;
+}) {
+  const dragControls = useDragControls();
+  const isReorderable = payload.type === TimelineEventType.CUS && !isLive;
+
+  return (
+    <Reorder.Item
+      value={payload}
+      dragListener={false}
+      dragControls={dragControls}
+      style={{
+        userSelect: "none",
+        position: "relative",
+      }}
+    >
+      <ControlTimelineTableItem
+        payload={payload}
+        isCurrent={isCurrent}
+        isLive={isLive}
+        onSeek={onSeek}
+        dragControls={isReorderable ? dragControls : undefined}
+      />
+    </Reorder.Item>
   );
 }
 
