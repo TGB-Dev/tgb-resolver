@@ -651,6 +651,39 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /assets/entries/{id}/transfer:
+    patch:
+      tags:
+      - Assets
+      operationId: TGBResolverServerFeaturesAssetsTransferEntryEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        x-name: TransferEntryRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferEntryRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
+        400:
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     ShowStateSnapshot:
@@ -1296,6 +1329,21 @@ components:
           type: string
           minLength: 1
           nullable: false
+    TransferEntryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+          minimum: 0
+        isDirectory:
+          type: boolean
+        targetFolderId:
+          type: string
+          nullable: true
+        copy:
+          type: boolean
   securitySchemes:
     JWTBearerAuth:
       type: http

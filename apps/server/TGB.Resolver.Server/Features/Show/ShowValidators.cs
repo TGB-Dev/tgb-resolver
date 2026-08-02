@@ -168,3 +168,12 @@ public sealed class MoveAssetRequestValidator : Validator<MoveAssetRequest>
     RuleFor(x => x.TargetFolderId).NotEmpty();
   }
 }
+
+public sealed class TransferEntryRequestValidator : Validator<TransferEntryRequest>
+{
+  public TransferEntryRequestValidator()
+  {
+    RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
+    RuleFor(x => x.Id).NotEmpty();
+  }
+}

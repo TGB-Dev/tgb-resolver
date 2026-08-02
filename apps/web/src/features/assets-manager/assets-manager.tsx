@@ -6,6 +6,7 @@ import { confirmActionModel } from "@/features/shared/confirm-action-model";
 import { toaster } from "@/features/shared/ui/toaster";
 
 import { AssetsGridView } from "./assets-grid-view";
+import { assetsInteractionModel } from "./assets-interaction-model";
 import { AssetsListView } from "./assets-list-view";
 import { assetsManagerModel } from "./assets-manager-model";
 import { AssetsToolbar } from "./assets-toolbar";
@@ -81,6 +82,24 @@ export function AssetsManager() {
 
   useHotkey("Mod+I", () => {
     fileInputRef.current?.click();
+  });
+
+  useHotkey("Mod+C", () => {
+    assetsInteractionModel.copySelection();
+  });
+
+  useHotkey("Mod+X", () => {
+    assetsInteractionModel.cutSelection();
+  });
+
+  useHotkey("Mod+V", () => {
+    const isTree = assetsManagerModel.focusedPanel.value === "tree";
+    const targetFolderId = isTree
+      ? assetsManagerModel.selectedEntryId.value
+      : assetsManagerModel.selectedEntryId.value;
+    void assetsInteractionModel.pasteInto(targetFolderId ?? null).catch((e) => {
+      handleError(e, "Paste");
+    });
   });
 
   useHotkeySequence(["Mod+K", "Mod+I"], () => {

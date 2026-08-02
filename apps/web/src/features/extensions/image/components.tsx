@@ -45,8 +45,6 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
         display="flex"
         alignItems="center"
         justifyContent="center"
-        bg="black"
-        color="white"
         zIndex={100}
       >
         <Text fontSize="lg" fontFamily="mono">

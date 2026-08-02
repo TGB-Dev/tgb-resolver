@@ -25,6 +25,7 @@ interface ControlTimelineTableItemProps {
   isCurrent: boolean;
   isLive: boolean;
   onSeek: (id: number) => void;
+  onOpenContextMenu?: (e: React.MouseEvent, payload: TimelineTableItem) => void;
   dragControls?: DragControls;
   onCreateEvent?: (relativeToEventId: number, before: boolean) => void;
 }
@@ -35,6 +36,7 @@ export const ControlTimelineTableItem = memo(
     isCurrent,
     isLive,
     onSeek,
+    onOpenContextMenu,
     dragControls,
     onCreateEvent,
   }: ControlTimelineTableItemProps) => {
@@ -63,6 +65,7 @@ export const ControlTimelineTableItem = memo(
         _light={{
           color: isCurrent ? "fg.inverted" : "fg",
         }}
+        onContextMenu={(e) => onOpenContextMenu?.(e, payload)}
         bg={payload.id & 1 ? "bg" : "bg.emphasized"}
         css={{
           "& .add-btn-wrapper": {

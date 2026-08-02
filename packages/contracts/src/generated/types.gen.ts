@@ -369,6 +369,13 @@ export type MoveAssetRequest = {
     targetFolderId: string;
 };
 
+export type TransferEntryRequest = {
+    showVersion?: number;
+    isDirectory?: boolean;
+    targetFolderId?: string | null;
+    copy?: boolean;
+};
+
 export type GetData = {
     body?: never;
     path?: never;
@@ -952,3 +959,30 @@ export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses = {
 };
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointData = {
+    body: TransferEntryRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/entries/{id}/transfer';
+};
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointError = TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses];

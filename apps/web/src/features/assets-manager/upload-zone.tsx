@@ -2,7 +2,7 @@ import { Box, Text } from "@chakra-ui/react";
 import { Upload } from "lucide-react";
 import { forwardRef, useState } from "react";
 
-import { assetsManagerModel } from "./assets-manager-model";
+import { assetsInteractionModel } from "./assets-interaction-model";
 import { processUploadBatch } from "./upload-helpers";
 
 interface UploadZoneProps {
@@ -16,12 +16,18 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
   const [isDragOver, setIsDragOver] = useState(false);
 
   function handleDragOver(e: React.DragEvent) {
+    if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
   }
 
   function handleDragLeave(e: React.DragEvent) {
+    if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
@@ -63,12 +69,19 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
   }
 
   async function handleDrop(e: React.DragEvent) {
+    if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
 
     const items = e.dataTransfer.items;
-    const targetFolderId = assetsManagerModel.selectedEntryId.value;
+    const dropTarget = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    const targetEntryId =
+      dropTarget?.closest<HTMLElement>("[data-entry-id]")?.dataset.entryId ?? null;
+    const targetFolderId = assetsInteractionModel.resolveDropUploadTarget(targetEntryId);
     const collected: { isFile: boolean; file?: File; pathParts: string[] }[] = [];
 
     if (items) {

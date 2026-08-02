@@ -72,3 +72,10 @@ public sealed record MoveAssetRequest(
   int ShowVersion,
   string AssetId,
   string TargetFolderId);
+
+public sealed record TransferEntryRequest(
+  int ShowVersion,
+  string Id,
+  bool IsDirectory,
+  string? TargetFolderId,
+  bool Copy);

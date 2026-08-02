@@ -275,6 +275,13 @@ export const vMoveAssetRequest = v.strictObject({
     targetFolderId: v.pipe(v.string(), v.minLength(1))
 });
 
+export const vTransferEntryRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    isDirectory: v.optional(v.boolean()),
+    targetFolderId: v.nullish(v.string()),
+    copy: v.optional(v.boolean())
+});
+
 export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequest;
 
 /**
@@ -479,3 +486,14 @@ export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointPath = v.object({
  * Success
  */
 export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointBody = vTransferEntryRequest;
+
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = vShowStateSnapshot;

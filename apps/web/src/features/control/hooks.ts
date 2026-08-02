@@ -1,6 +1,7 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   clearShow,
+  deleteTimelineEvent,
   disableLiveMode,
   enableLiveMode,
   exportShowBundle,
@@ -286,6 +287,26 @@ export function useMoveTimelineEventMutation() {
             relativeToEventId: payload.relativeToEventId,
             before: payload.before,
           },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: () => {},
+  });
+}
+
+export function useDeleteTimelineEventMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (eventId: number) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await deleteTimelineEvent({
+          client: generatedClient,
+          path: { id: eventId },
+          body: { showVersion: playbackModel.state.value.showVersion },
         });
         return data as ShowStateSnapshot;
       });

@@ -455,8 +455,16 @@ public sealed class ShowStateService(
     var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
+      var targetFolderId = ValidateTargetFolder(state.Assets.Folders, request.TargetFolderId);
+      var source = state.Assets.Items.FirstOrDefault(a => a.Id == request.AssetId)
+                   ?? throw new InvalidOperationException(
+                     $"Asset '{request.AssetId}' does not exist.");
+      if (NormalizeFolderId(source.FolderId) == targetFolderId)
+        throw new InvalidOperationException("Asset is already in the target folder.");
+
       var items = state.Assets.Items
-        .Select(a => a.Id == request.AssetId ? a with { FolderId = request.TargetFolderId } : a)
+        .Select(a =>
+          a.Id == request.AssetId ? a with { FolderId = targetFolderId ?? string.Empty } : a)
         .ToArray();
       return state with
       {
@@ -465,6 +473,207 @@ public sealed class ShowStateService(
     }, cancellationToken);
 
     return ShowContractMapper.ToContract(updated);
+  }
+
+  public async Task<ShowStateSnapshot> TransferEntryAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    if (request.IsDirectory)
+      return request.Copy
+        ? await CopyFolderInternalAsync(request, cancellationToken)
+        : await MoveFolderInternalAsync(request, cancellationToken);
+
+    return request.Copy
+      ? await CopyAssetInternalAsync(request, cancellationToken)
+      : await MoveAssetAsync(
+        new MoveAssetRequest(request.ShowVersion, request.Id,
+          request.TargetFolderId ?? string.Empty),
+        cancellationToken);
+  }
+
+  private async Task<ShowStateSnapshot> CopyAssetInternalAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var current = await repository.GetStateAsync(cancellationToken);
+    EnsureTimelineWritable(current);
+    var targetFolderId = ValidateTargetFolder(current.Assets.Folders, request.TargetFolderId);
+    var source = current.Assets.Items.FirstOrDefault(a => a.Id == request.Id)
+                 ?? throw new InvalidOperationException($"Asset '{request.Id}' does not exist.");
+
+    var clonedId = Guid.NewGuid().ToString("N");
+    var bytes = await assetStore.ReadAsync(source.Id, cancellationToken);
+    await assetStore.SaveAsync(clonedId, bytes, cancellationToken);
+
+    try
+    {
+      var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+      {
+        EnsureTimelineWritable(state);
+        var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
+        var stateSource = state.Assets.Items.FirstOrDefault(a => a.Id == request.Id)
+                          ?? throw new InvalidOperationException(
+                            $"Asset '{request.Id}' no longer exists.");
+        var clone = stateSource with { Id = clonedId, FolderId = target ?? string.Empty };
+        var items = state.Assets.Items.Append(clone).ToArray();
+        return state with
+        {
+          Assets = new AssetCollection(items) { Folders = state.Assets.Folders }
+        };
+      }, cancellationToken);
+
+      return ShowContractMapper.ToContract(updated);
+    }
+    catch
+    {
+      await assetStore.DeleteAsync(clonedId);
+      throw;
+    }
+  }
+
+  private async Task<ShowStateSnapshot> MoveFolderInternalAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var targetFolderId = NormalizeFolderId(request.TargetFolderId);
+    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
+
+      var (foldersWithoutSource, sourceFolder, found) =
+        ExtractFolderNode(state.Assets.Folders, request.Id);
+      if (!found || sourceFolder is null)
+        throw new InvalidOperationException($"Folder '{request.Id}' does not exist.");
+
+      if (target == request.Id)
+        throw new InvalidOperationException("Folder cannot be moved into itself.");
+      if (target is not null && IsDescendantFolder(state.Assets.Folders, request.Id, target))
+        throw new InvalidOperationException("Folder cannot be moved into one of its descendants.");
+      if (FindParentFolderId(state.Assets.Folders, request.Id) == target)
+        throw new InvalidOperationException("Folder is already in the target folder.");
+
+      var folders = target is null
+        ? [.. foldersWithoutSource, sourceFolder]
+        : InsertFolderNode(foldersWithoutSource, target, sourceFolder).Nodes;
+
+      return state with
+      {
+        Assets = state.Assets with
+        {
+          Folders = folders
+        }
+      };
+    }, cancellationToken);
+
+    return ShowContractMapper.ToContract(updated);
+  }
+
+  private async Task<ShowStateSnapshot> CopyFolderInternalAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var targetFolderId = NormalizeFolderId(request.TargetFolderId);
+    var current = await repository.GetStateAsync(cancellationToken);
+    EnsureTimelineWritable(current);
+    targetFolderId = ValidateTargetFolder(current.Assets.Folders, targetFolderId);
+
+    if (targetFolderId is not null && targetFolderId == request.Id)
+      throw new InvalidOperationException("Folder cannot be copied into itself.");
+    if (targetFolderId is not null &&
+        IsDescendantFolder(current.Assets.Folders, request.Id, targetFolderId))
+      throw new InvalidOperationException("Folder cannot be copied into one of its descendants.");
+
+    var sourceFolder = FindFolderNode(current.Assets.Folders, request.Id)
+                       ?? throw new InvalidOperationException(
+                         $"Folder '{request.Id}' does not exist.");
+    var folderIdMap = new Dictionary<string, string>();
+    var clonedFolder = CloneFolderTree(sourceFolder, folderIdMap);
+    var sourceFolderIds = CollectAllFolderIds(sourceFolder).ToHashSet();
+
+    var sourceAssets = current.Assets.Items
+      .Where(a => a.FolderId is not null && sourceFolderIds.Contains(a.FolderId))
+      .ToArray();
+
+    var clonedAssets = new List<ShowAsset>(sourceAssets.Length);
+    try
+    {
+      foreach (var sourceAsset in sourceAssets)
+      {
+        var clonedId = Guid.NewGuid().ToString("N");
+        var bytes = await assetStore.ReadAsync(sourceAsset.Id, cancellationToken);
+        await assetStore.SaveAsync(clonedId, bytes, cancellationToken);
+
+        clonedAssets.Add(sourceAsset with
+        {
+          Id = clonedId,
+          FolderId = sourceAsset.FolderId is null ? null : folderIdMap[sourceAsset.FolderId]
+        });
+      }
+
+      var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+      {
+        EnsureTimelineWritable(state);
+        var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
+        var stateSourceFolder = FindFolderNode(state.Assets.Folders, request.Id);
+        if (stateSourceFolder is null || !FolderTreesMatch(sourceFolder, stateSourceFolder) ||
+            sourceAssets.Any(sourceAsset => !state.Assets.Items.Contains(sourceAsset)))
+          throw new InvalidOperationException(
+            $"Folder '{request.Id}' changed before it could be copied.");
+
+        var folders = target is null
+          ? [.. state.Assets.Folders, clonedFolder]
+          : InsertFolderNode(state.Assets.Folders, target, clonedFolder).Nodes;
+
+        var items = state.Assets.Items.Concat(clonedAssets).ToArray();
+        return state with
+        {
+          Assets = new AssetCollection(items) { Folders = folders }
+        };
+      }, cancellationToken);
+
+      return ShowContractMapper.ToContract(updated);
+    }
+    catch
+    {
+      foreach (var clonedAsset in clonedAssets)
+        await assetStore.DeleteAsync(clonedAsset.Id);
+      throw;
+    }
+  }
+
+  private static string? NormalizeFolderId(string? folderId)
+  {
+    return string.IsNullOrWhiteSpace(folderId) ? null : folderId;
+  }
+
+  private static string? ValidateTargetFolder(IReadOnlyList<FolderNode> folders,
+    string? targetFolderId)
+  {
+    var normalizedTargetFolderId = NormalizeFolderId(targetFolderId);
+    if (normalizedTargetFolderId is not null &&
+        FindFolderNode(folders, normalizedTargetFolderId) is null)
+      throw new InvalidOperationException(
+        $"Target folder '{normalizedTargetFolderId}' does not exist.");
+
+    return normalizedTargetFolderId;
+  }
+
+  private static string? FindParentFolderId(IReadOnlyList<FolderNode> folders, string folderId)
+  {
+    foreach (var folder in folders)
+    {
+      if (folder.Children.Any(child => child.Id == folderId)) return folder.Id;
+      var parentId = FindParentFolderId(folder.Children, folderId);
+      if (parentId is not null) return parentId;
+    }
+
+    return null;
+  }
+
+  private static bool FolderTreesMatch(FolderNode expected, FolderNode actual)
+  {
+    return expected.Id == actual.Id && expected.Name == actual.Name &&
+           expected.Children.Count == actual.Children.Count &&
+           expected.Children.Zip(actual.Children)
+             .All(pair => FolderTreesMatch(pair.First, pair.Second));
   }
 
   private static (IReadOnlyList<FolderNode> Nodes, bool Changed) InsertFolderNode(
@@ -489,6 +698,28 @@ public sealed class ShowStateService(
     }
 
     return (nodes, false);
+  }
+
+  private static (IReadOnlyList<FolderNode> Nodes, FolderNode? Node, bool Found) ExtractFolderNode(
+    IReadOnlyList<FolderNode> nodes, string folderId)
+  {
+    var list = nodes.ToList();
+    for (var i = 0; i < list.Count; i++)
+    {
+      if (list[i].Id == folderId)
+      {
+        var node = list[i];
+        list.RemoveAt(i);
+        return (list, node, true);
+      }
+
+      var (updatedChildren, extracted, found) = ExtractFolderNode(list[i].Children, folderId);
+      if (!found) continue;
+      list[i] = list[i] with { Children = updatedChildren };
+      return (list, extracted, true);
+    }
+
+    return (nodes, null, false);
   }
 
   private static (IReadOnlyList<FolderNode> Nodes, bool Changed) RenameFolderNode(
@@ -543,6 +774,51 @@ public sealed class ShowStateService(
       else
         CollectDescendantFolderIds(node.Children, folderId, result);
     return result;
+  }
+
+  private static FolderNode? FindFolderNode(IReadOnlyList<FolderNode> nodes, string folderId)
+  {
+    foreach (var node in nodes)
+    {
+      if (node.Id == folderId)
+        return node;
+
+      var found = FindFolderNode(node.Children, folderId);
+      if (found is not null)
+        return found;
+    }
+
+    return null;
+  }
+
+  private static bool IsDescendantFolder(IReadOnlyList<FolderNode> nodes, string sourceFolderId,
+    string maybeDescendantId)
+  {
+    var source = FindFolderNode(nodes, sourceFolderId);
+    if (source is null)
+      return false;
+
+    return CollectAllFolderIds(source).Contains(maybeDescendantId);
+  }
+
+  private static FolderNode CloneFolderTree(FolderNode source, Dictionary<string, string> idMap)
+  {
+    var clonedId = Guid.NewGuid().ToString("N");
+    idMap[source.Id] = clonedId;
+
+    return source with
+    {
+      Id = clonedId,
+      Children = source.Children.Select(child => CloneFolderTree(child, idMap)).ToArray()
+    };
+  }
+
+  private static IEnumerable<string> CollectAllFolderIds(FolderNode node)
+  {
+    yield return node.Id;
+    foreach (var child in node.Children)
+    foreach (var childId in CollectAllFolderIds(child))
+      yield return childId;
   }
 
   private static void CollectAllFolderIds(FolderNode node, HashSet<string> ids)

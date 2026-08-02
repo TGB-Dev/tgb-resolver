@@ -15,6 +15,7 @@ import {
 import { playbackModel } from "@/features/control/playback-model";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 
+import { TimelineRowContextMenu, useTimelineRowContextMenu } from "./timeline-row-context-menu";
 import { ControlTimelineTableHeader, ControlTimelineTableItem } from "./timeline-table-item";
 
 export interface ControlTimelineTableHandle {
@@ -38,6 +39,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   const isLive = useControlIsLive();
   const seekPlayback = useSeekPlaybackMutation();
   const moveEvent = useMoveTimelineEventMutation();
+  const timelineContextMenu = useTimelineRowContextMenu();
   const onSeek = useCallback((id: number) => seekPlayback.mutate(id), [seekPlayback.mutate]);
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -126,10 +128,15 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
               isCurrent={playbackModel.currentCueId.value === payload.id}
               isLive={isLive}
               onSeek={onSeek}
+              onOpenContextMenu={timelineContextMenu.open}
             />
           ))}
         </Reorder.Group>
       </Box>
+      <TimelineRowContextMenu
+        state={timelineContextMenu.state}
+        onClose={timelineContextMenu.close}
+      />
     </Box>
   );
 }
@@ -139,11 +146,13 @@ function TimelineRowItem({
   isCurrent,
   isLive,
   onSeek,
+  onOpenContextMenu,
 }: {
   payload: TimelineTableItem;
   isCurrent: boolean;
   isLive: boolean;
   onSeek: (id: number) => void;
+  onOpenContextMenu: (e: React.MouseEvent, payload: TimelineTableItem) => void;
 }) {
   const dragControls = useDragControls();
   const isReorderable = payload.type === TimelineEventType.CUS && !isLive;
@@ -163,6 +172,7 @@ function TimelineRowItem({
         isCurrent={isCurrent}
         isLive={isLive}
         onSeek={onSeek}
+        onOpenContextMenu={onOpenContextMenu}
         dragControls={isReorderable ? dragControls : undefined}
       />
     </Reorder.Item>
