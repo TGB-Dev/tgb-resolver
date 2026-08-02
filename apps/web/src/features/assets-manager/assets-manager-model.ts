@@ -23,6 +23,7 @@ interface AssetsManagerState {
   viewMode: Signal<ViewMode>;
   expandedFolderIds: Signal<Set<string>>;
   entries: ReadonlySignal<FsEntry[]>;
+  allFiles: ReadonlySignal<FsEntry[]>;
   selectEntry: (id: string | null) => void;
   clearSelection: () => void;
   handleEntryClick: (
@@ -346,6 +347,7 @@ const AssetsManagerModel = createModel<AssetsManagerState>(() => {
     viewMode,
     expandedFolderIds,
     entries,
+    allFiles,
     selectEntry,
     clearSelection,
     handleEntryClick,

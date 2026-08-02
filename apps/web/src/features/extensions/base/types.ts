@@ -34,7 +34,7 @@ export interface BaseExtension {
    * Format the cue message from timeline event for displaying in the cue tab
    * of the control panel.
    */
-  formatCueMessage(event: TimelineTableItem): string;
+  formatCueMessage(event: TimelineTableItem): ReactNode;
 }
 
 /**
@@ -45,19 +45,20 @@ export enum ExtensionType {
   WithReactComponent,
 }
 
-export interface WithReactComponentExtension extends BaseExtension {
+// biome-ignore lint/suspicious/noExplicitAny: default payload type
+export interface WithReactComponentExtension<TPayload = any> extends BaseExtension {
   readonly type: ExtensionType.WithReactComponent;
 
   /**
    * The component to be rendered in the audience view. Should have relative position to the whole audience view.
    */
-  component: ReactNode;
+  component: (props: { payload: TPayload }) => ReactNode;
 
   /**
    * Early destruction hook (will be called when the timeline is seeked). For additional cleaning up if needed.
    * By default, the extension system will unmount the component.
    */
-  earlyDestruction(): void;
+  earlyDestruction?: () => void;
 }
 
 export interface ScriptOnlyExtension extends BaseExtension {
@@ -70,14 +71,21 @@ export interface ScriptOnlyExtension extends BaseExtension {
   execute(): () => void | Promise<void>;
 }
 
-export type Extension = WithReactComponentExtension | ScriptOnlyExtension;
+// biome-ignore lint/suspicious/noExplicitAny: heterogenous extension list
+export type Extension = WithReactComponentExtension<any> | ScriptOnlyExtension;
 
 /**
  * Type-safe read of a CUS event's extPayload; undefined for non-CUS events.
  */
 export function getExtensionPayload<TConfig extends Record<string, unknown>>(
-  event: TimelineEvent,
+  event: TimelineEvent | TimelineTableItem,
 ): TConfig | undefined {
   if (event.type !== TimelineEventType.CUS) return undefined;
-  return event.payload.extPayload as TConfig | undefined;
+  if ("extPayload" in event && event.extPayload !== undefined) {
+    return event.extPayload as TConfig | undefined;
+  }
+  if ("payload" in event && event.payload && "extPayload" in event.payload) {
+    return event.payload.extPayload as TConfig | undefined;
+  }
+  return undefined;
 }

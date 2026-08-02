@@ -157,6 +157,8 @@ export function toTimelineTableItem(
         name: resolveDisplayName(event.customName, placeholderName),
         customName: event.customName,
         placeholderName,
+        extId: event.payload.extId,
+        extPayload: event.payload.extPayload,
         triggerOffsetSeconds: event.triggerOffsetSeconds,
         requireManualInteraction: event.requireManualInteraction,
         isActive,
