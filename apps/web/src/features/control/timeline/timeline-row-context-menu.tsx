@@ -8,6 +8,7 @@ import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
 import { useDeleteTimelineEventMutation } from "@/features/control/hooks";
 import { confirmActionModel } from "@/features/shared/confirm-action-model";
+import { showModel } from "@/features/shared/show-model";
 
 export interface TimelineContextState {
   isOpen: boolean;
@@ -22,6 +23,11 @@ const closedState = (): TimelineContextState => ({
   y: 0,
   target: null,
 });
+
+function getTimelinePosition(eventId: number, fallback: number) {
+  const index = showModel.showOrderedIds.peek().indexOf(eventId);
+  return index < 0 ? fallback : index + 1;
+}
 
 function createTimelineContextMenuModel() {
   const state = signal<TimelineContextState>(closedState());
@@ -46,7 +52,10 @@ function createTimelineContextMenuModel() {
       isOpen: true,
       x: Math.max(8, x),
       y: Math.max(8, y),
-      target: payload,
+      target: {
+        ...payload,
+        position: getTimelinePosition(payload.id, payload.position),
+      },
     };
   }
 

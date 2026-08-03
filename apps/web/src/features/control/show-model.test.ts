@@ -117,6 +117,7 @@ test("applies a granular remove", () => {
 
 test("applies a reorder from the server's authoritative id list", () => {
   showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+  const eventsBeforeReorder = showModel.showEvents.value;
 
   const applied = showModel.tryApplyShowMessage({
     type: ShowMessageType.TimelineReordered,
@@ -126,14 +127,17 @@ test("applies a reorder from the server's authoritative id list", () => {
 
   expect(applied).toBe(true);
   expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
+  expect(showModel.showEvents.value).toBe(eventsBeforeReorder);
 });
 
 test("optimistically reorders rows with updated positions and rolls back the snapshot", () => {
   showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+  const itemBeforeReorder = showModel.timelineItemsById.value[1];
 
   const snapshot = showModel.optimisticallyReorderTimeline([3, 1, 2]);
 
   expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
+  expect(showModel.timelineItemsById.value[1]).toBe(itemBeforeReorder);
   expect(showModel.rows.value.map((row) => row.position)).toEqual([1, 2, 3]);
 
   showModel.restoreTimelineOrder(snapshot);

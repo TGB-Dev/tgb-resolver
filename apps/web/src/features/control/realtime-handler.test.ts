@@ -132,11 +132,13 @@ describe("applyControlRealtimeMessage", () => {
 
     await applyControlRealtimeMessage(queryClient, {
       type: ShowMessageType.LiveModeChanged,
-      showVersion: 3,
+      showVersion: 2,
       mode: ShowMode.LIVE,
     });
 
     expect(showModel.showMode.value).toBe(ShowMode.LIVE);
+    expect(showModel.dataVersion.value).toBe(2);
+    expect(playbackModel.state.value.showVersion).toBe(2);
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
@@ -156,6 +158,7 @@ describe("applyControlRealtimeMessage", () => {
 
     expect(2 in showModel.showEvents.value).toBe(true);
     expect(showModel.dataVersion.value).toBe(2);
+    expect(playbackModel.state.value.showVersion).toBe(2);
   });
 
   test("repairs via refetch when a granular diff arrives out of order", async () => {

@@ -39,6 +39,7 @@ function setShowInCache(
   snapshot: ShowStateSnapshot,
 ) {
   queryClient.setQueryData(controlShowQueryKey(), snapshot);
+  playbackModel.syncVersion(snapshot.showVersion ?? 0);
 }
 
 function requireShow(show: ReturnType<typeof useControlShowQuery>["data"]) {
@@ -166,7 +167,9 @@ export function useSeekPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -186,7 +189,9 @@ export function useOptimizeShowMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -269,7 +274,9 @@ export function useRenameControlEventMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -352,7 +359,9 @@ export function useCreateTimelineEventMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -372,7 +381,9 @@ export function useDeleteTimelineEventMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 

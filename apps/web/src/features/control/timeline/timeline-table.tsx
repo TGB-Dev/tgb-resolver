@@ -2,14 +2,13 @@ import { Box, Center, Spinner, Text } from "@chakra-ui/react";
 import { useComputed, useSignalEffect } from "@preact/signals-react";
 import { For } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
-import type { TimelineTableItem } from "@tgb-resolver/realtime";
+import type { TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
 import { Reorder, useDragControls } from "motion/react";
 import { memo, type RefObject, useCallback, useRef } from "react";
 
 import {
   useControlIsLive,
   useControlShowQuery,
-  useControlShowRows,
   useMoveTimelineEventMutation,
   useSeekPlaybackMutation,
 } from "@/features/control/hooks";
@@ -38,7 +37,7 @@ function scrollEventToTop(parent: HTMLDivElement | null, currentEventId: number 
 
 export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   const showQuery = useControlShowQuery();
-  const rows = useControlShowRows();
+  const orderedIds = showModel.showOrderedIds.value;
   const isLive = useControlIsLive();
   const seekPlayback = useSeekPlaybackMutation();
   const moveEvent = useMoveTimelineEventMutation();
@@ -50,17 +49,18 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
     useRef<ReturnType<typeof showModel.optimisticallyReorderTimeline>>(null);
 
   const commitReorder = useCallback(
-    (newRows: TimelineTableItem[]) => {
+    (orderedIds: number[]) => {
       const initialOrderedIds = showModel.showOrderedIds.peek();
       // Find the row that changed position
-      let movedItem: TimelineTableItem | null = null;
+      let movedItem: TimelineEvent | null = null;
       let targetIndex = -1;
 
-      for (let i = 0; i < newRows.length; i++) {
-        if (newRows[i].id !== initialOrderedIds[i]) {
+      for (let i = 0; i < orderedIds.length; i++) {
+        if (orderedIds[i] !== initialOrderedIds[i]) {
           // Check if this item is a CUS event (only CUS events can be moved)
-          if (newRows[i].type === TimelineEventType.CUS) {
-            movedItem = newRows[i];
+          const event = showModel.showEvents.peek()[orderedIds[i]];
+          if (event?.type === TimelineEventType.CUS) {
+            movedItem = event;
             targetIndex = i;
             break;
           }
@@ -71,10 +71,10 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
 
       // Determine relative destination
       const before = targetIndex === 0;
-      const relativeToEventId = before ? newRows[1]?.id : newRows[targetIndex - 1]?.id;
+      const relativeToEventId = before ? orderedIds[1] : orderedIds[targetIndex - 1];
 
       if (relativeToEventId != null) {
-        const snapshot = showModel.optimisticallyReorderTimeline(newRows.map((row) => row.id));
+        const snapshot = showModel.optimisticallyReorderTimeline(orderedIds);
         const expectedOrderedIds = showModel.showOrderedIds.peek();
         reorderSnapshotRef.current = snapshot;
         movePendingRef.current = true;
@@ -126,7 +126,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
     );
   }
 
-  if (rows.length === 0) {
+  if (orderedIds.length === 0) {
     return (
       <Center boxSize="full">
         <Text>No show loaded.</Text>
@@ -138,10 +138,19 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
     <Box boxSize="full" display="flex" flexDir="column" minH={0} overflow="hidden">
       <ControlTimelineTableHeader />
 
-      <Box flex={1} minH={0} ref={parentRef} overflow="auto">
+      <Box
+        flex={1}
+        minH={0}
+        ref={parentRef}
+        overflow="auto"
+        css={{
+          "& [data-timeline-row]:nth-child(odd) [data-event-id]": { bg: "bg" },
+          "& [data-timeline-row]:nth-child(even) [data-event-id]": { bg: "bg.emphasized" },
+        }}
+      >
         <CurrentEventScroller parentRef={parentRef} />
         <TimelineReorderList
-          rows={rows}
+          orderedIds={orderedIds}
           isLive={isLive}
           onSeek={onSeek}
           onOpenContextMenu={timelineContextMenu.open}
@@ -158,39 +167,39 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
 }
 
 function TimelineReorderList({
-  rows,
+  orderedIds,
   isLive,
   onSeek,
   onOpenContextMenu,
   onCommitReorder,
   isMovePending,
 }: {
-  rows: TimelineTableItem[];
+  orderedIds: number[];
   isLive: boolean;
   onSeek: (id: number) => void;
   onOpenContextMenu: (e: React.MouseEvent, payload: TimelineTableItem) => void;
-  onCommitReorder: (rows: TimelineTableItem[]) => void;
+  onCommitReorder: (orderedIds: number[]) => void;
   isMovePending: RefObject<boolean>;
 }) {
   const reorderStateRef = useRef<ReturnType<typeof createTimelineReorderState>>(null);
   if (!reorderStateRef.current) reorderStateRef.current = createTimelineReorderState();
   const reorderState = reorderStateRef.current;
-  const displayRows = reorderState.rows.value ?? rows;
+  const displayIds = reorderState.rows.value ?? orderedIds;
 
   return (
     <Reorder.Group
       axis="y"
-      values={displayRows}
-      onReorder={(nextRows) => {
-        if (!isMovePending.current) reorderState.set(nextRows);
+      values={displayIds}
+      onReorder={(nextIds) => {
+        if (!isMovePending.current) reorderState.set(nextIds);
       }}
       style={{ listStyle: "none", padding: 0, margin: 0 }}
     >
-      <For each={displayRows}>
-        {(payload) => (
+      <For each={displayIds}>
+        {(eventId) => (
           <TimelineRowItem
-            key={payload.id}
-            payload={payload}
+            key={eventId}
+            eventId={eventId}
             isLive={isLive}
             onSeek={onSeek}
             onOpenContextMenu={onOpenContextMenu}
@@ -206,25 +215,28 @@ function TimelineReorderList({
 }
 
 const TimelineRowItem = memo(function TimelineRowItem({
-  payload,
+  eventId,
   isLive,
   onSeek,
   onOpenContextMenu,
   onCommitReorder,
 }: {
-  payload: TimelineTableItem;
+  eventId: number;
   isLive: boolean;
   onSeek: (id: number) => void;
   onOpenContextMenu: (e: React.MouseEvent, payload: TimelineTableItem) => void;
   onCommitReorder: () => void;
 }) {
   const dragControls = useDragControls();
-  const isCurrent = useComputed(() => playbackModel.currentCueId.value === payload.id);
-  const isReorderable = payload.type === TimelineEventType.CUS && !isLive;
+  const payload = useComputed(() => showModel.timelineItemsById.value[eventId]);
+  const isCurrent = useComputed(() => playbackModel.currentCueId.value === eventId);
+  const isReorderable = payload.value?.type === TimelineEventType.CUS && !isLive;
+
+  if (!payload.value) return null;
 
   const row = (
     <ControlTimelineTableItem
-      payload={payload}
+      payload={payload.value}
       isCurrent={isCurrent.value}
       isLive={isLive}
       onSeek={onSeek}
@@ -235,7 +247,8 @@ const TimelineRowItem = memo(function TimelineRowItem({
 
   return (
     <Reorder.Item
-      value={payload}
+      value={eventId}
+      data-timeline-row
       dragListener={false}
       dragControls={dragControls}
       onDragEnd={onCommitReorder}

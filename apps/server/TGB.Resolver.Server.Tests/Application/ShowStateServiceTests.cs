@@ -5,6 +5,7 @@ using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Exceptions;
 using TGB.Resolver.Server.Commons.Serialization;
+using TGB.Resolver.Server.Commons.Types;
 using TGB.Resolver.Server.Features.Assets;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
@@ -92,6 +93,26 @@ public sealed class ShowStateServiceTests
     await hub.Clients.All.DidNotReceive().ShowReplaced(Arg.Any<ShowReplacedMessage>());
     var after = await service.GetSnapshotAsync();
     await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
+  }
+
+  [Test]
+  public async Task NonPlaybackShowMutations_IncrementShowVersion()
+  {
+    var (service, hub) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var timelineMode = await service.SetTimelineModeAsync(
+      new SetTimelineModeRequest(before.ShowVersion, TimelineMode.Ro));
+    await Assert.That(timelineMode.ShowVersion).IsEqualTo(before.ShowVersion + 1);
+
+    var automation = await service.SetAutomationAsync(
+      new SetAutomationRequest(timelineMode.ShowVersion, null, null, true));
+    await Assert.That(automation.ShowVersion).IsEqualTo(timelineMode.ShowVersion + 1);
+
+    var live = await service.SetLiveModeAsync(true);
+    await Assert.That(live.ShowVersion).IsEqualTo(automation.ShowVersion + 1);
+    await hub.Clients.All.Received(2).ShowReplaced(Arg.Any<ShowReplacedMessage>());
+    await hub.Clients.All.Received(1).LiveModeChanged(Arg.Any<LiveModeChangedMessage>());
   }
 
   [Test]

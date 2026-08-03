@@ -1,12 +1,11 @@
 import { signal } from "@preact/signals-react";
-import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 export function createTimelineReorderState() {
-  const rows = signal<TimelineTableItem[] | null>(null);
+  const rows = signal<number[] | null>(null);
 
   return {
     rows,
-    set(nextRows: TimelineTableItem[]) {
+    set(nextRows: number[]) {
       rows.value = nextRows;
     },
     take() {

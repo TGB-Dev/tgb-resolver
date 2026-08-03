@@ -26,7 +26,13 @@ export function applyControlRealtimeMessage(
       return;
 
     case ShowMessageType.LiveModeChanged:
+      if (!showModel.tryAdvanceShowVersion(message.showVersion)) {
+        realtimeModel.bigRefetching.value = true;
+        void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
+        return;
+      }
       showModel.showMode.value = message.mode;
+      playbackModel.syncVersion(message.showVersion);
       return;
 
     case ShowMessageType.ShowReplaced:
@@ -40,7 +46,9 @@ export function applyControlRealtimeMessage(
     case ShowMessageType.TimelineEventUpdated:
     case ShowMessageType.TimelineEventRemoved:
     case ShowMessageType.TimelineReordered:
-      if (!showModel.tryApplyShowMessage(message)) {
+      if (showModel.tryApplyShowMessage(message)) {
+        playbackModel.syncVersion(message.showVersion);
+      } else {
         // Version gap (missed message / late join) -> repair via whole-show refetch (original desync design).
         realtimeModel.bigRefetching.value = true;
         void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });

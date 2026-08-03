@@ -15,6 +15,7 @@ import {
   ShowMode,
   ShowSource,
   TimelineMode,
+  toTimelineTableItem,
   toTimelineTableItems,
 } from "@tgb-resolver/realtime";
 
@@ -38,7 +39,9 @@ interface ShowModelState {
   showMeta: Signal<ShowMetaSnapshot | undefined>;
   showFile: Signal<ShowFile | null>;
   rows: ReadonlySignal<TimelineTableItem[]>;
+  timelineItemsById: ReadonlySignal<Record<number, TimelineTableItem>>;
   hydrateFromSnapshot: (show: ShowFile) => void;
+  tryAdvanceShowVersion: (showVersion: number) => boolean;
   optimisticallyReorderTimeline: (orderedIds: number[]) => TimelineOrderSnapshot;
   restoreTimelineOrder: (snapshot: TimelineOrderSnapshot) => void;
   restoreTimelineOrderIfCurrent: (
@@ -63,9 +66,43 @@ const ShowModel = createModel<ShowModelState>(() => {
   const showMeta = signal<ShowMetaSnapshot | undefined>(undefined);
   const showFile = signal<ShowFile | null>(null);
 
+  let cachedTimelineItemContext: ShowDerivedContext | null = null;
+  let cachedTimelineItemEvents: Record<number, TimelineEvent> = {};
+  let cachedTimelineItemsById: Record<number, TimelineTableItem> = {};
+
+  const timelineItemsById = computed<Record<number, TimelineTableItem>>(() => {
+    const ctx = showContext.value;
+    const events = showEvents.value;
+    if (!ctx) return {};
+
+    const userById = Object.fromEntries(ctx.users.map((user) => [user.id, user] as const));
+    const problemById = Object.fromEntries(
+      ctx.problems.map((problem) => [problem.id, problem] as const),
+    );
+    const next: Record<number, TimelineTableItem> = {};
+    for (const [id, event] of Object.entries(events)) {
+      const eventId = Number(id);
+      const cachedItem = cachedTimelineItemsById[eventId];
+      next[eventId] =
+        cachedTimelineItemContext === ctx &&
+        cachedTimelineItemEvents[eventId] === event &&
+        cachedItem
+          ? cachedItem
+          : toTimelineTableItem(event, undefined, ctx.autoResolveSpeedMs, userById, problemById);
+    }
+
+    cachedTimelineItemContext = ctx;
+    cachedTimelineItemEvents = events;
+    cachedTimelineItemsById = next;
+    return next;
+  });
+
   const rows = computed<TimelineTableItem[]>(() => {
     const ctx = showContext.value;
-    const events = showOrderedIds.value.map((id) => showEvents.value[id]);
+    const events = showOrderedIds.value.map((id, index) => {
+      const event = showEvents.value[id];
+      return event && { ...event, position: index + 1 };
+    });
     if (!ctx || events.some((e) => e == null)) return [];
     const built = toTimelineTableItems({
       schemaVersion: SHOW_SCHEMA_VERSION,
@@ -93,13 +130,7 @@ const ShowModel = createModel<ShowModelState>(() => {
   });
 
   function applyTimelineOrder(orderedIds: number[]): void {
-    const events = showEvents.value;
-    batch(() => {
-      showOrderedIds.value = orderedIds;
-      showEvents.value = Object.fromEntries(
-        orderedIds.map((id, index) => [id, { ...events[id], position: index + 1 }] as const),
-      );
-    });
+    showOrderedIds.value = orderedIds;
   }
 
   function optimisticallyReorderTimeline(orderedIds: number[]): TimelineOrderSnapshot {
@@ -150,6 +181,12 @@ const ShowModel = createModel<ShowModelState>(() => {
     showMeta.value = show.meta;
   }
 
+  function tryAdvanceShowVersion(showVersion: number): boolean {
+    if (showVersion !== dataVersion.value + 1) return false;
+    dataVersion.value = showVersion;
+    return true;
+  }
+
   function tryApplyShowMessage(
     message:
       | { type: ShowMessageType.TimelineEventAdded; showVersion: number; event: TimelineEvent }
@@ -157,7 +194,7 @@ const ShowModel = createModel<ShowModelState>(() => {
       | { type: ShowMessageType.TimelineEventRemoved; showVersion: number; eventId: number }
       | { type: ShowMessageType.TimelineReordered; showVersion: number; orderedEventIds: number[] },
   ): boolean {
-    if (message.showVersion !== dataVersion.value + 1) return false;
+    if (!tryAdvanceShowVersion(message.showVersion)) return false;
     switch (message.type) {
       case ShowMessageType.TimelineEventAdded:
       case ShowMessageType.TimelineEventUpdated: {
@@ -180,7 +217,6 @@ const ShowModel = createModel<ShowModelState>(() => {
         applyTimelineOrder(message.orderedEventIds);
         break;
     }
-    dataVersion.value = message.showVersion;
     return true;
   }
 
@@ -192,7 +228,9 @@ const ShowModel = createModel<ShowModelState>(() => {
     showMeta,
     showFile,
     rows,
+    timelineItemsById,
     hydrateFromSnapshot,
+    tryAdvanceShowVersion,
     optimisticallyReorderTimeline,
     restoreTimelineOrder,
     restoreTimelineOrderIfCurrent,

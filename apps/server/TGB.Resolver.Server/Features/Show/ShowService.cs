@@ -45,7 +45,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> OptimizeAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
       {
@@ -55,11 +55,7 @@ public sealed class ShowStateService(
           .Select((e, i) => e with { Position = i + 1 })
           .ToArray();
 
-        return state with
-        {
-          ShowVersion = state.ShowVersion + 1,
-          Timeline = normalized
-        };
+        return state with { Timeline = normalized };
       },
       cancellationToken);
 
@@ -69,9 +65,9 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> ClearAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
-      state => ShowRawRepository.CreateEmptyShow(state.ShowVersion + 1, ShowSource.Manual),
+      state => ShowRawRepository.CreateEmptyShow(state.ShowVersion, ShowSource.Manual),
       cancellationToken);
 
     return await BroadcastReplacedAsync(updated);
@@ -116,14 +112,13 @@ public sealed class ShowStateService(
     ResolveEventRenameRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
       {
         EnsureTimelineWritable(state);
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline
             .Select(e => e.Id == eventId && e.Type == TimelineEventType.Res
               ? e with { CustomName = request.CustomName }
@@ -141,14 +136,13 @@ public sealed class ShowStateService(
     NonResolveEventPatchRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
       {
         EnsureTimelineWritable(state);
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline.Select(e =>
           {
             if (e.Id != eventId || e.Type == TimelineEventType.Res) return e;
@@ -174,7 +168,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
     CreateTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var target = state.Timeline.Single(e => e.Id == request.RelativeToEventId);
@@ -194,7 +188,6 @@ public sealed class ShowStateService(
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = shifted.Append(created).OrderBy(e => e.Position).ToArray()
       };
     }, cancellationToken);
@@ -206,7 +199,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> PatchTimelineEventAsync(int eventId,
     PatchTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var current = state.Timeline.Single(e => e.Id == eventId);
@@ -214,7 +207,6 @@ public sealed class ShowStateService(
       if (current.Type == TimelineEventType.Res)
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline
             .Select(e => e.Id == eventId
               ? e with
@@ -239,7 +231,6 @@ public sealed class ShowStateService(
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = state.Timeline
           .Select(e => e.Id == eventId
             ? e with
@@ -266,7 +257,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> MoveNonResolveEventAsync(int eventId,
     MoveTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(e => e.Id == eventId);
@@ -281,7 +272,6 @@ public sealed class ShowStateService(
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = without.Select((e, i) => e with { Position = i + 1 }).ToArray()
       };
     }, cancellationToken);
@@ -292,7 +282,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> DeleteNonResolveEventAsync(int eventId,
     VersionedCommandRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(e => e.Id == eventId);
@@ -301,7 +291,6 @@ public sealed class ShowStateService(
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = state.Timeline.Where(e => e.Id != eventId)
           .Select((e, i) => e with { Position = i + 1 }).ToArray()
       };
@@ -313,7 +302,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SetTimelineModeAsync(SetTimelineModeRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state => state with
       {
@@ -321,13 +310,13 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> UpsertAssetAsync(string assetId, UpsertAssetRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var rawBytes = Convert.FromBase64String(request.Bytes);
@@ -346,7 +335,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> DeleteEntryAsync(DeleteEntryRequest request,
@@ -368,7 +357,7 @@ public sealed class ShowStateService(
   private async Task<ShowStateSnapshot> DeleteAssetInternalAsync(DeleteEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       return state with
@@ -379,13 +368,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> RenameAssetInternalAsync(RenameEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var items = state.Assets.Items
@@ -397,13 +386,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> CreateFolderAsync(CreateFolderRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var folderId = Guid.NewGuid().ToString("N");
@@ -420,13 +409,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> RenameFolderInternalAsync(RenameEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var folders =
@@ -440,13 +429,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> DeleteFolderInternalAsync(DeleteEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var folderIdsToClear = CollectDescendantFolderIds(state.Assets.Folders, request.Id);
@@ -462,13 +451,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> MoveAssetAsync(MoveAssetRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var targetFolderId = ValidateTargetFolder(state.Assets.Folders, request.TargetFolderId);
@@ -488,7 +477,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> TransferEntryAsync(TransferEntryRequest request,
@@ -522,7 +511,7 @@ public sealed class ShowStateService(
 
     try
     {
-      var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+      var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
       {
         EnsureTimelineWritable(state);
         var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
@@ -537,7 +526,7 @@ public sealed class ShowStateService(
         };
       }, cancellationToken);
 
-      return ShowContractMapper.ToContract(updated);
+      return await BroadcastReplacedAsync(updated);
     }
     catch
     {
@@ -550,7 +539,7 @@ public sealed class ShowStateService(
     CancellationToken cancellationToken)
   {
     var targetFolderId = NormalizeFolderId(request.TargetFolderId);
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
@@ -580,7 +569,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> CopyFolderInternalAsync(TransferEntryRequest request,
@@ -624,7 +613,7 @@ public sealed class ShowStateService(
         });
       }
 
-      var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+      var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
       {
         EnsureTimelineWritable(state);
         var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
@@ -645,7 +634,7 @@ public sealed class ShowStateService(
         };
       }, cancellationToken);
 
-      return ShowContractMapper.ToContract(updated);
+      return await BroadcastReplacedAsync(updated);
     }
     catch
     {
@@ -857,7 +846,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SetLiveModeAsync(bool enabled,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutateShowAsync(
       state => state with
       {
         Mode = enabled ? ShowMode.Live : ShowMode.Editing
@@ -873,7 +862,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> StartPlaybackAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       request.ShowVersion,
       state =>
       {
@@ -925,7 +914,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> ResetPlaybackAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       request.ShowVersion,
       state => state with
       {
@@ -941,7 +930,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SeekPlaybackAsync(SeekPlaybackRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       request.ShowVersion,
       state =>
       {
@@ -979,7 +968,7 @@ public sealed class ShowStateService(
       if (first is null) return;
       var startedAt = NowMs();
 
-      var updated = await repository.MutateControlStateAsync(
+      var updated = await repository.MutatePlaybackAsync(
         s => s with
         {
           Playback = NewPlayback(
@@ -1006,7 +995,7 @@ public sealed class ShowStateService(
 
     var nextEvent = ordered[currentIndex + 1];
 
-    var updated2 = await repository.MutateControlStateAsync(
+    var updated2 = await repository.MutatePlaybackAsync(
       s => s with
       {
         Playback = NewPlayback(
@@ -1030,7 +1019,7 @@ public sealed class ShowStateService(
 
   private async Task StopPlaybackAsync(CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       s => s with
       {
         Playback = NewPlayback(PlaybackStatus.Idle, null, [], null)
@@ -1075,7 +1064,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       var a = state.Automation;
       return state with
@@ -1093,7 +1082,7 @@ public sealed class ShowStateService(
       ScheduleNextAdvanceAsync(updated);
     }
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private static void EnsureTimelineWritable(ShowState state)

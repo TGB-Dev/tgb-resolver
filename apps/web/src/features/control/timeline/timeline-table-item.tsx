@@ -1,5 +1,5 @@
 import { Box, DataList, Editable, IconButton } from "@chakra-ui/react";
-import { useSignal } from "@preact/signals-react";
+import { useComputed, useSignal } from "@preact/signals-react";
 import { For } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
@@ -15,6 +15,7 @@ import {
 } from "@/features/control/hooks";
 import { extensionRegistry } from "@/features/extensions";
 import { TgbResolverCssEasings } from "@/features/shared/anim/easings";
+import { showModel } from "@/features/shared/show-model";
 import { GridTableRow } from "@/features/shared/ui/grid-table";
 import { Tooltip } from "@/features/shared/ui/tooltip";
 
@@ -25,6 +26,11 @@ function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "pla
   return payload.customName && payload.customName.trim().length > 0
     ? payload.customName
     : payload.placeholderName;
+}
+
+function getTimelinePosition(eventId: number, fallback: number) {
+  const index = showModel.showOrderedIds.peek().indexOf(eventId);
+  return index < 0 ? fallback : index + 1;
 }
 
 interface ControlTimelineTableItemProps {
@@ -57,12 +63,13 @@ export const ControlTimelineTableItem = memo(
           : extensionRegistry.extensionWithExtId(payload.extId)?.shortName || "UNK";
 
     const handleCreate = (before: boolean) => {
+      const position = getTimelinePosition(payload.id, payload.position);
       if (onCreateEvent) {
         onCreateEvent(payload.id, before);
       } else {
         floatingPanelModel.openFloatingPanel(
           FloatingPanelType.CreateEvent,
-          `Create Event (${before ? "Before" : "After"} #${payload.position})`,
+          `Create Event (${before ? "Before" : "After"} #${position})`,
           { relativeToEventId: payload.id, before },
         );
       }
@@ -81,14 +88,14 @@ export const ControlTimelineTableItem = memo(
         onContextMenu={(e) => onOpenContextMenu?.(e, payload)}
         onDoubleClick={() => {
           if (payload.type === TimelineEventType.CUS) {
+            const position = getTimelinePosition(payload.id, payload.position);
             floatingPanelModel.openFloatingPanel(
               FloatingPanelType.ExtensionConfig,
-              `Edit Event #${payload.position}`,
+              `Edit Event #${position}`,
               { eventId: payload.id },
             );
           }
         }}
-        bg={payload.position & 1 ? "bg" : "bg.emphasized"}
         css={{
           "& .add-btn-wrapper": {
             opacity: 0,
@@ -101,20 +108,11 @@ export const ControlTimelineTableItem = memo(
         <CurrentEventIndicator isCurrent={isCurrent} durationInSeconds={durationInSeconds} />
 
         <GridTableRow templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}>
-          <Tooltip
-            content={`Seek to event #${payload.position}`}
-            openDelay={0}
-            positioning={{ placement: "left" }}
-          >
-            <Box
-              textAlign="end"
-              fontFamily="mono"
-              cursor="pointer"
-              onClick={() => onSeek(payload.id)}
-            >
-              {payload.position}
-            </Box>
-          </Tooltip>
+          <TimelineEventPosition
+            eventId={payload.id}
+            fallbackPosition={payload.position}
+            onSeek={onSeek}
+          />
           <Box fontFamily="mono" textTransform="uppercase">
             {type}
           </Box>
@@ -176,7 +174,7 @@ export const ControlTimelineTableItem = memo(
 
         {!isLive ? (
           <>
-            <Tooltip content={`Add event before #${payload.position}`} openDelay={0}>
+            <Tooltip content="Add event before" openDelay={0}>
               <IconButton
                 aria-label="Add event before"
                 size="2xs"
@@ -197,7 +195,7 @@ export const ControlTimelineTableItem = memo(
               </IconButton>
             </Tooltip>
 
-            <Tooltip content={`Add event after #${payload.position}`} openDelay={0}>
+            <Tooltip content="Add event after" openDelay={0}>
               <IconButton
                 aria-label="Add event after"
                 size="2xs"
@@ -223,6 +221,33 @@ export const ControlTimelineTableItem = memo(
     );
   },
 );
+
+function TimelineEventPosition({
+  eventId,
+  fallbackPosition,
+  onSeek,
+}: {
+  eventId: number;
+  fallbackPosition: number;
+  onSeek: (id: number) => void;
+}) {
+  const position = useComputed(() => {
+    const index = showModel.showOrderedIds.value.indexOf(eventId);
+    return index < 0 ? fallbackPosition : index + 1;
+  });
+
+  return (
+    <Tooltip
+      content={`Seek to event #${position.value}`}
+      openDelay={0}
+      positioning={{ placement: "left" }}
+    >
+      <Box textAlign="end" fontFamily="mono" cursor="pointer" onClick={() => onSeek(eventId)}>
+        {position.value}
+      </Box>
+    </Tooltip>
+  );
+}
 
 export function ControlTimelineTableHeader() {
   return (

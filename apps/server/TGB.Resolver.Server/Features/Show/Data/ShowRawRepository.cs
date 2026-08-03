@@ -40,7 +40,11 @@ public sealed class ShowRawRepository(
     return DeserializeShow(entity.PayloadJson);
   }
 
-  public async Task<ShowState> MutateAsync(
+  /// <summary>
+  ///   Applies a persisted show change and advances its optimistic-concurrency version.
+  ///   Every show mutation must use this operation; playback is the only version-neutral state.
+  /// </summary>
+  public async Task<ShowState> MutateShowAsync(
     int expectedShowVersion,
     Func<ShowState, ShowState> mutation,
     CancellationToken cancellationToken = default)
@@ -51,7 +55,7 @@ public sealed class ShowRawRepository(
     if (current.ShowVersion != expectedShowVersion)
       throw new VersionDriftException(expectedShowVersion, current.ShowVersion);
 
-    var updated = mutation(current);
+    var updated = mutation(current) with { ShowVersion = current.ShowVersion + 1 };
     entity.ShowVersion = updated.ShowVersion;
     entity.PayloadJson = serializer.Serialize(updated);
     entity.UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds();
@@ -60,13 +64,8 @@ public sealed class ShowRawRepository(
     return updated;
   }
 
-  /// <summary>
-  ///   Applies a control-state mutation (playback, live mode, automation,
-  ///   timeline mode, assets) WITHOUT changing the data show version. Only
-  ///   timeline content edits may bump the version, so the audience/editor
-  ///   cache stays coherent across playback changes.
-  /// </summary>
-  public async Task<ShowState> MutateControlStateAsync(
+  /// <summary>Applies a playback-only update without changing the show version.</summary>
+  public async Task<ShowState> MutatePlaybackAsync(
     Func<ShowState, ShowState> mutation,
     CancellationToken cancellationToken = default)
   {
@@ -81,7 +80,8 @@ public sealed class ShowRawRepository(
     return updated;
   }
 
-  public async Task<ShowState> MutateControlStateAsync(
+  /// <summary>Applies a version-checked playback-only update without changing the show version.</summary>
+  public async Task<ShowState> MutatePlaybackAsync(
     int expectedShowVersion,
     Func<ShowState, ShowState> mutation,
     CancellationToken cancellationToken = default)
@@ -94,6 +94,26 @@ public sealed class ShowRawRepository(
     var updated = mutation(current);
 
     entity.PayloadJson = serializer.Serialize(updated with { ShowVersion = current.ShowVersion });
+    entity.UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds();
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return updated;
+  }
+
+  /// <summary>
+  ///   Applies a persisted show change without an expected-version check and advances its version.
+  ///   This is reserved for server-controlled changes such as toggling live mode.
+  /// </summary>
+  public async Task<ShowState> MutateShowAsync(
+    Func<ShowState, ShowState> mutation,
+    CancellationToken cancellationToken = default)
+  {
+    var entity = await GetEntityAsync(cancellationToken);
+    var current = DeserializeShow(entity.PayloadJson);
+    var updated = mutation(current) with { ShowVersion = current.ShowVersion + 1 };
+
+    entity.ShowVersion = updated.ShowVersion;
+    entity.PayloadJson = serializer.Serialize(updated);
     entity.UpdatedAtUnixMs = clock.GetCurrentInstant().ToUnixTimeMilliseconds();
 
     await dbContext.SaveChangesAsync(cancellationToken);
