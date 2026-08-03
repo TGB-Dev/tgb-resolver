@@ -74,7 +74,7 @@ describe("ExtensionConfigPanel", () => {
     render(makeUi(createPanel()));
 
     expect(screen.getByLabelText("Asset")).toHaveValue("asset-1");
-    expect(screen.getByLabelText("Fit Mode")).toHaveValue("cover");
+    expect(screen.getByRole("combobox", { name: "Fit Mode" })).toHaveTextContent("Cover");
   });
 
   test("saving patches the full merged payload and closes the panel", async () => {
@@ -82,9 +82,8 @@ describe("ExtensionConfigPanel", () => {
     const panel = createPanel();
     render(makeUi(panel));
 
-    const input = screen.getByLabelText("Fit Mode");
-    await user.clear(input);
-    await user.type(input, "contain");
+    await user.click(screen.getByRole("combobox", { name: "Fit Mode" }));
+    await user.click(screen.getByRole("option", { name: "Contain" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(panel.close).toHaveBeenCalledWith(true));
@@ -100,9 +99,8 @@ describe("ExtensionConfigPanel", () => {
     patchPayload.mockRejectedValue(new Error("boom"));
     const view = render(makeUi(panel));
 
-    const input = screen.getByLabelText("Fit Mode");
-    await user.clear(input);
-    await user.type(input, "contain");
+    await user.click(screen.getByRole("combobox", { name: "Fit Mode" }));
+    await user.click(screen.getByRole("option", { name: "Contain" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(panel.close).not.toHaveBeenCalled());

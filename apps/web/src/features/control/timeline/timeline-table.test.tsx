@@ -10,8 +10,9 @@ import { system } from "@/features/shared/ui/provider";
 
 import { ControlTimelineTableItem } from "./timeline-table-item";
 
-const { mutateAsync } = vi.hoisted(() => ({
+const { mutateAsync, openFloatingPanel } = vi.hoisted(() => ({
   mutateAsync: vi.fn(async () => undefined),
+  openFloatingPanel: vi.fn(),
 }));
 
 vi.mock("@/features/control/hooks", () => ({
@@ -19,8 +20,15 @@ vi.mock("@/features/control/hooks", () => ({
   useRenameControlEventMutation: () => ({ mutateAsync }),
 }));
 
+vi.mock("@/features/control/floating-panel-model", () => ({
+  floatingPanelModel: { openFloatingPanel },
+}));
+
 afterEach(cleanup);
-beforeEach(() => mutateAsync.mockClear());
+beforeEach(() => {
+  mutateAsync.mockClear();
+  openFloatingPanel.mockClear();
+});
 
 function renderWithChakra(ui: ReactNode) {
   return render(<ChakraProvider value={system}>{ui}</ChakraProvider>);
@@ -56,6 +64,23 @@ describe("ControlTimelineTable", () => {
     fireEvent.doubleClick(screen.getByRole("button", { name: "Toggle manual interaction" }));
 
     expect(mutateAsync).toHaveBeenCalledWith({ eventId: 11, requireManualInteraction: true });
+  });
+
+  test("opens the extension config panel when a custom event row is double-clicked", () => {
+    renderWithChakra(
+      <ControlTimelineTableItem
+        payload={makePayload()}
+        isCurrent={false}
+        isLive={false}
+        onSeek={() => {}}
+      />,
+    );
+
+    fireEvent.doubleClick(screen.getByText("Custom event"));
+
+    expect(openFloatingPanel).toHaveBeenCalledWith("extension-config", "Edit Event #1", {
+      eventId: 11,
+    });
   });
 
   test("clearing trigger offset sends an explicit clear request", async () => {

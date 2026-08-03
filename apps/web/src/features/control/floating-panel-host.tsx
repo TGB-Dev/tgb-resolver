@@ -3,6 +3,7 @@ import { GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
 import { useEffect } from "react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
+import { getDefaultFloatingPanelPosition } from "@/features/control/floating-panel-position";
 import {
   floatingPanelComponents,
   floatingPanelConfig,
@@ -27,6 +28,7 @@ export function FloatingPanelHost() {
         const PanelComponent = floatingPanelComponents[panel.type];
         const config = floatingPanelConfig[panel.type];
         const resizable = config?.resizable ?? true;
+        const defaultSize = config?.size ?? { width: 640, height: 480 };
 
         return (
           <FloatingPanel.Root
@@ -35,7 +37,11 @@ export function FloatingPanelHost() {
             closeOnEscape
             open
             resizable={resizable}
-            defaultSize={config?.size ?? { width: 640, height: 480 }}
+            defaultSize={defaultSize}
+            defaultPosition={getDefaultFloatingPanelPosition(defaultSize, {
+              width: window.innerWidth,
+              height: window.innerHeight,
+            })}
             minSize={config?.minSize}
             onOpenChange={(details) => {
               if (!details.open) {

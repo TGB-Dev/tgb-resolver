@@ -1,4 +1,12 @@
-import { Checkbox, Field, Input, NumberInput, Text } from "@chakra-ui/react";
+import {
+  Checkbox,
+  Field,
+  Input,
+  NumberInput,
+  Select,
+  Text,
+  useListCollection,
+} from "@chakra-ui/react";
 import { FieldDataType } from "@tgb-form/core";
 import { createReactRendererRegistry, type ReactRendererProps } from "@tgb-form/react";
 
@@ -78,6 +86,52 @@ function BooleanRenderer({ field, label, errors }: ReactRendererProps) {
   );
 }
 
+function SelectInput({ field, label, description, props, errors }: ReactRendererProps) {
+  const options = Array.isArray(props?.options)
+    ? props.options.filter(
+        (option): option is { value: string; label: string } =>
+          typeof option === "object" &&
+          option !== null &&
+          typeof option.value === "string" &&
+          typeof option.label === "string",
+      )
+    : [];
+  const { collection } = useListCollection({ initialItems: options });
+  const value = typeof field.state.value === "string" ? field.state.value : "";
+  return (
+    <Field.Root w="full">
+      <Field.Label>{label}</Field.Label>
+      <Select.Root
+        collection={collection}
+        value={value ? [value] : []}
+        onValueChange={(details) => field.handleChange(details.value[0] ?? "")}
+      >
+        <Select.HiddenSelect />
+        <Select.Control>
+          <Select.Trigger>
+            <Select.ValueText placeholder="Select an option" />
+          </Select.Trigger>
+          <Select.IndicatorGroup>
+            <Select.Indicator />
+          </Select.IndicatorGroup>
+        </Select.Control>
+        <Select.Positioner>
+          <Select.Content>
+            {collection.items.map((option) => (
+              <Select.Item item={option} key={option.value}>
+                <Select.ItemText>{option.label}</Select.ItemText>
+                <Select.ItemIndicator />
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Positioner>
+      </Select.Root>
+      {description && <Field.HelperText>{description}</Field.HelperText>}
+      <FieldErrorText errors={errors} />
+    </Field.Root>
+  );
+}
+
 function UnsupportedRenderer({ label }: ReactRendererProps) {
   return (
     <Text color="fg.muted" fontSize="sm">
@@ -89,6 +143,7 @@ function UnsupportedRenderer({ label }: ReactRendererProps) {
 export const sharedRendererRegistry = createReactRendererRegistry({
   byName: {
     "asset-selector": AssetSelectorRenderer,
+    "select-input": SelectInput,
   },
   byType: {
     [FieldDataType.String]: StringRenderer,

@@ -128,6 +128,36 @@ test("applies a reorder from the server's authoritative id list", () => {
   expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
 });
 
+test("optimistically reorders rows with updated positions and rolls back the snapshot", () => {
+  showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+
+  const snapshot = showModel.optimisticallyReorderTimeline([3, 1, 2]);
+
+  expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
+  expect(showModel.rows.value.map((row) => row.position)).toEqual([1, 2, 3]);
+
+  showModel.restoreTimelineOrder(snapshot);
+
+  expect(showModel.showOrderedIds.value).toEqual([1, 2, 3]);
+  expect(showModel.rows.value.map((row) => row.position)).toEqual([1, 2, 3]);
+});
+
+test("does not roll back an optimistic reorder after an authoritative reorder arrives", () => {
+  showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+
+  const snapshot = showModel.optimisticallyReorderTimeline([3, 1, 2]);
+  showModel.tryApplyShowMessage({
+    type: ShowMessageType.TimelineReordered,
+    showVersion: 3,
+    orderedEventIds: [2, 3, 1],
+  });
+
+  const restored = showModel.restoreTimelineOrderIfCurrent(snapshot, [3, 1, 2]);
+
+  expect(restored).toBe(false);
+  expect(showModel.showOrderedIds.value).toEqual([2, 3, 1]);
+});
+
 test("rejects an out-of-order diff and reports the gap for repair-refetch", () => {
   showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1)]));
 

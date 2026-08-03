@@ -1,10 +1,12 @@
 import { useSignalEffect } from "@preact/signals-react";
 import { For, useLiveSignal } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
-import { memo } from "react";
+import { AnimatePresence } from "motion/react";
+import { createElement, memo, useMemo } from "react";
 
 import { useControlShowQuery } from "@/features/control/hooks";
 import { playbackModel } from "@/features/control/playback-model";
+import { ExtensionType, extensionRegistry, getExtensionPayload } from "@/features/extensions";
 import { leaderboardModel } from "@/features/leaderboard/leaderboard-model";
 
 import { LeaderboardProvider } from "./leaderboard-provider";
@@ -83,6 +85,26 @@ export function Resolve({ isBigScreen }: ResolveProps) {
     }
   });
 
+  const currentEventId = playbackModel.currentEventId.value;
+  const activeEvent = useMemo(
+    () => data.value?.timeline.find((event) => event.id === currentEventId),
+    [data.value, currentEventId],
+  );
+  const activeExtension = useMemo(
+    () =>
+      activeEvent?.type === TimelineEventType.CUS
+        ? extensionRegistry.extensionWithExtId(activeEvent.payload.extId)
+        : undefined,
+    [activeEvent],
+  );
+  const extensionOverlay = useMemo(() => {
+    if (!activeEvent || activeExtension?.type !== ExtensionType.WithReactComponent) return null;
+    return createElement(activeExtension.component, {
+      key: activeEvent.id,
+      payload: getExtensionPayload(activeEvent) ?? {},
+    });
+  }, [activeEvent, activeExtension]);
+
   if (data.value == null) return null;
 
   return (
@@ -90,6 +112,7 @@ export function Resolve({ isBigScreen }: ResolveProps) {
       <LeaderboardTable problems={data.value.contest.problems}>
         <LeaderboardRows />
       </LeaderboardTable>
+      <AnimatePresence mode="wait">{extensionOverlay}</AnimatePresence>
     </LeaderboardProvider>
   );
 }

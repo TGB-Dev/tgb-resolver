@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
 import { floatingPanelModel } from "./floating-panel-model";
+import { getDefaultFloatingPanelPosition } from "./floating-panel-position";
 import { FloatingPanelType } from "./floating-panel-types";
 
 const reset = () => {
@@ -105,5 +106,19 @@ describe("floatingPanelModel", () => {
     expect(a.title.value).toBe("Renamed");
     expect(a.props.value).toEqual({ foo: 1 });
     expect(a.result).toBeInstanceOf(Promise);
+  });
+});
+
+describe("getDefaultFloatingPanelPosition", () => {
+  test("centers a panel from its default size within the viewport", () => {
+    expect(
+      getDefaultFloatingPanelPosition({ width: 560, height: 480 }, { width: 1440, height: 900 }),
+    ).toEqual({ x: 440, y: 210 });
+  });
+
+  test("keeps an oversized panel anchored to the viewport origin", () => {
+    expect(
+      getDefaultFloatingPanelPosition({ width: 640, height: 480 }, { width: 320, height: 240 }),
+    ).toEqual({ x: 0, y: 0 });
   });
 });

@@ -42,6 +42,14 @@ const formSchema = defineForm(
         type: FieldDataType.String,
         defaultValue: "cover",
         label: "Fit Mode",
+        component: "select-input",
+        props: {
+          options: [
+            { value: "cover", label: "Cover" },
+            { value: "contain", label: "Contain" },
+            { value: "fill", label: "Fill" },
+          ],
+        },
       },
     },
   },

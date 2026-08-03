@@ -1,4 +1,5 @@
 import {
+  batch,
   computed,
   createModel,
   type ReadonlySignal,
@@ -24,6 +25,11 @@ interface ShowDerivedContext {
   autoResolveSpeedMs: number;
 }
 
+interface TimelineOrderSnapshot {
+  events: Record<number, TimelineEvent>;
+  orderedIds: number[];
+}
+
 interface ShowModelState {
   showEvents: Signal<Record<number, TimelineEvent>>;
   showOrderedIds: Signal<number[]>;
@@ -33,6 +39,12 @@ interface ShowModelState {
   showFile: Signal<ShowFile | null>;
   rows: ReadonlySignal<TimelineTableItem[]>;
   hydrateFromSnapshot: (show: ShowFile) => void;
+  optimisticallyReorderTimeline: (orderedIds: number[]) => TimelineOrderSnapshot;
+  restoreTimelineOrder: (snapshot: TimelineOrderSnapshot) => void;
+  restoreTimelineOrderIfCurrent: (
+    snapshot: TimelineOrderSnapshot,
+    expectedOrderedIds: number[],
+  ) => boolean;
   tryApplyShowMessage: (
     message:
       | { type: ShowMessageType.TimelineEventAdded; showVersion: number; event: TimelineEvent }
@@ -79,6 +91,43 @@ const ShowModel = createModel<ShowModelState>(() => {
     });
     return built;
   });
+
+  function applyTimelineOrder(orderedIds: number[]): void {
+    const events = showEvents.value;
+    batch(() => {
+      showOrderedIds.value = orderedIds;
+      showEvents.value = Object.fromEntries(
+        orderedIds.map((id, index) => [id, { ...events[id], position: index + 1 }] as const),
+      );
+    });
+  }
+
+  function optimisticallyReorderTimeline(orderedIds: number[]): TimelineOrderSnapshot {
+    const snapshot = { events: showEvents.value, orderedIds: showOrderedIds.value };
+    applyTimelineOrder(orderedIds);
+    return snapshot;
+  }
+
+  function restoreTimelineOrder(snapshot: TimelineOrderSnapshot): void {
+    batch(() => {
+      showEvents.value = snapshot.events;
+      showOrderedIds.value = snapshot.orderedIds;
+    });
+  }
+
+  function restoreTimelineOrderIfCurrent(
+    snapshot: TimelineOrderSnapshot,
+    expectedOrderedIds: number[],
+  ): boolean {
+    if (
+      showOrderedIds.value.length !== expectedOrderedIds.length ||
+      showOrderedIds.value.some((id, index) => id !== expectedOrderedIds[index])
+    ) {
+      return false;
+    }
+    restoreTimelineOrder(snapshot);
+    return true;
+  }
 
   function hydrateFromSnapshot(show: ShowFile): void {
     showFile.value = show;
@@ -128,7 +177,7 @@ const ShowModel = createModel<ShowModelState>(() => {
         break;
       }
       case ShowMessageType.TimelineReordered:
-        showOrderedIds.value = [...message.orderedEventIds];
+        applyTimelineOrder(message.orderedEventIds);
         break;
     }
     dataVersion.value = message.showVersion;
@@ -144,6 +193,9 @@ const ShowModel = createModel<ShowModelState>(() => {
     showFile,
     rows,
     hydrateFromSnapshot,
+    optimisticallyReorderTimeline,
+    restoreTimelineOrder,
+    restoreTimelineOrderIfCurrent,
     tryApplyShowMessage,
   };
 });

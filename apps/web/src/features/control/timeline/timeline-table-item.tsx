@@ -1,10 +1,10 @@
-import { Box, Button, DataList, Editable, IconButton } from "@chakra-ui/react";
+import { Box, DataList, Editable, IconButton } from "@chakra-ui/react";
 import { For } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check, GripVertical, Plus } from "lucide-react";
 import type { DragControls } from "motion/react";
-import { memo, useCallback, useState } from "react";
+import { memo, type ReactNode, useState } from "react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
@@ -13,6 +13,7 @@ import {
   useRenameControlEventMutation,
 } from "@/features/control/hooks";
 import { extensionRegistry } from "@/features/extensions";
+import { TgbResolverCssEasings } from "@/features/shared/anim/easings";
 import { GridTableRow } from "@/features/shared/ui/grid-table";
 import { Tooltip } from "@/features/shared/ui/tooltip";
 
@@ -77,11 +78,20 @@ export const ControlTimelineTableItem = memo(
           color: isCurrent ? "fg.inverted" : "fg",
         }}
         onContextMenu={(e) => onOpenContextMenu?.(e, payload)}
+        onDoubleClick={() => {
+          if (payload.type === TimelineEventType.CUS) {
+            floatingPanelModel.openFloatingPanel(
+              FloatingPanelType.ExtensionConfig,
+              `Edit Event #${payload.position}`,
+              { eventId: payload.id },
+            );
+          }
+        }}
         bg={payload.position & 1 ? "bg" : "bg.emphasized"}
         css={{
           "& .add-btn-wrapper": {
             opacity: 0,
-            transition: "opacity 0.15s ease-in-out",
+            transition: `opacity 0.15s ${TgbResolverCssEasings.swiftOut}`,
             pointerEvents: "none",
           },
           "&:hover .add-btn-wrapper": { opacity: 1, pointerEvents: "auto" },
@@ -274,14 +284,13 @@ function ControlTimelineManualInteraction({
 }) {
   const patchEvent = usePatchTimelineEventMutation();
   return (
-    <Button
+    <IconButton
       aria-label="Toggle manual interaction"
       variant="ghost"
       minW={0}
       w="full"
-      h="full"
-      p={0}
-      justifyContent="flex-start"
+      h={6}
+      m={1}
       disabled={!editable}
       cursor={editable ? "pointer" : undefined}
       title={editable ? "Double-click to toggle manual interaction" : undefined}
@@ -292,8 +301,8 @@ function ControlTimelineManualInteraction({
         });
       }}
     >
-      {payload.requireManualInteraction ? <Check size={18} /> : null}
-    </Button>
+      {payload.requireManualInteraction ? <Check size={14} /> : null}
+    </IconButton>
   );
 }
 
@@ -305,59 +314,32 @@ function ControlTimelineNumberEditable({
   field: "durationSeconds" | "triggerOffsetSeconds";
 }) {
   const patchEvent = usePatchTimelineEventMutation();
-  const [editing, setEditing] = useState(false);
-  const [draftValue, setDraftValue] = useState("");
   const current = payload[field];
-  if (!editing)
-    return (
-      <Box
-        w="full"
-        h="full"
-        textAlign="end"
-        fontFamily="mono"
-        cursor="text"
-        onDoubleClick={() => {
-          setDraftValue(current == null ? "" : String(current));
-          setEditing(true);
-        }}
-      >
-        {field === "triggerOffsetSeconds" && current != null && current > 0
-          ? `+${current}`
-          : (current ?? "")}
-      </Box>
-    );
   return (
-    <Editable.Root
-      defaultEdit
-      submitMode="both"
-      w="full"
-      h="full"
-      value={draftValue}
-      onValueChange={({ value }) => setDraftValue(value)}
-      onValueCommit={({ value }) => {
+    <TimelineCellEditable
+      value={current == null ? "" : String(current)}
+      displayValue={
+        field === "triggerOffsetSeconds" && current != null && current > 0
+          ? `+${current}`
+          : (current ?? "")
+      }
+      onBlankCommit={() =>
+        void patchEvent.mutateAsync({
+          eventId: payload.id,
+          ...(field === "durationSeconds"
+            ? { useDefaultDuration: true }
+            : { clearTriggerOffset: true }),
+        })
+      }
+      textAlign="end"
+      fontFamily="mono"
+      onCommit={(value) => {
         const normalizedValue = value.trim();
-        if (normalizedValue.length === 0) {
-          void patchEvent.mutateAsync({
-            eventId: payload.id,
-            ...(field === "durationSeconds"
-              ? { useDefaultDuration: true }
-              : { clearTriggerOffset: true }),
-          });
-        } else {
-          const next = Number(normalizedValue);
-          if (
-            Number.isFinite(next) &&
-            (field !== "durationSeconds" || next >= 0) &&
-            next !== current
-          )
-            void patchEvent.mutateAsync({ eventId: payload.id, [field]: next });
-        }
-        setEditing(false);
+        const next = Number(normalizedValue);
+        if (Number.isFinite(next) && (field !== "durationSeconds" || next >= 0) && next !== current)
+          void patchEvent.mutateAsync({ eventId: payload.id, [field]: next });
       }}
-      onValueRevert={() => setEditing(false)}
-    >
-      <Editable.Input autoFocus textAlign="end" fontFamily="mono" />
-    </Editable.Root>
+    />
   );
 }
 
@@ -399,91 +381,101 @@ const ControlTimelineEventCustomNameEditable = memo(
   function ControlTimelineEventCustomNameEditable({
     payload,
   }: ControlTimelineEventCustomNameEditableProps) {
-    const [editing, setEditing] = useState(false);
-
-    // Mount the heavy Chakra `Editable` only while this specific row is being
-    // edited. Otherwise render a cheap text node so the timeline can mount
-    // hundreds of rows without paying the Editable mount/effect cost per row.
-    if (!editing) {
-      return (
-        <Box
-          onDoubleClick={() => setEditing(true)}
-          cursor="text"
-          px={1}
-          py={0.5}
-          minH={6}
-          overflow="hidden"
-          textOverflow="ellipsis"
-          whiteSpace="nowrap"
-          title={resolveDisplayName(payload)}
-        >
-          {resolveDisplayName(payload)}
-        </Box>
-      );
-    }
-
-    return <ControlTimelineEventNameEditor payload={payload} onDone={() => setEditing(false)} />;
+    const renameEvent = useRenameControlEventMutation();
+    const currentName = payload.customName ?? "";
+    return (
+      <TimelineCellEditable
+        value={currentName}
+        displayValue={resolveDisplayName(payload)}
+        placeholder={payload.placeholderName}
+        textAlign="start"
+        onCommit={(value) => {
+          const customName = value.trim();
+          if (customName !== currentName.trim()) {
+            void renameEvent.mutateAsync({ eventId: payload.id, type: payload.type, customName });
+          }
+        }}
+      />
+    );
   },
 );
 
-interface ControlTimelineEventNameEditorProps {
-  payload: TimelineTableItem;
-  onDone: () => void;
-}
-
-function ControlTimelineEventNameEditor({ payload, onDone }: ControlTimelineEventNameEditorProps) {
-  const renameEvent = useRenameControlEventMutation();
-  const [draftName, setDraftName] = useState(payload.customName ?? "");
-
-  const commitName = useCallback(
-    async (nextValue: string) => {
-      const normalizedNextValue = nextValue.trim();
-      const normalizedCurrentValue = (payload.customName ?? "").trim();
-
-      if (normalizedNextValue === normalizedCurrentValue) {
-        setDraftName(payload.customName ?? "");
-        return;
-      }
-
-      await renameEvent.mutateAsync({
-        eventId: payload.id,
-        type: payload.type,
-        customName: normalizedNextValue,
-      });
-    },
-    [payload.customName, payload.id, payload.type, renameEvent],
-  );
-
-  const handleValueChange = useCallback(({ value }: { value: string }) => setDraftName(value), []);
-
+function TimelineCellEditable({
+  value,
+  displayValue,
+  placeholder,
+  onBlankCommit,
+  textAlign = "start",
+  fontFamily,
+  onCommit,
+}: {
+  value: string;
+  displayValue: ReactNode;
+  placeholder?: string;
+  onBlankCommit?: () => void;
+  textAlign?: "start" | "end";
+  fontFamily?: string;
+  onCommit: (value: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  if (!editing)
+    return (
+      <Box
+        px={1}
+        py={0.5}
+        minH={6}
+        borderRadius="sm"
+        textAlign={textAlign}
+        fontFamily={fontFamily}
+        cursor="text"
+        overflow="hidden"
+        textOverflow="ellipsis"
+        whiteSpace="nowrap"
+        onDoubleClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+      >
+        {displayValue}
+      </Box>
+    );
   return (
     <Editable.Root
-      activationMode="dblclick"
-      submitMode="both"
       defaultEdit
-      value={draftName}
-      placeholder={payload.placeholderName}
-      onValueChange={handleValueChange}
+      submitMode="both"
+      value={draft}
+      placeholder={placeholder}
+      onValueChange={({ value }) => setDraft(value)}
       onValueCommit={({ value }) => {
-        void commitName(value);
-        onDone();
+        if (value.trim().length === 0 && onBlankCommit) onBlankCommit();
+        else onCommit(value);
+        setEditing(false);
       }}
-      onValueRevert={() => {
-        setDraftName(payload.customName ?? "");
-        onDone();
-      }}
+      onValueRevert={() => setEditing(false)}
     >
       <Editable.Preview
         px={1}
         py={0.5}
         minH={6}
         borderRadius="sm"
+        textAlign={textAlign}
+        fontFamily={fontFamily}
         cursor="text"
         overflow="hidden"
         textOverflow="ellipsis"
         whiteSpace="nowrap"
       />
-      <Editable.Input px={1} py={0.5} minH={6} borderRadius="sm" bg="bg.panel" autoFocus />
+      <Editable.Input
+        px={1}
+        py={0.5}
+        minH={6}
+        borderRadius="sm"
+        textAlign={textAlign}
+        fontFamily={fontFamily}
+        bg="bg.panel"
+        autoFocus
+      />
     </Editable.Root>
   );
 }

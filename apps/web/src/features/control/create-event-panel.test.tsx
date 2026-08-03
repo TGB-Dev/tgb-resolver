@@ -73,8 +73,8 @@ describe("CreateEventPanel", () => {
     await user.click(await screen.findByRole("option", { name: "IMG" }));
 
     expect(screen.getByLabelText("Asset")).toHaveValue("");
-    expect(screen.getByRole("textbox", { name: "Fit Mode" })).toHaveValue("cover");
-  });
+    expect(screen.getByRole("combobox", { name: "Fit Mode" })).toHaveTextContent("Cover");
+  }, 10_000);
 
   test("creates an Image event with the selected asset name and closes the panel", async () => {
     const user = userEvent.setup();

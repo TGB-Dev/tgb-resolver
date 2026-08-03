@@ -1,9 +1,13 @@
 import { Box, Text } from "@chakra-ui/react";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
+import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { getPreloadedAsset } from "@/utils/preload-assets";
 
 import type { ImageExtensionPayload } from "./index";
+
+const MotionBox = motion.create(Box);
 
 interface ImageExtensionComponentProps {
   payload: ImageExtensionPayload;
@@ -37,34 +41,49 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
 
   if (!assetId || hasError) {
     return (
-      <Box
+      <MotionBox
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: TgbResolverEasings.swiftOut }}
         position="absolute"
-        top="0"
-        left="0"
+        top={0}
+        left={0}
         w="full"
         h="full"
         display="flex"
         alignItems="center"
         justifyContent="center"
-        zIndex={100}
+        zIndex={1000}
       >
         <Text fontSize="lg" fontFamily="mono">
           Asset not found: {assetId || "none"}
         </Text>
-      </Box>
+      </MotionBox>
     );
   }
 
   if (!objectUrl) return null;
 
   return (
-    <Box position="absolute" top="0" left="0" w="full" h="full" zIndex={100}>
+    <MotionBox
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: TgbResolverEasings.swiftOut }}
+      position="absolute"
+      top={0}
+      left={0}
+      w="full"
+      h="full"
+      zIndex={1000}
+    >
       <img
         src={objectUrl}
         alt={`asset ${assetId}`}
         onError={() => setHasError(true)}
         style={{ width: "100%", height: "100%", objectFit: fit }}
       />
-    </Box>
+    </MotionBox>
   );
 }
