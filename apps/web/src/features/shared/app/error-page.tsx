@@ -1,6 +1,6 @@
 import { Button, Code, Icon, Stack, Text, VStack } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { Copy } from "lucide-react";
-import { useState } from "react";
 
 export function NotFoundPage() {
   return (
@@ -22,7 +22,7 @@ export function NotFoundPage() {
 }
 
 export function ErrorPage({ error }: { error: Error }) {
-  const [isCopied, setIsCopied] = useState(false);
+  const isCopied = useSignal(false);
 
   const handleCopyError = () => {
     const errorData = {
@@ -31,8 +31,8 @@ export function ErrorPage({ error }: { error: Error }) {
       stack: error.stack,
     };
     navigator.clipboard.writeText(JSON.stringify(errorData, null, 2));
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    isCopied.value = true;
+    setTimeout(() => (isCopied.value = false), 2000);
   };
 
   return (
@@ -67,7 +67,7 @@ export function ErrorPage({ error }: { error: Error }) {
             w="fit-content"
           >
             <Icon as={Copy} w={3} h={3} mr={1} />
-            {isCopied ? "Copied" : "Copy Error"}
+            {isCopied.value ? "Copied" : "Copy Error"}
           </Button>
 
           <Text fontSize="sm" fontWeight="bold" color="fg">

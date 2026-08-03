@@ -1,6 +1,7 @@
 import { Box, Grid, Image, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { File, Folder } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 import { toaster } from "@/features/shared/ui/toaster";
 
@@ -161,7 +162,7 @@ export function AssetsGridView() {
           ))}
         </Grid>
       )}
-      {selectionRect && <SelectionRectOverlay rect={selectionRect} />}
+      {selectionRect.value && <SelectionRectOverlay rect={selectionRect.value} />}
       <ContextMenuOverlay state={contextMenu.state} onClose={() => contextMenu.close()} />
     </Box>
   );
@@ -194,7 +195,7 @@ function EntryCard({
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
 }) {
-  const [imgError, setImgError] = useState(false);
+  const imgError = useSignal(false);
   const isImage = !entry.isDirectory && entry.contentType?.startsWith("image/");
 
   return (
@@ -227,13 +228,13 @@ function EntryCard({
       <Box h={32} display="flex" alignItems="center" justifyContent="center" bg="bg.subtle">
         {entry.isDirectory ? (
           <Folder size={40} />
-        ) : isImage && !imgError ? (
+        ) : isImage && !imgError.value ? (
           <Image
             src={`${API_URL}/assets/${entry.id}`}
             alt={entry.name}
             boxSize="full"
             objectFit="contain"
-            onError={() => setImgError(true)}
+            onError={() => (imgError.value = true)}
           />
         ) : (
           <File size={40} />

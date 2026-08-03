@@ -1,10 +1,11 @@
 import { Box, DataList, Editable, IconButton } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { For } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check, GripVertical, Plus } from "lucide-react";
 import type { DragControls } from "motion/react";
-import { memo, type ReactNode, useState } from "react";
+import { memo, type ReactNode } from "react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
@@ -417,9 +418,9 @@ function TimelineCellEditable({
   fontFamily?: string;
   onCommit: (value: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  if (!editing)
+  const editing = useSignal(false);
+  const draft = useSignal(value);
+  if (!editing.value)
     return (
       <Box
         px={1}
@@ -432,9 +433,10 @@ function TimelineCellEditable({
         overflow="hidden"
         textOverflow="ellipsis"
         whiteSpace="nowrap"
-        onDoubleClick={() => {
-          setDraft(value);
-          setEditing(true);
+        onDoubleClick={(event) => {
+          event.stopPropagation();
+          draft.value = value;
+          editing.value = true;
         }}
       >
         {displayValue}
@@ -444,15 +446,16 @@ function TimelineCellEditable({
     <Editable.Root
       defaultEdit
       submitMode="both"
-      value={draft}
+      value={draft.value}
       placeholder={placeholder}
-      onValueChange={({ value }) => setDraft(value)}
+      onDoubleClick={(event) => event.stopPropagation()}
+      onValueChange={({ value }) => (draft.value = value)}
       onValueCommit={({ value }) => {
         if (value.trim().length === 0 && onBlankCommit) onBlankCommit();
         else onCommit(value);
-        setEditing(false);
+        editing.value = false;
       }}
-      onValueRevert={() => setEditing(false)}
+      onValueRevert={() => (editing.value = false)}
     >
       <Editable.Preview
         px={1}

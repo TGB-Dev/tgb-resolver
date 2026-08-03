@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { useSignal } from "@preact/signals-react";
 import { For } from "@preact/signals-react/utils";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { getDefaultValues, type RuntimeFormDefinition, toValibotSchema } from "@tgb-form/core";
 import { TgbForm } from "@tgb-form/react";
 import { useEffect } from "react";
@@ -66,7 +66,9 @@ export function CreateEventPanel({ panel, relativeToEventId, before }: CreateEve
               <For each={collection.items}>
                 {(extension) => (
                   <Combobox.Item key={extension.extId} item={extension}>
-                    <Combobox.ItemText>{extension.shortName}</Combobox.ItemText>
+                    <Combobox.ItemText>
+                      {extension.shortName} - {extension.description}
+                    </Combobox.ItemText>
                     <Combobox.ItemIndicator />
                   </Combobox.Item>
                 )}
@@ -134,7 +136,7 @@ function CreateEventForm({
       }
     },
   });
-  const isDirty = useStore(
+  const isDirty = useSelector(
     form.store,
     (state) => JSON.stringify(state.values) !== JSON.stringify(defaultValues),
   );
@@ -149,6 +151,7 @@ function CreateEventForm({
         definition={configForm}
         instance={toTgbFormInstance(form)}
         renderers={sharedRendererRegistry}
+        style={{ gap: "4px", display: "flex", flexDirection: "column" }}
       />
       <HStack justify="end">
         <Button variant="outline" onClick={() => void panel.requestClose()}>

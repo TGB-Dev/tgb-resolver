@@ -1,6 +1,7 @@
 import { Box, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { getPreloadedAsset } from "@/utils/preload-assets";
@@ -16,30 +17,30 @@ interface ImageExtensionComponentProps {
 export function ImageExtensionComponent({ payload }: ImageExtensionComponentProps) {
   const assetId = payload?.assetId ?? "";
   const fit = payload?.fit ?? "cover";
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [hasError, setHasError] = useState(false);
+  const objectUrl = useSignal<string | null>(null);
+  const hasError = useSignal(false);
 
   useEffect(() => {
-    setHasError(false);
-    setObjectUrl(null);
+    hasError.value = false;
+    objectUrl.value = null;
     if (!assetId) return undefined;
 
     const buffer = getPreloadedAsset(assetId);
     if (buffer) {
       const blob = new Blob([buffer]);
       const url = URL.createObjectURL(blob);
-      setObjectUrl(url);
+      objectUrl.value = url;
       return () => {
         URL.revokeObjectURL(url);
       };
     }
 
     const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
-    setObjectUrl(`${baseUrl}/assets/${assetId}`);
+    objectUrl.value = `${baseUrl}/assets/${assetId}`;
     return undefined;
-  }, [assetId]);
+  }, [assetId, hasError, objectUrl]);
 
-  if (!assetId || hasError) {
+  if (!assetId || hasError.value) {
     return (
       <MotionBox
         initial={{ opacity: 0 }}
@@ -63,7 +64,7 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
     );
   }
 
-  if (!objectUrl) return null;
+  if (!objectUrl.value) return null;
 
   return (
     <MotionBox
@@ -79,9 +80,9 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
       zIndex={1000}
     >
       <img
-        src={objectUrl}
+        src={objectUrl.value}
         alt={`asset ${assetId}`}
-        onError={() => setHasError(true)}
+        onError={() => (hasError.value = true)}
         style={{ width: "100%", height: "100%", objectFit: fit }}
       />
     </MotionBox>

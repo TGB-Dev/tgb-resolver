@@ -1,6 +1,7 @@
 import { Box, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { Upload } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef } from "react";
 
 import { assetsInteractionModel } from "./assets-interaction-model";
 import { processUploadBatch } from "./upload-helpers";
@@ -13,7 +14,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
   { children, ...rest },
   ref,
 ) {
-  const [isDragOver, setIsDragOver] = useState(false);
+  const isDragOver = useSignal(false);
 
   function handleDragOver(e: React.DragEvent) {
     if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
@@ -21,7 +22,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
     }
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(true);
+    isDragOver.value = true;
   }
 
   function handleDragLeave(e: React.DragEvent) {
@@ -30,7 +31,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
     }
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    isDragOver.value = false;
   }
 
   async function collectFilesAndFolders(
@@ -75,7 +76,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
 
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    isDragOver.value = false;
 
     const items = e.dataTransfer.items;
     const dropTarget = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
@@ -125,7 +126,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
     >
       {children}
 
-      {isDragOver && (
+      {isDragOver.value && (
         <Box
           position="absolute"
           inset={0}

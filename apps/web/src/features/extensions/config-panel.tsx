@@ -1,6 +1,6 @@
 import { Button, EmptyState, HStack, Stack, Text } from "@chakra-ui/react";
 import { useSignal } from "@preact/signals-react";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { getDefaultValues, type RuntimeFormDefinition, toValibotSchema } from "@tgb-form/core";
 import { TgbForm } from "@tgb-form/react";
 import { type TimelineEvent, TimelineEventType } from "@tgb-resolver/realtime";
@@ -118,11 +118,11 @@ function ExtensionConfigForm({
     },
   });
 
-  const isDirty = useStore(
+  const isDirty = useSelector(
     form.store,
     (state) => JSON.stringify(state.values) !== JSON.stringify(baseline),
   );
-  const canSubmit = useStore(form.store, (state) => state.canSubmit);
+  const canSubmit = useSelector(form.store, (state) => state.canSubmit);
 
   useEffect(() => {
     panel.setDirty(isDirty);
@@ -134,6 +134,7 @@ function ExtensionConfigForm({
         definition={configForm}
         instance={toTgbFormInstance(form)}
         renderers={sharedRendererRegistry}
+        style={{ gap: "4px", display: "flex", flexDirection: "column" }}
       />
       <HStack justify="end">
         <Button variant="outline" onClick={() => void panel.requestClose()}>

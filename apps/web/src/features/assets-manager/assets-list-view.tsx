@@ -175,7 +175,7 @@ export function AssetsListView() {
           ))}
         </>
       )}
-      {selectionRect && <SelectionRectOverlay rect={selectionRect} />}
+      {selectionRect.value && <SelectionRectOverlay rect={selectionRect.value} />}
       <ContextMenuOverlay state={contextMenu.state} onClose={() => contextMenu.close()} />
     </Box>
   );

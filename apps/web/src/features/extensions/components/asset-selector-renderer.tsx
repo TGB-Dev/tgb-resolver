@@ -1,7 +1,7 @@
 import { Box, Field, HStack, Input, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import type { ReactRendererProps } from "@tgb-form/react";
 import { FileUp } from "lucide-react";
-import { useState } from "react";
 
 import { INTERNAL_DRAG_MIME } from "@/features/assets-manager/assets-interaction-model";
 import { assetsManagerModel } from "@/features/assets-manager/assets-manager-model";
@@ -52,21 +52,21 @@ export function AssetSelectorRenderer({
   props,
   errors,
 }: ReactRendererProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
+  const isDragOver = useSignal(false);
   const currentValue = typeof field.state.value === "string" ? field.state.value : "";
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(true);
+    isDragOver.value = true;
   };
 
   const handleDragLeave = () => {
-    setIsDragOver(false);
+    isDragOver.value = false;
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(false);
+    isDragOver.value = false;
 
     const droppedId = getDroppedAssetId(e.dataTransfer, (id) => {
       const entry = assetsManagerModel.findEntry(id);
@@ -90,8 +90,8 @@ export function AssetSelectorRenderer({
         borderRadius="md"
         borderWidth={2}
         borderStyle="dashed"
-        borderColor={isDragOver ? "border.emphasized" : "border"}
-        bg={isDragOver ? "bg.emphasized" : "bg.subtle"}
+        borderColor={isDragOver.value ? "border.emphasized" : "border"}
+        bg={isDragOver.value ? "bg.emphasized" : "bg.subtle"}
         transition="all 0.15s ease"
       >
         <HStack gap={3}>

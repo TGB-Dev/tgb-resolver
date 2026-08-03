@@ -1,33 +1,39 @@
 import { Box, Button, Portal } from "@chakra-ui/react";
+import { createModel, signal, useSignalEffect } from "@preact/signals-react";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
-import { useCallback, useEffect, useState } from "react";
+import { useRef } from "react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
 import { useDeleteTimelineEventMutation } from "@/features/control/hooks";
 import { confirmActionModel } from "@/features/shared/confirm-action-model";
 
-interface TimelineContextState {
+export interface TimelineContextState {
   isOpen: boolean;
   x: number;
   y: number;
   target: TimelineTableItem | null;
 }
 
-export function useTimelineRowContextMenu() {
-  const [state, setState] = useState<TimelineContextState>({
-    isOpen: false,
-    x: 0,
-    y: 0,
-    target: null,
-  });
+const closedState = (): TimelineContextState => ({
+  isOpen: false,
+  x: 0,
+  y: 0,
+  target: null,
+});
 
-  const close = useCallback(() => {
-    setState({ isOpen: false, x: 0, y: 0, target: null });
-  }, []);
+function createTimelineContextMenuModel() {
+  const state = signal<TimelineContextState>(closedState());
 
-  const open = useCallback((e: React.MouseEvent, payload: TimelineTableItem) => {
+  function close() {
+    state.value = closedState();
+  }
+
+  function open(
+    e: Pick<React.MouseEvent, "preventDefault" | "stopPropagation" | "clientX" | "clientY">,
+    payload: TimelineTableItem,
+  ) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -36,30 +42,41 @@ export function useTimelineRowContextMenu() {
     const menuHeight = menuItemHeight * 2 + 8;
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
-    setState({
+    state.value = {
       isOpen: true,
       x: Math.max(8, x),
       y: Math.max(8, y),
       target: payload,
-    });
-  }, []);
+    };
+  }
 
-  useEffect(() => {
-    if (!state.isOpen) {
-      return;
-    }
+  return { state, open, close };
+}
+
+type TimelineContextMenuModelState = ReturnType<typeof createTimelineContextMenuModel>;
+const TimelineContextMenuModel = createModel<TimelineContextMenuModelState>(() =>
+  createTimelineContextMenuModel(),
+);
+
+export function useTimelineRowContextMenu() {
+  const modelRef = useRef<InstanceType<typeof TimelineContextMenuModel>>(null);
+  if (!modelRef.current) modelRef.current = new TimelineContextMenuModel();
+  const model = modelRef.current;
+
+  useSignalEffect(() => {
+    if (!model.state.value.isOpen) return;
 
     function handlePointerDown(e: PointerEvent) {
       const target = e.target as HTMLElement;
       if (target.closest("[data-timeline-context-menu]")) return;
-      close();
+      model.close();
     }
 
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [state.isOpen, close]);
+  });
 
-  return { state, open, close };
+  return { ...model, state: model.state.value };
 }
 
 export function TimelineRowContextMenu({

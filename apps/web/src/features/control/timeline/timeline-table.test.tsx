@@ -66,7 +66,7 @@ describe("ControlTimelineTable", () => {
     expect(mutateAsync).toHaveBeenCalledWith({ eventId: 11, requireManualInteraction: true });
   });
 
-  test("opens the extension config panel when a custom event row is double-clicked", () => {
+  test("opens the extension config panel when a non-editable row cell is double-clicked", () => {
     renderWithChakra(
       <ControlTimelineTableItem
         payload={makePayload()}
@@ -76,11 +76,27 @@ describe("ControlTimelineTable", () => {
       />,
     );
 
-    fireEvent.doubleClick(screen.getByText("Custom event"));
+    fireEvent.doubleClick(screen.getByText("UNK"));
 
     expect(openFloatingPanel).toHaveBeenCalledWith("extension-config", "Edit Event #1", {
       eventId: 11,
     });
+  });
+
+  test("does not open the extension config panel when an editable cell is double-clicked", () => {
+    renderWithChakra(
+      <ControlTimelineTableItem
+        payload={makePayload()}
+        isCurrent={false}
+        isLive={false}
+        onSeek={() => {}}
+      />,
+    );
+
+    fireEvent.doubleClick(screen.getByText("+3"));
+
+    expect(openFloatingPanel).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
   });
 
   test("clearing trigger offset sends an explicit clear request", async () => {

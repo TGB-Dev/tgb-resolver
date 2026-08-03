@@ -15,6 +15,8 @@ import { system } from "@/features/shared/ui/provider";
 
 import { CreateEventPanel } from "./create-event-panel";
 
+const imageExtensionLabel = "IMG - Showing fullscreen image in the audience view.";
+
 const { createTimelineEvent } = vi.hoisted(() => ({
   createTimelineEvent: vi.fn<() => Promise<void>>(),
 }));
@@ -67,13 +69,14 @@ describe("CreateEventPanel", () => {
     expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(
       extensionRegistry.extensionList
         .filter((extension) => extension.configForm)
-        .map((extension) => extension.shortName),
+        .map((extension) => `${extension.shortName} - ${extension.description}`),
     );
 
-    await user.click(await screen.findByRole("option", { name: "IMG" }));
+    await user.click(await screen.findByRole("option", { name: imageExtensionLabel }));
 
     expect(screen.getByLabelText("Asset")).toHaveValue("");
     expect(screen.getByRole("combobox", { name: "Fit Mode" })).toHaveTextContent("Cover");
+    expect(screen.getByLabelText("Asset").closest("form")).toHaveStyle({ gap: "4px" });
   }, 10_000);
 
   test("creates an Image event with the selected asset name and closes the panel", async () => {
@@ -83,7 +86,7 @@ describe("CreateEventPanel", () => {
     render(makeUi(panel));
 
     await user.click(screen.getByRole("button", { name: "Toggle suggestions" }));
-    await user.click(await screen.findByRole("option", { name: "IMG" }));
+    await user.click(await screen.findByRole("option", { name: imageExtensionLabel }));
     await user.type(screen.getByLabelText("Asset"), "asset-1");
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
@@ -103,7 +106,7 @@ describe("CreateEventPanel", () => {
     render(makeUi(createPanel()));
 
     await user.click(screen.getByRole("button", { name: "Toggle suggestions" }));
-    await user.click(await screen.findByRole("option", { name: "IMG" }));
+    await user.click(await screen.findByRole("option", { name: imageExtensionLabel }));
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     expect(await screen.findByText("Asset is required")).toBeInTheDocument();
@@ -118,7 +121,7 @@ describe("CreateEventPanel", () => {
     const view = render(makeUi(panel));
 
     await user.click(screen.getByRole("button", { name: "Toggle suggestions" }));
-    await user.click(await screen.findByRole("option", { name: "IMG" }));
+    await user.click(await screen.findByRole("option", { name: imageExtensionLabel }));
     await user.type(screen.getByLabelText("Asset"), "asset-1");
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
