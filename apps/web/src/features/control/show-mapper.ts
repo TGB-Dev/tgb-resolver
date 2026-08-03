@@ -7,7 +7,12 @@ import {
   TimelineMode,
   VerdictRunResult,
 } from "@tgb-resolver/contracts";
-import { createEmptyShow, normalizeShow, type ShowFile } from "@tgb-resolver/realtime";
+import {
+  createEmptyShow,
+  normalizeShow,
+  SHOW_SCHEMA_VERSION,
+  type ShowFile,
+} from "@tgb-resolver/realtime";
 
 function normalizePlaybackStatus(status?: string): PlaybackStatus {
   if (status === PlaybackStatus.RUNNING) return PlaybackStatus.RUNNING;
@@ -22,6 +27,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
     const base = {
       id: event.id ?? 0,
       position: event.position ?? event.id ?? 0,
+      durationSeconds: event.durationSeconds ?? undefined,
       triggerOffsetSeconds: event.triggerOffsetSeconds ?? undefined,
       requireManualInteraction: event.requireManualInteraction ?? undefined,
       customName: event.customName ?? undefined,
@@ -63,42 +69,21 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
       continue;
     }
 
-    if (event.type === TimelineEventType.IMG && event.image) {
-      timeline.push({
-        ...base,
-        type: TimelineEventType.IMG,
-        payload: {
-          imageId: event.image.assetId ?? "",
-          durationSeconds: event.image.durationSeconds ?? undefined,
-        },
-      });
-      continue;
-    }
-
-    if (event.type === TimelineEventType.SFX && event.sfx) {
-      timeline.push({
-        ...base,
-        type: TimelineEventType.SFX,
-        payload: {
-          sfxId: event.sfx.assetId ?? "",
-          durationSeconds: event.sfx.durationSeconds ?? undefined,
-        },
-      });
-      continue;
-    }
-
     if (event.type === TimelineEventType.CUS) {
       timeline.push({
         ...base,
         type: TimelineEventType.CUS,
-        payload: (event.custom as Record<string, unknown>) ?? {},
+        payload: {
+          extId: event.custom?.extId ?? "",
+          extPayload: event.custom?.extPayload ?? undefined,
+        },
       });
     }
   }
 
   return normalizeShow(
     createEmptyShow({
-      schemaVersion: 1,
+      schemaVersion: SHOW_SCHEMA_VERSION,
       showVersion: snapshot.showVersion ?? 0,
       mode: snapshot.mode === ShowMode.LIVE ? ShowMode.LIVE : ShowMode.EDITING,
       timelineMode: snapshot.timelineMode === TimelineMode.RO ? TimelineMode.RO : TimelineMode.RW,

@@ -1,6 +1,5 @@
 using FastEndpoints;
 using FluentValidation;
-using TGB.Resolver.Server.Commons.Types;
 using TGB.Resolver.Server.Features.Show.Dto;
 using TGB.Resolver.Server.Shared.Validation;
 
@@ -72,12 +71,14 @@ public sealed class CreateTimelineEventRequestValidator : Validator<CreateTimeli
   public CreateTimelineEventRequestValidator()
   {
     RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
-    RuleFor(x => x.Type)
-      .NotEqual(TimelineEventType.Res)
-      .WithMessage("Resolve events are created only by XML import.");
     RuleFor(x => x.RelativeToEventId).GreaterThan(0);
     RuleFor(x => x.CustomName)
       .OptionalLength(100, "CustomName must not exceed 100 characters.");
+    RuleFor(x => x.Custom)
+      .Must(custom => custom is null || !string.IsNullOrWhiteSpace(custom.ExtId))
+      .WithMessage("Custom events require an extension identifier (ExtId).")
+      .Must(custom => custom is null || custom.ExtId.Length <= 100)
+      .WithMessage("ExtId must not exceed 100 characters.");
   }
 }
 
@@ -165,5 +166,14 @@ public sealed class MoveAssetRequestValidator : Validator<MoveAssetRequest>
     RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
     RuleFor(x => x.AssetId).NotEmpty();
     RuleFor(x => x.TargetFolderId).NotEmpty();
+  }
+}
+
+public sealed class TransferEntryRequestValidator : Validator<TransferEntryRequest>
+{
+  public TransferEntryRequestValidator()
+  {
+    RuleFor(x => x.ShowVersion).GreaterThanOrEqualTo(0);
+    RuleFor(x => x.Id).NotEmpty();
   }
 }

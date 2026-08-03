@@ -1,8 +1,9 @@
 import { Box, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { Upload } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef } from "react";
 
-import { assetsManagerModel } from "./assets-manager-model";
+import { assetsInteractionModel } from "./assets-interaction-model";
 import { processUploadBatch } from "./upload-helpers";
 
 interface UploadZoneProps {
@@ -13,18 +14,24 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
   { children, ...rest },
   ref,
 ) {
-  const [isDragOver, setIsDragOver] = useState(false);
+  const isDragOver = useSignal(false);
 
   function handleDragOver(e: React.DragEvent) {
+    if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(true);
+    isDragOver.value = true;
   }
 
   function handleDragLeave(e: React.DragEvent) {
+    if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    isDragOver.value = false;
   }
 
   async function collectFilesAndFolders(
@@ -63,12 +70,19 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
   }
 
   async function handleDrop(e: React.DragEvent) {
+    if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    isDragOver.value = false;
 
     const items = e.dataTransfer.items;
-    const targetFolderId = assetsManagerModel.selectedEntryId.value;
+    const dropTarget = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    const targetEntryId =
+      dropTarget?.closest<HTMLElement>("[data-entry-id]")?.dataset.entryId ?? null;
+    const targetFolderId = assetsInteractionModel.resolveDropUploadTarget(targetEntryId);
     const collected: { isFile: boolean; file?: File; pathParts: string[] }[] = [];
 
     if (items) {
@@ -112,7 +126,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
     >
       {children}
 
-      {isDragOver && (
+      {isDragOver.value && (
         <Box
           position="absolute"
           inset={0}

@@ -87,14 +87,13 @@ public sealed record TimelineEventSnapshot(
   int Id,
   int Position,
   TimelineEventType Type,
+  double? DurationSeconds,
   double? TriggerOffsetSeconds,
   bool? RequireManualInteraction,
   string? CustomName,
   ResolveEventPayloadSnapshot? Resolve,
-  MediaEventPayloadSnapshot? Image,
-  MediaEventPayloadSnapshot? Sfx,
   ResolveEventPayloadSnapshot? Pre,
-  Dictionary<string, object?>? Custom);
+  CustomEventPayloadSnapshot? Custom);
 
 [TranspilationSource]
 public sealed record ResolveEventPayloadSnapshot(
@@ -108,6 +107,6 @@ public sealed record ResolveEventPayloadSnapshot(
   double TimeSinceStart);
 
 [TranspilationSource]
-public sealed record MediaEventPayloadSnapshot(
-  string AssetId,
-  double? DurationSeconds);
+public sealed record CustomEventPayloadSnapshot(
+  string ExtId,
+  Dictionary<string, object?>? ExtPayload);

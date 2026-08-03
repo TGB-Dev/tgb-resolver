@@ -10,6 +10,7 @@ import {
   createFolderEndpoint,
   deleteEntryEndpoint,
   renameEntryEndpoint,
+  transferEntryEndpoint,
   uploadAssetEndpoint,
 } from "@tgb-resolver/contracts";
 
@@ -23,6 +24,7 @@ interface AssetsManagerState {
   viewMode: Signal<ViewMode>;
   expandedFolderIds: Signal<Set<string>>;
   entries: ReadonlySignal<FsEntry[]>;
+  allFiles: ReadonlySignal<FsEntry[]>;
   selectEntry: (id: string | null) => void;
   clearSelection: () => void;
   handleEntryClick: (
@@ -37,6 +39,12 @@ interface AssetsManagerState {
   uploadAsset: (folderId: string | null, file: File) => Promise<void>;
   renameEntry: (id: string, isDirectory: boolean, newName: string) => Promise<void>;
   deleteEntry: (id: string, isDirectory: boolean) => Promise<void>;
+  transferEntry: (
+    id: string,
+    isDirectory: boolean,
+    targetFolderId: string | null,
+    copy: boolean,
+  ) => Promise<void>;
   findEntry: (id: string) => FsEntry | undefined;
   findEntryName: (id: string) => string | undefined;
   applyShowState: (data: ShowStateSnapshot) => void;
@@ -327,12 +335,39 @@ const AssetsManagerModel = createModel<AssetsManagerState>(() => {
         next.delete(id);
         selectedIds.value = next;
       }
+
       if (isDirectory && selectedEntryId.value === id) {
         selectedEntryId.value = null;
       }
       invalidateCache?.();
     } catch (e) {
       console.error("deleteEntry error:", e);
+      invalidateCache?.();
+      throw e;
+    }
+  }
+
+  async function transferEntry(
+    id: string,
+    isDirectory: boolean,
+    targetFolderId: string | null,
+    copy: boolean,
+  ): Promise<void> {
+    try {
+      const res = await transferEntryEndpoint({
+        path: { id },
+        body: {
+          showVersion: showVersion.value,
+          isDirectory,
+          targetFolderId: targetFolderId ?? "",
+          copy,
+        },
+        throwOnError: true,
+      });
+      applyShowState(res.data as ShowStateSnapshot);
+      invalidateCache?.();
+    } catch (e) {
+      console.error("transferEntry error:", e);
       invalidateCache?.();
       throw e;
     }
@@ -346,6 +381,7 @@ const AssetsManagerModel = createModel<AssetsManagerState>(() => {
     viewMode,
     expandedFolderIds,
     entries,
+    allFiles,
     selectEntry,
     clearSelection,
     handleEntryClick,
@@ -357,6 +393,7 @@ const AssetsManagerModel = createModel<AssetsManagerState>(() => {
     uploadAsset,
     renameEntry,
     deleteEntry,
+    transferEntry,
     findEntry,
     findEntryName,
     applyShowState,

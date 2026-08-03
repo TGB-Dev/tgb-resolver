@@ -1,10 +1,14 @@
 import { Box, Grid, Image, Text } from "@chakra-ui/react";
+import { useSignal } from "@preact/signals-react";
 import { File, Folder } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
+import { toaster } from "@/features/shared/ui/toaster";
+
+import { assetsInteractionModel, INTERNAL_DRAG_MIME } from "./assets-interaction-model";
 import { assetsManagerModel } from "./assets-manager-model";
 import { ContextMenuOverlay } from "./context-menu-overlay";
-import { useContextMenu } from "./use-context-menu";
+import { useEntryContextMenu } from "./use-entry-context-menu";
 import { type Rect, useRubberBandSelect } from "./use-rubber-band-select";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
@@ -13,7 +17,7 @@ export function AssetsGridView() {
   const entries = assetsManagerModel.entries.value;
   const selectedIds = assetsManagerModel.selectedIds.value;
   const containerRef = useRef<HTMLDivElement>(null);
-  const contextMenu = useContextMenu();
+  const contextMenu = useEntryContextMenu();
 
   const { selectionRect, containerHandlers } = useRubberBandSelect(containerRef, (ids, mod) => {
     if (mod) {
@@ -26,6 +30,7 @@ export function AssetsGridView() {
   });
 
   function handleContainerClick(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
     if (contextMenu.state.target) return;
     const target = e.target as HTMLElement;
     if (target.closest("[data-entry-id]")) return;
@@ -47,12 +52,12 @@ export function AssetsGridView() {
     }
   }
 
-  if (entries.length === 0) {
-    return (
-      <Box display="flex" alignItems="center" justifyContent="center" h="full">
-        <Text color="fg.muted">Empty</Text>
-      </Box>
-    );
+  function handleDropError(error: unknown): void {
+    toaster.create({
+      title: "Move assets",
+      description: error instanceof Error ? error.message : String(error),
+      type: "error",
+    });
   }
 
   return (
@@ -65,44 +70,99 @@ export function AssetsGridView() {
       onContextMenu={(e) => {
         const target = e.target as HTMLElement;
         if (!target.closest("[data-entry-id]")) {
-          assetsManagerModel.clearSelection();
-          contextMenu.open(e, null);
+          contextMenu.openForContainer(e);
         }
       }}
       onPointerDown={(e) => {
+        if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
         assetsManagerModel.focusedPanel.value = "content";
         containerHandlers.onPointerDown(e);
       }}
       onPointerMove={containerHandlers.onPointerMove}
       onPointerUp={containerHandlers.onPointerUp}
-      onClickCapture={containerHandlers.onClickCapture}
+      onClickCapture={(e) => {
+        if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
+        containerHandlers.onClickCapture(e);
+      }}
       tabIndex={-1}
       onKeyDown={(e) => {
         if (e.key === "Escape") assetsManagerModel.clearSelection();
       }}
+      onDragOver={(e) => {
+        if (!assetsInteractionModel.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        const effect: "copy" | "move" = e.altKey ? "copy" : "move";
+        assetsInteractionModel.setDragEffect(effect);
+        e.dataTransfer.dropEffect = effect;
+      }}
+      onDrop={(e) => {
+        if (!assetsInteractionModel.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        const effect: "copy" | "move" = e.altKey ? "copy" : "move";
+        void assetsInteractionModel
+          .dropInto(assetsManagerModel.selectedEntryId.value, effect)
+          .catch(handleDropError);
+      }}
     >
-      <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={4} p={4}>
-        {entries.map((entry, index) => (
-          <EntryCard
-            key={entry.id}
-            entry={entry}
-            isSelected={selectedIds.has(entry.id)}
-            onContextMenu={(e) => {
-              if (!selectedIds.has(entry.id)) {
-                assetsManagerModel.selectedIds.value = new Set([entry.id]);
+      {entries.length === 0 ? (
+        <Box display="flex" alignItems="center" justifyContent="center" h="full">
+          <Text color="fg.muted">Empty</Text>
+        </Box>
+      ) : (
+        <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={4} p={4}>
+          {entries.map((entry, index) => (
+            <EntryCard
+              key={entry.id}
+              entry={entry}
+              isSelected={selectedIds.has(entry.id)}
+              onContextMenu={(e) => {
+                if (!selectedIds.has(entry.id)) {
+                  assetsManagerModel.selectedIds.value = new Set([entry.id]);
+                }
+                contextMenu.openForEntry(e, {
+                  id: entry.id,
+                  name: entry.name,
+                  isDirectory: entry.isDirectory,
+                });
+              }}
+              onDragStart={(e) => {
+                const effect: "copy" | "move" = e.altKey ? "copy" : "move";
+                const dragIds = assetsInteractionModel.beginDrag(entry.id, effect);
+                e.dataTransfer.effectAllowed = "copyMove";
+                e.dataTransfer.setData(INTERNAL_DRAG_MIME, JSON.stringify(dragIds));
+              }}
+              onDragEnd={() => {
+                assetsInteractionModel.clearDrag();
+              }}
+              onDragOver={
+                entry.isDirectory
+                  ? (e) => {
+                      if (!assetsInteractionModel.isInternalDragData(e.dataTransfer)) return;
+                      e.preventDefault();
+                      const effect: "copy" | "move" = e.altKey ? "copy" : "move";
+                      assetsInteractionModel.setDragEffect(effect);
+                      e.dataTransfer.dropEffect = effect;
+                    }
+                  : undefined
               }
-              contextMenu.open(e, {
-                id: entry.id,
-                name: entry.name,
-                isDirectory: entry.isDirectory,
-              });
-            }}
-            onClick={(e) => handleEntryClick(e, index)}
-            onDoubleClick={() => handleDoubleClick(entry)}
-          />
-        ))}
-      </Grid>
-      {selectionRect && <SelectionRectOverlay rect={selectionRect} />}
+              onDrop={
+                entry.isDirectory
+                  ? (e) => {
+                      if (!assetsInteractionModel.isInternalDragData(e.dataTransfer)) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const effect: "copy" | "move" = e.altKey ? "copy" : "move";
+                      void assetsInteractionModel.dropInto(entry.id, effect).catch(handleDropError);
+                    }
+                  : undefined
+              }
+              onClick={(e) => handleEntryClick(e, index)}
+              onDoubleClick={() => handleDoubleClick(entry)}
+            />
+          ))}
+        </Grid>
+      )}
+      {selectionRect.value && <SelectionRectOverlay rect={selectionRect.value} />}
       <ContextMenuOverlay state={contextMenu.state} onClose={() => contextMenu.close()} />
     </Box>
   );
@@ -114,6 +174,10 @@ function EntryCard({
   onContextMenu,
   onClick,
   onDoubleClick,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
 }: {
   entry: {
     id: string;
@@ -126,13 +190,18 @@ function EntryCard({
   onContextMenu: (e: React.MouseEvent) => void;
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }) {
-  const [imgError, setImgError] = useState(false);
+  const imgError = useSignal(false);
   const isImage = !entry.isDirectory && entry.contentType?.startsWith("image/");
 
   return (
     <Box
       data-entry-id={entry.id}
+      draggable
       borderWidth={2}
       borderColor={isSelected ? "colorPalette.border" : "border"}
       borderRadius="md"
@@ -151,17 +220,21 @@ function EntryCard({
         e.stopPropagation();
         onContextMenu(e);
       }}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
     >
       <Box h={32} display="flex" alignItems="center" justifyContent="center" bg="bg.subtle">
         {entry.isDirectory ? (
           <Folder size={40} />
-        ) : isImage && !imgError ? (
+        ) : isImage && !imgError.value ? (
           <Image
             src={`${API_URL}/assets/${entry.id}`}
             alt={entry.name}
             boxSize="full"
             objectFit="contain"
-            onError={() => setImgError(true)}
+            onError={() => (imgError.value = true)}
           />
         ) : (
           <File size={40} />

@@ -107,3 +107,21 @@ public sealed class MoveAssetEndpoint(ShowStateService showStateService)
     await Send.OkAsync(await showStateService.MoveAssetAsync(request, ct), ct);
   }
 }
+
+public sealed class TransferEntryEndpoint(ShowStateService showStateService)
+  : Endpoint<TransferEntryRequest, ShowStateSnapshot>
+{
+  public override void Configure()
+  {
+    Patch("/assets/entries/{id}/transfer");
+    AllowAnonymous();
+  }
+
+  public override async Task HandleAsync(TransferEntryRequest request, CancellationToken ct)
+  {
+    var entryId = Route<string>("id") ?? string.Empty;
+    await Send.OkAsync(
+      await showStateService.TransferEntryAsync(request with { Id = entryId }, ct),
+      ct);
+  }
+}

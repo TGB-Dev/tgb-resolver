@@ -1,6 +1,6 @@
 import { Tabs } from "@chakra-ui/react";
 import { useSignal } from "@preact/signals-react";
-import { useHotkey } from "@tanstack/react-hotkeys";
+import { useHotkeys } from "@tanstack/react-hotkeys";
 import { Images, Info, Logs, ScanEye, Settings } from "lucide-react";
 
 import { ControlMainAssetsTab } from "./tabs/control-main-assets-tab";
@@ -20,21 +20,13 @@ enum ControlEditMainPanelTabs {
 export function ControlEditMainPanel() {
   const tab = useSignal<ControlEditMainPanelTabs>(ControlEditMainPanelTabs.PREVIEW);
 
-  useHotkey("Mod+1", () => {
-    tab.value = ControlEditMainPanelTabs.PREVIEW;
-  });
-  useHotkey("Mod+2", () => {
-    tab.value = ControlEditMainPanelTabs.ASSETS;
-  });
-  useHotkey("Mod+3", () => {
-    tab.value = ControlEditMainPanelTabs.CUE;
-  });
-  useHotkey("Mod+4", () => {
-    tab.value = ControlEditMainPanelTabs.INFO;
-  });
-  useHotkey("Mod+5", () => {
-    tab.value = ControlEditMainPanelTabs.SETTINGS;
-  });
+  useHotkeys([
+    { hotkey: "Mod+1", callback: () => (tab.value = ControlEditMainPanelTabs.PREVIEW) },
+    { hotkey: "Mod+2", callback: () => (tab.value = ControlEditMainPanelTabs.ASSETS) },
+    { hotkey: "Mod+3", callback: () => (tab.value = ControlEditMainPanelTabs.CUE) },
+    { hotkey: "Mod+4", callback: () => (tab.value = ControlEditMainPanelTabs.INFO) },
+    { hotkey: "Mod+5", callback: () => (tab.value = ControlEditMainPanelTabs.SETTINGS) },
+  ]);
 
   return (
     <Tabs.Root
@@ -46,8 +38,6 @@ export function ControlEditMainPanel() {
       minH={0}
       overflow="hidden"
       defaultValue="preview"
-      lazyMount
-      unmountOnExit
       display="grid"
       gridTemplateRows="auto 1fr"
     >

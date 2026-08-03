@@ -11,6 +11,7 @@ export function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): Timel
   const base = {
     id: src.Id,
     position: src.Position,
+    durationSeconds: src.DurationSeconds,
     triggerOffsetSeconds: src.TriggerOffsetSeconds,
     requireManualInteraction: src.RequireManualInteraction,
     customName: src.CustomName,
@@ -53,30 +54,17 @@ export function mapTimelineEvent(src: TimelineEventAddedMessage["Event"]): Timel
         },
       };
     }
-    case TimelineEventType.IMG: {
-      const img = src.Image;
-      if (!img) throw new Error("IMG timeline event missing Image payload");
-      return {
-        ...base,
-        type: TimelineEventType.IMG,
-        payload: { imageId: img.AssetId, durationSeconds: img.DurationSeconds },
-      };
-    }
-    case TimelineEventType.SFX: {
-      const sfx = src.Sfx;
-      if (!sfx) throw new Error("SFX timeline event missing Sfx payload");
-      return {
-        ...base,
-        type: TimelineEventType.SFX,
-        payload: { sfxId: sfx.AssetId, durationSeconds: sfx.DurationSeconds },
-      };
-    }
-    case TimelineEventType.CUS:
+    case TimelineEventType.CUS: {
+      const custom = src.Custom;
       return {
         ...base,
         type: TimelineEventType.CUS,
-        payload: (src.Custom as Record<string, unknown>) ?? {},
+        payload: {
+          extId: custom?.ExtId ?? "",
+          extPayload: custom?.ExtPayload,
+        },
       };
+    }
     default:
       return {
         ...base,

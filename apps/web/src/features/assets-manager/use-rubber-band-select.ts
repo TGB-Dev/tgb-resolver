@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useSignal } from "@preact/signals-react";
+import { useEffect, useRef } from "react";
 
 export interface Rect {
   left: number;
@@ -23,7 +24,7 @@ export function useRubberBandSelect(
   containerRef: React.RefObject<HTMLElement | null>,
   onSelect: (entryIds: string[], mod: boolean) => void,
 ) {
-  const [selectionRect, setSelectionRect] = useState<Rect | null>(null);
+  const selectionRect = useSignal<Rect | null>(null);
   const isDragging = useRef(false);
   const dragEndTime = useRef(0);
   const startPoint = useRef({ x: 0, y: 0 });
@@ -69,7 +70,7 @@ export function useRubberBandSelect(
     modKey.current = e.metaKey || e.ctrlKey;
     startPoint.current = { x: e.clientX, y: e.clientY };
     currentPoint.current = { x: e.clientX, y: e.clientY };
-    setSelectionRect(null);
+    selectionRect.value = null;
 
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -82,7 +83,7 @@ export function useRubberBandSelect(
     if (!isDragging.current) return;
     currentPoint.current = { x: e.clientX, y: e.clientY };
     const rect = computeRect(startPoint.current, currentPoint.current);
-    setSelectionRect(rect);
+    selectionRect.value = rect;
 
     if (rect) {
       const entries = getEntryElements();
@@ -107,7 +108,7 @@ export function useRubberBandSelect(
     }
 
     const rect = computeRect(startPoint.current, currentPoint.current);
-    setSelectionRect(null);
+    selectionRect.value = null;
 
     if (rect) {
       const entries = getEntryElements();
@@ -123,13 +124,13 @@ export function useRubberBandSelect(
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && isDragging.current) {
         isDragging.current = false;
-        setSelectionRect(null);
+        selectionRect.value = null;
       }
     }
 
     container.addEventListener("keydown", onKeyDown);
     return () => container.removeEventListener("keydown", onKeyDown);
-  }, [containerRef]);
+  }, [containerRef, selectionRect]);
 
   function handleClickCapture(e: React.MouseEvent) {
     if (Date.now() - dragEndTime.current < 100) {

@@ -1,14 +1,18 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   clearShow,
+  createTimelineEvent,
+  deleteTimelineEvent,
   disableLiveMode,
   enableLiveMode,
   exportShowBundle,
   generatedClient,
   importShowBundle,
   importShowXml,
+  moveTimelineEvent,
   optimizeShow,
   patchNonResolveEvent,
+  patchTimelineEvent,
   renameResolveEvent,
   resetPlayback,
   type SetAutomationRequest,
@@ -35,6 +39,7 @@ function setShowInCache(
   snapshot: ShowStateSnapshot,
 ) {
   queryClient.setQueryData(controlShowQueryKey(), snapshot);
+  playbackModel.syncVersion(snapshot.showVersion ?? 0);
 }
 
 function requireShow(show: ReturnType<typeof useControlShowQuery>["data"]) {
@@ -118,7 +123,9 @@ export function useStartPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -138,7 +145,9 @@ export function useResetPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -158,7 +167,9 @@ export function useSeekPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -178,7 +189,9 @@ export function useOptimizeShowMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 
@@ -250,21 +263,127 @@ export function useRenameControlEventMutation() {
           return data as ShowStateSnapshot;
         }
 
-        const eventType =
-          payload.type === TimelineEventType.IMG ? TimelineEventType.IMG : TimelineEventType.SFX;
         const { data } = await patchNonResolveEvent({
           client: generatedClient,
           path: { id: payload.eventId },
           body: {
             showVersion: playbackModel.state.value.showVersion,
-            type: eventType,
             customName: payload.customName.trim(),
           },
         });
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function usePatchTimelineEventMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      eventId: number;
+      durationSeconds?: number;
+      useDefaultDuration?: boolean;
+      triggerOffsetSeconds?: number;
+      clearTriggerOffset?: boolean;
+      requireManualInteraction?: boolean;
+    }) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await patchTimelineEvent({
+          client: generatedClient,
+          path: { id: payload.eventId },
+          body: { showVersion: playbackModel.state.value.showVersion, ...payload },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function useMoveTimelineEventMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      eventId: number;
+      relativeToEventId: number;
+      before: boolean;
+    }) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await moveTimelineEvent({
+          client: generatedClient,
+          path: { id: payload.eventId },
+          body: {
+            showVersion: playbackModel.state.value.showVersion,
+            relativeToEventId: payload.relativeToEventId,
+            before: payload.before,
+          },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function useCreateTimelineEventMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      relativeToEventId: number;
+      before: boolean;
+      customName?: string;
+      custom: { extId: string; extPayload: Record<string, unknown> };
+    }) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await createTimelineEvent({
+          client: generatedClient,
+          body: { showVersion: playbackModel.state.value.showVersion, ...payload },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function useDeleteTimelineEventMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (eventId: number) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await deleteTimelineEvent({
+          client: generatedClient,
+          path: { id: eventId },
+          body: { showVersion: playbackModel.state.value.showVersion },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
   });
 }
 

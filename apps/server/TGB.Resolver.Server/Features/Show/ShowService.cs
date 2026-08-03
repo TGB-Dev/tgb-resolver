@@ -45,22 +45,17 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> OptimizeAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
       {
         var normalized = state.Timeline
           .Where(e => e.Type == TimelineEventType.Res || e.Type == TimelineEventType.Pre
-                                                      || e.Image is not null || e.Sfx is not null
                                                       || e.Custom is not null)
           .Select((e, i) => e with { Position = i + 1 })
           .ToArray();
 
-        return state with
-        {
-          ShowVersion = state.ShowVersion + 1,
-          Timeline = normalized
-        };
+        return state with { Timeline = normalized };
       },
       cancellationToken);
 
@@ -70,9 +65,9 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> ClearAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
-      state => ShowRawRepository.CreateEmptyShow(state.ShowVersion + 1, ShowSource.Manual),
+      state => ShowRawRepository.CreateEmptyShow(state.ShowVersion, ShowSource.Manual),
       cancellationToken);
 
     return await BroadcastReplacedAsync(updated);
@@ -117,14 +112,13 @@ public sealed class ShowStateService(
     ResolveEventRenameRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
       {
         EnsureTimelineWritable(state);
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline
             .Select(e => e.Id == eventId && e.Type == TimelineEventType.Res
               ? e with { CustomName = request.CustomName }
@@ -142,44 +136,26 @@ public sealed class ShowStateService(
     NonResolveEventPatchRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
       {
         EnsureTimelineWritable(state);
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline.Select(e =>
           {
             if (e.Id != eventId || e.Type == TimelineEventType.Res) return e;
 
-            var (type, target, _) = request.Type switch
-            {
-              TimelineEventType.Img => (TimelineEventType.Img, e.Image, e.Sfx),
-              TimelineEventType.Sfx => (TimelineEventType.Sfx, e.Sfx, e.Image),
-              _ => (e.Type, null, null)
-            };
-            var custom = request.Type == TimelineEventType.Cus
-              ? request.Custom
-              : e.Custom;
-            var assetId = request.Type == TimelineEventType.Img
-              ? request.Payload?.ImageId ?? target?.AssetId ?? string.Empty
-              : request.Payload?.SfxId ?? target?.AssetId ?? string.Empty;
-            var media = new MediaEventPayload(
-              assetId,
-              request.Payload?.DurationSeconds ?? target?.DurationSeconds);
-
             return e with
             {
-              Type = type,
               TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
               request.RequireManualInteraction ?? e.RequireManualInteraction,
               CustomName = request.CustomName ?? e.CustomName,
-              Image = type == TimelineEventType.Img ? media : null,
-              Sfx = type == TimelineEventType.Sfx ? media : null,
-              Custom = type == TimelineEventType.Cus ? custom : null
+              Custom = e.Type == TimelineEventType.Cus
+                ? ToData(request.Custom) ?? e.Custom
+                : e.Custom
             };
           }).ToArray()
         };
@@ -192,10 +168,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
     CreateTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    if (request.Type == TimelineEventType.Res)
-      throw new InvalidOperationException("Resolve events are created only by XML import.");
-
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var target = state.Timeline.Single(e => e.Id == request.RelativeToEventId);
@@ -208,20 +181,13 @@ public sealed class ShowStateService(
         ? e with { Position = e.Position + 1 }
         : e);
 
-      var isImg = request.Type == TimelineEventType.Img;
-      var assetId = isImg
-        ? request.Payload?.ImageId ?? string.Empty
-        : request.Payload?.SfxId ?? string.Empty;
-      var media = new MediaEventPayload(assetId, request.Payload?.DurationSeconds);
       var created = new TimelineEvent(
-        nextId, position, request.Type,
+        nextId, position, TimelineEventType.Cus, request.DurationSeconds,
         request.TriggerOffsetSeconds, request.RequireManualInteraction ?? false,
-        request.CustomName, null, isImg ? media : null, isImg ? null : media, null,
-        request.Type == TimelineEventType.Cus ? request.Custom : null);
+        request.CustomName, null, null, ToData(request.Custom));
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = shifted.Append(created).OrderBy(e => e.Position).ToArray()
       };
     }, cancellationToken);
@@ -233,7 +199,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> PatchTimelineEventAsync(int eventId,
     PatchTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var current = state.Timeline.Single(e => e.Id == eventId);
@@ -241,48 +207,44 @@ public sealed class ShowStateService(
       if (current.Type == TimelineEventType.Res)
         return state with
         {
-          ShowVersion = state.ShowVersion + 1,
           Timeline = state.Timeline
             .Select(e => e.Id == eventId
-              ? e with { CustomName = request.CustomName ?? e.CustomName }
+              ? e with
+              {
+                CustomName = request.CustomName ?? e.CustomName,
+                DurationSeconds = request.UseDefaultDuration
+                  ? null
+                  : request.DurationSeconds ?? e.DurationSeconds,
+                TriggerOffsetSeconds = request.ClearTriggerOffset
+                  ? null
+                  : request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
+                RequireManualInteraction =
+                request.RequireManualInteraction ?? e.RequireManualInteraction
+              }
               : e)
             .ToArray()
         };
 
-      var type = request.Type switch
-      {
-        TimelineEventType.Img => TimelineEventType.Img,
-        TimelineEventType.Sfx => TimelineEventType.Sfx,
-        TimelineEventType.Cus => TimelineEventType.Cus,
-        _ => current.Type
-      };
-      var isImg = type == TimelineEventType.Img;
-      var isCus = type == TimelineEventType.Cus;
-      var custom = isCus ? request.Custom ?? current.Custom : null;
-      var assetId = isImg
-        ? request.Payload?.ImageId ?? current.Image?.AssetId ?? string.Empty
-        : request.Payload?.SfxId ?? current.Sfx?.AssetId ?? string.Empty;
-      var media = new MediaEventPayload(
-        assetId,
-        request.Payload?.DurationSeconds
-        ?? current.Image?.DurationSeconds
-        ?? current.Sfx?.DurationSeconds);
+      var custom = current.Type == TimelineEventType.Cus
+        ? ToData(request.Custom) ?? current.Custom
+        : null;
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = state.Timeline
           .Select(e => e.Id == eventId
             ? e with
             {
-              Type = type,
               CustomName = request.CustomName ?? e.CustomName,
-              TriggerOffsetSeconds = request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
+              DurationSeconds = request.UseDefaultDuration
+                ? null
+                : request.DurationSeconds ?? e.DurationSeconds,
+              TriggerOffsetSeconds = request.ClearTriggerOffset
+                ? null
+                : request.TriggerOffsetSeconds ?? e.TriggerOffsetSeconds,
               RequireManualInteraction =
               request.RequireManualInteraction ?? e.RequireManualInteraction,
-              Image = isImg ? media : null,
-              Sfx = isImg ? null : media,
-              Custom = isCus ? custom : null
+              Custom = custom
             }
             : e)
           .ToArray()
@@ -295,7 +257,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> MoveNonResolveEventAsync(int eventId,
     MoveTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(e => e.Id == eventId);
@@ -310,7 +272,6 @@ public sealed class ShowStateService(
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = without.Select((e, i) => e with { Position = i + 1 }).ToArray()
       };
     }, cancellationToken);
@@ -321,16 +282,15 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> DeleteNonResolveEventAsync(int eventId,
     VersionedCommandRequest request, CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var item = state.Timeline.Single(e => e.Id == eventId);
-      if (item.Type == TimelineEventType.Res)
-        throw new InvalidOperationException("Resolve events cannot be deleted.");
+      if (item.Type == TimelineEventType.Res || item.Type == TimelineEventType.Pre)
+        throw new InvalidOperationException("Resolve and pre-resolve events cannot be deleted.");
 
       return state with
       {
-        ShowVersion = state.ShowVersion + 1,
         Timeline = state.Timeline.Where(e => e.Id != eventId)
           .Select((e, i) => e with { Position = i + 1 }).ToArray()
       };
@@ -342,7 +302,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SetTimelineModeAsync(SetTimelineModeRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state => state with
       {
@@ -350,13 +310,13 @@ public sealed class ShowStateService(
       },
       cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> UpsertAssetAsync(string assetId, UpsertAssetRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var rawBytes = Convert.FromBase64String(request.Bytes);
@@ -375,7 +335,7 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> DeleteEntryAsync(DeleteEntryRequest request,
@@ -397,7 +357,7 @@ public sealed class ShowStateService(
   private async Task<ShowStateSnapshot> DeleteAssetInternalAsync(DeleteEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       return state with
@@ -408,13 +368,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> RenameAssetInternalAsync(RenameEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var items = state.Assets.Items
@@ -426,13 +386,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> CreateFolderAsync(CreateFolderRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var folderId = Guid.NewGuid().ToString("N");
@@ -449,13 +409,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> RenameFolderInternalAsync(RenameEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var folders =
@@ -469,13 +429,13 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private async Task<ShowStateSnapshot> DeleteFolderInternalAsync(DeleteEntryRequest request,
     CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
       var folderIdsToClear = CollectDescendantFolderIds(state.Assets.Folders, request.Id);
@@ -491,17 +451,25 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   public async Task<ShowStateSnapshot> MoveAssetAsync(MoveAssetRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
+      var targetFolderId = ValidateTargetFolder(state.Assets.Folders, request.TargetFolderId);
+      var source = state.Assets.Items.FirstOrDefault(a => a.Id == request.AssetId)
+                   ?? throw new InvalidOperationException(
+                     $"Asset '{request.AssetId}' does not exist.");
+      if (NormalizeFolderId(source.FolderId) == targetFolderId)
+        throw new InvalidOperationException("Asset is already in the target folder.");
+
       var items = state.Assets.Items
-        .Select(a => a.Id == request.AssetId ? a with { FolderId = request.TargetFolderId } : a)
+        .Select(a =>
+          a.Id == request.AssetId ? a with { FolderId = targetFolderId ?? string.Empty } : a)
         .ToArray();
       return state with
       {
@@ -509,7 +477,208 @@ public sealed class ShowStateService(
       };
     }, cancellationToken);
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
+  }
+
+  public async Task<ShowStateSnapshot> TransferEntryAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    if (request.IsDirectory)
+      return request.Copy
+        ? await CopyFolderInternalAsync(request, cancellationToken)
+        : await MoveFolderInternalAsync(request, cancellationToken);
+
+    return request.Copy
+      ? await CopyAssetInternalAsync(request, cancellationToken)
+      : await MoveAssetAsync(
+        new MoveAssetRequest(request.ShowVersion, request.Id,
+          request.TargetFolderId ?? string.Empty),
+        cancellationToken);
+  }
+
+  private async Task<ShowStateSnapshot> CopyAssetInternalAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var current = await repository.GetStateAsync(cancellationToken);
+    EnsureTimelineWritable(current);
+    var targetFolderId = ValidateTargetFolder(current.Assets.Folders, request.TargetFolderId);
+    var source = current.Assets.Items.FirstOrDefault(a => a.Id == request.Id)
+                 ?? throw new InvalidOperationException($"Asset '{request.Id}' does not exist.");
+
+    var clonedId = Guid.NewGuid().ToString("N");
+    var bytes = await assetStore.ReadAsync(source.Id, cancellationToken);
+    await assetStore.SaveAsync(clonedId, bytes, cancellationToken);
+
+    try
+    {
+      var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
+      {
+        EnsureTimelineWritable(state);
+        var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
+        var stateSource = state.Assets.Items.FirstOrDefault(a => a.Id == request.Id)
+                          ?? throw new InvalidOperationException(
+                            $"Asset '{request.Id}' no longer exists.");
+        var clone = stateSource with { Id = clonedId, FolderId = target ?? string.Empty };
+        var items = state.Assets.Items.Append(clone).ToArray();
+        return state with
+        {
+          Assets = new AssetCollection(items) { Folders = state.Assets.Folders }
+        };
+      }, cancellationToken);
+
+      return await BroadcastReplacedAsync(updated);
+    }
+    catch
+    {
+      await assetStore.DeleteAsync(clonedId);
+      throw;
+    }
+  }
+
+  private async Task<ShowStateSnapshot> MoveFolderInternalAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var targetFolderId = NormalizeFolderId(request.TargetFolderId);
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
+    {
+      EnsureTimelineWritable(state);
+      var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
+
+      var (foldersWithoutSource, sourceFolder, found) =
+        ExtractFolderNode(state.Assets.Folders, request.Id);
+      if (!found || sourceFolder is null)
+        throw new InvalidOperationException($"Folder '{request.Id}' does not exist.");
+
+      if (target == request.Id)
+        throw new InvalidOperationException("Folder cannot be moved into itself.");
+      if (target is not null && IsDescendantFolder(state.Assets.Folders, request.Id, target))
+        throw new InvalidOperationException("Folder cannot be moved into one of its descendants.");
+      if (FindParentFolderId(state.Assets.Folders, request.Id) == target)
+        throw new InvalidOperationException("Folder is already in the target folder.");
+
+      var folders = target is null
+        ? [.. foldersWithoutSource, sourceFolder]
+        : InsertFolderNode(foldersWithoutSource, target, sourceFolder).Nodes;
+
+      return state with
+      {
+        Assets = state.Assets with
+        {
+          Folders = folders
+        }
+      };
+    }, cancellationToken);
+
+    return await BroadcastReplacedAsync(updated);
+  }
+
+  private async Task<ShowStateSnapshot> CopyFolderInternalAsync(TransferEntryRequest request,
+    CancellationToken cancellationToken)
+  {
+    var targetFolderId = NormalizeFolderId(request.TargetFolderId);
+    var current = await repository.GetStateAsync(cancellationToken);
+    EnsureTimelineWritable(current);
+    targetFolderId = ValidateTargetFolder(current.Assets.Folders, targetFolderId);
+
+    if (targetFolderId is not null && targetFolderId == request.Id)
+      throw new InvalidOperationException("Folder cannot be copied into itself.");
+    if (targetFolderId is not null &&
+        IsDescendantFolder(current.Assets.Folders, request.Id, targetFolderId))
+      throw new InvalidOperationException("Folder cannot be copied into one of its descendants.");
+
+    var sourceFolder = FindFolderNode(current.Assets.Folders, request.Id)
+                       ?? throw new InvalidOperationException(
+                         $"Folder '{request.Id}' does not exist.");
+    var folderIdMap = new Dictionary<string, string>();
+    var clonedFolder = CloneFolderTree(sourceFolder, folderIdMap);
+    var sourceFolderIds = CollectAllFolderIds(sourceFolder).ToHashSet();
+
+    var sourceAssets = current.Assets.Items
+      .Where(a => a.FolderId is not null && sourceFolderIds.Contains(a.FolderId))
+      .ToArray();
+
+    var clonedAssets = new List<ShowAsset>(sourceAssets.Length);
+    try
+    {
+      foreach (var sourceAsset in sourceAssets)
+      {
+        var clonedId = Guid.NewGuid().ToString("N");
+        var bytes = await assetStore.ReadAsync(sourceAsset.Id, cancellationToken);
+        await assetStore.SaveAsync(clonedId, bytes, cancellationToken);
+
+        clonedAssets.Add(sourceAsset with
+        {
+          Id = clonedId,
+          FolderId = sourceAsset.FolderId is null ? null : folderIdMap[sourceAsset.FolderId]
+        });
+      }
+
+      var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
+      {
+        EnsureTimelineWritable(state);
+        var target = ValidateTargetFolder(state.Assets.Folders, targetFolderId);
+        var stateSourceFolder = FindFolderNode(state.Assets.Folders, request.Id);
+        if (stateSourceFolder is null || !FolderTreesMatch(sourceFolder, stateSourceFolder) ||
+            sourceAssets.Any(sourceAsset => !state.Assets.Items.Contains(sourceAsset)))
+          throw new InvalidOperationException(
+            $"Folder '{request.Id}' changed before it could be copied.");
+
+        var folders = target is null
+          ? [.. state.Assets.Folders, clonedFolder]
+          : InsertFolderNode(state.Assets.Folders, target, clonedFolder).Nodes;
+
+        var items = state.Assets.Items.Concat(clonedAssets).ToArray();
+        return state with
+        {
+          Assets = new AssetCollection(items) { Folders = folders }
+        };
+      }, cancellationToken);
+
+      return await BroadcastReplacedAsync(updated);
+    }
+    catch
+    {
+      foreach (var clonedAsset in clonedAssets)
+        await assetStore.DeleteAsync(clonedAsset.Id);
+      throw;
+    }
+  }
+
+  private static string? NormalizeFolderId(string? folderId)
+  {
+    return string.IsNullOrWhiteSpace(folderId) ? null : folderId;
+  }
+
+  private static string? ValidateTargetFolder(IReadOnlyList<FolderNode> folders,
+    string? targetFolderId)
+  {
+    var normalizedTargetFolderId = NormalizeFolderId(targetFolderId);
+    if (normalizedTargetFolderId is not null &&
+        FindFolderNode(folders, normalizedTargetFolderId) is null)
+      throw new InvalidOperationException(
+        $"Target folder '{normalizedTargetFolderId}' does not exist.");
+
+    return normalizedTargetFolderId;
+  }
+
+  private static string? FindParentFolderId(IReadOnlyList<FolderNode> folders, string folderId)
+  {
+    foreach (var folder in folders)
+    {
+      if (folder.Children.Any(child => child.Id == folderId)) return folder.Id;
+      var parentId = FindParentFolderId(folder.Children, folderId);
+      if (parentId is not null) return parentId;
+    }
+
+    return null;
+  }
+
+  private static bool FolderTreesMatch(FolderNode expected, FolderNode actual)
+  {
+    return expected.Id == actual.Id && expected.Name == actual.Name &&
+           expected.Children.Count == actual.Children.Count &&
+           expected.Children.Zip(actual.Children)
+             .All(pair => FolderTreesMatch(pair.First, pair.Second));
   }
 
   private static (IReadOnlyList<FolderNode> Nodes, bool Changed) InsertFolderNode(
@@ -534,6 +703,28 @@ public sealed class ShowStateService(
     }
 
     return (nodes, false);
+  }
+
+  private static (IReadOnlyList<FolderNode> Nodes, FolderNode? Node, bool Found) ExtractFolderNode(
+    IReadOnlyList<FolderNode> nodes, string folderId)
+  {
+    var list = nodes.ToList();
+    for (var i = 0; i < list.Count; i++)
+    {
+      if (list[i].Id == folderId)
+      {
+        var node = list[i];
+        list.RemoveAt(i);
+        return (list, node, true);
+      }
+
+      var (updatedChildren, extracted, found) = ExtractFolderNode(list[i].Children, folderId);
+      if (!found) continue;
+      list[i] = list[i] with { Children = updatedChildren };
+      return (list, extracted, true);
+    }
+
+    return (nodes, null, false);
   }
 
   private static (IReadOnlyList<FolderNode> Nodes, bool Changed) RenameFolderNode(
@@ -590,6 +781,51 @@ public sealed class ShowStateService(
     return result;
   }
 
+  private static FolderNode? FindFolderNode(IReadOnlyList<FolderNode> nodes, string folderId)
+  {
+    foreach (var node in nodes)
+    {
+      if (node.Id == folderId)
+        return node;
+
+      var found = FindFolderNode(node.Children, folderId);
+      if (found is not null)
+        return found;
+    }
+
+    return null;
+  }
+
+  private static bool IsDescendantFolder(IReadOnlyList<FolderNode> nodes, string sourceFolderId,
+    string maybeDescendantId)
+  {
+    var source = FindFolderNode(nodes, sourceFolderId);
+    if (source is null)
+      return false;
+
+    return CollectAllFolderIds(source).Contains(maybeDescendantId);
+  }
+
+  private static FolderNode CloneFolderTree(FolderNode source, Dictionary<string, string> idMap)
+  {
+    var clonedId = Guid.NewGuid().ToString("N");
+    idMap[source.Id] = clonedId;
+
+    return source with
+    {
+      Id = clonedId,
+      Children = source.Children.Select(child => CloneFolderTree(child, idMap)).ToArray()
+    };
+  }
+
+  private static IEnumerable<string> CollectAllFolderIds(FolderNode node)
+  {
+    yield return node.Id;
+    foreach (var child in node.Children)
+    foreach (var childId in CollectAllFolderIds(child))
+      yield return childId;
+  }
+
   private static void CollectAllFolderIds(FolderNode node, HashSet<string> ids)
   {
     ids.Add(node.Id);
@@ -610,7 +846,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SetLiveModeAsync(bool enabled,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutateShowAsync(
       state => state with
       {
         Mode = enabled ? ShowMode.Live : ShowMode.Editing
@@ -626,7 +862,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> StartPlaybackAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       request.ShowVersion,
       state =>
       {
@@ -678,7 +914,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> ResetPlaybackAsync(VersionedCommandRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       request.ShowVersion,
       state => state with
       {
@@ -694,7 +930,7 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> SeekPlaybackAsync(SeekPlaybackRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       request.ShowVersion,
       state =>
       {
@@ -732,7 +968,7 @@ public sealed class ShowStateService(
       if (first is null) return;
       var startedAt = NowMs();
 
-      var updated = await repository.MutateControlStateAsync(
+      var updated = await repository.MutatePlaybackAsync(
         s => s with
         {
           Playback = NewPlayback(
@@ -759,7 +995,7 @@ public sealed class ShowStateService(
 
     var nextEvent = ordered[currentIndex + 1];
 
-    var updated2 = await repository.MutateControlStateAsync(
+    var updated2 = await repository.MutatePlaybackAsync(
       s => s with
       {
         Playback = NewPlayback(
@@ -783,7 +1019,7 @@ public sealed class ShowStateService(
 
   private async Task StopPlaybackAsync(CancellationToken cancellationToken)
   {
-    var updated = await repository.MutateControlStateAsync(
+    var updated = await repository.MutatePlaybackAsync(
       s => s with
       {
         Playback = NewPlayback(PlaybackStatus.Idle, null, [], null)
@@ -804,7 +1040,6 @@ public sealed class ShowStateService(
     if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
       return;
 
-    var currentEvent = ordered[currentIndex];
     var nextEvent = ordered[currentIndex + 1];
 
     // No auto-advance when both auto modes are off
@@ -822,22 +1057,14 @@ public sealed class ShowStateService(
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
 
-    // Use current event's media duration for IMG/SFX when available
-    var mediaPayload = currentEvent.Image ?? currentEvent.Sfx;
-    if (mediaPayload?.DurationSeconds is not null)
-    {
-      orchestrator.ScheduleAdvance(Math.Max(1,
-        (long)(mediaPayload.DurationSeconds.Value * 1000)));
-      return;
-    }
-
-    orchestrator.ScheduleAdvance(state.Automation.AutoResolveSpeedMs);
+    orchestrator.ScheduleAdvance((long)((nextEvent.DurationSeconds ??
+                                         state.Automation.AutoResolveSpeedMs / 1000d) * 1000));
   }
 
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
     CancellationToken cancellationToken = default)
   {
-    var updated = await repository.MutateControlStateAsync(request.ShowVersion, state =>
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       var a = state.Automation;
       return state with
@@ -855,7 +1082,7 @@ public sealed class ShowStateService(
       ScheduleNextAdvanceAsync(updated);
     }
 
-    return ShowContractMapper.ToContract(updated);
+    return await BroadcastReplacedAsync(updated);
   }
 
   private static void EnsureTimelineWritable(ShowState state)
@@ -926,5 +1153,10 @@ public sealed class ShowStateService(
     long? startedAt)
   {
     return new PlaybackState(status, currentEventId, activeEventIds, startedAt);
+  }
+
+  private static CustomEventPayload? ToData(CustomEventPayloadSnapshot? payload)
+  {
+    return payload is null ? null : new CustomEventPayload(payload.ExtId, payload.ExtPayload);
   }
 }

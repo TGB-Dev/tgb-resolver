@@ -17,11 +17,17 @@ Call actions as methods.
 | `controlNowModel` | `@/features/control/control-now-model` | `now` | `setNow(n)` |
 | `confirmActionModel` | `@/features/shared/confirm-action-model` | `open`, `title`, `message`, `confirmLabel`, `cancelLabel`, `showInput`, `inputLabel`, `inputValue` | `confirmAction(p)`, `promptAction(p)`, `resolveConfirmAction(ok)`, `setInputValue(v)` |
 | `fullscreenModel` | `@/features/shared/full-screen-model` | `isFullscreen` | `toggleFullscreen()` |
-| `floatingPanelModel` | `@/features/control/floating-panel-model` | `active`, `isDirty` | `openFloatingPanel(...)`, `closeFloatingPanel(b)`, `requestFloatingPanelClose(r?)`, `setDirty(b)` |
+| `floatingPanelModel` | `@/features/control/floating-panel-model` | `panels`, `hasDirtyPanels` (computed) | `openFloatingPanel(...) → FloatingPanelHandle`, `requestFloatingPanelClose(handle, r?)`, `closeFloatingPanel(handle, accepted)` |
 | `leaderboardModel` | `@/features/leaderboard/leaderboard-model` | `userIds`, `currentBottomView`, `currentResolvedUserId`, `getSignal(id)` | `sync(show, upToEventId?)` |
 | `assetsManagerModel` | `@/features/assets-manager/assets-manager-model` | `folderTree`, `selectedEntryId`, `selectedIds`, `viewMode`, `expandedFolderIds`, `entries` (computed), `focusedPanel` | `selectEntry(id)`, `clearSelection()`, `handleEntryClick(e, idx)`, `setViewMode(m)`, `toggleFolder(id)`, `expandAll()`, `collapseAll()`, `createFolder(pid, name)`, `uploadAsset(fid, file)`, `renameEntry(id, isDir, name)`, `deleteEntry(id, isDir)`, `findEntry(id)`, `findEntryName(id)`, `applyShowState(data)`, `setInvalidateCache(fn)`, `ensureFolderPath(root, parts)` |
 
-Other model files: `floating-panel-types.ts` (`@/features/control`).
+Other model files: `floating-panel-types.ts` (`@/features/control`). `floating-panel-model.ts`
+also exports the `FloatingPanelHandle` type (per-panel `isDirty`/`isSaving` signals, `result`
+promise, `close(accepted)` / `requestClose(reason?)` actions).
+
+Non-`createModel` singletons: `extensionRegistry` (`@/features/extensions/base/registry`) — static
+extension registry (`extensionList`, `extensionWithExtId(id)`, `configFormFor(id)`);
+`sharedRendererRegistry` (`@/features/extensions/renderers`) — TGB Form field renderers.
 
 ## Feature directories (model locations)
 
@@ -33,6 +39,7 @@ Models live alongside their feature code. The table below shows where each featu
 | `@/features/leaderboard/` | Leaderboard grid/table views |
 | `@/features/assets-manager/` | Folder/file asset browser with tree view |
 | `@/features/shared/` | Shared UI components used across features |
+| `@/features/extensions/` | Extension registry, config UI, server patch API |
 
 ## Declare a new store (`src/features/<feature>/my-model.ts`)
 

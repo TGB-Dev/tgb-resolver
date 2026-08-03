@@ -211,16 +211,13 @@ export type TimelineEventSnapshot = {
     id?: number;
     position?: number;
     type?: TimelineEventType;
+    durationSeconds?: number | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
     resolve?: ResolveEventPayloadSnapshot | null;
-    image?: MediaEventPayloadSnapshot | null;
-    sfx?: MediaEventPayloadSnapshot | null;
     pre?: ResolveEventPayloadSnapshot | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export enum TimelineEventType {
@@ -228,14 +225,6 @@ export enum TimelineEventType {
      * Res
      */
     RES = 'Res',
-    /**
-     * Img
-     */
-    IMG = 'Img',
-    /**
-     * Sfx
-     */
-    SFX = 'Sfx',
     /**
      * Pre
      */
@@ -257,9 +246,11 @@ export type ResolveEventPayloadSnapshot = {
     timeSinceStart?: number;
 };
 
-export type MediaEventPayloadSnapshot = {
-    assetId?: string;
-    durationSeconds?: number | null;
+export type CustomEventPayloadSnapshot = {
+    extId?: string;
+    extPayload?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 export type SetAutomationRequest = {
@@ -314,34 +305,21 @@ export type ResolveEventRenameRequest = {
 
 export type NonResolveEventPatchRequest = {
     showVersion?: number;
-    type?: TimelineEventType | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
-    payload?: MediaEventPatchPayload | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
-};
-
-export type MediaEventPatchPayload = {
-    imageId?: string | null;
-    sfxId?: string | null;
-    durationSeconds?: number | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export type CreateTimelineEventRequest = {
     showVersion?: number;
-    type?: TimelineEventType;
     relativeToEventId?: number;
     before?: boolean;
+    durationSeconds?: number | null;
     triggerOffsetSeconds?: number | null;
     requireManualInteraction?: boolean | null;
     customName?: string | null;
-    payload?: MediaEventPatchPayload | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export type MoveTimelineEventRequest = {
@@ -352,14 +330,13 @@ export type MoveTimelineEventRequest = {
 
 export type PatchTimelineEventRequest = {
     showVersion?: number;
+    durationSeconds?: number | null;
+    useDefaultDuration?: boolean;
     customName?: string | null;
-    type?: TimelineEventType | null;
     triggerOffsetSeconds?: number | null;
+    clearTriggerOffset?: boolean;
     requireManualInteraction?: boolean | null;
-    payload?: MediaEventPatchPayload | null;
-    custom?: {
-        [key: string]: unknown;
-    } | null;
+    custom?: CustomEventPayloadSnapshot | null;
 };
 
 export type SetTimelineModeRequest = {
@@ -395,6 +372,13 @@ export type RenameEntryRequest = {
 export type MoveAssetRequest = {
     showVersion?: number;
     targetFolderId: string;
+};
+
+export type TransferEntryRequest = {
+    showVersion?: number;
+    isDirectory?: boolean;
+    targetFolderId?: string | null;
+    copy?: boolean;
 };
 
 export type GetData = {
@@ -980,3 +964,30 @@ export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses = {
 };
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointData = {
+    body: TransferEntryRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/entries/{id}/transfer';
+};
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+};
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointError = TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses];

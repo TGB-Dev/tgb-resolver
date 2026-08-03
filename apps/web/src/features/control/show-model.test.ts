@@ -1,4 +1,4 @@
-import type { PlaySfxEvent, ShowFile, TimelineEvent } from "@tgb-resolver/realtime";
+import type { CustomEvent, ShowFile, TimelineEvent } from "@tgb-resolver/realtime";
 import {
   PlaybackStatus,
   ShowMessageType,
@@ -40,13 +40,13 @@ function makeShow(showVersion: number, events: TimelineEvent[]): ShowFile {
 function event(
   id: number,
   position: number,
-  type: TimelineEventType.SFX = TimelineEventType.SFX,
+  type: TimelineEventType.CUS = TimelineEventType.CUS,
 ): TimelineEvent {
   return {
     id,
     position,
     type,
-    payload: { sfxId: `s${id}`, durationSeconds: 1 },
+    payload: { extId: `ext${id}`, extPayload: { key: "value" } },
   };
 }
 
@@ -90,14 +90,14 @@ test("applies a granular update in place without touching order", () => {
     event: {
       id: 1,
       position: 1,
-      type: TimelineEventType.SFX,
-      payload: { sfxId: "updated", durationSeconds: 9 },
+      type: TimelineEventType.CUS,
+      payload: { extId: "updated", extPayload: { key: "value" } },
     },
   });
 
   expect(applied).toBe(true);
   expect(showModel.dataVersion.value).toBe(2);
-  expect((showModel.showEvents.value[1] as PlaySfxEvent).payload.sfxId).toBe("updated");
+  expect((showModel.showEvents.value[1] as CustomEvent).payload.extId).toBe("updated");
   expect(showModel.showOrderedIds.value).toEqual([1, 2]);
 });
 
@@ -117,6 +117,7 @@ test("applies a granular remove", () => {
 
 test("applies a reorder from the server's authoritative id list", () => {
   showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+  const eventsBeforeReorder = showModel.showEvents.value;
 
   const applied = showModel.tryApplyShowMessage({
     type: ShowMessageType.TimelineReordered,
@@ -126,6 +127,39 @@ test("applies a reorder from the server's authoritative id list", () => {
 
   expect(applied).toBe(true);
   expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
+  expect(showModel.showEvents.value).toBe(eventsBeforeReorder);
+});
+
+test("optimistically reorders rows with updated positions and rolls back the snapshot", () => {
+  showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+  const itemBeforeReorder = showModel.timelineItemsById.value[1];
+
+  const snapshot = showModel.optimisticallyReorderTimeline([3, 1, 2]);
+
+  expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
+  expect(showModel.timelineItemsById.value[1]).toBe(itemBeforeReorder);
+  expect(showModel.rows.value.map((row) => row.position)).toEqual([1, 2, 3]);
+
+  showModel.restoreTimelineOrder(snapshot);
+
+  expect(showModel.showOrderedIds.value).toEqual([1, 2, 3]);
+  expect(showModel.rows.value.map((row) => row.position)).toEqual([1, 2, 3]);
+});
+
+test("does not roll back an optimistic reorder after an authoritative reorder arrives", () => {
+  showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+
+  const snapshot = showModel.optimisticallyReorderTimeline([3, 1, 2]);
+  showModel.tryApplyShowMessage({
+    type: ShowMessageType.TimelineReordered,
+    showVersion: 3,
+    orderedEventIds: [2, 3, 1],
+  });
+
+  const restored = showModel.restoreTimelineOrderIfCurrent(snapshot, [3, 1, 2]);
+
+  expect(restored).toBe(false);
+  expect(showModel.showOrderedIds.value).toEqual([2, 3, 1]);
 });
 
 test("rejects an out-of-order diff and reports the gap for repair-refetch", () => {

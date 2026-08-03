@@ -12,8 +12,6 @@ export enum PlaybackStatus {
 /** Transpiled from TGB.Resolver.Server.Commons.Types.TimelineEventType */
 export enum TimelineEventType {
     Res = "Res",
-    Img = "Img",
-    Sfx = "Sfx",
     Pre = "Pre",
     Cus = "Cus",
 }

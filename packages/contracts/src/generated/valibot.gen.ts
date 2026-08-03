@@ -124,8 +124,6 @@ export const vAssetCollectionSnapshot = v.strictObject({
 
 export const vTimelineEventType = v.picklist([
     'Res',
-    'Img',
-    'Sfx',
     'Pre',
     'Cus'
 ]);
@@ -141,23 +139,22 @@ export const vResolveEventPayloadSnapshot = v.strictObject({
     timeSinceStart: v.optional(v.number())
 });
 
-export const vMediaEventPayloadSnapshot = v.strictObject({
-    assetId: v.optional(v.string()),
-    durationSeconds: v.nullish(v.number())
+export const vCustomEventPayloadSnapshot = v.strictObject({
+    extId: v.optional(v.string()),
+    extPayload: v.nullish(v.record(v.string(), v.unknown()))
 });
 
 export const vTimelineEventSnapshot = v.strictObject({
     id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     position: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     type: v.optional(vTimelineEventType),
+    durationSeconds: v.nullish(v.number()),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
     customName: v.nullish(v.string()),
     resolve: v.nullish(vResolveEventPayloadSnapshot),
-    image: v.nullish(vMediaEventPayloadSnapshot),
-    sfx: v.nullish(vMediaEventPayloadSnapshot),
     pre: v.nullish(vResolveEventPayloadSnapshot),
-    custom: v.nullish(v.record(v.string(), v.unknown()))
+    custom: v.nullish(vCustomEventPayloadSnapshot)
 });
 
 export const vShowStateSnapshot = v.strictObject({
@@ -212,32 +209,23 @@ export const vResolveEventRenameRequest = v.strictObject({
     customName: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(100)))
 });
 
-export const vMediaEventPatchPayload = v.strictObject({
-    imageId: v.nullish(v.string()),
-    sfxId: v.nullish(v.string()),
-    durationSeconds: v.nullish(v.number())
-});
-
 export const vNonResolveEventPatchRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    type: v.nullish(vTimelineEventType),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
     customName: v.nullish(v.string()),
-    payload: v.nullish(vMediaEventPatchPayload),
-    custom: v.nullish(v.record(v.string(), v.unknown()))
+    custom: v.nullish(vCustomEventPayloadSnapshot)
 });
 
 export const vCreateTimelineEventRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    type: v.optional(vTimelineEventType),
     relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     before: v.optional(v.boolean()),
+    durationSeconds: v.nullish(v.number()),
     triggerOffsetSeconds: v.nullish(v.number()),
     requireManualInteraction: v.nullish(v.boolean()),
     customName: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(100))),
-    payload: v.nullish(vMediaEventPatchPayload),
-    custom: v.nullish(v.record(v.string(), v.unknown()))
+    custom: v.nullish(vCustomEventPayloadSnapshot)
 });
 
 export const vMoveTimelineEventRequest = v.strictObject({
@@ -248,12 +236,13 @@ export const vMoveTimelineEventRequest = v.strictObject({
 
 export const vPatchTimelineEventRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    durationSeconds: v.nullish(v.number()),
+    useDefaultDuration: v.optional(v.boolean()),
     customName: v.nullish(v.string()),
-    type: v.nullish(vTimelineEventType),
     triggerOffsetSeconds: v.nullish(v.number()),
+    clearTriggerOffset: v.optional(v.boolean()),
     requireManualInteraction: v.nullish(v.boolean()),
-    payload: v.nullish(vMediaEventPatchPayload),
-    custom: v.nullish(v.record(v.string(), v.unknown()))
+    custom: v.nullish(vCustomEventPayloadSnapshot)
 });
 
 export const vSetTimelineModeRequest = v.strictObject({
@@ -289,6 +278,13 @@ export const vRenameEntryRequest = v.strictObject({
 export const vMoveAssetRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     targetFolderId: v.pipe(v.string(), v.minLength(1))
+});
+
+export const vTransferEntryRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    isDirectory: v.optional(v.boolean()),
+    targetFolderId: v.nullish(v.string()),
+    copy: v.optional(v.boolean())
 });
 
 export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequest;
@@ -495,3 +491,14 @@ export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointPath = v.object({
  * Success
  */
 export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointBody = vTransferEntryRequest;
+
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = vShowStateSnapshot;

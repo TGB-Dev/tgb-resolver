@@ -5,6 +5,7 @@ using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
 using TGB.Resolver.Server.Commons.Exceptions;
 using TGB.Resolver.Server.Commons.Serialization;
+using TGB.Resolver.Server.Commons.Types;
 using TGB.Resolver.Server.Features.Assets;
 using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
@@ -92,6 +93,26 @@ public sealed class ShowStateServiceTests
     await hub.Clients.All.DidNotReceive().ShowReplaced(Arg.Any<ShowReplacedMessage>());
     var after = await service.GetSnapshotAsync();
     await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
+  }
+
+  [Test]
+  public async Task NonPlaybackShowMutations_IncrementShowVersion()
+  {
+    var (service, hub) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var timelineMode = await service.SetTimelineModeAsync(
+      new SetTimelineModeRequest(before.ShowVersion, TimelineMode.Ro));
+    await Assert.That(timelineMode.ShowVersion).IsEqualTo(before.ShowVersion + 1);
+
+    var automation = await service.SetAutomationAsync(
+      new SetAutomationRequest(timelineMode.ShowVersion, null, null, true));
+    await Assert.That(automation.ShowVersion).IsEqualTo(timelineMode.ShowVersion + 1);
+
+    var live = await service.SetLiveModeAsync(true);
+    await Assert.That(live.ShowVersion).IsEqualTo(automation.ShowVersion + 1);
+    await hub.Clients.All.Received(2).ShowReplaced(Arg.Any<ShowReplacedMessage>());
+    await hub.Clients.All.Received(1).LiveModeChanged(Arg.Any<LiveModeChangedMessage>());
   }
 
   [Test]
@@ -234,8 +255,302 @@ public sealed class ShowStateServiceTests
     await Assert.That(snapshot.Assets.Items[0].FolderId).IsEqualTo(string.Empty);
   }
 
+  [Test]
+  public async Task TransferEntry_CopyAsset_CreatesNewAssetInTargetFolder()
+  {
+    var assetStore = CreateAssetStore();
+    var (service, _) = await CreateServiceAsync(assetStore);
+    var before = await service.GetSnapshotAsync();
+    var folder = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Target"));
+
+    var assetId = "asset-1";
+    var bytes = Convert.ToBase64String([0x01, 0x02, 0x03]);
+    await assetStore.SaveAsync(assetId, Convert.FromBase64String(bytes));
+    var withAsset = await service.UpsertAssetAsync(assetId,
+      new UpsertAssetRequest(folder.ShowVersion, "test.png", "image/png", bytes));
+
+    var snapshot = await service.TransferEntryAsync(
+      new TransferEntryRequest(
+        withAsset.ShowVersion,
+        assetId,
+        false,
+        folder.Assets.Folders[0].Id,
+        true));
+
+    await Assert.That(snapshot.Assets.Items).Count().IsEqualTo(2);
+    var copy = snapshot.Assets.Items.Single(item => item.Id != assetId);
+    await Assert.That(copy.FolderId).IsEqualTo(folder.Assets.Folders[0].Id);
+  }
+
+  [Test]
+  public async Task TransferEntry_MoveFolder_ReparentsFolder()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var root = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Root"));
+    var child = await service.CreateFolderAsync(
+      new CreateFolderRequest(root.ShowVersion, root.Assets.Folders[0].Id, "Child"));
+    var destination = await service.CreateFolderAsync(
+      new CreateFolderRequest(child.ShowVersion, string.Empty, "Destination"));
+
+    var childId = child.Assets.Folders[0].Children[0].Id;
+    var destinationId = destination.Assets.Folders.First(f => f.Name == "Destination").Id;
+
+    var snapshot = await service.TransferEntryAsync(
+      new TransferEntryRequest(destination.ShowVersion, childId, true, destinationId, false));
+
+    var rootFolder = snapshot.Assets.Folders.First(f => f.Name == "Root");
+    await Assert.That(rootFolder.Children).IsEmpty();
+    var destinationFolder = snapshot.Assets.Folders.First(f => f.Name == "Destination");
+    await Assert.That(destinationFolder.Children.Any(f => f.Name == "Child")).IsTrue();
+  }
+
+  [Test]
+  public async Task TransferEntry_RejectsMissingTargetFolder_WithoutChangingSnapshot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var folder = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+    var snapshotBeforeTransfer = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.TransferEntryAsync(
+        new TransferEntryRequest(snapshotBeforeTransfer.ShowVersion, folder.Assets.Folders[0].Id,
+          true,
+          "missing-folder", false)))
+      .Throws<InvalidOperationException>();
+
+    var after = await service.GetSnapshotAsync();
+    await AssertSnapshotUnchangedAsync(after, snapshotBeforeTransfer);
+  }
+
+  [Test]
+  public async Task TransferEntry_RejectsFolderTransferIntoDescendant_WithoutChangingSnapshot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var root = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Root"));
+    var child = await service.CreateFolderAsync(
+      new CreateFolderRequest(root.ShowVersion, root.Assets.Folders[0].Id, "Child"));
+    var snapshotBeforeTransfer = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.TransferEntryAsync(
+        new TransferEntryRequest(snapshotBeforeTransfer.ShowVersion, root.Assets.Folders[0].Id,
+          true,
+          child.Assets.Folders[0].Children[0].Id, false)))
+      .Throws<InvalidOperationException>();
+
+    var after = await service.GetSnapshotAsync();
+    await AssertSnapshotUnchangedAsync(after, snapshotBeforeTransfer);
+  }
+
+  [Test]
+  public async Task TransferEntry_RejectsNoOpFolderMove_WithoutChangingSnapshot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var folder = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+    var snapshotBeforeTransfer = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.TransferEntryAsync(
+        new TransferEntryRequest(snapshotBeforeTransfer.ShowVersion, folder.Assets.Folders[0].Id,
+          true,
+          string.Empty, false)))
+      .Throws<InvalidOperationException>();
+
+    var after = await service.GetSnapshotAsync();
+    await AssertSnapshotUnchangedAsync(after, snapshotBeforeTransfer);
+  }
+
+  [Test]
+  public async Task MoveAsset_NormalizesWhitespaceTargetFolderToRoot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var folder = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Folder"));
+    var withAsset = await service.UpsertAssetAsync("asset-1",
+      new UpsertAssetRequest(folder.ShowVersion, "test.png", "image/png",
+        Convert.ToBase64String([0x01]))
+      {
+        FolderId = folder.Assets.Folders[0].Id
+      });
+
+    var snapshot = await service.MoveAssetAsync(
+      new MoveAssetRequest(withAsset.ShowVersion, "asset-1", "   "));
+
+    await Assert.That(snapshot.Assets.Items[0].FolderId).IsEqualTo(string.Empty);
+  }
+
+  [Test]
+  public async Task TransferEntry_CopyNestedFolder_CopiesChildrenAndAssets()
+  {
+    var assetStore = CreateAssetStore();
+    var (service, _) = await CreateServiceAsync(assetStore);
+    var before = await service.GetSnapshotAsync();
+    var source = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+    var nested = await service.CreateFolderAsync(
+      new CreateFolderRequest(source.ShowVersion, source.Assets.Folders[0].Id, "Nested"));
+    var destination = await service.CreateFolderAsync(
+      new CreateFolderRequest(nested.ShowVersion, string.Empty, "Destination"));
+    await assetStore.SaveAsync("asset-1", [0x01]);
+    var withAsset = await service.UpsertAssetAsync("asset-1",
+      new UpsertAssetRequest(destination.ShowVersion, "test.png", "image/png",
+        Convert.ToBase64String([0x01]))
+      {
+        FolderId = nested.Assets.Folders[0].Children[0].Id
+      });
+
+    var snapshot = await service.TransferEntryAsync(
+      new TransferEntryRequest(withAsset.ShowVersion, source.Assets.Folders[0].Id, true,
+        destination.Assets.Folders.Single(folder => folder.Name == "Destination").Id, true));
+
+    var copiedSource = snapshot.Assets.Folders.Single(folder => folder.Name == "Destination")
+      .Children
+      .Single(folder => folder.Name == "Source");
+    var copiedNested = copiedSource.Children.Single();
+    var copiedAsset = snapshot.Assets.Items.Single(asset => asset.Id != "asset-1");
+    await Assert.That(copiedSource.Id).IsNotEqualTo(source.Assets.Folders[0].Id);
+    await Assert.That(copiedNested.Id).IsNotEqualTo(nested.Assets.Folders[0].Children[0].Id);
+    await Assert.That(copiedAsset.Id).IsNotEqualTo("asset-1");
+    await Assert.That(copiedAsset.FolderId).IsEqualTo(copiedNested.Id);
+    await Assert.That(await assetStore.ReadAsync(copiedAsset.Id))
+      .IsEquivalentTo(new byte[] { 0x01 });
+  }
+
+  [Test]
+  public async Task TransferEntry_RejectsFolderCopyIntoSelf_WithoutChangingSnapshot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var source = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+    var snapshotBeforeCopy = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.TransferEntryAsync(
+        new TransferEntryRequest(snapshotBeforeCopy.ShowVersion, source.Assets.Folders[0].Id, true,
+          source.Assets.Folders[0].Id, true)))
+      .Throws<InvalidOperationException>();
+
+    await AssertSnapshotUnchangedAsync(await service.GetSnapshotAsync(), snapshotBeforeCopy);
+  }
+
+  [Test]
+  public async Task TransferEntry_RejectsFolderCopyIntoDescendant_WithoutChangingSnapshot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var source = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+    var nested = await service.CreateFolderAsync(
+      new CreateFolderRequest(source.ShowVersion, source.Assets.Folders[0].Id, "Nested"));
+    var snapshotBeforeCopy = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.TransferEntryAsync(
+        new TransferEntryRequest(snapshotBeforeCopy.ShowVersion, source.Assets.Folders[0].Id, true,
+          nested.Assets.Folders[0].Children[0].Id, true)))
+      .Throws<InvalidOperationException>();
+
+    await AssertSnapshotUnchangedAsync(await service.GetSnapshotAsync(), snapshotBeforeCopy);
+  }
+
+  [Test]
+  public async Task TransferEntry_RejectsFolderCopyToMissingTarget_WithoutChangingSnapshot()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var source = await service.CreateFolderAsync(
+      new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+    var snapshotBeforeCopy = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.TransferEntryAsync(
+        new TransferEntryRequest(snapshotBeforeCopy.ShowVersion, source.Assets.Folders[0].Id, true,
+          "missing-folder", true)))
+      .Throws<InvalidOperationException>();
+
+    await AssertSnapshotUnchangedAsync(await service.GetSnapshotAsync(), snapshotBeforeCopy);
+  }
+
+  [Test]
+  public async Task TransferEntry_StaleAssetCopy_RollsBackCopiedFile()
+  {
+    var contentRoot = Path.Combine(Path.GetTempPath(), $"tgb-resolver-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(contentRoot);
+    try
+    {
+      var assetStore = CreateAssetStore(contentRoot);
+      var (service, _) = await CreateServiceAsync(assetStore);
+      await assetStore.SaveAsync("asset-1", [0x01]);
+      var before = await service.GetSnapshotAsync();
+      var withAsset = await service.UpsertAssetAsync("asset-1",
+        new UpsertAssetRequest(before.ShowVersion, "test.png", "image/png",
+          Convert.ToBase64String([0x01])));
+
+      await Assert.That(async () => await service.TransferEntryAsync(
+          new TransferEntryRequest(withAsset.ShowVersion - 1, "asset-1", false, string.Empty,
+            true)))
+        .Throws<VersionDriftException>();
+
+      var storedFiles = Directory.GetFiles(Path.Combine(contentRoot, ".data", "assets"));
+      await Assert.That(storedFiles.Select(path => Path.GetFileName(path)))
+        .IsEquivalentTo(["asset-1"]);
+    }
+    finally
+    {
+      Directory.Delete(contentRoot, true);
+    }
+  }
+
+  [Test]
+  public async Task TransferEntry_StaleFolderCopy_RollsBackCopiedFiles()
+  {
+    var contentRoot = Path.Combine(Path.GetTempPath(), $"tgb-resolver-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(contentRoot);
+    try
+    {
+      var assetStore = CreateAssetStore(contentRoot);
+      var (service, _) = await CreateServiceAsync(assetStore);
+      var before = await service.GetSnapshotAsync();
+      var source = await service.CreateFolderAsync(
+        new CreateFolderRequest(before.ShowVersion, string.Empty, "Source"));
+      await assetStore.SaveAsync("asset-1", [0x01]);
+      var withAsset = await service.UpsertAssetAsync("asset-1",
+        new UpsertAssetRequest(source.ShowVersion, "test.png", "image/png",
+          Convert.ToBase64String([0x01]))
+        {
+          FolderId = source.Assets.Folders[0].Id
+        });
+
+      await Assert.That(async () => await service.TransferEntryAsync(
+          new TransferEntryRequest(withAsset.ShowVersion - 1, source.Assets.Folders[0].Id, true,
+            string.Empty, true)))
+        .Throws<VersionDriftException>();
+
+      var storedFiles = Directory.GetFiles(Path.Combine(contentRoot, ".data", "assets"));
+      await Assert.That(storedFiles.Select(path => Path.GetFileName(path)))
+        .IsEquivalentTo(["asset-1"]);
+    }
+    finally
+    {
+      Directory.Delete(contentRoot, true);
+    }
+  }
+
+  private static async Task AssertSnapshotUnchangedAsync(ShowStateSnapshot actual,
+    ShowStateSnapshot expected)
+  {
+    await Assert.That(actual.ShowVersion).IsEqualTo(expected.ShowVersion);
+    await Assert.That(actual.Assets.Items).IsEquivalentTo(expected.Assets.Items);
+    await Assert.That(actual.Assets.Folders).IsEquivalentTo(expected.Assets.Folders);
+  }
+
   private static async Task<(ShowStateService Service, IHubContext<ShowHub, IShowHubClient> Hub)>
-    CreateServiceAsync()
+    CreateServiceAsync(AssetStore? assetStore = null)
   {
     var options = new DbContextOptionsBuilder<ResolverDbContext>()
       .UseSqlite("Data Source=:memory:")
@@ -249,17 +564,17 @@ public sealed class ShowStateServiceTests
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
     var orchestrator = new TimelineOrchestrator(null!);
-    var assetStore = CreateAssetStore();
+    assetStore ??= CreateAssetStore();
     var service = new ShowStateService(
       repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
     await service.EnsureSeededAsync();
     return (service, hubContext);
   }
 
-  private static AssetStore CreateAssetStore()
+  private static AssetStore CreateAssetStore(string? contentRootPath = null)
   {
     var environment = Substitute.For<IHostEnvironment>();
-    environment.ContentRootPath.Returns(Path.GetTempPath());
+    environment.ContentRootPath.Returns(contentRootPath ?? Path.GetTempPath());
     return new AssetStore(environment);
   }
 }

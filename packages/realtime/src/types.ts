@@ -1,14 +1,20 @@
 import {
   type AssetCollectionSnapshot,
   type AutomationSnapshot,
+  type ContestSnapshot,
+  type FreezeSnapshotEntrySnapshot,
   type PlaybackStateSnapshot,
   PlaybackStatus,
+  type ProblemDefinitionSnapshot,
+  type ProblemFreezeResultSnapshot,
+  type ResolveEventPayloadSnapshot,
   type ShowAssetSnapshot,
   type ShowMetaSnapshot,
   ShowMode,
   ShowSource,
   TimelineEventType,
   TimelineMode,
+  type UserDefinitionSnapshot,
   VerdictRunResult,
 } from "@tgb-resolver/contracts";
 
@@ -20,43 +26,41 @@ export type ShowAutomation = AutomationSnapshot;
 export type ShowAssets = AssetCollectionSnapshot;
 export type ShowAsset = ShowAssetSnapshot;
 
-export interface ProblemDefinition {
-  id: number;
-  label: string;
-  name: string;
-  score: number;
-}
+export type ProblemDefinition = Required<ProblemDefinitionSnapshot>;
+export type UserDefinition = Required<UserDefinitionSnapshot>;
 
-export interface UserDefinition {
-  id: number;
-  username: string;
-  realName: string;
-}
-
-export interface ProblemFreezeResult {
-  problemId: number;
-  score: number;
+export type ProblemFreezeResult = Required<Omit<ProblemFreezeResultSnapshot, "verdict">> & {
   verdict: VerdictRunResult;
-  preFreezeSubmissionCount: number;
-  postFreezeSubmissionCount: number;
-}
+};
 
-export interface FreezeSnapshotEntry {
-  userId: number;
-  totalScore: number;
-  totalPenalty: number;
-  rank: number;
+export type FreezeSnapshotEntry = Required<
+  Omit<FreezeSnapshotEntrySnapshot, "problems" | "lastRunId" | "lastSubmittedSeconds">
+> & {
   problems: ProblemFreezeResult[];
   lastRunId: number | null;
   lastSubmittedSeconds: number | null;
-}
+};
 
-export interface ShowContestData {
-  durationSeconds: number;
-  freezeDurationSeconds: number;
+export type ShowContestData = Required<
+  Omit<ContestSnapshot, "problems" | "users" | "preFreezeSnapshot">
+> & {
   problems: ProblemDefinition[];
   users: UserDefinition[];
   preFreezeSnapshot: FreezeSnapshotEntry[];
+};
+
+export type ResolvePayload = Required<ResolveEventPayloadSnapshot>;
+
+export interface ClockSyncRequest {
+  sessionId: string;
+  clientSentAtUnixMs: number;
+}
+
+export interface ClockSyncResponse {
+  sessionId: string;
+  clientSentAtUnixMs: number;
+  serverReceivedAtUnixMs: number;
+  serverTransmittedAtUnixMs: number;
 }
 
 export type {
@@ -82,56 +86,18 @@ export {
 export const SHOW_SCHEMA_VERSION = 1;
 export const FILE_EXTENSION = ".tgbresolver";
 
-export interface ClockSyncRequest {
-  sessionId: string;
-  clientSentAtUnixMs: number;
-}
-
-export interface ClockSyncResponse {
-  sessionId: string;
-  clientSentAtUnixMs: number;
-  serverReceivedAtUnixMs: number;
-  serverTransmittedAtUnixMs: number;
-}
-
 export interface EventBase {
   id: number;
   position: number;
+  durationSeconds?: number;
   triggerOffsetSeconds?: number;
   requireManualInteraction?: boolean;
   customName?: string;
 }
 
-export interface ResolvePayload {
-  userId: number;
-  problemId: number;
-  newTotalScore: number;
-  newTotalPenalty: number;
-  newRank: number;
-  newProblemScore: number;
-  verdict: VerdictRunResult;
-  timeSinceStart: number;
-}
-
 export interface ResolveEvent extends EventBase {
   type: TimelineEventType.RES;
   payload: ResolvePayload;
-}
-
-export interface ShowImageEvent extends EventBase {
-  type: TimelineEventType.IMG;
-  payload: {
-    imageId: string;
-    durationSeconds?: number;
-  };
-}
-
-export interface PlaySfxEvent extends EventBase {
-  type: TimelineEventType.SFX;
-  payload: {
-    sfxId: string;
-    durationSeconds?: number;
-  };
 }
 
 export interface PreResolveEvent extends EventBase {
@@ -141,15 +107,13 @@ export interface PreResolveEvent extends EventBase {
 
 export interface CustomEvent extends EventBase {
   type: TimelineEventType.CUS;
-  payload: Record<string, unknown>;
+  payload: {
+    extId: string;
+    extPayload?: Record<string, unknown>;
+  };
 }
 
-export type TimelineEvent =
-  | ResolveEvent
-  | ShowImageEvent
-  | PlaySfxEvent
-  | PreResolveEvent
-  | CustomEvent;
+export type TimelineEvent = ResolveEvent | PreResolveEvent | CustomEvent;
 
 export interface ShowFile {
   schemaVersion: typeof SHOW_SCHEMA_VERSION;
@@ -173,26 +137,32 @@ export type ShowWebSocketMessage =
   | { type: ShowMessageType.PlaybackStateChanged; showVersion: number; playback: ShowPlaybackState }
   | { type: ShowMessageType.LiveModeChanged; showVersion: number; mode: ShowMode };
 
-export interface TimelineTableItem {
-  id: number;
+export interface TimelineTableItem extends EventBase {
   type: TimelineEventType;
   name: string;
-  customName?: string;
   placeholderName: string;
+
+  // Joined user / problem metadata for display
   realName?: string;
   username?: string;
   problem?: string;
   problemDisplayName?: string;
-  newProblemScore?: number;
+
+  // Joined resolution calculations
   oldScore?: number;
   oldRank?: number;
-  newTotalScore?: number;
-  newRank?: number;
-  verdict?: VerdictRunResult;
-  triggerOffsetSeconds?: number;
-  requireManualInteraction?: boolean;
   durationSeconds?: number;
-  assetId?: string;
+
+  // Flattened ResolvePayload fields
+  newProblemScore?: ResolvePayload["newProblemScore"];
+  newTotalScore?: ResolvePayload["newTotalScore"];
+  newRank?: ResolvePayload["newRank"];
+  verdict?: ResolvePayload["verdict"];
+
+  // Flattened CustomEvent payload fields
+  extId?: string;
+  extPayload?: Record<string, unknown>;
+
   isActive: boolean;
 }
 

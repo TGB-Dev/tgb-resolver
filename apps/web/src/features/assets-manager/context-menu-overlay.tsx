@@ -1,7 +1,9 @@
 import { Box, Button, Portal, Separator, Text } from "@chakra-ui/react";
 
 import { confirmActionModel } from "@/features/shared/confirm-action-model";
+import { toaster } from "@/features/shared/ui/toaster";
 
+import { assetsInteractionModel } from "./assets-interaction-model";
 import { assetsManagerModel } from "./assets-manager-model";
 import { processUploadBatch } from "./upload-helpers";
 import type { ContextMenuState } from "./use-context-menu";
@@ -11,6 +13,11 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
 interface ContextMenuOverlayProps {
   state: ContextMenuState;
   onClose: () => void;
+}
+
+function handleOperationError(error: unknown, label: string): void {
+  const description = error instanceof Error ? error.message : String(error);
+  toaster.create({ title: label, description, type: "error" });
 }
 
 export function ContextMenuOverlay({ state, onClose }: ContextMenuOverlayProps) {
@@ -43,7 +50,7 @@ export function ContextMenuOverlay({ state, onClose }: ContextMenuOverlayProps) 
             <FileMenuItems target={state.target} onClose={handleClose} />
           )
         ) : (
-          <ContainerMenuItems onClose={handleClose} />
+          <ContainerMenuItems targetFolderId={state.targetFolderId} onClose={handleClose} />
         )}
       </Box>
     </Portal>
@@ -54,10 +61,12 @@ function MenuItemButton({
   label,
   onClick,
   danger,
+  disabled,
 }: {
   label: string;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Button
@@ -69,10 +78,14 @@ function MenuItemButton({
       px={3}
       borderRadius="none"
       color={danger ? "fg.error" : undefined}
+      disabled={disabled}
       _hover={
         danger ? { bg: "bg.error", color: "fg.error" } : { bg: "bg.subtle", color: undefined }
       }
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        void onClick();
+      }}
     >
       {label}
     </Button>
@@ -101,13 +114,21 @@ async function promptDirectory(): Promise<FileList | null> {
   });
 }
 
-function ContainerMenuItems({ onClose }: { onClose: () => void }) {
+function ContainerMenuItems({
+  targetFolderId,
+  onClose,
+}: {
+  targetFolderId: string | null;
+  onClose: () => void;
+}) {
+  const canPaste = assetsInteractionModel.canPasteInto(targetFolderId);
+
   return (
     <>
       <MenuItemButton
         label="Upload Files"
         onClick={async () => {
-          const folderId = assetsManagerModel.selectedEntryId.value;
+          const folderId = targetFolderId;
           const files = await promptFiles();
           onClose();
           if (files) {
@@ -119,7 +140,7 @@ function ContainerMenuItems({ onClose }: { onClose: () => void }) {
       <MenuItemButton
         label="Upload Folder"
         onClick={async () => {
-          const folderId = assetsManagerModel.selectedEntryId.value;
+          const folderId = targetFolderId;
           const files = await promptDirectory();
           onClose();
           if (files) {
@@ -132,17 +153,32 @@ function ContainerMenuItems({ onClose }: { onClose: () => void }) {
         }}
       />
       <MenuItemButton
+        label="Paste"
+        disabled={!canPaste}
+        onClick={async () => {
+          onClose();
+          try {
+            await assetsInteractionModel.pasteInto(targetFolderId);
+          } catch (error) {
+            handleOperationError(error, "Paste");
+          }
+        }}
+      />
+      <Separator />
+      <MenuItemButton
         label="Create Folder"
         onClick={async () => {
-          const folderId = assetsManagerModel.selectedEntryId.value;
-          onClose();
+          const folderId = targetFolderId;
           const name = await confirmActionModel.promptAction({
             title: "Create Folder",
             label: "Folder name",
             confirmLabel: "Create",
           });
+          onClose();
           if (name?.trim()) {
-            assetsManagerModel.createFolder(folderId, name.trim());
+            await assetsManagerModel.createFolder(folderId, name.trim()).catch((error) => {
+              handleOperationError(error, "Create Folder");
+            });
           }
         }}
       />
@@ -174,6 +210,33 @@ function FileMenuItems({
           a.href = `${API_URL}/assets/${target.id}`;
           a.download = target.name;
           a.click();
+        }}
+      />
+      <Separator />
+      <MenuItemButton
+        label="Copy"
+        onClick={() => {
+          onClose();
+          assetsInteractionModel.copySelection(target.id);
+        }}
+      />
+      <MenuItemButton
+        label="Cut"
+        onClick={() => {
+          onClose();
+          assetsInteractionModel.cutSelection(target.id);
+        }}
+      />
+      <MenuItemButton
+        label="Paste"
+        disabled={!assetsInteractionModel.canPasteInto(assetsManagerModel.selectedEntryId.value)}
+        onClick={async () => {
+          onClose();
+          try {
+            await assetsInteractionModel.pasteInto(assetsManagerModel.selectedEntryId.value);
+          } catch (error) {
+            handleOperationError(error, "Paste");
+          }
         }}
       />
       <Separator />
@@ -261,6 +324,33 @@ function FolderMenuItems({
           });
           if (name?.trim()) {
             assetsManagerModel.createFolder(target.id, name.trim());
+          }
+        }}
+      />
+      <Separator />
+      <MenuItemButton
+        label="Copy"
+        onClick={() => {
+          onClose();
+          assetsInteractionModel.copySelection(target.id);
+        }}
+      />
+      <MenuItemButton
+        label="Cut"
+        onClick={() => {
+          onClose();
+          assetsInteractionModel.cutSelection(target.id);
+        }}
+      />
+      <MenuItemButton
+        label="Paste"
+        disabled={!assetsInteractionModel.canPasteInto(target.id)}
+        onClick={async () => {
+          onClose();
+          try {
+            await assetsInteractionModel.pasteInto(target.id);
+          } catch (error) {
+            handleOperationError(error, "Paste");
           }
         }}
       />

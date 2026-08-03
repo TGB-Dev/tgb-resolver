@@ -3,6 +3,7 @@ import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import type { ReactNode } from "react";
 
+import { extensionRegistry } from "@/features/extensions";
 import { useVerdictColor, verdictShortCode } from "@/lib/verdict";
 
 interface CueContentProps {
@@ -40,25 +41,12 @@ export function CueContent({ cue, contentSize }: CueContentProps) {
     );
   }
 
+  if (cue.type === TimelineEventType.CUS) {
+    const extension = extensionRegistry.extensionWithExtId(cue.extId ?? "");
+    if (extension) return <Text fontFamily="mono">{extension.formatCueMessage(cue)}</Text>;
+  }
+
   const resolvedName = cue.customName ?? cue.name;
-
-  if (cue.type === TimelineEventType.IMG) {
-    return (
-      <Text as="span">
-        {resolvedName}
-        {cue.durationSeconds !== undefined ? ` (${cue.durationSeconds}s)` : null}
-      </Text>
-    );
-  }
-
-  if (cue.type === TimelineEventType.SFX) {
-    return (
-      <Text as="span">
-        {resolvedName}
-        {cue.durationSeconds !== undefined ? ` (${cue.durationSeconds}s)` : null}
-      </Text>
-    );
-  }
 
   return <Text fontFamily="mono">{resolvedName}</Text>;
 }

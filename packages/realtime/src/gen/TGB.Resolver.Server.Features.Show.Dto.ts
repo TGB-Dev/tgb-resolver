@@ -45,6 +45,8 @@ export type TimelineEventSnapshot = {
     /** Transpiled from TGB.Resolver.Server.Commons.Types.TimelineEventType */
     Type: TimelineEventType;
     /** Transpiled from double */
+    DurationSeconds?: number;
+    /** Transpiled from double */
     TriggerOffsetSeconds?: number;
     /** Transpiled from bool */
     RequireManualInteraction?: boolean;
@@ -52,14 +54,10 @@ export type TimelineEventSnapshot = {
     CustomName?: string;
     /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot? */
     Resolve?: ResolveEventPayloadSnapshot;
-    /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.MediaEventPayloadSnapshot? */
-    Image?: MediaEventPayloadSnapshot;
-    /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.MediaEventPayloadSnapshot? */
-    Sfx?: MediaEventPayloadSnapshot;
     /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot? */
     Pre?: ResolveEventPayloadSnapshot;
-    /** Transpiled from System.Collections.Generic.Dictionary<string, object?>? */
-    Custom?: Partial<Record<string, any>>;
+    /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.CustomEventPayloadSnapshot? */
+    Custom?: CustomEventPayloadSnapshot;
 }
 
 /** Transpiled from TGB.Resolver.Server.Features.Show.Dto.ResolveEventPayloadSnapshot */
@@ -82,11 +80,11 @@ export type ResolveEventPayloadSnapshot = {
     TimeSinceStart: number;
 }
 
-/** Transpiled from TGB.Resolver.Server.Features.Show.Dto.MediaEventPayloadSnapshot */
-export type MediaEventPayloadSnapshot = {
+/** Transpiled from TGB.Resolver.Server.Features.Show.Dto.CustomEventPayloadSnapshot */
+export type CustomEventPayloadSnapshot = {
     /** Transpiled from string */
-    AssetId: string;
-    /** Transpiled from double */
-    DurationSeconds?: number;
+    ExtId: string;
+    /** Transpiled from System.Collections.Generic.Dictionary<string, object?>? */
+    ExtPayload?: Partial<Record<string, any>>;
 }
 
