@@ -52,6 +52,7 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
         left={0}
         w="full"
         h="full"
+        bg="bg"
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -77,6 +78,7 @@ export function ImageExtensionComponent({ payload }: ImageExtensionComponentProp
       left={0}
       w="full"
       h="full"
+      bg="bg"
       zIndex={1000}
     >
       <img

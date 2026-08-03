@@ -185,6 +185,12 @@ function TimelineReorderList({
   if (!reorderStateRef.current) reorderStateRef.current = createTimelineReorderState();
   const reorderState = reorderStateRef.current;
   const displayIds = reorderState.rows.value ?? orderedIds;
+  const onCommitReorderRef = useRef(onCommitReorder);
+  onCommitReorderRef.current = onCommitReorder;
+  const commitDrag = useCallback(() => {
+    const nextRows = reorderState.take();
+    if (nextRows && !isMovePending.current) onCommitReorderRef.current(nextRows);
+  }, [isMovePending, reorderState]);
 
   return (
     <Reorder.Group
@@ -203,10 +209,7 @@ function TimelineReorderList({
             isLive={isLive}
             onSeek={onSeek}
             onOpenContextMenu={onOpenContextMenu}
-            onCommitReorder={() => {
-              const nextRows = reorderState.take();
-              if (nextRows && !isMovePending.current) onCommitReorder(nextRows);
-            }}
+            onCommitReorder={commitDrag}
           />
         )}
       </For>

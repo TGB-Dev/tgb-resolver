@@ -31,6 +31,24 @@ interface TimelineOrderSnapshot {
   orderedIds: number[];
 }
 
+function hasSameTimelineEventContent(
+  previous: TimelineEvent | undefined,
+  next: TimelineEvent,
+): boolean {
+  if (!previous || previous.type !== next.type) return false;
+
+  const { position: _previousPosition, ...previousContent } = previous;
+  const { position: _nextPosition, ...nextContent } = next;
+  return JSON.stringify(previousContent) === JSON.stringify(nextContent);
+}
+
+function hasSameDerivedContext(
+  previous: ShowDerivedContext | null,
+  next: ShowDerivedContext,
+): boolean {
+  return previous != null && JSON.stringify(previous) === JSON.stringify(next);
+}
+
 interface ShowModelState {
   showEvents: Signal<Record<number, TimelineEvent>>;
   showOrderedIds: Signal<number[]>;
@@ -85,7 +103,7 @@ const ShowModel = createModel<ShowModelState>(() => {
       const cachedItem = cachedTimelineItemsById[eventId];
       next[eventId] =
         cachedTimelineItemContext === ctx &&
-        cachedTimelineItemEvents[eventId] === event &&
+        hasSameTimelineEventContent(cachedTimelineItemEvents[eventId], event) &&
         cachedItem
           ? cachedItem
           : toTimelineTableItem(event, undefined, ctx.autoResolveSpeedMs, userById, problemById);
@@ -170,12 +188,16 @@ const ShowModel = createModel<ShowModelState>(() => {
       .sort((a, b) => (map[a]?.position ?? 0) - (map[b]?.position ?? 0));
     showEvents.value = map;
     showOrderedIds.value = ids;
-    showContext.value = {
+    const nextContext = {
       problems: show.contest?.problems ?? [],
       users: show.contest?.users ?? [],
       preFreezeSnapshot: show.contest?.preFreezeSnapshot ?? [],
       autoResolveSpeedMs: show.automation?.autoResolveSpeedMs ?? 3_000,
     };
+    const previousContext = showContext.peek();
+    if (!hasSameDerivedContext(previousContext, nextContext)) {
+      showContext.value = nextContext;
+    }
     showMode.value = show.mode;
     dataVersion.value = show.showVersion;
     showMeta.value = show.meta;
@@ -201,9 +223,13 @@ const ShowModel = createModel<ShowModelState>(() => {
         const next = { ...showEvents.value, [message.event.id]: message.event };
         showEvents.value = next;
         if (!showOrderedIds.value.includes(message.event.id)) {
-          showOrderedIds.value = [...showOrderedIds.value, message.event.id].sort(
-            (a, b) => (next[a]?.position ?? 0) - (next[b]?.position ?? 0),
-          );
+          const orderedIds = showOrderedIds.value;
+          const insertAt = Math.min(Math.max(message.event.position - 1, 0), orderedIds.length);
+          showOrderedIds.value = [
+            ...orderedIds.slice(0, insertAt),
+            message.event.id,
+            ...orderedIds.slice(insertAt),
+          ];
         }
         break;
       }
