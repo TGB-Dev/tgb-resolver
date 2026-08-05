@@ -123,7 +123,8 @@ function CreateEventForm({
           relativeToEventId,
           before,
           customName:
-            extension.extId === "img" && typeof value.assetId === "string"
+            (extension.extId === "img" || extension.extId === "media") &&
+            typeof value.assetId === "string"
               ? assetsManagerModel.findEntryName(value.assetId)
               : undefined,
           custom: { extId: extension.extId, extPayload: { ...value } },

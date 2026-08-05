@@ -102,6 +102,19 @@ describe("sharedRendererRegistry", () => {
     expect(screen.getByText("Auto-hide").closest("label")).toHaveAttribute("data-state", "checked");
   });
 
+  test("BooleanRenderer renders unchecked when value is false", () => {
+    renderWithChakra(
+      <BooleanRenderer
+        {...baseProps({
+          field: { state: { value: false }, handleChange: vi.fn() },
+          label: "Loop",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Loop").closest("label")).toHaveAttribute("data-state", "unchecked");
+  });
+
   test("UnsupportedRenderer flags nested Object/Array fields as read-only", () => {
     renderWithChakra(<UnsupportedRenderer {...baseProps({ label: "nested" })} />);
 

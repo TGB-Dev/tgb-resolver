@@ -76,7 +76,9 @@ function BooleanRenderer({ field, label, errors }: ReactRendererProps) {
     <Field.Root w="full">
       <Checkbox.Root
         checked={Boolean(field.state.value)}
-        onCheckedChange={(details) => field.handleChange(details.checked === true)}
+        onCheckedChange={(details) => {
+          if (typeof details.checked === "boolean") field.handleChange(details.checked);
+        }}
       >
         <Checkbox.Control />
         {label && <Checkbox.Label>{label}</Checkbox.Label>}
