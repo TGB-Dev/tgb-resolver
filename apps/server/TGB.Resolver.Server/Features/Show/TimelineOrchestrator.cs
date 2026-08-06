@@ -7,13 +7,13 @@ namespace TGB.Resolver.Server.Features.Show;
 ///   delayed operations related to timeline advancements. This class is thread-safe and ensures
 ///   proper handling of concurrent modifications.
 /// </summary>
-public sealed class TimelineOrchestrator(
+public class TimelineOrchestrator(
   IServiceScopeFactory scopeFactory)
 {
   private readonly Lock _lock = new();
   private readonly HashSet<CancellationTokenSource> _ctsSet = [];
 
-  public void ScheduleAdvance(long delayMs)
+  public virtual void ScheduleAdvance(long delayMs)
   {
     var cts = new CancellationTokenSource();
     lock (_lock) _ctsSet.Add(cts);
@@ -21,7 +21,7 @@ public sealed class TimelineOrchestrator(
     _ = AdvanceAfterDelayAsync(delayMs, cts);
   }
 
-  public void CancelAdvance()
+  public virtual void CancelAdvance()
   {
     lock (_lock)
     {

@@ -1048,6 +1048,7 @@ public sealed class ShowStateService(
     if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
       return;
 
+    var currentEvent = ordered[currentIndex];
     var nextEvent = ordered[currentIndex + 1];
 
     // No auto-advance when both auto modes are off
@@ -1065,8 +1066,9 @@ public sealed class ShowStateService(
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
 
-    orchestrator.ScheduleAdvance((long)((nextEvent.DurationSeconds ??
-                                         state.Automation.AutoResolveSpeedMs / 1000d) * 1000));
+    // Hold the next event until the CURRENT event finishes (its own duration wins).
+    orchestrator.ScheduleAdvance(ToMs(currentEvent.DurationSeconds ??
+                                     state.Automation.AutoResolveSpeedMs / 1000d));
   }
 
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
@@ -1167,6 +1169,11 @@ public sealed class ShowStateService(
   {
     if (value is { } v && !double.IsFinite(v))
       throw new ArgumentException($"{fieldName} must be a finite number.", fieldName);
+  }
+
+  private static long ToMs(double seconds)
+  {
+    return (long)(seconds * 1000);
   }
 
   private static CustomEventPayload? ToData(CustomEventPayloadSnapshot? payload)

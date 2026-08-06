@@ -79,6 +79,30 @@ public sealed class ShowStateServiceTests
   }
 
   [Test]
+  public async Task ScheduleNextAdvance_HoldsNextEventUntilCurrentDurationElapses()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    // Current event lasts 5s; next event has no trigger offset (sequential).
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, 5, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, null, false, "E2", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(5_000);
+  }
+
+  [Test]
   public async Task SeekPlayback_MovesTheCurrentEventToTheRequestedTimelineEvent()
   {
     var (service, _) = await CreateServiceAsync();
@@ -590,6 +614,45 @@ public sealed class ShowStateServiceTests
       repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
     await service.EnsureSeededAsync();
     return (service, hubContext);
+  }
+
+  private static async Task<(ShowStateService Service, ShowRawRepository Repository)>
+    CreateServiceWithOrchestratorAsync(TimelineOrchestrator orchestrator)
+  {
+    var options = new DbContextOptionsBuilder<ResolverDbContext>()
+      .UseSqlite("Data Source=:memory:")
+      .Options;
+    var dbContext = new ResolverDbContext(options);
+    await dbContext.Database.OpenConnectionAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
+    var repository = new ShowRawRepository(dbContext, serializer, SystemClock.Instance);
+    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
+    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
+    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
+    var service = new ShowStateService(
+      repository, serializer, hubContext, orchestrator, SystemClock.Instance, CreateAssetStore());
+    await service.EnsureSeededAsync();
+    return (service, repository);
+  }
+
+  private sealed class RecordingOrchestrator : TimelineOrchestrator
+  {
+    public List<long> Delays { get; } = [];
+
+    public RecordingOrchestrator()
+      : base(null!)
+    {
+    }
+
+    public override void ScheduleAdvance(long delayMs)
+    {
+      Delays.Add(delayMs);
+    }
+
+    public override void CancelAdvance()
+    {
+    }
   }
 
   private static AssetStore CreateAssetStore(string? contentRootPath = null)
