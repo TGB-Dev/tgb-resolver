@@ -434,6 +434,10 @@ export function useControlAutoResolveSpeedMs() {
   return useControlShowQuery().data?.automation?.autoResolveSpeedMs ?? 3000;
 }
 
+export function useControlFullAutoEnabled() {
+  return useControlShowQuery().data?.automation?.fullAutoEnabled ?? false;
+}
+
 export function useUpdateAutomationMutation() {
   const queryClient = useQueryClient();
   const showQuery = useControlShowQuery();
