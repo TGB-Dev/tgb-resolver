@@ -150,6 +150,31 @@ public sealed class ShowStateServiceTests
   }
 
   [Test]
+  public async Task StartPlayback_ActiveEventIdsIncludesConcurrentTriggerOffsetChildren()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, null, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 2, false, "E2", null, null, null),
+        new TimelineEvent(3, 3, TimelineEventType.Cus, null, 3, false, "E3", null, null, null),
+        new TimelineEvent(4, 4, TimelineEventType.Cus, null, null, false, "E4", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    var snapshot = await service.StartPlaybackAsync(new VersionedCommandRequest(1));
+
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(1);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([1, 2, 3]);
+  }
+
+  [Test]
   public async Task SeekPlayback_MovesTheCurrentEventToTheRequestedTimelineEvent()
   {
     var (service, _) = await CreateServiceAsync();
@@ -157,7 +182,7 @@ public sealed class ShowStateServiceTests
     var snapshot = await service.SeekPlaybackAsync(new SeekPlaybackRequest(1, 3));
 
     await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
-    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([3]);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([3, 4]);
   }
 
   [Test]

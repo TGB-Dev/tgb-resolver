@@ -903,7 +903,7 @@ public sealed class ShowStateService(
           Playback = NewPlayback(
             PlaybackStatus.Running,
             firstEvent?.Id,
-            firstEvent is not null ? [firstEvent.Id] : [],
+            firstEvent is not null ? ComputeActiveEventIds(ordered, 0) : [],
             firstEvent is not null ? startedAt : null)
         };
       },
@@ -952,7 +952,7 @@ public sealed class ShowStateService(
           Playback = NewPlayback(
             PlaybackStatus.Paused,
             request.EventId,
-            [request.EventId],
+            ComputeActiveEventIds(ordered, targetIndex),
             state.Playback.StartedAt)
         };
       },
@@ -982,7 +982,7 @@ public sealed class ShowStateService(
           Playback = NewPlayback(
             PlaybackStatus.Running,
             first.Id,
-            [first.Id],
+            ComputeActiveEventIds(ordered, 0),
             startedAt)
         },
         cancellationToken);
@@ -1009,7 +1009,7 @@ public sealed class ShowStateService(
         Playback = NewPlayback(
           PlaybackStatus.Running,
           nextEvent.Id,
-          [nextEvent.Id],
+          ComputeActiveEventIds(ordered, currentIndex + 1),
           state.Playback.StartedAt)
       },
       cancellationToken);
@@ -1174,6 +1174,16 @@ public sealed class ShowStateService(
   private static long ToMs(double seconds)
   {
     return (long)(seconds * 1000);
+  }
+
+  private static IReadOnlyList<int> ComputeActiveEventIds(
+    TimelineEvent[] ordered, int currentIndex)
+  {
+    var ids = new List<int> { ordered[currentIndex].Id };
+    for (var i = currentIndex + 1; i < ordered.Length && ordered[i].TriggerOffsetSeconds is not null;
+         i++)
+      ids.Add(ordered[i].Id);
+    return ids;
   }
 
   private static CustomEventPayload? ToData(CustomEventPayloadSnapshot? payload)
