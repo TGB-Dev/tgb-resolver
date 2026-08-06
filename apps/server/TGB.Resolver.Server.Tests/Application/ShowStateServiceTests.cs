@@ -58,6 +58,27 @@ public sealed class ShowStateServiceTests
   }
 
   [Test]
+  public async Task PatchTimelineEvent_RejectsNonFiniteTriggerOffset()
+  {
+    var (service, _) = await CreateServiceAsync();
+
+    await Assert.That(async () => await service.PatchTimelineEventAsync(1,
+        new PatchTimelineEventRequest(1, null, false, null, double.NaN, false, null, null)))
+      .Throws<ArgumentException>();
+  }
+
+  [Test]
+  public async Task PatchTimelineEvent_RejectsNonFiniteDuration()
+  {
+    var (service, _) = await CreateServiceAsync();
+
+    await Assert.That(async () => await service.PatchTimelineEventAsync(1,
+        new PatchTimelineEventRequest(1, double.PositiveInfinity, false, null, null, false, null,
+          null)))
+      .Throws<ArgumentException>();
+  }
+
+  [Test]
   public async Task SeekPlayback_MovesTheCurrentEventToTheRequestedTimelineEvent()
   {
     var (service, _) = await CreateServiceAsync();

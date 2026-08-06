@@ -136,6 +136,8 @@ public sealed class ShowStateService(
     NonResolveEventPatchRequest request,
     CancellationToken cancellationToken = default)
   {
+    EnsureFiniteOrNull(request.TriggerOffsetSeconds, nameof(request.TriggerOffsetSeconds));
+
     var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
@@ -168,6 +170,9 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
     CreateTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
+    EnsureFiniteOrNull(request.DurationSeconds, nameof(request.DurationSeconds));
+    EnsureFiniteOrNull(request.TriggerOffsetSeconds, nameof(request.TriggerOffsetSeconds));
+
     var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
@@ -199,6 +204,9 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> PatchTimelineEventAsync(int eventId,
     PatchTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
+    EnsureFiniteOrNull(request.DurationSeconds, nameof(request.DurationSeconds));
+    EnsureFiniteOrNull(request.TriggerOffsetSeconds, nameof(request.TriggerOffsetSeconds));
+
     var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
@@ -1153,6 +1161,12 @@ public sealed class ShowStateService(
     long? startedAt)
   {
     return new PlaybackState(status, currentEventId, activeEventIds, startedAt);
+  }
+
+  private static void EnsureFiniteOrNull(double? value, string fieldName)
+  {
+    if (value is { } v && !double.IsFinite(v))
+      throw new ArgumentException($"{fieldName} must be a finite number.", fieldName);
   }
 
   private static CustomEventPayload? ToData(CustomEventPayloadSnapshot? payload)
