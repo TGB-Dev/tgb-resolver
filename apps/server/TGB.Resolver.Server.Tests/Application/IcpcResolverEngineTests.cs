@@ -96,6 +96,60 @@ public sealed class IcpcResolverEngineTests
     await AssertEvents(result.ResolveEvents, ExpectedResolveEvents);
   }
 
+  [Test]
+  public async Task Convert_UsesXmlPenaltyForWrongAttemptPenalty()
+  {
+    const string xml = """
+      <contest>
+        <info>
+          <contest-id>c</contest-id>
+          <title>C</title>
+          <starttime>0</starttime>
+          <length>1:00:00</length>
+          <penalty>1</penalty>
+          <scoreboard-freeze-length>0:00:00</scoreboard-freeze-length>
+        </info>
+        <problem>
+          <id>1</id>
+          <label>A</label>
+          <name>P</name>
+          <score>100</score>
+        </problem>
+        <team>
+          <id>1</id>
+          <name>Team One</name>
+          <username>t1</username>
+        </team>
+        <run>
+          <id>1</id>
+          <problem>1</problem>
+          <team>1</team>
+          <time>10</time>
+          <solved>False</solved>
+          <penalty>True</penalty>
+          <score>0</score>
+          <result>WA</result>
+        </run>
+        <run>
+          <id>2</id>
+          <problem>1</problem>
+          <team>1</team>
+          <time>100</time>
+          <solved>True</solved>
+          <penalty>True</penalty>
+          <score>0</score>
+          <result>AC</result>
+        </run>
+      </contest>
+      """;
+
+    var result = IcpcResolverEngine.Convert(xml);
+
+    var entry = result.PreFreezeSnapshot.Single();
+    // finish time (100s) + 1 wrong attempt * 60s penalty => 160s.
+    await Assert.That(entry.TotalPenalty).IsEqualTo(160);
+  }
+
   private static async Task AssertSubmissionCounts(
     IReadOnlyList<FreezeSnapshotEntry> entries)
   {

@@ -134,7 +134,6 @@ public sealed record IcpcXmlInfo(
   // ReSharper disable once NotAccessedPositionalProperty.Global
   int StartTime,
   string Length,
-  // ReSharper disable once NotAccessedPositionalProperty.Global
   int Penalty,
   string ScoreboardFreezeLength);
 
