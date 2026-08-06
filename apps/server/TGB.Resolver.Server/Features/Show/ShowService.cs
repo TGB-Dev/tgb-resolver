@@ -1055,11 +1055,11 @@ public sealed class ShowStateService(
     if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
       return;
 
-    // Next event's trigger offset: explicit per-event override
+    // Next event's trigger offset: explicit per-event override.
+    // 0 = concurrent at previous start, negative = fires before the previous event.
     if (nextEvent.TriggerOffsetSeconds is not null)
     {
-      orchestrator.ScheduleAdvance(Math.Max(1,
-        (long)(nextEvent.TriggerOffsetSeconds.Value * 1000)));
+      orchestrator.ScheduleAdvance(ToMs(nextEvent.TriggerOffsetSeconds.Value));
       return;
     }
 

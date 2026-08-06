@@ -103,6 +103,53 @@ public sealed class ShowStateServiceTests
   }
 
   [Test]
+  public async Task ScheduleNextAdvance_ZeroTriggerOffset_SchedulesZeroDelay()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, null, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 0, false, "E2", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(0);
+  }
+
+  [Test]
+  public async Task ScheduleNextAdvance_NegativeTriggerOffset_PassesNegativeDelay()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, null, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, -2.5, false, "E2", null, null,
+          null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(-2_500);
+  }
+
+  [Test]
   public async Task SeekPlayback_MovesTheCurrentEventToTheRequestedTimelineEvent()
   {
     var (service, _) = await CreateServiceAsync();
