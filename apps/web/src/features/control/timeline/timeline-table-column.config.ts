@@ -28,8 +28,8 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig
     maxW: "4ch",
   },
   triggerOffsetSeconds: {
-    minW: "4ch",
-    maxW: "4ch",
+    minW: "6ch",
+    maxW: "6ch",
   },
   requireManualInteraction: {
     minW: "5ch",

@@ -80,6 +80,7 @@ function BooleanRenderer({ field, label, errors }: ReactRendererProps) {
           if (typeof details.checked === "boolean") field.handleChange(details.checked);
         }}
       >
+        <Checkbox.HiddenInput />
         <Checkbox.Control />
         {label && <Checkbox.Label>{label}</Checkbox.Label>}
       </Checkbox.Root>

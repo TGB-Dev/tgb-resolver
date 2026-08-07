@@ -36,7 +36,7 @@ const ActiveExtensionsOverlay = memo(function ActiveExtensionsOverlay({
       .filter((overlay) => overlay !== null);
   });
 
-  return <AnimatePresence mode="wait">{overlays.value}</AnimatePresence>;
+  return <AnimatePresence mode="sync">{overlays.value}</AnimatePresence>;
 });
 
 const Row = memo(function Row({ userId }: { userId: number }) {

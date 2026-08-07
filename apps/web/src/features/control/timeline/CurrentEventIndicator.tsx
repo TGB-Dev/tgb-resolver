@@ -29,6 +29,9 @@ interface CurrentEventIndicatorProps {
 // static-until-needed trick as TimelineCellEditable's preview Box.
 export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEventIndicatorProps) {
   const isCurrent = useComputed(() => playbackModel.currentCueId.value === eventId);
+  const isActive = useComputed(
+    () => isCurrent.value || playbackModel.state.value.activeEventIds.includes(eventId),
+  );
   const { colorMode } = useColorMode();
   const colorModeSignal = useLiveSignal(colorMode);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -41,13 +44,13 @@ export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEve
   useSignalEffect(() => {
     const rowEl = rootRef.current?.closest<HTMLElement>("[data-event-id]");
     if (!rowEl) return;
-    const currentInLightMode = isCurrent.value && colorModeSignal.value === "light";
-    rowEl.style.color = currentInLightMode ? "var(--chakra-colors-fg-inverted)" : "";
+    const activeInLightMode = isActive.value && colorModeSignal.value === "light";
+    rowEl.style.color = activeInLightMode ? "var(--chakra-colors-fg-inverted)" : "";
   });
 
   return (
     <Box ref={rootRef} position="absolute" inset={0} pointerEvents="none">
-      {isCurrent.value ? (
+      {isActive.value ? (
         <CurrentEventActiveIndicator durationInSeconds={durationInSeconds} />
       ) : null}
     </Box>

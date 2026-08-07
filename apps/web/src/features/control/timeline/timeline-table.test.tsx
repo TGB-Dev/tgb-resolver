@@ -172,14 +172,25 @@ describe("ControlTimelineTable", () => {
     };
   }
 
-  test("toggles manual interaction when its full-width cell is double-clicked", () => {
-    renderWithChakra(
+  test("toggles manual interaction when its cell is double-clicked while hovered", () => {
+    const { container } = renderWithChakra(
       <ControlTimelineTableItem payload={makePayload()} isLive={false} onSeek={() => {}} />,
     );
+
+    // The toggle button only mounts while the row is hovered.
+    fireEvent.pointerEnter(container.querySelector("[data-event-id='11']") as HTMLElement);
 
     fireEvent.doubleClick(screen.getByRole("button", { name: "Toggle manual interaction" }));
 
     expect(mutateAsync).toHaveBeenCalledWith({ eventId: 11, requireManualInteraction: true });
+  });
+
+  test("mounts no toggle button for non-hovered rows", () => {
+    renderWithChakra(
+      <ControlTimelineTableItem payload={makePayload()} isLive={false} onSeek={() => {}} />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Toggle manual interaction" })).toBeNull();
   });
 
   test("opens the extension config panel when a non-editable row cell is double-clicked", () => {
@@ -312,6 +323,7 @@ describe("ControlTimelineTable mode-dependent rendering", () => {
     expect(reorderGroupSpy).toHaveBeenCalledTimes(1);
     expect(reorderItemSpy).toHaveBeenCalledTimes(3);
     expect(screen.getAllByRole("button", { name: "Drag to reorder event" })).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: "Toggle manual interaction" })).toBeNull();
 
     const grids = gridDivs(container);
     expect(grids).toHaveLength(4);

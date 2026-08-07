@@ -100,7 +100,7 @@ public sealed class ShowStateServiceTests
   }
 
   [Test]
-  public async Task ScheduleNextAdvance_NegativeTriggerOffset_PassesNegativeDelay()
+  public async Task ScheduleNextAdvance_NegativeTriggerOffset_PassesClampedZeroDelay()
   {
     var orchestrator = new RecordingOrchestrator();
     var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
@@ -120,7 +120,30 @@ public sealed class ShowStateServiceTests
 
     await service.RescheduleAdvanceAsync();
 
-    await Assert.That(orchestrator.Delays).Contains(-2_500);
+    await Assert.That(orchestrator.Delays).Contains(0);
+  }
+
+  [Test]
+  public async Task ScheduleNextAdvance_TriggerOffset_SchedulesDelayEvenWhenAutoModesDisabled()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(false, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, 5, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 0.5, false, "E2", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(500);
   }
 
   [Test]
@@ -145,7 +168,7 @@ public sealed class ShowStateServiceTests
     var snapshot = await service.StartPlaybackAsync(new VersionedCommandRequest(1));
 
     await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(1);
-    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([1, 2, 3]);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([1]);
   }
 
   [Test]
@@ -156,7 +179,7 @@ public sealed class ShowStateServiceTests
     var snapshot = await service.SeekPlaybackAsync(new SeekPlaybackRequest(1, 3));
 
     await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
-    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([3, 4]);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([3]);
   }
 
   [Test]
@@ -786,7 +809,7 @@ public sealed class ShowStateServiceTests
 
     var after = await service.GetSnapshotAsync();
     await Assert.That(after.Playback.CurrentEventId).IsEqualTo(2);
-    await Assert.That(after.Playback.ActiveEventIds).IsEquivalentTo([2]);
+    await Assert.That(after.Playback.ActiveEventIds).IsEquivalentTo([1, 2]);
   }
 
   [Test]

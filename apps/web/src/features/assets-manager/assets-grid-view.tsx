@@ -224,6 +224,7 @@ function EntryCard({
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      bg="bg.panel"
     >
       <Box h={32} display="flex" alignItems="center" justifyContent="center" bg="bg.subtle">
         {entry.isDirectory ? (

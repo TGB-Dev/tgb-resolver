@@ -58,7 +58,7 @@ export function ControlConfirmDialog() {
                 </Button>
               </Dialog.ActionTrigger>
               <Button
-                colorPalette={showInput ? "accent" : "red"}
+                colorPalette={showInput ? "colorPalette" : "red"}
                 onClick={() => confirmActionModel.resolveConfirmAction(true)}
               >
                 <>{confirmLabel}</>

@@ -1051,17 +1051,17 @@ public sealed class ShowStateService(
     var currentEvent = ordered[currentIndex];
     var nextEvent = ordered[currentIndex + 1];
 
-    // No auto-advance when both auto modes are off
-    if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
-      return;
-
     // Next event's trigger offset: explicit per-event override.
     // 0 = concurrent at previous start, negative = fires before the previous event.
     if (nextEvent.TriggerOffsetSeconds is not null)
     {
-      orchestrator.ScheduleAdvance(ToMs(nextEvent.TriggerOffsetSeconds.Value));
+      orchestrator.ScheduleAdvance(Math.Max(0, ToMs(nextEvent.TriggerOffsetSeconds.Value)));
       return;
     }
+
+    // No auto-advance when both auto modes are off
+    if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
+      return;
 
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
@@ -1179,11 +1179,31 @@ public sealed class ShowStateService(
   private static IReadOnlyList<int> ComputeActiveEventIds(
     TimelineEvent[] ordered, int currentIndex)
   {
-    var ids = new List<int> { ordered[currentIndex].Id };
-    for (var i = currentIndex + 1;
-         i < ordered.Length && ordered[i].TriggerOffsetSeconds is not null;
-         i++)
+    if (currentIndex < 0 || currentIndex >= ordered.Length)
+      return [];
+
+    // Trace back to the group parent of the current concurrent group.
+    var parentIndex = currentIndex;
+    while (parentIndex > 0 && ordered[parentIndex].TriggerOffsetSeconds is not null)
+    {
+      parentIndex--;
+    }
+
+    // Include the group parent through the current active event (all triggered so far).
+    var ids = new List<int>();
+    for (var i = parentIndex; i <= currentIndex; i++)
+    {
       ids.Add(ordered[i].Id);
+    }
+
+    // Plus any immediate 0-second (simultaneous) offset events right after current.
+    for (var i = currentIndex + 1;
+         i < ordered.Length && ordered[i].TriggerOffsetSeconds == 0;
+         i++)
+    {
+      ids.Add(ordered[i].Id);
+    }
+
     return ids;
   }
 

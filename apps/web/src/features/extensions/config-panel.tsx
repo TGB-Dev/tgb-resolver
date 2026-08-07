@@ -134,7 +134,7 @@ function ExtensionConfigForm({
         definition={configForm}
         instance={toTgbFormInstance(form)}
         renderers={sharedRendererRegistry}
-        style={{ gap: "4px", display: "flex", flexDirection: "column" }}
+        style={{ gap: "1rem", display: "flex", flexDirection: "column" }}
       />
       <HStack justify="end">
         <Button variant="outline" onClick={() => void panel.requestClose()}>
