@@ -14,11 +14,7 @@ export function animateScrollIntoView(
   element: HTMLElement,
   container: HTMLElement,
   options: ScrollOptions = {},
-): AnimationPlaybackControls {
-  // A new scroll on the same container supersedes any in-flight one:
-  // overlapping scrollTop writers would double layout invalidation per frame
-  // and jitter the container. Animations on other containers run independently.
-  activeByContainer.get(container)?.stop();
+): AnimationPlaybackControls | undefined {
   const { block = "end", duration = 0.5, ease = TgbResolverEasings.swiftOut } = options;
 
   const containerRect = container.getBoundingClientRect();
@@ -50,6 +46,18 @@ export function animateScrollIntoView(
   // Clamp within scroll bounds
   const maxScroll = container.scrollHeight - container.clientHeight;
   targetScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll));
+
+  // Already at the expected position: skip starting an animation (and do not
+  // touch the active map). The container must stay untouched for this to be
+  // observable, so the supersession stop below only runs when we animate.
+  if (Math.abs(targetScrollTop - container.scrollTop) < 0.5) {
+    return undefined;
+  }
+
+  // A new scroll on the same container supersedes any in-flight one:
+  // overlapping scrollTop writers would double layout invalidation per frame
+  // and jitter the container. Animations on other containers run independently.
+  activeByContainer.get(container)?.stop();
 
   // Return animate's controls
   const controls = animate(container.scrollTop, targetScrollTop, {
