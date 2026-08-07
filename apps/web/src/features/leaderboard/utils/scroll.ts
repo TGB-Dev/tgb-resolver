@@ -8,16 +8,17 @@ interface ScrollOptions {
   ease?: KeyframeOptions["ease"];
 }
 
-let active: AnimationPlaybackControls | null = null;
+const activeByContainer = new WeakMap<HTMLElement, AnimationPlaybackControls>();
 
 export function animateScrollIntoView(
   element: HTMLElement,
   container: HTMLElement,
   options: ScrollOptions = {},
 ): AnimationPlaybackControls {
-  // A new scroll supersedes any in-flight one: overlapping scrollTop writers
-  // would double layout invalidation per frame and jitter the container.
-  active?.stop();
+  // A new scroll on the same container supersedes any in-flight one:
+  // overlapping scrollTop writers would double layout invalidation per frame
+  // and jitter the container. Animations on other containers run independently.
+  activeByContainer.get(container)?.stop();
   const { block = "end", duration = 0.5, ease = TgbResolverEasings.swiftOut } = options;
 
   const containerRect = container.getBoundingClientRect();
@@ -58,9 +59,11 @@ export function animateScrollIntoView(
       container.scrollTop = latest;
     },
     onComplete: () => {
-      if (active === controls) active = null;
+      if (activeByContainer.get(container) === controls) {
+        activeByContainer.delete(container);
+      }
     },
   });
-  active = controls;
+  activeByContainer.set(container, controls);
   return controls;
 }

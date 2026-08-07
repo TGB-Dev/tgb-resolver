@@ -32,6 +32,20 @@ describe("animateScrollIntoView", () => {
     expect(first.stop).toHaveBeenCalledTimes(1);
   });
 
+  test("does not stop an animation running on a different container", () => {
+    const element = document.createElement("div");
+    const firstContainer = document.createElement("div");
+    const secondContainer = document.createElement("div");
+
+    const first = animateScrollIntoView(element, firstContainer);
+    animateScrollIntoView(element, secondContainer);
+
+    // The leaderboard follow-scroll and the timeline current-event scroller
+    // run in the same frame on different containers; they must not cancel
+    // each other.
+    expect(first.stop).not.toHaveBeenCalled();
+  });
+
   test("clears the active handle on completion so a finished animation is not stopped", () => {
     const element = document.createElement("div");
     const container = document.createElement("div");
