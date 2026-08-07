@@ -28,6 +28,11 @@ interface ControlTimelineTableProps {
   apiRef?: { current: ControlTimelineTableHandle | null };
 }
 
+const TIMELINE_CONTAINER_CSS = {
+  "& [data-timeline-row]:nth-child(odd) [data-event-id]": { bg: "bg" },
+  "& [data-timeline-row]:nth-child(even) [data-event-id]": { bg: "bg.emphasized" },
+};
+
 function scrollEventToTop(parent: HTMLDivElement | null, currentEventId: number | null) {
   if (!parent || currentEventId == null) return;
   const el = parent.querySelector<HTMLElement>(`[data-event-id="${currentEventId}"]`);
@@ -138,16 +143,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
     <Box boxSize="full" display="flex" flexDir="column" minH={0} overflow="hidden">
       <ControlTimelineTableHeader />
 
-      <Box
-        flex={1}
-        minH={0}
-        ref={parentRef}
-        overflow="auto"
-        css={{
-          "& [data-timeline-row]:nth-child(odd) [data-event-id]": { bg: "bg" },
-          "& [data-timeline-row]:nth-child(even) [data-event-id]": { bg: "bg.emphasized" },
-        }}
-      >
+      <Box flex={1} minH={0} ref={parentRef} overflow="auto" css={TIMELINE_CONTAINER_CSS}>
         <CurrentEventScroller parentRef={parentRef} />
         <TimelineReorderList
           orderedIds={orderedIds}
@@ -232,7 +228,6 @@ const TimelineRowItem = memo(function TimelineRowItem({
 }) {
   const dragControls = useDragControls();
   const payload = useComputed(() => showModel.timelineItemsById.value[eventId]);
-  const isCurrent = useComputed(() => playbackModel.currentCueId.value === eventId);
   const isReorderable = payload.value?.type === TimelineEventType.CUS && !isLive;
 
   if (!payload.value) return null;
@@ -240,7 +235,6 @@ const TimelineRowItem = memo(function TimelineRowItem({
   const row = (
     <ControlTimelineTableItem
       payload={payload.value}
-      isCurrent={isCurrent.value}
       isLive={isLive}
       onSeek={onSeek}
       onOpenContextMenu={onOpenContextMenu}

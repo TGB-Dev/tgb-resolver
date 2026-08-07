@@ -22,6 +22,8 @@ import { Tooltip } from "@/features/shared/ui/tooltip";
 import { CurrentEventIndicator } from "./CurrentEventIndicator";
 import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
 
+const ADD_BUTTON_HOVER = { bg: "bg.emphasized", color: "fg" };
+
 function resolveDisplayName(payload: Pick<TimelineTableItem, "customName" | "placeholderName">) {
   return payload.customName && payload.customName.trim().length > 0
     ? payload.customName
@@ -35,7 +37,6 @@ function getTimelinePosition(eventId: number, fallback: number) {
 
 interface ControlTimelineTableItemProps {
   payload: TimelineTableItem;
-  isCurrent: boolean;
   isLive: boolean;
   onSeek: (id: number) => void;
   onOpenContextMenu?: (e: React.MouseEvent, payload: TimelineTableItem) => void;
@@ -46,7 +47,6 @@ interface ControlTimelineTableItemProps {
 export const ControlTimelineTableItem = memo(
   ({
     payload,
-    isCurrent,
     isLive,
     onSeek,
     onOpenContextMenu,
@@ -82,9 +82,6 @@ export const ControlTimelineTableItem = memo(
         position="relative"
         borderBottomColor="border"
         data-event-id={payload.id}
-        _light={{
-          color: isCurrent ? "fg.inverted" : "fg",
-        }}
         onContextMenu={(e) => onOpenContextMenu?.(e, payload)}
         onDoubleClick={() => {
           if (payload.type === TimelineEventType.CUS) {
@@ -105,7 +102,7 @@ export const ControlTimelineTableItem = memo(
           "&:hover .add-btn-wrapper": { opacity: 1, pointerEvents: "auto" },
         }}
       >
-        <CurrentEventIndicator isCurrent={isCurrent} durationInSeconds={durationInSeconds} />
+        <CurrentEventIndicator eventId={payload.id} durationInSeconds={durationInSeconds} />
 
         <GridTableRow templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}>
           <TimelineEventPosition
@@ -187,7 +184,7 @@ export const ControlTimelineTableItem = memo(
                 borderTopRadius="md"
                 borderBottomRadius={0}
                 bg={payload.id & 1 ? "bg.subtle" : "bg.muted"}
-                _hover={{ bg: "bg.emphasized", color: "fg" }}
+                _hover={ADD_BUTTON_HOVER}
                 zIndex={20}
                 onClick={() => handleCreate(true)}
               >
@@ -208,7 +205,7 @@ export const ControlTimelineTableItem = memo(
                 borderTopRadius={0}
                 borderBottomRadius="md"
                 bg={payload.id & 1 ? "bg.subtle" : "bg.muted"}
-                _hover={{ bg: "bg.emphasized", color: "fg" }}
+                _hover={ADD_BUTTON_HOVER}
                 zIndex={20}
                 onClick={() => handleCreate(false)}
               >

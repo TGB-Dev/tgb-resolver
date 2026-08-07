@@ -1,7 +1,10 @@
 import { Box, useToken } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
+import { useComputed, useSignalEffect } from "@preact/signals-react";
 import { type AnimationPlaybackControls, animate } from "motion/react";
 import { useEffect, useRef } from "react";
+
+import { playbackModel } from "@/features/control/playback-model";
 
 const pulseBorder = keyframes`
   0%, 100% {
@@ -14,18 +17,26 @@ const pulseBorder = keyframes`
 `;
 
 interface CurrentEventIndicatorProps {
-  isCurrent: boolean;
+  eventId: number;
   durationInSeconds?: number;
 }
 
-export function CurrentEventIndicator({
-  isCurrent,
-  durationInSeconds,
-}: CurrentEventIndicatorProps) {
+export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEventIndicatorProps) {
   const [success, error] = useToken("colors", ["green.600", "red.500"]);
   const barRef = useRef<HTMLDivElement>(null);
   const warnRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<AnimationPlaybackControls[]>([]);
+  const isCurrent = useComputed(() => playbackModel.currentCueId.value === eventId);
+
+  // The row container's "current" text color (previously driven by an isCurrent
+  // prop that re-rendered the whole row subtree on every playback advance) is
+  // applied imperatively to the parent row so only this leaf re-renders.
+  useSignalEffect(() => {
+    const rowEl = barRef.current?.parentElement;
+    if (!rowEl) return;
+    const currentInLightMode = isCurrent.value && rowEl.closest(".light") !== null;
+    rowEl.style.color = currentInLightMode ? "var(--chakra-colors-fg-inverted)" : "";
+  });
 
   useEffect(() => {
     const barEl = barRef.current;
@@ -39,7 +50,7 @@ export function CurrentEventIndicator({
 
     const duration = durationInSeconds ?? 0;
 
-    if (isCurrent) {
+    if (isCurrent.value) {
       animationRef.current = [
         animate(barEl, { scaleX: [0, 1] }, { duration, ease: "linear" }),
         animate(warnEl, { opacity: [0, 0, 1] }, { duration, ease: "linear" }),
@@ -56,7 +67,7 @@ export function CurrentEventIndicator({
         controls.stop();
       });
     };
-  }, [isCurrent, durationInSeconds]);
+  }, [isCurrent.value, durationInSeconds]);
 
   return (
     <>
@@ -76,11 +87,12 @@ export function CurrentEventIndicator({
         <Box ref={warnRef} position="absolute" inset={0} backgroundColor={error} opacity={0} />
       </Box>
       <Box
+        data-testid="current-event-border"
         position="absolute"
         inset={0}
         borderWidth={2}
-        borderColor={isCurrent ? "border.success" : "transparent"}
-        animation={isCurrent ? `${pulseBorder} 1s infinite` : undefined}
+        borderColor={isCurrent.value ? "border.success" : "transparent"}
+        animation={isCurrent.value ? `${pulseBorder} 1s infinite` : undefined}
         pointerEvents="none"
         zIndex={1}
       />
