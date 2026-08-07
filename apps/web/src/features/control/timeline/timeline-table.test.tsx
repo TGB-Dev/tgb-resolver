@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { playbackModel } from "@/features/control/playback-model";
+import { ColorModeProvider, useColorMode } from "@/features/shared/ui/color-mode";
 import { system } from "@/features/shared/ui/provider";
 
 import { ControlTimelineTableItem } from "./timeline-table-item";
@@ -30,16 +31,36 @@ beforeEach(() => {
   mutateAsync.mockClear();
   openFloatingPanel.mockClear();
   playbackModel.reset();
+  localStorage.clear();
 });
 
 function renderWithChakra(ui: ReactNode) {
-  return render(<ChakraProvider value={system}>{ui}</ChakraProvider>);
+  return render(
+    <ChakraProvider value={system}>
+      <ColorModeProvider>{ui}</ColorModeProvider>
+    </ChakraProvider>,
+  );
+}
+
+function ColorModeToggle({ children }: { children: ReactNode }) {
+  const { setColorMode } = useColorMode();
+  return (
+    <>
+      <button type="button" onClick={() => setColorMode("light")}>
+        light
+      </button>
+      <button type="button" onClick={() => setColorMode("dark")}>
+        dark
+      </button>
+      {children}
+    </>
+  );
 }
 
 describe("ControlTimelineTable", () => {
-  function makePayload(): TimelineTableItem {
+  function makePayload(id = 11): TimelineTableItem {
     return {
-      id: 11,
+      id,
       position: 1,
       type: TimelineEventType.CUS,
       placeholderName: "Custom event",
@@ -100,29 +121,52 @@ describe("ControlTimelineTable", () => {
     expect(mutateAsync).toHaveBeenCalledWith({ eventId: 11, clearTriggerOffset: true });
   });
 
-  test("shows the current-event highlight on the current row only", async () => {
+  test("shows the current-event highlight on the current row only and tracks theme changes", async () => {
     const { container } = renderWithChakra(
-      <div className="light">
+      <ColorModeToggle>
         <ControlTimelineTableItem payload={makePayload()} isLive={false} onSeek={() => {}} />
-      </div>,
+        <ControlTimelineTableItem payload={makePayload(22)} isLive={false} onSeek={() => {}} />
+      </ColorModeToggle>,
     );
 
     const row = container.querySelector("[data-event-id='11']") as HTMLElement;
-    const border = container.querySelector("[data-testid='current-event-border']") as HTMLElement;
+    const otherRow = container.querySelector("[data-event-id='22']") as HTMLElement;
+    const borders = container.querySelectorAll("[data-testid='current-event-border']");
+    const rowBorder = borders[0] as HTMLElement;
+    const otherBorder = borders[1] as HTMLElement;
     expect(row).not.toBeNull();
-    expect(border).not.toBeNull();
+    expect(otherRow).not.toBeNull();
+    expect(rowBorder).not.toBeNull();
+    expect(otherBorder).not.toBeNull();
 
-    const unhighlightedClass = border.className;
+    const unhighlightedClass = rowBorder.className;
+    expect(otherBorder.className).toBe(unhighlightedClass);
     expect(row.style.color).toBe("");
+    expect(otherRow.style.color).toBe("");
 
     act(() => playbackModel.update({ currentEventId: 11 }));
 
-    await waitFor(() => expect(row.style.color).toBe("var(--chakra-colors-fg-inverted)"));
-    expect(border.className).not.toBe(unhighlightedClass);
+    await waitFor(() => expect(rowBorder.className).not.toBe(unhighlightedClass));
+    // dark mode is the default: the current row keeps the inherited text color
+    expect(row.style.color).toBe("");
+    expect(otherBorder.className).toBe(unhighlightedClass);
+    expect(otherRow.style.color).toBe("");
 
-    act(() => playbackModel.update({ currentEventId: 99 }));
+    fireEvent.click(screen.getByRole("button", { name: "light" }));
+
+    await waitFor(() => expect(row.style.color).toBe("var(--chakra-colors-fg-inverted)"));
+    expect(otherRow.style.color).toBe("");
+    expect(otherBorder.className).toBe(unhighlightedClass);
+
+    fireEvent.click(screen.getByRole("button", { name: "dark" }));
 
     await waitFor(() => expect(row.style.color).toBe(""));
-    expect(border.className).toBe(unhighlightedClass);
+    expect(rowBorder.className).not.toBe(unhighlightedClass);
+
+    act(() => playbackModel.update({ currentEventId: 22 }));
+
+    await waitFor(() => expect(rowBorder.className).toBe(unhighlightedClass));
+    expect(row.style.color).toBe("");
+    expect(otherRow.style.color).toBe("");
   });
 });

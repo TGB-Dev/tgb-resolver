@@ -1,10 +1,12 @@
 import { Box, useToken } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 import { useComputed, useSignalEffect } from "@preact/signals-react";
+import { useLiveSignal } from "@preact/signals-react/utils";
 import { type AnimationPlaybackControls, animate } from "motion/react";
 import { useEffect, useRef } from "react";
 
 import { playbackModel } from "@/features/control/playback-model";
+import { useColorMode } from "@/features/shared/ui/color-mode";
 
 const pulseBorder = keyframes`
   0%, 100% {
@@ -27,14 +29,18 @@ export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEve
   const warnRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<AnimationPlaybackControls[]>([]);
   const isCurrent = useComputed(() => playbackModel.currentCueId.value === eventId);
+  const { colorMode } = useColorMode();
+  const colorModeSignal = useLiveSignal(colorMode);
 
   // The row container's "current" text color (previously driven by an isCurrent
   // prop that re-rendered the whole row subtree on every playback advance) is
-  // applied imperatively to the parent row so only this leaf re-renders.
+  // applied imperatively to the parent row so only this leaf re-renders. The
+  // color mode is tracked as a signal so the gate stays live across theme
+  // toggles without re-rendering the row.
   useSignalEffect(() => {
-    const rowEl = barRef.current?.parentElement;
+    const rowEl = barRef.current?.closest<HTMLElement>("[data-event-id]");
     if (!rowEl) return;
-    const currentInLightMode = isCurrent.value && rowEl.closest(".light") !== null;
+    const currentInLightMode = isCurrent.value && colorModeSignal.value === "light";
     rowEl.style.color = currentInLightMode ? "var(--chakra-colors-fg-inverted)" : "";
   });
 
