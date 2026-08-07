@@ -32,11 +32,44 @@ public static class IcpcXmlParser
       throw new InvalidOperationException(
         "Failed to parse XML: missing or invalid <contest> root element.");
 
+    IReadOnlyList<IcpcXmlRun> runs = [.. contest.Elements("run").Select(ParseRun)];
+    ValidateRunIdsMonotonicInTime(runs);
+
     return new IcpcXmlContest(
       ParseInfo(info),
       [.. contest.Elements("problem").Select(ParseProblem)],
       [.. contest.Elements("team").Select(ParseTeam)],
-      [.. contest.Elements("run").Select(ParseRun)]);
+      runs);
+  }
+
+  // The resolver counts penalty attempts with `run.Id < lastAlteringRunId`,
+  // which is only sound when run ids are monotonic in time within a
+  // (team, problem). Ported from vnoi-resolver's parse.ts: fail loudly at the
+  // boundary so a re-numbered or recycled-id export cannot silently miscompute
+  // penalty during resolution.
+  private static void ValidateRunIdsMonotonicInTime(IReadOnlyList<IcpcXmlRun> runs)
+  {
+    var latestByTeamProblem =
+      new Dictionary<(int TeamId, int ProblemId), (double Time, int RunId)>();
+    for (var i = 0; i < runs.Count; i++)
+    {
+      var run = runs[i];
+      var key = (run.Team, run.Problem);
+      if (!latestByTeamProblem.TryGetValue(key, out var latest))
+      {
+        latestByTeamProblem[key] = (run.Time, run.Id);
+        continue;
+      }
+
+      if (run.Time >= latest.Time && run.Id < latest.RunId)
+        throw new InvalidOperationException(
+          $"Run #{run.Id} for team {run.Team}, problem {run.Problem} is later in time "
+          + $"than run #{latest.RunId} but has a smaller id. Penalty calculation assumes "
+          + "run ids are monotonic in time.");
+
+      if (run.Time >= latest.Time)
+        latestByTeamProblem[key] = (run.Time, run.Id);
+    }
   }
 
   private static IcpcXmlInfo ParseInfo(XElement element)

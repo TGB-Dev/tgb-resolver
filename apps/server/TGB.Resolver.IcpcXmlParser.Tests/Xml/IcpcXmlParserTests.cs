@@ -154,6 +154,38 @@ public sealed class IcpcXmlParserTests
     await Assert.That(result.Info.Penalty).IsEqualTo(5);
   }
 
+  [Test]
+  public async Task Parse_RunIdsNotMonotonicInTime_Throws()
+  {
+    var doc = await LoadSampleAsync();
+    // Swap ids of the first two runs (both team 1, problem 6) so the second
+    // is later in time yet has the smaller id.
+    var first = doc.Descendants("run").ElementAt(0);
+    var second = doc.Descendants("run").ElementAt(1);
+    (first.Element("id")!.Value, second.Element("id")!.Value) =
+      (second.Element("id")!.Value, first.Element("id")!.Value);
+
+    await Assert.That(() => IcpcParser.Parse(doc.ToString()))
+      .Throws<InvalidOperationException>()
+      .WithMessageContaining("monotonic in time");
+  }
+
+  [Test]
+  public async Task Parse_EqualTimeRunsWithDescendingIds_Throws()
+  {
+    var doc = await LoadSampleAsync();
+    // Both runs at the same floored second, ids descending.
+    var first = doc.Descendants("run").ElementAt(0);
+    var second = doc.Descendants("run").ElementAt(1);
+    second.Element("time")!.Value = first.Element("time")!.Value;
+    (first.Element("id")!.Value, second.Element("id")!.Value) =
+      (second.Element("id")!.Value, first.Element("id")!.Value);
+
+    await Assert.That(() => IcpcParser.Parse(doc.ToString()))
+      .Throws<InvalidOperationException>()
+      .WithMessageContaining("monotonic in time");
+  }
+
   private static async Task<XDocument> LoadSampleAsync()
   {
     var xml = await File.ReadAllTextAsync(ResolveSamplePath());

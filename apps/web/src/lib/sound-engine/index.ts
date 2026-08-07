@@ -1,3 +1,5 @@
+// Minimal sound engine originally crafted for TGB's usages
+
 import { type RandomSource, seedSfc32 } from "@tgb-resolver/realtime";
 
 const STOP_FADE_MS = 500;

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FastEndpoints;
 using TGB.Resolver.Server.Features.Show.Dto;
 
@@ -59,7 +60,17 @@ public sealed class ImportXmlEndpoint(ShowStateService showStateService)
 
   public override async Task HandleAsync(ImportXmlRequest request, CancellationToken ct)
   {
-    await Send.OkAsync(await showStateService.ImportXmlAsync(request, ct), ct);
+    try
+    {
+      await Send.OkAsync(await showStateService.ImportXmlAsync(request, ct), ct);
+    }
+    catch (InvalidOperationException exception)
+    {
+      // Malformed XML, missing elements, or a run-id monotonicity violation
+      // from the ICPC parser/engine all surface here as user input errors.
+      AddError(exception.Message);
+      ThrowIfAnyErrors();
+    }
   }
 }
 
@@ -74,7 +85,21 @@ public sealed class ImportBundleEndpoint(ShowStateService showStateService)
 
   public override async Task HandleAsync(ImportBundleRequest request, CancellationToken ct)
   {
-    await Send.OkAsync(await showStateService.ImportBundleAsync(request, ct), ct);
+    try
+    {
+      await Send.OkAsync(await showStateService.ImportBundleAsync(request, ct), ct);
+    }
+    catch (Exception exception)
+      when (exception is FormatException
+        or InvalidDataException
+        or InvalidOperationException
+        or JsonException)
+    {
+      // Bad base64, corrupt zip, missing/hash-mismatched entries, or an
+      // unreadable show.json are all user input errors.
+      AddError(exception.Message);
+      ThrowIfAnyErrors();
+    }
   }
 }
 

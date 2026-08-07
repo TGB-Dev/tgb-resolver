@@ -4,6 +4,19 @@ import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-model";
 import { useImportShowMutation } from "@/features/control/hooks";
+import { toaster } from "@/features/shared/ui/toaster";
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const body = error as { message?: unknown; errors?: Record<string, unknown> };
+    const general = body.errors?.generalErrors ?? body.errors?.General;
+    if (Array.isArray(general) && typeof general[0] === "string") return general[0];
+    if (typeof body.message === "string" && body.message.length > 0) return body.message;
+  }
+  return "Unknown error";
+}
 
 export function ImportShowPanel({ panel }: { panel: FloatingPanelHandle }) {
   const file = useSignal<File | null>(null);
@@ -13,14 +26,22 @@ export function ImportShowPanel({ panel }: { panel: FloatingPanelHandle }) {
   const accept = async () => {
     if (!file.value) return;
 
-    await importShow.mutateAsync({
-      file: file.value,
-      excludedUsernames: excludedUsernames.value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    });
-    panel.close(true);
+    try {
+      await importShow.mutateAsync({
+        file: file.value,
+        excludedUsernames: excludedUsernames.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      });
+      panel.close(true);
+    } catch (error) {
+      toaster.create({
+        title: "Import failed",
+        description: errorMessage(error),
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -66,7 +87,7 @@ export function ImportShowPanel({ panel }: { panel: FloatingPanelHandle }) {
         <Field.HelperText>Comma-separated. Applies to XML imports only.</Field.HelperText>
       </Field.Root>
 
-      {importShow.error ? <Text color="fg.error">{importShow.error.message}</Text> : null}
+      {importShow.error ? <Text color="fg.error">{errorMessage(importShow.error)}</Text> : null}
 
       <HStack justify="end">
         <Button variant="outline" onClick={() => panel.close(false)}>

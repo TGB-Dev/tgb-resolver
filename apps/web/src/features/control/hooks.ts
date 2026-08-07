@@ -407,6 +407,7 @@ export function useImportShowMutation() {
         const { data } = await importShowXml({
           client: generatedClient,
           body: { xml: await file.text(), excludedUsernames },
+          throwOnError: true,
         });
         return data as ShowStateSnapshot;
       }
@@ -417,6 +418,7 @@ export function useImportShowMutation() {
           body: {
             bytes: arrayBufferToBase64(await file.arrayBuffer()),
           },
+          throwOnError: true,
         });
         return data as ShowStateSnapshot;
       }

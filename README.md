@@ -1,21 +1,29 @@
 # tgb-resolver
 
-The Gifted Battlefield resolver for ICPC/DMOJ-style contest feeds.
+The Gifted Battlefield resolver for ICPC/DMOJ/VNOJ-style contest feeds.
+
+> [!NOTE]
+> This project is heavily inspired, with a large portion of parsing code being ported over/referenced from the [ICPC resolver](https://github.com/icpctools/icpctools/tree/main/Resolver), and [VNOI Resolver](https://github.com/VNOI-Admin/vnoi-resolver).
+>
+> We sincerely thanks the authors for their time on crafting algorithms for these beautiful leaderboard resolving systems!
+
+> [!WARNING]
+> We currently support only the VNOJ contest format. See https://github.com/VNOI-Admin/OJ/blob/master/judge/contest_format/vnoj.py for more details.
 
 Server-authoritative event timeline with realtime signaling,
 driving audience and control UIs from a single source of truth.
 
 ## Stack
 
-| Layer       | Tech                                                                           |
-|-------------|--------------------------------------------------------------------------------|
-| Workspace   | Turborepo, pnpm workspaces                                                     |
+| Layer       | Tech                                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| Workspace   | Turborepo, pnpm workspaces                                                               |
 | Frontend    | React 19, TanStack Router (file-based routing, SPA), Vite 8, Chakra UI 3, Preact Signals |
-| Server      | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly |
-| Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot                       |
-| Parsers     | .NET `TGB.Resolver.IcpcXmlParser` (server-side)                                |
-| Lint/Format | Biome, syncpack                                                                |
-| Tests       | Vitest, Testing Library (web), TUnit (.NET)                                    |
+| Server      | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly           |
+| Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot                                 |
+| Parsers     | .NET `TGB.Resolver.IcpcXmlParser` (server-side)                                          |
+| Lint/Format | Biome, syncpack                                                                          |
+| Tests       | Vitest, Testing Library (web), TUnit (.NET)                                              |
 
 ## Prerequisites
 
@@ -39,7 +47,7 @@ pnpm dev
 Runs the server (port 5001) and frontend (port 3000) in parallel.
 
 | Route      | UI       |
-|------------|----------|
+| ---------- | -------- |
 | `/`        | Audience |
 | `/control` | Control  |
 
@@ -84,3 +92,27 @@ packages/
   contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
   realtime/    Client-side clock sync, timeline and domain helpers
 ```
+
+## License:
+
+MIT License
+
+Copyright (c) 2026 The Gifted Battlefield Organization.
+
+## Backstory
+
+The original idea came from @hmthien050209, and with the help of @dzhoz0 and other colleagues (AI-assistance, some non-tech colleagues who aided us on the UX side), here comes our resolver!
+
+We decided to craft this software because we want a solution that's:
+
+- Easy to customize heavily (like the media/image extensions that we're doing)
+- Performant
+- Fast to iterate pre-resolve while maintaining customizability, without writing/running a bunch of scripts
+- Be centralized
+- And expose UIs that both operators/MCs/other people at different department (live streaming, on stage, etc.) can sync together on timings.
+
+We're heavily inspired by the UIs of lighting/VJ software, as they have similar constraints to us. Ours are way simpler, but we can still adapt from them.
+
+Then this project is born to solve all of the requirements of us. We decided to go with DOM-based because modern browsers can handle big things well, and it's only us footgunning ourselves via state managements.
+And with the power of WAAPI (via motion.dev), we're now able to render smooth animations across many components (both in the control panel, and the audience view) at 60+ FPS (at most 75 FPS tested, and
+it ran stablely).
