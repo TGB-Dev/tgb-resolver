@@ -1,6 +1,7 @@
 import { useSignalEffect } from "@preact/signals-react";
 import { For, useLiveSignal } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
+import type { CustomEvent, TimelineEvent } from "@tgb-resolver/realtime";
 import { AnimatePresence } from "motion/react";
 import { createElement, memo, useMemo } from "react";
 
@@ -19,6 +20,10 @@ const Row = memo(function Row({ userId }: { userId: number }) {
   if (data == null) return null;
   return <LeaderboardRow data={data} isCurrentResolved={isCurrentResolved} />;
 });
+
+function isCustomEvent(event: TimelineEvent): event is CustomEvent {
+  return event.type === TimelineEventType.CUS;
+}
 
 function LeaderboardRows() {
   return (
@@ -85,25 +90,22 @@ export function Resolve({ isBigScreen }: ResolveProps) {
     }
   });
 
-  const currentEventId = playbackModel.currentEventId.value;
-  const activeEvent = useMemo(
-    () => data.value?.timeline.find((event) => event.id === currentEventId),
-    [data.value, currentEventId],
-  );
-  const activeExtension = useMemo(
-    () =>
-      activeEvent?.type === TimelineEventType.CUS
-        ? extensionRegistry.extensionWithExtId(activeEvent.payload.extId)
-        : undefined,
-    [activeEvent],
-  );
-  const extensionOverlay = useMemo(() => {
-    if (!activeEvent || activeExtension?.type !== ExtensionType.WithReactComponent) return null;
-    return createElement(activeExtension.component, {
-      key: activeEvent.id,
-      payload: getExtensionPayload(activeEvent) ?? {},
-    });
-  }, [activeEvent, activeExtension]);
+  const activeEventIds = playbackModel.state.value.activeEventIds;
+  const activeExtensions = useMemo(() => {
+    if (data.value == null) return [];
+    return data.value.timeline
+      .filter(isCustomEvent)
+      .filter((event) => activeEventIds.includes(event.id))
+      .map((event) => {
+        const extension = extensionRegistry.extensionWithExtId(event.payload.extId);
+        if (extension?.type !== ExtensionType.WithReactComponent) return null;
+        return createElement(extension.component, {
+          key: event.id,
+          payload: getExtensionPayload(event) ?? {},
+        });
+      })
+      .filter((overlay) => overlay !== null);
+  }, [data.value, activeEventIds]);
 
   if (data.value == null) return null;
 
@@ -112,7 +114,7 @@ export function Resolve({ isBigScreen }: ResolveProps) {
       <LeaderboardTable problems={data.value.contest.problems}>
         <LeaderboardRows />
       </LeaderboardTable>
-      <AnimatePresence mode="wait">{extensionOverlay}</AnimatePresence>
+      <AnimatePresence mode="wait">{activeExtensions}</AnimatePresence>
     </LeaderboardProvider>
   );
 }
