@@ -141,7 +141,7 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
 
   return (
     <Box boxSize="full" display="flex" flexDir="column" minH={0} overflow="hidden">
-      <ControlTimelineTableHeader />
+      <ControlTimelineTableHeader isLive={isLive} />
 
       <Box flex={1} minH={0} ref={parentRef} overflow="auto" css={TIMELINE_CONTAINER_CSS}>
         <CurrentEventScroller parentRef={parentRef} />
@@ -178,22 +178,39 @@ function TimelineReorderList({
   isMovePending: RefObject<boolean>;
 }) {
   const reorderStateRef = useRef<ReturnType<typeof createTimelineReorderState>>(null);
-  if (!reorderStateRef.current) reorderStateRef.current = createTimelineReorderState();
-  const reorderState = reorderStateRef.current;
-  const displayIds = reorderState.rows.value ?? orderedIds;
+  if (!isLive && !reorderStateRef.current) reorderStateRef.current = createTimelineReorderState();
+  const displayIds = reorderStateRef.current?.rows.value ?? orderedIds;
   const onCommitReorderRef = useRef(onCommitReorder);
   onCommitReorderRef.current = onCommitReorder;
   const commitDrag = useCallback(() => {
-    const nextRows = reorderState.take();
+    const nextRows = reorderStateRef.current?.take();
     if (nextRows && !isMovePending.current) onCommitReorderRef.current(nextRows);
-  }, [isMovePending, reorderState]);
+  }, [isMovePending]);
+
+  if (isLive) {
+    return (
+      <Box as="ul" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        <For each={orderedIds}>
+          {(eventId) => (
+            <TimelineStaticRow
+              key={eventId}
+              eventId={eventId}
+              isLive={isLive}
+              onSeek={onSeek}
+              onOpenContextMenu={onOpenContextMenu}
+            />
+          )}
+        </For>
+      </Box>
+    );
+  }
 
   return (
     <Reorder.Group
       axis="y"
       values={displayIds}
       onReorder={(nextIds) => {
-        if (!isMovePending.current) reorderState.set(nextIds);
+        if (!isMovePending.current) reorderStateRef.current?.set(nextIds);
       }}
       style={{ listStyle: "none", padding: 0, margin: 0 }}
     >
@@ -256,6 +273,33 @@ const TimelineRowItem = memo(function TimelineRowItem({
     >
       {row}
     </Reorder.Item>
+  );
+});
+
+const TimelineStaticRow = memo(function TimelineStaticRow({
+  eventId,
+  isLive,
+  onSeek,
+  onOpenContextMenu,
+}: {
+  eventId: number;
+  isLive: boolean;
+  onSeek: (id: number) => void;
+  onOpenContextMenu: (e: React.MouseEvent, payload: TimelineTableItem) => void;
+}) {
+  const payload = useComputed(() => showModel.timelineItemsById.value[eventId]);
+
+  if (!payload.value) return null;
+
+  return (
+    <li data-timeline-row>
+      <ControlTimelineTableItem
+        payload={payload.value}
+        isLive={isLive}
+        onSeek={onSeek}
+        onOpenContextMenu={onOpenContextMenu}
+      />
+    </li>
   );
 });
 

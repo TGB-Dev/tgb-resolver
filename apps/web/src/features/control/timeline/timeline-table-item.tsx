@@ -20,7 +20,10 @@ import { GridTableRow } from "@/features/shared/ui/grid-table";
 import { Tooltip } from "@/features/shared/ui/tooltip";
 
 import { CurrentEventIndicator } from "./CurrentEventIndicator";
-import { TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS } from "./timeline-table-column.config";
+import {
+  TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS,
+  TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS_STATIC,
+} from "./timeline-table-column.config";
 
 const ADD_BUTTON_HOVER = { bg: "bg.emphasized", color: "fg" };
 
@@ -55,6 +58,9 @@ export const ControlTimelineTableItem = memo(
   }: ControlTimelineTableItemProps) => {
     const durationInSeconds = payload.durationSeconds;
     const isReorderable = payload.type === TimelineEventType.CUS && !isLive;
+    const templateColumns = isLive
+      ? TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS_STATIC
+      : TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS;
     const type =
       payload.type !== TimelineEventType.CUS
         ? payload.type
@@ -104,7 +110,7 @@ export const ControlTimelineTableItem = memo(
       >
         <CurrentEventIndicator eventId={payload.id} durationInSeconds={durationInSeconds} />
 
-        <GridTableRow templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}>
+        <GridTableRow templateColumns={templateColumns}>
           <TimelineEventPosition
             eventId={payload.id}
             fallbackPosition={payload.position}
@@ -148,25 +154,27 @@ export const ControlTimelineTableItem = memo(
           )}
           <ControlTimelineManualInteraction payload={payload} editable={!isLive} />
 
-          <Box display="flex" alignItems="center" justifyContent="center" h="full">
-            <IconButton
-              aria-label="Drag to reorder event"
-              size="2xs"
-              variant="ghost"
-              disabled={!isReorderable}
-              cursor={isReorderable ? "grab" : "not-allowed"}
-              _active={{ cursor: isReorderable ? "grabbing" : "not-allowed" }}
-              onPointerDown={(e) => {
-                if (isReorderable) {
-                  dragControls?.start(e);
-                }
-              }}
-              color="fg.muted"
-              _hover={isReorderable ? { color: "fg" } : undefined}
-            >
-              <GripVertical size={14} />
-            </IconButton>
-          </Box>
+          {!isLive ? (
+            <Box display="flex" alignItems="center" justifyContent="center" h="full">
+              <IconButton
+                aria-label="Drag to reorder event"
+                size="2xs"
+                variant="ghost"
+                disabled={!isReorderable}
+                cursor={isReorderable ? "grab" : "not-allowed"}
+                _active={{ cursor: isReorderable ? "grabbing" : "not-allowed" }}
+                onPointerDown={(e) => {
+                  if (isReorderable) {
+                    dragControls?.start(e);
+                  }
+                }}
+                color="fg.muted"
+                _hover={isReorderable ? { color: "fg" } : undefined}
+              >
+                <GripVertical size={14} />
+              </IconButton>
+            </Box>
+          ) : null}
         </GridTableRow>
 
         {!isLive ? (
@@ -246,10 +254,12 @@ function TimelineEventPosition({
   );
 }
 
-export function ControlTimelineTableHeader() {
+export function ControlTimelineTableHeader({ isLive = false }: { isLive?: boolean }) {
   return (
     <GridTableRow
-      templateColumns={TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS}
+      templateColumns={
+        isLive ? TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS_STATIC : TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS
+      }
       h="auto"
       bg="bg.subtle"
       py={2}
@@ -293,7 +303,7 @@ export function ControlTimelineTableHeader() {
         <Box>Man.?</Box>
       </Tooltip>
 
-      <Box />
+      {!isLive ? <Box /> : null}
     </GridTableRow>
   );
 }

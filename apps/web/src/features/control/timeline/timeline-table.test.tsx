@@ -2,37 +2,134 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TimelineEventType } from "@tgb-resolver/contracts";
-import type { TimelineTableItem } from "@tgb-resolver/realtime";
+import type { ShowFile, TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
+import { PlaybackStatus, ShowMode, ShowSource, TimelineMode } from "@tgb-resolver/realtime";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { playbackModel } from "@/features/control/playback-model";
+import { showModel } from "@/features/shared/show-model";
 import { ColorModeProvider, useColorMode } from "@/features/shared/ui/color-mode";
 import { system } from "@/features/shared/ui/provider";
 
+import { ControlTimelineTable } from "./timeline-table";
 import { ControlTimelineTableItem } from "./timeline-table-item";
 
-const { mutateAsync, openFloatingPanel } = vi.hoisted(() => ({
+const {
+  mutateAsync,
+  openFloatingPanel,
+  isLiveMock,
+  seekMock,
+  moveMock,
+  reorderGroupSpy,
+  reorderItemSpy,
+} = vi.hoisted(() => ({
   mutateAsync: vi.fn(async () => undefined),
   openFloatingPanel: vi.fn(),
+  isLiveMock: vi.fn(() => false),
+  seekMock: vi.fn(),
+  moveMock: vi.fn(),
+  reorderGroupSpy: vi.fn(),
+  reorderItemSpy: vi.fn(),
 }));
 
 vi.mock("@/features/control/hooks", () => ({
   usePatchTimelineEventMutation: () => ({ mutateAsync }),
   useRenameControlEventMutation: () => ({ mutateAsync }),
+  useDeleteTimelineEventMutation: () => ({ mutateAsync }),
+  useControlShowQuery: () => ({ data: { mode: ShowMode.LIVE }, isLoading: false, error: null }),
+  useControlIsLive: () => isLiveMock(),
+  useSeekPlaybackMutation: () => ({ mutate: seekMock }),
+  useMoveTimelineEventMutation: () => ({ mutate: moveMock }),
 }));
 
 vi.mock("@/features/control/floating-panel-model", () => ({
   floatingPanelModel: { openFloatingPanel },
 }));
 
+vi.mock("motion/react", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("motion/react")>();
+  return {
+    ...mod,
+    Reorder: {
+      Group: ({
+        children,
+        axis: _axis,
+        values: _values,
+        onReorder: _onReorder,
+        ...rest
+      }: {
+        children?: ReactNode;
+        [key: string]: unknown;
+      }) => {
+        reorderGroupSpy();
+        return <ul {...(rest as React.HTMLAttributes<HTMLUListElement>)}>{children}</ul>;
+      },
+      Item: ({
+        children,
+        value: _value,
+        dragListener: _dragListener,
+        dragControls: _dragControls,
+        onDragEnd: _onDragEnd,
+        ...rest
+      }: {
+        children?: ReactNode;
+        [key: string]: unknown;
+      }) => {
+        reorderItemSpy();
+        return <li {...(rest as React.HTMLAttributes<HTMLLIElement>)}>{children}</li>;
+      },
+    },
+  };
+});
+
 afterEach(cleanup);
 beforeEach(() => {
   mutateAsync.mockClear();
   openFloatingPanel.mockClear();
+  seekMock.mockClear();
+  moveMock.mockClear();
+  isLiveMock.mockReset();
+  reorderGroupSpy.mockClear();
+  reorderItemSpy.mockClear();
   playbackModel.reset();
+  showModel.hydrateFromSnapshot(makeShow([]));
   localStorage.clear();
 });
+
+function makeShow(events: TimelineEvent[]): ShowFile {
+  return {
+    schemaVersion: 1,
+    showVersion: 1,
+    mode: ShowMode.EDITING,
+    timelineMode: TimelineMode.RW,
+    meta: { title: "t", source: ShowSource.MANUAL },
+    contest: {
+      durationSeconds: 0,
+      freezeDurationSeconds: 0,
+      problems: [],
+      users: [],
+      preFreezeSnapshot: [],
+    },
+    automation: {
+      autoResolveEnabled: false,
+      autoResolveSpeedMs: 3_000,
+      fullAutoEnabled: false,
+    },
+    playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
+    assets: { items: [] },
+    timeline: events,
+  };
+}
+
+function event(id: number): TimelineEvent {
+  return {
+    id,
+    position: id,
+    type: TimelineEventType.CUS,
+    payload: { extId: `ext${id}`, extPayload: {} },
+  };
+}
 
 function renderWithChakra(ui: ReactNode) {
   return render(
@@ -168,5 +265,49 @@ describe("ControlTimelineTable", () => {
     await waitFor(() => expect(rowBorder.className).toBe(unhighlightedClass));
     expect(row.style.color).toBe("");
     expect(otherRow.style.color).toBe("");
+  });
+});
+
+describe("ControlTimelineTable mode-dependent rendering", () => {
+  test("live mode: static rows without reorder wrappers, grip buttons, or grip column", () => {
+    isLiveMock.mockReturnValue(true);
+    showModel.hydrateFromSnapshot(makeShow([event(1), event(2), event(3)]));
+
+    const { container } = renderWithChakra(<ControlTimelineTable />);
+
+    expect(container.querySelectorAll("ul > li[data-timeline-row]")).toHaveLength(3);
+    expect(container.querySelectorAll("[data-event-id]")).toHaveLength(3);
+
+    expect(reorderGroupSpy).not.toHaveBeenCalled();
+    expect(reorderItemSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Drag to reorder event" })).toBeNull();
+
+    const grids = Array.from(container.querySelectorAll<HTMLElement>("div")).filter(
+      (el) => getComputedStyle(el).gridTemplateColumns !== "none",
+    );
+    expect(grids.length).toBe(4);
+    for (const grid of grids) {
+      expect(getComputedStyle(grid).gridTemplateColumns).not.toContain("3ch");
+    }
+  });
+
+  test("edit mode: reorder wrappers, grip buttons, and grip column rendered", () => {
+    isLiveMock.mockReturnValue(false);
+    showModel.hydrateFromSnapshot(makeShow([event(1), event(2), event(3)]));
+
+    const { container } = renderWithChakra(<ControlTimelineTable />);
+
+    expect(container.querySelectorAll("ul > li[data-timeline-row]")).toHaveLength(3);
+    expect(reorderGroupSpy).toHaveBeenCalledTimes(1);
+    expect(reorderItemSpy).toHaveBeenCalledTimes(3);
+    expect(screen.getAllByRole("button", { name: "Drag to reorder event" })).toHaveLength(3);
+
+    const grids = Array.from(container.querySelectorAll<HTMLElement>("div")).filter(
+      (el) => getComputedStyle(el).gridTemplateColumns !== "none",
+    );
+    expect(grids.length).toBe(4);
+    for (const grid of grids) {
+      expect(getComputedStyle(grid).gridTemplateColumns).toContain("minmax(3ch, 3ch)");
+    }
   });
 });
