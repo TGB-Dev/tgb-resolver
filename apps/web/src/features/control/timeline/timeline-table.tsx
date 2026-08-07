@@ -345,6 +345,13 @@ function CurrentEventScroller({ parentRef }: { parentRef: RefObject<HTMLDivEleme
   // would otherwise never fire after the initial mount.
   useSignalEffect(() => {
     const target = playbackModel.currentCueId.value;
+    // Only scroll when the current event starts a new concurrent group (or is
+    // standalone). Offset children of an already-visible group fire while the
+    // group is in view — scrolling to them would yank the timeline away from
+    // the group's parent.
+    if (target != null && showModel.timelineItemsById.value[target]?.triggerOffsetSeconds != null) {
+      return;
+    }
     const raf = requestAnimationFrame(() => scrollEventToTop(parentRef.current, target));
     return () => cancelAnimationFrame(raf);
   });

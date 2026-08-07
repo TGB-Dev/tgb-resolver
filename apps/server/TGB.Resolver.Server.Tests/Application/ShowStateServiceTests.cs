@@ -759,7 +759,7 @@ public sealed class ShowStateServiceTests
     var snapshot = await service.MoveNonResolveEventAsync(4,
       new MoveTimelineEventRequest(before.ShowVersion, 2, true));
 
-    await Assert.That(snapshot.Timeline.Select(e => e.Id)).IsEquivalentTo(new[] { 1, 4, 2, 3 });
+    await Assert.That(snapshot.Timeline.Select(e => e.Id)).IsEquivalentTo([1, 4, 2, 3]);
   }
 
   [Test]
@@ -783,7 +783,7 @@ public sealed class ShowStateServiceTests
       new VersionedCommandRequest(before.ShowVersion));
 
     await Assert.That(snapshot.Timeline).Count().IsEqualTo(3);
-    await Assert.That(snapshot.Timeline.Select(e => e.Position)).IsEquivalentTo(new[] { 1, 2, 3 });
+    await Assert.That(snapshot.Timeline.Select(e => e.Position)).IsEquivalentTo([1, 2, 3]);
   }
 
   [Test]
@@ -890,13 +890,8 @@ public sealed class ShowStateServiceTests
     return new AssetStore(environment);
   }
 
-  private sealed class RecordingOrchestrator : TimelineOrchestrator
+  private sealed class RecordingOrchestrator() : TimelineOrchestrator(null!)
   {
-    public RecordingOrchestrator()
-      : base(null!)
-    {
-    }
-
     public List<long> Delays { get; } = [];
 
     public override void ScheduleAdvance(long delayMs)

@@ -950,7 +950,7 @@ public sealed class ShowStateService(
         return state with
         {
           Playback = NewPlayback(
-            PlaybackStatus.Paused,
+            state.Playback.Status,
             request.EventId,
             ComputeActiveEventIds(ordered, targetIndex),
             state.Playback.StartedAt)
@@ -959,7 +959,13 @@ public sealed class ShowStateService(
       cancellationToken);
 
     await BroadcastPlaybackAsync(updated);
+    // A seek jumps to a different point in the timeline: the pending schedule
+    // was computed for the old current event, so drop it and re-schedule from
+    // the new current event when still running (otherwise trigger-offset
+    // children of the target would never fire).
     orchestrator.CancelAdvance();
+    if (updated.Playback.Status == PlaybackStatus.Running)
+      ScheduleNextAdvanceAsync(updated);
     return ShowContractMapper.ToContract(updated);
   }
 

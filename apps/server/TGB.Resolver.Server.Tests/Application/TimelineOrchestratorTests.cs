@@ -121,6 +121,48 @@ public sealed class TimelineOrchestratorTests
   }
 
   [Test]
+  public async Task SeekPlayback_WhileRunning_ReschedulesNextAdvance()
+  {
+    var (provider, _) = CreateProvider();
+    var service = provider.GetRequiredService<ShowStateService>();
+    var repository = provider.GetRequiredService<ShowRawRepository>();
+    await service.EnsureSeededAsync();
+
+    // User repro: [E1, Parent, Child(+0.5s)]. Pressing "next" seeks to the
+    // parent; the offset child must still fire on its own schedule after the
+    // seek instead of remaining stuck.
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(false, 3_000, false),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, 10, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, 30, null, false, "Parent", null, null,
+          null),
+        new TimelineEvent(3, 3, TimelineEventType.Cus, null, 0.5, false, "Child", null, null,
+          null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    var version = (await service.GetSnapshotAsync()).ShowVersion;
+    await service.StartPlaybackAsync(new VersionedCommandRequest(version));
+
+    // Seek to the parent mid-playback (the transport "next" button).
+    await service.SeekPlaybackAsync(new SeekPlaybackRequest(version, 2));
+
+    var snapshot = await service.GetSnapshotAsync();
+    await Assert.That(snapshot.Playback.Status).IsEqualTo(PlaybackStatus.Running);
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(2);
+
+    // The offset child must fire on its own schedule after the seek.
+    await Task.Delay(TimeSpan.FromMilliseconds(1_100));
+    snapshot = await service.GetSnapshotAsync();
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([2, 3]);
+  }
+
+  [Test]
   public async Task StartPlayback_WithPendingOffsetAdvance_KeepsPendingTimersAlive()
   {
     var (provider, hubContext) = CreateProvider();
