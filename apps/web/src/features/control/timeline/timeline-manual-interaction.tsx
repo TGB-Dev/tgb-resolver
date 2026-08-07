@@ -1,4 +1,4 @@
-import { Box, IconButton } from "@chakra-ui/react";
+import { IconButton } from "@chakra-ui/react";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check } from "lucide-react";
 import { type MouseEvent, useCallback } from "react";

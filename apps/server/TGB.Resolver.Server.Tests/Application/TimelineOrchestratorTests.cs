@@ -84,6 +84,43 @@ public sealed class TimelineOrchestratorTests
   }
 
   [Test]
+  public async Task ConcurrentGroup_SingleOffsetChild_FiresAtItsOwnOffset()
+  {
+    var (provider, _) = CreateProvider();
+    var service = provider.GetRequiredService<ShowStateService>();
+    var repository = provider.GetRequiredService<ShowRawRepository>();
+    await service.EnsureSeededAsync();
+
+    // User repro: [Parent, Child(+5s)]. The child must fire 5s after the
+    // parent started, not remain stuck.
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(false, 3_000, false),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, 30, null, false, "Parent", null, null,
+          null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 5, false, "Child", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    var version = (await service.GetSnapshotAsync()).ShowVersion;
+    await service.StartPlaybackAsync(new VersionedCommandRequest(version));
+
+    // Not yet fired after 1s.
+    await Task.Delay(TimeSpan.FromMilliseconds(1_100));
+    var snapshot = await service.GetSnapshotAsync();
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(1);
+
+    // Fired ~5s after the parent started.
+    await Task.Delay(TimeSpan.FromMilliseconds(4_200));
+    snapshot = await service.GetSnapshotAsync();
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(2);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([1, 2]);
+  }
+
+  [Test]
   public async Task StartPlayback_WithPendingOffsetAdvance_KeepsPendingTimersAlive()
   {
     var (provider, hubContext) = CreateProvider();
@@ -131,7 +168,7 @@ public sealed class TimelineOrchestratorTests
     var services = new ServiceCollection();
     services.AddSingleton(dbContext);
     services.AddSingleton(serializer);
-    services.AddSingleton(sp => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
+    services.AddSingleton(_ => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
     services.AddSingleton(hubContext);
     services.AddSingleton(CreateAssetStore());
     services.AddSingleton<TimelineOrchestrator>();

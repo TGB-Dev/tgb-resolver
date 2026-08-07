@@ -1184,25 +1184,17 @@ public sealed class ShowStateService(
 
     // Trace back to the group parent of the current concurrent group.
     var parentIndex = currentIndex;
-    while (parentIndex > 0 && ordered[parentIndex].TriggerOffsetSeconds is not null)
-    {
-      parentIndex--;
-    }
+    while (parentIndex > 0 && ordered[parentIndex].TriggerOffsetSeconds is not null) parentIndex--;
 
     // Include the group parent through the current active event (all triggered so far).
     var ids = new List<int>();
-    for (var i = parentIndex; i <= currentIndex; i++)
-    {
-      ids.Add(ordered[i].Id);
-    }
+    for (var i = parentIndex; i <= currentIndex; i++) ids.Add(ordered[i].Id);
 
     // Plus any immediate 0-second (simultaneous) offset events right after current.
     for (var i = currentIndex + 1;
          i < ordered.Length && ordered[i].TriggerOffsetSeconds == 0;
          i++)
-    {
       ids.Add(ordered[i].Id);
-    }
 
     return ids;
   }

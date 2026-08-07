@@ -3,7 +3,6 @@ import { useSignal } from "@preact/signals-react";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { Check, GripVertical } from "lucide-react";
-import type { DragControls } from "motion/react";
 import { memo, useCallback } from "react";
 
 import { floatingPanelModel } from "@/features/control/floating-panel-model";
@@ -31,7 +30,7 @@ export interface ControlTimelineTableItemProps {
   isLive: boolean;
   onSeek: (id: number) => void;
   onOpenContextMenu?: (e: React.MouseEvent, payload: TimelineTableItem) => void;
-  dragControls?: DragControls;
+  dragHandleRef?: (element: Element | null) => void;
   onCreateEvent?: (relativeToEventId: number, before: boolean) => void;
 }
 
@@ -52,7 +51,7 @@ export const ControlTimelineTableItem = memo(
     isLive,
     onSeek,
     onOpenContextMenu,
-    dragControls,
+    dragHandleRef,
     onCreateEvent,
   }: ControlTimelineTableItemProps) => {
     const isNear = useSignal(false);
@@ -109,15 +108,6 @@ export const ControlTimelineTableItem = memo(
         );
       }
     }, [payload.id, payload.position, payload.type]);
-
-    const handleDragPointerDown = useCallback(
-      (e: React.PointerEvent) => {
-        if (isReorderable) {
-          dragControls?.start(e);
-        }
-      },
-      [dragControls, isReorderable],
-    );
 
     return (
       <Box
@@ -196,12 +186,12 @@ export const ControlTimelineTableItem = memo(
             <Box display="flex" alignItems="center" justifyContent="center" h="full">
               <IconButton
                 aria-label="Drag to reorder event"
+                ref={dragHandleRef}
                 size="2xs"
                 variant="ghost"
                 disabled={!isReorderable}
                 cursor={isReorderable ? "grab" : "not-allowed"}
                 _active={{ cursor: isReorderable ? "grabbing" : "not-allowed" }}
-                onPointerDown={handleDragPointerDown}
                 color="fg.muted"
                 _hover={isReorderable ? { color: "fg" } : undefined}
               >

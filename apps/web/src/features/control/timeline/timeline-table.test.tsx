@@ -21,16 +21,16 @@ const {
   isLiveMock,
   seekMock,
   moveMock,
-  reorderGroupSpy,
-  reorderItemSpy,
+  dragDropProviderSpy,
+  sortableSpy,
 } = vi.hoisted(() => ({
   mutateAsync: vi.fn(async () => undefined),
   openFloatingPanel: vi.fn(),
   isLiveMock: vi.fn(),
   seekMock: vi.fn(),
   moveMock: vi.fn(),
-  reorderGroupSpy: vi.fn(),
-  reorderItemSpy: vi.fn(),
+  dragDropProviderSpy: vi.fn(),
+  sortableSpy: vi.fn(),
 }));
 
 vi.mock("@/features/control/hooks", () => ({
@@ -47,41 +47,19 @@ vi.mock("@/features/control/floating-panel-model", () => ({
   floatingPanelModel: { openFloatingPanel },
 }));
 
-vi.mock("motion/react", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("motion/react")>();
-  return {
-    ...mod,
-    Reorder: {
-      Group: ({
-        children,
-        axis: _axis,
-        values: _values,
-        onReorder: _onReorder,
-        ...rest
-      }: {
-        children?: ReactNode;
-        [key: string]: unknown;
-      }) => {
-        reorderGroupSpy();
-        return <ul {...(rest as React.HTMLAttributes<HTMLUListElement>)}>{children}</ul>;
-      },
-      Item: ({
-        children,
-        value: _value,
-        dragListener: _dragListener,
-        dragControls: _dragControls,
-        onDragEnd: _onDragEnd,
-        ...rest
-      }: {
-        children?: ReactNode;
-        [key: string]: unknown;
-      }) => {
-        reorderItemSpy();
-        return <li {...(rest as React.HTMLAttributes<HTMLLIElement>)}>{children}</li>;
-      },
-    },
-  };
-});
+vi.mock("@dnd-kit/react", () => ({
+  DragDropProvider: ({ children }: { children?: ReactNode }) => {
+    dragDropProviderSpy();
+    return <>{children}</>;
+  },
+}));
+
+vi.mock("@dnd-kit/react/sortable", () => ({
+  useSortable: () => {
+    sortableSpy();
+    return { ref: () => undefined, handleRef: () => undefined };
+  },
+}));
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -91,8 +69,8 @@ beforeEach(() => {
   moveMock.mockClear();
   isLiveMock.mockClear();
   isLiveMock.mockReturnValue(false);
-  reorderGroupSpy.mockClear();
-  reorderItemSpy.mockClear();
+  dragDropProviderSpy.mockClear();
+  sortableSpy.mockClear();
   playbackModel.reset();
   showModel.hydrateFromSnapshot(makeShow([]));
   localStorage.clear();
@@ -301,8 +279,8 @@ describe("ControlTimelineTable mode-dependent rendering", () => {
     expect(container.querySelectorAll("ul > li[data-timeline-row]")).toHaveLength(3);
     expect(container.querySelectorAll("[data-event-id]")).toHaveLength(3);
 
-    expect(reorderGroupSpy).not.toHaveBeenCalled();
-    expect(reorderItemSpy).not.toHaveBeenCalled();
+    expect(dragDropProviderSpy).not.toHaveBeenCalled();
+    expect(sortableSpy).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "Drag to reorder event" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Toggle manual interaction" })).toBeNull();
 
@@ -320,8 +298,8 @@ describe("ControlTimelineTable mode-dependent rendering", () => {
     const { container } = renderWithChakra(<ControlTimelineTable />);
 
     expect(container.querySelectorAll("ul > li[data-timeline-row]")).toHaveLength(3);
-    expect(reorderGroupSpy).toHaveBeenCalledTimes(1);
-    expect(reorderItemSpy).toHaveBeenCalledTimes(3);
+    expect(dragDropProviderSpy).toHaveBeenCalledTimes(1);
+    expect(sortableSpy).toHaveBeenCalledTimes(3);
     expect(screen.getAllByRole("button", { name: "Drag to reorder event" })).toHaveLength(3);
     expect(screen.queryByRole("button", { name: "Toggle manual interaction" })).toBeNull();
 

@@ -1,9 +1,11 @@
 import { Box, Center, Spinner, Text } from "@chakra-ui/react";
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { useComputed, useSignalEffect } from "@preact/signals-react";
 import { For } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
-import { type DragControls, Reorder, useDragControls } from "motion/react";
 import { memo, type RefObject, useCallback, useRef } from "react";
 
 import {
@@ -172,7 +174,10 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
   );
 }
 
-function TimelineReorderList({
+type DragOverHandler = NonNullable<React.ComponentProps<typeof DragDropProvider>["onDragOver"]>;
+type DragEndHandler = NonNullable<React.ComponentProps<typeof DragDropProvider>["onDragEnd"]>;
+
+const TimelineReorderList = memo(function TimelineReorderList({
   orderedIds,
   isLive,
   onSeek,
@@ -194,10 +199,42 @@ function TimelineReorderList({
   const displayIds = reorderStateRef.current?.rows.value ?? orderedIds;
   const onCommitReorderRef = useRef(onCommitReorder);
   onCommitReorderRef.current = onCommitReorder;
+  // Latest committed order, for the drag handlers (stable across renders).
+  const orderedIdsRef = useRef(orderedIds);
+  orderedIdsRef.current = orderedIds;
+
   const commitDrag = useCallback(() => {
     const nextRows = reorderStateRef.current?.take();
     if (nextRows && !isMovePending.current) onCommitReorderRef.current(nextRows);
   }, [isMovePending]);
+
+  // The provisional order currently shown (dragging) or the committed base.
+  const currentDisplay = useCallback(
+    () => reorderStateRef.current?.rows.value ?? orderedIdsRef.current,
+    [],
+  );
+
+  const onDragOver = useCallback<DragOverHandler>(
+    (event) => {
+      if (event.operation.canceled || isMovePending.current) return;
+      reorderStateRef.current?.set(move(currentDisplay(), event));
+    },
+    [currentDisplay, isMovePending],
+  );
+
+  const onDragEnd = useCallback<DragEndHandler>(
+    (event) => {
+      if (isMovePending.current) return;
+      if (event.operation.canceled || event.operation.target == null) {
+        // Esc/dropped outside any row: discard the provisional order.
+        reorderStateRef.current?.take();
+        return;
+      }
+      reorderStateRef.current?.set(move(currentDisplay(), event));
+      commitDrag();
+    },
+    [currentDisplay, commitDrag, isMovePending],
+  );
 
   if (isLive) {
     // Drop any uncommitted drag order when leaving edit mode so it cannot
@@ -221,75 +258,56 @@ function TimelineReorderList({
   }
 
   return (
-    <Reorder.Group
-      axis="y"
-      values={displayIds}
-      onReorder={(nextIds) => {
-        if (!isMovePending.current) reorderStateRef.current?.set(nextIds);
-      }}
-      style={{ listStyle: "none", padding: 0, margin: 0 }}
-    >
-      {displayIds.map((eventId) => (
-        <TimelineRowItem
-          key={eventId}
-          eventId={eventId}
-          isLive={isLive}
-          onSeek={onSeek}
-          onOpenContextMenu={onOpenContextMenu}
-          onCommitReorder={commitDrag}
-        />
-      ))}
-    </Reorder.Group>
+    <Box as="ul" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+      <DragDropProvider onDragOver={onDragOver} onDragEnd={onDragEnd}>
+        {displayIds.map((eventId, index) => (
+          <TimelineRowItem
+            key={eventId}
+            eventId={eventId}
+            index={index}
+            isLive={isLive}
+            onSeek={onSeek}
+            onOpenContextMenu={onOpenContextMenu}
+          />
+        ))}
+      </DragDropProvider>
+    </Box>
   );
-}
+});
 
 const TimelineRowItem = memo(function TimelineRowItem({
   eventId,
+  index,
   isLive,
   onSeek,
   onOpenContextMenu,
-  onCommitReorder,
 }: {
   eventId: number;
+  index: number;
   isLive: boolean;
   onSeek: (id: number) => void;
   onOpenContextMenu: (e: React.MouseEvent, payload: TimelineTableItem) => void;
-  onCommitReorder: () => void;
 }) {
-  const dragControls = useDragControls();
-  const dragControlsRef = useRef<DragControls | null>(null);
-  if (!dragControlsRef.current) dragControlsRef.current = dragControls;
-
   const payload = useComputed(() => showModel.timelineItemsById.value[eventId]);
   const isReorderable = payload.value?.type === TimelineEventType.CUS && !isLive;
+  const { ref, handleRef } = useSortable({
+    id: eventId,
+    index,
+    disabled: { draggable: !isReorderable },
+  });
 
   if (!payload.value) return null;
 
-  const row = (
-    <ControlTimelineTableItem
-      payload={payload.value}
-      isLive={isLive}
-      onSeek={onSeek}
-      onOpenContextMenu={onOpenContextMenu}
-      dragControls={isReorderable ? dragControlsRef.current : undefined}
-    />
-  );
-
   return (
-    <Reorder.Item
-      layout="position"
-      value={eventId}
-      data-timeline-row
-      dragListener={false}
-      dragControls={dragControls}
-      onDragEnd={onCommitReorder}
-      style={{
-        userSelect: "none",
-        position: "relative",
-      }}
-    >
-      {row}
-    </Reorder.Item>
+    <li ref={ref} data-timeline-row style={{ position: "relative", userSelect: "none" }}>
+      <ControlTimelineTableItem
+        payload={payload.value}
+        isLive={isLive}
+        onSeek={onSeek}
+        onOpenContextMenu={onOpenContextMenu}
+        dragHandleRef={isReorderable ? handleRef : undefined}
+      />
+    </li>
   );
 });
 
