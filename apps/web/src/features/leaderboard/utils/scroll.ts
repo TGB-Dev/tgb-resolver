@@ -8,11 +8,16 @@ interface ScrollOptions {
   ease?: KeyframeOptions["ease"];
 }
 
+let active: AnimationPlaybackControls | null = null;
+
 export function animateScrollIntoView(
   element: HTMLElement,
   container: HTMLElement,
   options: ScrollOptions = {},
 ): AnimationPlaybackControls {
+  // A new scroll supersedes any in-flight one: overlapping scrollTop writers
+  // would double layout invalidation per frame and jitter the container.
+  active?.stop();
   const { block = "end", duration = 0.5, ease = TgbResolverEasings.swiftOut } = options;
 
   const containerRect = container.getBoundingClientRect();
@@ -46,11 +51,16 @@ export function animateScrollIntoView(
   targetScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll));
 
   // Return animate's controls
-  return animate(container.scrollTop, targetScrollTop, {
+  const controls = animate(container.scrollTop, targetScrollTop, {
     duration,
     ease,
     onUpdate: (latest) => {
       container.scrollTop = latest;
     },
+    onComplete: () => {
+      if (active === controls) active = null;
+    },
   });
+  active = controls;
+  return controls;
 }
