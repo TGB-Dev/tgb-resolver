@@ -136,6 +136,8 @@ public sealed class ShowStateService(
     NonResolveEventPatchRequest request,
     CancellationToken cancellationToken = default)
   {
+    EnsureFiniteOrNull(request.TriggerOffsetSeconds, nameof(request.TriggerOffsetSeconds));
+
     var updated = await repository.MutateShowAsync(
       request.ShowVersion,
       state =>
@@ -168,6 +170,9 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> CreateNonResolveEventAsync(
     CreateTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
+    EnsureFiniteOrNull(request.DurationSeconds, nameof(request.DurationSeconds));
+    EnsureFiniteOrNull(request.TriggerOffsetSeconds, nameof(request.TriggerOffsetSeconds));
+
     var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
@@ -199,6 +204,9 @@ public sealed class ShowStateService(
   public async Task<ShowStateSnapshot> PatchTimelineEventAsync(int eventId,
     PatchTimelineEventRequest request, CancellationToken cancellationToken = default)
   {
+    EnsureFiniteOrNull(request.DurationSeconds, nameof(request.DurationSeconds));
+    EnsureFiniteOrNull(request.TriggerOffsetSeconds, nameof(request.TriggerOffsetSeconds));
+
     var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
     {
       EnsureTimelineWritable(state);
@@ -895,7 +903,7 @@ public sealed class ShowStateService(
           Playback = NewPlayback(
             PlaybackStatus.Running,
             firstEvent?.Id,
-            firstEvent is not null ? [firstEvent.Id] : [],
+            firstEvent is not null ? ComputeActiveEventIds(ordered, 0) : [],
             firstEvent is not null ? startedAt : null)
         };
       },
@@ -942,16 +950,22 @@ public sealed class ShowStateService(
         return state with
         {
           Playback = NewPlayback(
-            PlaybackStatus.Paused,
+            state.Playback.Status,
             request.EventId,
-            [request.EventId],
+            ComputeActiveEventIds(ordered, targetIndex),
             state.Playback.StartedAt)
         };
       },
       cancellationToken);
 
     await BroadcastPlaybackAsync(updated);
+    // A seek jumps to a different point in the timeline: the pending schedule
+    // was computed for the old current event, so drop it and re-schedule from
+    // the new current event when still running (otherwise trigger-offset
+    // children of the target would never fire).
     orchestrator.CancelAdvance();
+    if (updated.Playback.Status == PlaybackStatus.Running)
+      ScheduleNextAdvanceAsync(updated);
     return ShowContractMapper.ToContract(updated);
   }
 
@@ -974,7 +988,7 @@ public sealed class ShowStateService(
           Playback = NewPlayback(
             PlaybackStatus.Running,
             first.Id,
-            [first.Id],
+            ComputeActiveEventIds(ordered, 0),
             startedAt)
         },
         cancellationToken);
@@ -1001,7 +1015,7 @@ public sealed class ShowStateService(
         Playback = NewPlayback(
           PlaybackStatus.Running,
           nextEvent.Id,
-          [nextEvent.Id],
+          ComputeActiveEventIds(ordered, currentIndex + 1),
           state.Playback.StartedAt)
       },
       cancellationToken);
@@ -1040,25 +1054,27 @@ public sealed class ShowStateService(
     if (currentIndex < 0 || currentIndex >= ordered.Length - 1)
       return;
 
+    var currentEvent = ordered[currentIndex];
     var nextEvent = ordered[currentIndex + 1];
+
+    // Next event's trigger offset: explicit per-event override.
+    // 0 = concurrent at previous start, negative = fires before the previous event.
+    if (nextEvent.TriggerOffsetSeconds is not null)
+    {
+      orchestrator.ScheduleAdvance(Math.Max(0, ToMs(nextEvent.TriggerOffsetSeconds.Value)));
+      return;
+    }
 
     // No auto-advance when both auto modes are off
     if (state.Automation is { FullAutoEnabled: false, AutoResolveEnabled: false })
       return;
 
-    // Next event's trigger offset: explicit per-event override
-    if (nextEvent.TriggerOffsetSeconds is not null)
-    {
-      orchestrator.ScheduleAdvance(Math.Max(1,
-        (long)(nextEvent.TriggerOffsetSeconds.Value * 1000)));
-      return;
-    }
-
     if (!state.Automation.FullAutoEnabled && nextEvent.RequireManualInteraction == true)
       return;
 
-    orchestrator.ScheduleAdvance((long)((nextEvent.DurationSeconds ??
-                                         state.Automation.AutoResolveSpeedMs / 1000d) * 1000));
+    // Hold the next event until the CURRENT event finishes (its own duration wins).
+    orchestrator.ScheduleAdvance(ToMs(currentEvent.DurationSeconds ??
+                                      state.Automation.AutoResolveSpeedMs / 1000d));
   }
 
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
@@ -1153,6 +1169,40 @@ public sealed class ShowStateService(
     long? startedAt)
   {
     return new PlaybackState(status, currentEventId, activeEventIds, startedAt);
+  }
+
+  private static void EnsureFiniteOrNull(double? value, string fieldName)
+  {
+    if (value is { } v && !double.IsFinite(v))
+      throw new ArgumentException($"{fieldName} must be a finite number.", fieldName);
+  }
+
+  private static long ToMs(double seconds)
+  {
+    return (long)(seconds * 1000);
+  }
+
+  private static IReadOnlyList<int> ComputeActiveEventIds(
+    TimelineEvent[] ordered, int currentIndex)
+  {
+    if (currentIndex < 0 || currentIndex >= ordered.Length)
+      return [];
+
+    // Trace back to the group parent of the current concurrent group.
+    var parentIndex = currentIndex;
+    while (parentIndex > 0 && ordered[parentIndex].TriggerOffsetSeconds is not null) parentIndex--;
+
+    // Include the group parent through the current active event (all triggered so far).
+    var ids = new List<int>();
+    for (var i = parentIndex; i <= currentIndex; i++) ids.Add(ordered[i].Id);
+
+    // Plus any immediate 0-second (simultaneous) offset events right after current.
+    for (var i = currentIndex + 1;
+         i < ordered.Length && ordered[i].TriggerOffsetSeconds == 0;
+         i++)
+      ids.Add(ordered[i].Id);
+
+    return ids;
   }
 
   private static CustomEventPayload? ToData(CustomEventPayloadSnapshot? payload)

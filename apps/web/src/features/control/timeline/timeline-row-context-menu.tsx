@@ -24,6 +24,8 @@ const closedState = (): TimelineContextState => ({
   target: null,
 });
 
+const DELETE_BUTTON_HOVER = { bg: "bg.error", color: "fg.error" };
+
 function getTimelinePosition(eventId: number, fallback: number) {
   const index = showModel.showOrderedIds.peek().indexOf(eventId);
   return index < 0 ? fallback : index + 1;
@@ -146,7 +148,7 @@ export function TimelineRowContextMenu({
           px={3}
           borderRadius="none"
           color="fg.error"
-          _hover={{ bg: "bg.error", color: "fg.error" }}
+          _hover={DELETE_BUTTON_HOVER}
           onClick={async () => {
             onClose();
             const accepted = await confirmActionModel.confirmAction({

@@ -12,7 +12,7 @@ export interface BaseExtension {
   readonly extId: string;
 
   /**
-   * Extension short name for displaying in the event timeline
+   * Extension short name for displaying in the event timeline, 3-char
    */
   readonly shortName: string;
 

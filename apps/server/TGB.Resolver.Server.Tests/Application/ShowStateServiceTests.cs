@@ -21,40 +21,154 @@ public sealed class ShowStateServiceTests
   [Test]
   public async Task StartPlayback_RejectsStaleShowVersion()
   {
-    var options = new DbContextOptionsBuilder<ResolverDbContext>()
-      .UseSqlite("Data Source=:memory:")
-      .Options;
-    await using var dbContext = new ResolverDbContext(options);
-    await dbContext.Database.OpenConnectionAsync();
-    await dbContext.Database.EnsureCreatedAsync();
+    var (service, _) = await CreateServiceAsync();
 
-    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
-    var repository = new ShowRawRepository(dbContext, serializer, SystemClock.Instance);
-    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
-    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
-    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
-    var orchestrator = new TimelineOrchestrator(null!);
-    var assetStore = CreateAssetStore();
+    var exception = (await Assert.That(async () =>
+        await service.StartPlaybackAsync(new VersionedCommandRequest(999)))
+      .Throws<VersionDriftException>())!;
 
-    var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
-
-    await service.EnsureSeededAsync();
-
-    VersionDriftException? exception = null;
-
-    try
-    {
-      await service.StartPlaybackAsync(new VersionedCommandRequest(999));
-    }
-    catch (VersionDriftException ex)
-    {
-      exception = ex;
-    }
-
-    await Assert.That(exception).IsNotNull();
-    await Assert.That(exception!.ExpectedVersion).IsEqualTo(999);
+    await Assert.That(exception.ExpectedVersion).IsEqualTo(999);
     await Assert.That(exception.ActualVersion).IsEqualTo(1);
+  }
+
+  [Test]
+  public async Task PatchTimelineEvent_RejectsNonFiniteTriggerOffset()
+  {
+    var (service, _) = await CreateServiceAsync();
+
+    await Assert.That(async () => await service.PatchTimelineEventAsync(1,
+        new PatchTimelineEventRequest(1, null, false, null, double.NaN, false, null, null)))
+      .Throws<ArgumentException>();
+  }
+
+  [Test]
+  public async Task PatchTimelineEvent_RejectsNonFiniteDuration()
+  {
+    var (service, _) = await CreateServiceAsync();
+
+    await Assert.That(async () => await service.PatchTimelineEventAsync(1,
+        new PatchTimelineEventRequest(1, double.PositiveInfinity, false, null, null, false, null,
+          null)))
+      .Throws<ArgumentException>();
+  }
+
+  [Test]
+  public async Task ScheduleNextAdvance_HoldsNextEventUntilCurrentDurationElapses()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    // Current event lasts 5s; next event has no trigger offset (sequential).
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, 5, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, null, false, "E2", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(5_000);
+  }
+
+  [Test]
+  public async Task ScheduleNextAdvance_ZeroTriggerOffset_SchedulesZeroDelay()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, null, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 0, false, "E2", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(0);
+  }
+
+  [Test]
+  public async Task ScheduleNextAdvance_NegativeTriggerOffset_PassesClampedZeroDelay()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, null, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, -2.5, false, "E2", null, null,
+          null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(0);
+  }
+
+  [Test]
+  public async Task ScheduleNextAdvance_TriggerOffset_SchedulesDelayEvenWhenAutoModesDisabled()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(false, 3_000, false),
+      Playback = new PlaybackState(PlaybackStatus.Running, 1, [1], 0),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, 5, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 0.5, false, "E2", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    await service.RescheduleAdvanceAsync();
+
+    await Assert.That(orchestrator.Delays).Contains(500);
+  }
+
+  [Test]
+  public async Task StartPlayback_ActiveEventIdsIncludesConcurrentTriggerOffsetChildren()
+  {
+    var orchestrator = new RecordingOrchestrator();
+    var (service, repository) = await CreateServiceWithOrchestratorAsync(orchestrator);
+
+    var show = ShowRawRepository.CreateEmptyShow(1, ShowSource.Manual) with
+    {
+      Automation = new AutomationState(true, 3_000, false),
+      Timeline =
+      [
+        new TimelineEvent(1, 1, TimelineEventType.Cus, null, null, false, "E1", null, null, null),
+        new TimelineEvent(2, 2, TimelineEventType.Cus, null, 2, false, "E2", null, null, null),
+        new TimelineEvent(3, 3, TimelineEventType.Cus, null, 3, false, "E3", null, null, null),
+        new TimelineEvent(4, 4, TimelineEventType.Cus, null, null, false, "E4", null, null, null)
+      ]
+    };
+    await repository.ReplaceAsync(show);
+
+    var snapshot = await service.StartPlaybackAsync(new VersionedCommandRequest(1));
+
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(1);
+    await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([1]);
   }
 
   [Test]
@@ -541,6 +655,182 @@ public sealed class ShowStateServiceTests
     }
   }
 
+  [Test]
+  public async Task Optimize_KeepsResolveAndPayloadEvents_ReindexesPositions()
+  {
+    var (service, hub) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var created = await service.CreateNonResolveEventAsync(new CreateTimelineEventRequest(
+      before.ShowVersion, 2, false, 5, 0.5, false, "Payloadless", null));
+
+    var snapshot = await service.OptimizeAsync(
+      new VersionedCommandRequest(created.ShowVersion));
+
+    // The payload-less custom event is dropped; resolve/pre-resolve and
+    // payload-bearing events survive and are reindexed from 1.
+    await Assert.That(snapshot.Timeline).Count().IsEqualTo(4);
+    await Assert.That(snapshot.Timeline.Select(e => e.Position)).IsEquivalentTo([1, 2, 3, 4]);
+    await Assert.That(snapshot.Timeline.Any(e => e.CustomName == "Payloadless")).IsFalse();
+    await hub.Clients.All.Received(1).TimelineReordered(Arg.Any<TimelineReorderedMessage>());
+  }
+
+  [Test]
+  public async Task Clear_ResetsShowToEmptyManualState()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var snapshot = await service.ClearAsync(new VersionedCommandRequest(before.ShowVersion));
+
+    await Assert.That(snapshot.Timeline).IsEmpty();
+    await Assert.That(snapshot.Meta.Title).IsEqualTo("Untitled show");
+    await Assert.That(snapshot.Meta.Source).IsEqualTo(ShowSource.Manual);
+    await Assert.That(snapshot.ShowVersion).IsEqualTo(before.ShowVersion + 1);
+  }
+
+  [Test]
+  public async Task ImportXml_ReplacesShowWithParsedContest()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var xml = await ReadSampleXmlAsync();
+
+    var snapshot = await service.ImportXmlAsync(new ImportXmlRequest(xml, null));
+
+    await Assert.That(snapshot.ShowVersion).IsEqualTo(before.ShowVersion + 1);
+    await Assert.That(snapshot.Meta.Title).IsEqualTo("Contest");
+    await Assert.That(snapshot.Meta.Source).IsEqualTo(ShowSource.Xml);
+    await Assert.That(snapshot.Contest.Users).Count().IsEqualTo(54);
+    await Assert.That(snapshot.Timeline).Count().IsEqualTo(78);
+  }
+
+  [Test]
+  public async Task ImportXml_RejectsReadOnlyTimeline()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    await service.SetTimelineModeAsync(new SetTimelineModeRequest(before.ShowVersion,
+      TimelineMode.Ro));
+    var xml = await ReadSampleXmlAsync();
+
+    await Assert.That(async () => await service.ImportXmlAsync(new ImportXmlRequest(xml, null)))
+      .Throws<InvalidOperationException>();
+  }
+
+  [Test]
+  public async Task CreateNonResolveEvent_InsertsCustomEventAtPosition()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var snapshot = await service.CreateNonResolveEventAsync(new CreateTimelineEventRequest(
+      before.ShowVersion, 2, true, 7, 1.5, false, "Inserted", null));
+
+    await Assert.That(snapshot.Timeline).Count().IsEqualTo(5);
+    var inserted = snapshot.Timeline[1];
+    await Assert.That(inserted.CustomName).IsEqualTo("Inserted");
+    await Assert.That(inserted.Position).IsEqualTo(2);
+    await Assert.That(snapshot.Timeline[2].Id).IsEqualTo(2);
+  }
+
+  [Test]
+  public async Task PatchTimelineEvent_UpdatesCustomEventFields()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var snapshot = await service.PatchTimelineEventAsync(4,
+      new PatchTimelineEventRequest(
+        before.ShowVersion, 7, false, "Renamed", 1.5, false, true, null));
+
+    var updated = snapshot.Timeline.Single(e => e.Id == 4);
+    await Assert.That(updated.DurationSeconds).IsEqualTo(7);
+    await Assert.That(updated.CustomName).IsEqualTo("Renamed");
+    await Assert.That(updated.TriggerOffsetSeconds).IsEqualTo(1.5);
+    await Assert.That(updated.RequireManualInteraction).IsTrue();
+  }
+
+  [Test]
+  public async Task MoveNonResolveEvent_ReordersCustomEvent()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var snapshot = await service.MoveNonResolveEventAsync(4,
+      new MoveTimelineEventRequest(before.ShowVersion, 2, true));
+
+    await Assert.That(snapshot.Timeline.Select(e => e.Id)).IsEquivalentTo([1, 4, 2, 3]);
+  }
+
+  [Test]
+  public async Task MoveNonResolveEvent_RejectsResolveEvent()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.MoveNonResolveEventAsync(1,
+        new MoveTimelineEventRequest(before.ShowVersion, 2, true)))
+      .Throws<InvalidOperationException>();
+  }
+
+  [Test]
+  public async Task DeleteNonResolveEvent_RemovesEventAndRenumbers()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    var snapshot = await service.DeleteNonResolveEventAsync(4,
+      new VersionedCommandRequest(before.ShowVersion));
+
+    await Assert.That(snapshot.Timeline).Count().IsEqualTo(3);
+    await Assert.That(snapshot.Timeline.Select(e => e.Position)).IsEquivalentTo([1, 2, 3]);
+  }
+
+  [Test]
+  public async Task DeleteNonResolveEvent_RejectsResolveEvent()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    await Assert.That(async () => await service.DeleteNonResolveEventAsync(1,
+        new VersionedCommandRequest(before.ShowVersion)))
+      .Throws<InvalidOperationException>();
+  }
+
+  [Test]
+  public async Task AdvancePlaybackAsync_WhenRunning_MovesToTheNextEvent()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    var started = await service.StartPlaybackAsync(new VersionedCommandRequest(before.ShowVersion));
+    await Assert.That(started.Playback.CurrentEventId).IsEqualTo(1);
+
+    await service.AdvancePlaybackAsync(CancellationToken.None);
+
+    var after = await service.GetSnapshotAsync();
+    await Assert.That(after.Playback.CurrentEventId).IsEqualTo(2);
+    await Assert.That(after.Playback.ActiveEventIds).IsEquivalentTo([1, 2]);
+  }
+
+  [Test]
+  public async Task AdvancePlaybackAsync_WhenIdle_DoesNothing()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+
+    await service.AdvancePlaybackAsync(CancellationToken.None);
+
+    var after = await service.GetSnapshotAsync();
+    await Assert.That(after.ShowVersion).IsEqualTo(before.ShowVersion);
+    await Assert.That(after.Playback.Status).IsEqualTo(PlaybackStatus.Idle);
+  }
+
+  private static async Task<string> ReadSampleXmlAsync()
+  {
+    return await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures",
+      "sample.xml"));
+  }
+
   private static async Task AssertSnapshotUnchangedAsync(ShowStateSnapshot actual,
     ShowStateSnapshot expected)
   {
@@ -571,10 +861,46 @@ public sealed class ShowStateServiceTests
     return (service, hubContext);
   }
 
+  private static async Task<(ShowStateService Service, ShowRawRepository Repository)>
+    CreateServiceWithOrchestratorAsync(TimelineOrchestrator orchestrator)
+  {
+    var options = new DbContextOptionsBuilder<ResolverDbContext>()
+      .UseSqlite("Data Source=:memory:")
+      .Options;
+    var dbContext = new ResolverDbContext(options);
+    await dbContext.Database.OpenConnectionAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
+    var repository = new ShowRawRepository(dbContext, serializer, SystemClock.Instance);
+    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
+    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
+    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
+    var service = new ShowStateService(
+      repository, serializer, hubContext, orchestrator, SystemClock.Instance, CreateAssetStore());
+    await service.EnsureSeededAsync();
+    return (service, repository);
+  }
+
   private static AssetStore CreateAssetStore(string? contentRootPath = null)
   {
     var environment = Substitute.For<IHostEnvironment>();
-    environment.ContentRootPath.Returns(contentRootPath ?? Path.GetTempPath());
+    environment.ContentRootPath.Returns(contentRootPath
+                                        ?? Path.Combine(Path.GetTempPath(),
+                                          $"tgb-resolver-{Guid.NewGuid():N}"));
     return new AssetStore(environment);
+  }
+
+  private sealed class RecordingOrchestrator() : TimelineOrchestrator(null!)
+  {
+    public List<long> Delays { get; } = [];
+
+    public override void ScheduleAdvance(long delayMs)
+    {
+      Delays.Add(delayMs);
+    }
+
+    public override void CancelAdvance()
+    {
+    }
   }
 }

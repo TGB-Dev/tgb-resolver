@@ -60,7 +60,7 @@ export const LeaderboardRow = memo(
       const targetId = leaderboardModel.currentBottomView.value;
       if (targetId !== data.userId) return;
 
-      requestAnimationFrame(() => {
+      const raf = requestAnimationFrame(() => {
         if (!ref.current) return;
 
         let parent: HTMLElement | null = ref.current.parentElement;
@@ -82,6 +82,10 @@ export const LeaderboardRow = memo(
           parent = parent.parentElement;
         }
       });
+      // Cancel the pending frame when the cue advances again before it fires;
+      // the scroll animation itself is superseded by animateScrollIntoView's
+      // module-level active handle.
+      return () => cancelAnimationFrame(raf);
     });
 
     return (

@@ -18,6 +18,8 @@ const LeaderboardModel = createModel<LeaderboardModelState>(() => {
   const currentBottomView = signal<number>(0);
   const currentResolvedUserId = signal<number>(0);
 
+  let lastDeriveKey: { show: ShowFile; upToEventId?: number } | null = null;
+
   function getSignal(userId: number): Signal<LeaderboardEntry | null> {
     let sig = signals.get(userId);
     if (!sig) {
@@ -28,6 +30,17 @@ const LeaderboardModel = createModel<LeaderboardModelState>(() => {
   }
 
   function sync(show: ShowFile, upToEventId?: number): void {
+    // Every playback advance re-syncs with an unchanged show and a moved
+    // upToEventId; identical inputs must skip the full leaderboard derivation.
+    if (
+      lastDeriveKey != null &&
+      lastDeriveKey.show === show &&
+      lastDeriveKey.upToEventId === upToEventId
+    ) {
+      return;
+    }
+    lastDeriveKey = { show, upToEventId };
+
     const rows = deriveLeaderboard(show, upToEventId);
     for (const row of rows) {
       const sig = getSignal(row.userId);

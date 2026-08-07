@@ -1,4 +1,4 @@
-import { Grid } from "@chakra-ui/react";
+import { Grid, VStack } from "@chakra-ui/react";
 
 import { useControlShowRows } from "@/features/control/hooks";
 import { playbackModel } from "@/features/control/playback-model";
@@ -19,22 +19,67 @@ function CurrentEventCues() {
   const rows = useControlShowRows();
   const currentCueId = playbackModel.currentCueId.value;
   const currentIndex = rows.findIndex((row) => row.id === currentCueId);
-  const current = currentIndex >= 0 ? rows[currentIndex] : undefined;
-  const next =
-    currentIndex >= 0 && currentIndex < rows.length - 1 ? rows[currentIndex + 1] : undefined;
-  const previous = currentIndex > 0 ? rows[currentIndex - 1] : undefined;
+
+  if (currentIndex < 0) {
+    return (
+      <>
+        <CueItem cue={Cue.CURRENT}>
+          <CueContent cue={undefined} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+        </CueItem>
+        <NextCueTimer />
+        <CueItem cue={Cue.NEXT}>
+          <CueContent cue={undefined} contentSize={CUE_CONFIG[Cue.NEXT].contentSize} />
+        </CueItem>
+        <CueItem cue={Cue.PREVIOUS}>
+          <CueContent cue={undefined} contentSize={CUE_CONFIG[Cue.PREVIOUS].contentSize} />
+        </CueItem>
+      </>
+    );
+  }
+
+  // Find current group parent (the event at or before currentIndex with no trigger offset)
+  let parentIndex = currentIndex;
+  while (parentIndex > 0 && rows[parentIndex].triggerOffsetSeconds != null) {
+    parentIndex--;
+  }
+  const parentCue = rows[parentIndex];
+
+  // Concurrent child events in this group up to currentIndex
+  const concurrentChildren = rows.slice(parentIndex + 1, currentIndex + 1);
+  const latestChild =
+    concurrentChildren.length > 0 ? concurrentChildren[concurrentChildren.length - 1] : undefined;
+
+  // Next group starts at the next event after current group that has no trigger offset
+  let nextGroupIndex = currentIndex + 1;
+  while (nextGroupIndex < rows.length && rows[nextGroupIndex].triggerOffsetSeconds != null) {
+    nextGroupIndex++;
+  }
+  const nextCue = nextGroupIndex < rows.length ? rows[nextGroupIndex] : undefined;
+
+  // Previous group starts at the parent event before parentIndex
+  let prevGroupIndex = parentIndex - 1;
+  while (prevGroupIndex > 0 && rows[prevGroupIndex].triggerOffsetSeconds != null) {
+    prevGroupIndex--;
+  }
+  const previousCue =
+    prevGroupIndex >= 0 && prevGroupIndex < parentIndex ? rows[prevGroupIndex] : undefined;
 
   return (
     <>
       <CueItem cue={Cue.CURRENT}>
-        <CueContent cue={current} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+        <VStack gap={2} alignItems="start">
+          <CueContent cue={parentCue} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+          {latestChild && (
+            <CueContent cue={latestChild} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+          )}
+        </VStack>
       </CueItem>
       <NextCueTimer />
       <CueItem cue={Cue.NEXT}>
-        <CueContent cue={next} contentSize={CUE_CONFIG[Cue.NEXT].contentSize} />
+        <CueContent cue={nextCue} contentSize={CUE_CONFIG[Cue.NEXT].contentSize} />
       </CueItem>
       <CueItem cue={Cue.PREVIOUS}>
-        <CueContent cue={previous} contentSize={CUE_CONFIG[Cue.PREVIOUS].contentSize} />
+        <CueContent cue={previousCue} contentSize={CUE_CONFIG[Cue.PREVIOUS].contentSize} />
       </CueItem>
     </>
   );

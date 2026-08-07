@@ -220,7 +220,7 @@ function EntryRow({
       cursor="pointer"
       borderLeftWidth={3}
       borderLeftColor={isSelected ? "colorPalette.border" : "transparent"}
-      bg={isSelected ? "bg.accent.muted" : undefined}
+      bg={isSelected ? "bg.muted" : "bg.panel"}
       _hover={{ bg: "bg.subtle" }}
       onClick={(e) => {
         e.stopPropagation();

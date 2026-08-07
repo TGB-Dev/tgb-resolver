@@ -22,7 +22,7 @@
     "@tgb-resolver/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@microsoft/signalr": "^10.0.0",
+    "@microsoft/signalr": "^10.0.11",
     "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.1.2",
     "tsdown": "^0.22.14",
@@ -30,7 +30,7 @@
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
-    "@microsoft/signalr": "^10.0.0"
+    "@microsoft/signalr": "^10.0.11"
   },
   "files": [
     "dist"

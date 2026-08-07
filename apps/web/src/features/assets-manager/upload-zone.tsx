@@ -29,6 +29,10 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
     if (assetsInteractionModel.isInternalDragData(e.dataTransfer)) {
       return;
     }
+    // Ignore dragleave if moving to a child element inside the upload zone
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     isDragOver.value = false;
@@ -130,6 +134,7 @@ export const UploadZone = forwardRef<HTMLDivElement, UploadZoneProps>(function U
         <Box
           position="absolute"
           inset={0}
+          pointerEvents="none"
           bg="bg.subtle/80"
           display="flex"
           flexDirection="column"

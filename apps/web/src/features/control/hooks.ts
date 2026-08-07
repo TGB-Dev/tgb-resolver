@@ -123,9 +123,12 @@ export function useStartPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
+    // Playback-only response: do NOT setQueryData. The response carries the
+    // whole show, so writing it re-runs the query select (full show mapping)
+    // and re-emits to every consumer, re-rendering the entire timeline on a
+    // play/pause. Playback state is delivered by the SignalR
+    // PlaybackStateChanged broadcast (the authoritative path); a version bump
+    // cannot happen here (playback mutations don't advance the show version).
   });
 }
 
@@ -145,9 +148,7 @@ export function useResetPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
+    // Playback-only response - do NOT setQueryData (see useStartPlaybackMutation).
   });
 }
 
@@ -167,9 +168,11 @@ export function useSeekPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
+    // Playback-only response — do NOT setQueryData. Writing the response here
+    // re-runs the query select (mapShowStateSnapshotToShowFile maps the whole
+    // timeline) and re-emits to every consumer, re-rendering ~111 timeline
+    // rows + the cue tab on every seek. Playback state arrives via the SignalR
+    // PlaybackStateChanged broadcast; a seek cannot bump the show version.
   });
 }
 
@@ -432,6 +435,10 @@ export function useControlAutoResolveEnabled() {
 
 export function useControlAutoResolveSpeedMs() {
   return useControlShowQuery().data?.automation?.autoResolveSpeedMs ?? 3000;
+}
+
+export function useControlFullAutoEnabled() {
+  return useControlShowQuery().data?.automation?.fullAutoEnabled ?? false;
 }
 
 export function useUpdateAutomationMutation() {

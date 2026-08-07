@@ -39,26 +39,15 @@ export function ControlMainControls() {
   const seekPlayback = useSeekPlaybackMutation();
   const toggleLiveMode = useToggleLiveModeMutation();
   const isLive = useControlIsLive();
-  const rows = useControlShowRows();
   const connectionStatus = realtimeModel.connectionStatus.value;
   const canMutate = useControlCanMutate();
 
   const autoResolveEnabled = useControlAutoResolveEnabled();
-  const autoResolveSpeedMs = useControlAutoResolveSpeedMs();
   const updateAutomation = useUpdateAutomationMutation();
-
-  const RATES = [0.2, 0.5, 1, 2, 5];
-  const rateIndex = (() => {
-    const idx = RATES.findIndex((r) => 3000 / r <= autoResolveSpeedMs);
-    return idx >= 0 ? idx : RATES.length - 1;
-  })();
-
-  const dragValue = useSignal<number[]>([]);
 
   return (
     <HStack h={16} alignItems="center" borderTopWidth={1} gap={2} p={2}>
       <PlaybackTransportState
-        rows={rows}
         canMutate={canMutate}
         startPlayback={startPlayback}
         resetPlayback={resetPlayback}
@@ -79,34 +68,7 @@ export function ControlMainControls() {
         </Switch.Control>
       </Switch.Root>
 
-      <Slider.Root
-        value={dragValue.value.length > 0 ? dragValue.value : [rateIndex]}
-        min={0}
-        max={4}
-        step={1}
-        onValueChange={(details) => {
-          dragValue.value = details.value;
-        }}
-        onValueChangeEnd={({ value }) => {
-          dragValue.value = [];
-          updateAutomation.mutate({
-            autoResolveSpeedMs: Math.round(3000 / RATES[value[0]]),
-          });
-        }}
-        disabled={!canMutate || updateAutomation.isPending}
-        width={32}
-      >
-        <HStack gap={4}>
-          <Slider.Control>
-            <Slider.Track>
-              <Slider.Range />
-            </Slider.Track>
-            <Slider.Thumb index={0} />
-          </Slider.Control>
-
-          <Slider.ValueText>{RATES[rateIndex]}x</Slider.ValueText>
-        </HStack>
-      </Slider.Root>
+      <SpeedSlider canMutate={canMutate} />
 
       <Box flex={1} />
 
@@ -134,22 +96,97 @@ export function ControlMainControls() {
 }
 
 function PlaybackTransportState({
-  rows,
   canMutate,
   startPlayback,
   resetPlayback,
   seekPlayback,
 }: {
-  rows: ReturnType<typeof useControlShowRows>;
   canMutate: boolean;
   startPlayback: ReturnType<typeof useStartPlaybackMutation>;
   resetPlayback: ReturnType<typeof useResetPlaybackMutation>;
   seekPlayback: ReturnType<typeof useSeekPlaybackMutation>;
 }) {
+  return (
+    <>
+      <IconButton
+        loading={startPlayback.isPending}
+        onClick={() => startPlayback.mutate()}
+        disabled={!canMutate}
+      >
+        <PlayPauseIcon />
+      </IconButton>
+      <IconButton
+        loading={resetPlayback.isPending}
+        onClick={() => resetPlayback.mutate()}
+        disabled={!canMutate}
+      >
+        <TimerReset />
+      </IconButton>
+
+      <SeekButtons canMutate={canMutate} seekPlayback={seekPlayback} />
+    </>
+  );
+}
+
+function PlayPauseIcon() {
+  return playbackModel.status.value === PlaybackStatus.RUNNING ? <Pause /> : <Play />;
+}
+
+const SPEED_RATES = [0.2, 0.5, 1, 2, 5];
+
+function SpeedSlider({ canMutate }: { canMutate: boolean }) {
+  const autoResolveSpeedMs = useControlAutoResolveSpeedMs();
+  const updateAutomation = useUpdateAutomationMutation();
+  const dragValue = useSignal<number[]>([]);
+
+  const rateIndex = (() => {
+    const idx = SPEED_RATES.findIndex((r) => 3000 / r <= autoResolveSpeedMs);
+    return idx >= 0 ? idx : SPEED_RATES.length - 1;
+  })();
+
+  return (
+    <Slider.Root
+      value={dragValue.value.length > 0 ? dragValue.value : [rateIndex]}
+      min={0}
+      max={4}
+      step={1}
+      onValueChange={(details) => {
+        dragValue.value = details.value;
+      }}
+      onValueChangeEnd={({ value }) => {
+        dragValue.value = [];
+        updateAutomation.mutate({
+          autoResolveSpeedMs: Math.round(3000 / SPEED_RATES[value[0]]),
+        });
+      }}
+      disabled={!canMutate || updateAutomation.isPending}
+      width={32}
+    >
+      <HStack gap={4}>
+        <Slider.Control>
+          <Slider.Track>
+            <Slider.Range />
+          </Slider.Track>
+          <Slider.Thumb index={0} />
+        </Slider.Control>
+
+        <Slider.ValueText>{SPEED_RATES[rateIndex]}x</Slider.ValueText>
+      </HStack>
+    </Slider.Root>
+  );
+}
+
+function SeekButtons({
+  canMutate,
+  seekPlayback,
+}: {
+  canMutate: boolean;
+  seekPlayback: ReturnType<typeof useSeekPlaybackMutation>;
+}) {
+  const rows = useControlShowRows();
   const currentEventId = playbackModel.currentEventId.value;
   const currentIndex =
     currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
-  const playbackStatus = playbackModel.status.value;
 
   const prevAction = useAction({
     handler: () => {
@@ -176,21 +213,6 @@ function PlaybackTransportState({
 
   return (
     <>
-      <IconButton
-        loading={startPlayback.isPending}
-        onClick={() => startPlayback.mutate()}
-        disabled={!canMutate}
-      >
-        {playbackStatus === PlaybackStatus.RUNNING ? <Pause /> : <Play />}
-      </IconButton>
-      <IconButton
-        loading={resetPlayback.isPending}
-        onClick={() => resetPlayback.mutate()}
-        disabled={!canMutate}
-      >
-        <TimerReset />
-      </IconButton>
-
       <IconButton {...prevAction.buttonProps}>
         <ChevronLeft />
       </IconButton>

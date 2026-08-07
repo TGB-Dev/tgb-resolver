@@ -7,8 +7,6 @@ namespace TGB.Resolver.Server.Importing;
 
 public static class IcpcResolverEngine
 {
-  private const int WrongAttemptPenaltySeconds = 300;
-
   public static IcpcResolution Convert(
     string xml,
     IReadOnlyCollection<string>? excludedUsernames = null)
@@ -40,7 +38,8 @@ public static class IcpcResolverEngine
       .OrderBy(run => run.Id)
       .ToArray();
 
-    var frozen = new Scoreboard(teams, problemDefs, runs);
+    var wrongAttemptPenaltySeconds = contest.Info.Penalty * 60;
+    var frozen = new Scoreboard(teams, problemDefs, runs, wrongAttemptPenaltySeconds);
     foreach (var run in runs.Where(run => run.Time < freezeAtSeconds)) frozen.Apply(run);
 
     var final = frozen.CreateEmptyClone();
@@ -166,12 +165,15 @@ public static class IcpcResolverEngine
     private readonly IReadOnlyDictionary<int, IcpcXmlRun> runsById;
     private readonly IReadOnlyDictionary<ProblemKey, IReadOnlyList<IcpcXmlRun>> runsByProblem;
     private readonly IReadOnlyDictionary<int, IcpcXmlTeam> teams;
+    private readonly double wrongAttemptPenaltySeconds;
 
     public Scoreboard(
       IEnumerable<IcpcXmlTeam> sourceTeams,
       IEnumerable<ProblemDefinition> sourceProblems,
-      IEnumerable<IcpcXmlRun> sourceRuns)
+      IEnumerable<IcpcXmlRun> sourceRuns,
+      double wrongAttemptPenaltySeconds)
     {
+      this.wrongAttemptPenaltySeconds = wrongAttemptPenaltySeconds;
       problems = sourceProblems.ToDictionary(problem => problem.Id);
       teams = sourceTeams.ToDictionary(team => team.Id);
 
@@ -203,7 +205,8 @@ public static class IcpcResolverEngine
 
     public Scoreboard CreateEmptyClone()
     {
-      return new Scoreboard(teams.Values, problems.Values, runsById.Values);
+      return new Scoreboard(teams.Values, problems.Values, runsById.Values,
+        wrongAttemptPenaltySeconds);
     }
 
     public ProblemResult ResultFor(int teamId, int problemId)
@@ -276,7 +279,7 @@ public static class IcpcResolverEngine
           finish = lastAlteringRun;
       }
 
-      return finish is null ? 0 : finish.Time + WrongAttemptPenaltySeconds * wrongAttempts;
+      return finish is null ? 0 : finish.Time + wrongAttemptPenaltySeconds * wrongAttempts;
     }
 
     private double EffectiveScore(IcpcXmlRun run)

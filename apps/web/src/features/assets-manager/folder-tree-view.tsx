@@ -68,10 +68,8 @@ function FolderNode({
         borderLeftColor={
           isDropTarget.value || isSelected.value ? "colorPalette.border" : "transparent"
         }
-        bg={
-          isDropTarget.value ? "bg.accent.muted" : isSelected.value ? "bg.accent.muted" : undefined
-        }
-        color={isSelected.value ? "fg.accent" : undefined}
+        bg={isDropTarget.value ? "bg.muted" : isSelected.value ? "bg.muted" : undefined}
+        color={isSelected.value ? "colorPalette" : undefined}
         _hover={{ bg: "bg.subtle" }}
         onClick={handleClick}
         onContextMenu={(e) => {
@@ -151,8 +149,8 @@ function AllAssetsButton() {
       borderLeftColor={
         isDropTarget.value || isSelected.value ? "colorPalette.border" : "transparent"
       }
-      bg={isDropTarget.value ? "bg.accent.muted" : isSelected.value ? "bg.accent.muted" : undefined}
-      color={isSelected.value ? "fg.accent" : undefined}
+      bg={isDropTarget.value ? "bg.muted" : isSelected.value ? "bg.muted" : undefined}
+      color={isSelected.value ? "colorPalette" : undefined}
       _hover={{ bg: "bg.subtle" }}
       onClick={() => {
         assetsManagerModel.focusedPanel.value = "tree";

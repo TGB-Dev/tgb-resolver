@@ -85,7 +85,7 @@ export const MediaExtension: WithReactComponentExtension<MediaExtensionPayload> 
   configForm: formSchema,
   earlyDestruction: undefined,
   extId: "media",
-  shortName: "MEDIA",
+  shortName: "MED",
   description: "Play an image, video, or audio asset in the audience view.",
   formatCueMessage: (event: TimelineTableItem) => {
     const payload = getExtensionPayload<MediaExtensionPayload>(event);

@@ -42,6 +42,22 @@ function hasSameTimelineEventContent(
   return JSON.stringify(previousContent) === JSON.stringify(nextContent);
 }
 
+function hasSameIds(previous: readonly number[], next: readonly number[]): boolean {
+  if (previous.length !== next.length) return false;
+  return previous.every((id, index) => id === next[index]);
+}
+
+function hasSameTimelineEvents(
+  previous: Record<number, TimelineEvent>,
+  next: Record<number, TimelineEvent>,
+): boolean {
+  const previousKeys = Object.keys(previous);
+  if (previousKeys.length !== Object.keys(next).length) return false;
+  return previousKeys.every(
+    (key) => key in next && hasSameTimelineEventContent(previous[Number(key)], next[Number(key)]),
+  );
+}
+
 function hasSameDerivedContext(
   previous: ShowDerivedContext | null,
   next: ShowDerivedContext,
@@ -148,6 +164,7 @@ const ShowModel = createModel<ShowModelState>(() => {
   });
 
   function applyTimelineOrder(orderedIds: number[]): void {
+    if (hasSameIds(showOrderedIds.peek(), orderedIds)) return;
     showOrderedIds.value = orderedIds;
   }
 
@@ -186,8 +203,15 @@ const ShowModel = createModel<ShowModelState>(() => {
     const ids = Object.keys(map)
       .map(Number)
       .sort((a, b) => (map[a]?.position ?? 0) - (map[b]?.position ?? 0));
-    showEvents.value = map;
-    showOrderedIds.value = ids;
+    // Skip writes that would hand fresh identities to unchanged data: a big
+    // refetch (version gap / reconnect) with no edits must not rebuild the
+    // events map or ids array, which would re-derive every table row.
+    if (!hasSameTimelineEvents(showEvents.peek(), map)) {
+      showEvents.value = map;
+    }
+    if (!hasSameIds(showOrderedIds.peek(), ids)) {
+      showOrderedIds.value = ids;
+    }
     const nextContext = {
       problems: show.contest?.problems ?? [],
       users: show.contest?.users ?? [],

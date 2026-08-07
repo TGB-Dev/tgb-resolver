@@ -66,6 +66,56 @@ test("hydrate populates the indexed map and position-sorted ids", () => {
   expect(showModel.showOrderedIds.value).toEqual([2, 3, 1]);
 });
 
+test("hydrate with identical data keeps the store references stable", () => {
+  showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2), event(3, 3)]));
+  const idsBefore = showModel.showOrderedIds.peek();
+  const eventsBefore = showModel.showEvents.peek();
+
+  showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2), event(3, 3)]));
+
+  // A big refetch (version gap / reconnect) with unchanged data must not
+  // rebuild the ids array or the events map.
+  expect(showModel.showOrderedIds.peek()).toBe(idsBefore);
+  expect(showModel.showEvents.peek()).toBe(eventsBefore);
+  expect(showModel.dataVersion.value).toBe(1);
+});
+
+test("hydrate applies a changed order as a new ids array", () => {
+  showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2), event(3, 3)]));
+
+  showModel.hydrateFromSnapshot(makeShow(2, [event(3, 1), event(1, 2), event(2, 3)]));
+
+  expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
+});
+
+test("hydrate applies changed event content as a new events map", () => {
+  showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2)]));
+  const eventsBefore = showModel.showEvents.peek();
+
+  showModel.hydrateFromSnapshot(
+    makeShow(2, [
+      event(1, 1),
+      {
+        id: 2,
+        position: 2,
+        type: TimelineEventType.CUS,
+        payload: { extId: "updated", extPayload: { key: "value" } },
+      },
+    ]),
+  );
+
+  expect(showModel.showEvents.peek()).not.toBe(eventsBefore);
+  expect((showModel.showEvents.value[2] as CustomEvent).payload.extId).toBe("updated");
+});
+
+test("hydrate applies a removed event as a new events map", () => {
+  showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2)]));
+
+  showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1)]));
+
+  expect(showModel.showEvents.value).toEqual({ 1: event(1, 1) });
+});
+
 test("retains unchanged table items when a snapshot inserts an event", () => {
   showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2)]));
   const firstItem = showModel.timelineItemsById.value[1];
@@ -81,11 +131,14 @@ test("retains unchanged table items when a snapshot inserts an event", () => {
 test("retains table items when a snapshot only reorders events", () => {
   showModel.hydrateFromSnapshot(makeShow(1, [event(1, 1), event(2, 2), event(3, 3)]));
   const itemsBefore = showModel.timelineItemsById.value;
+  const eventsBefore = showModel.showEvents.peek();
 
   showModel.hydrateFromSnapshot(makeShow(2, [event(3, 1), event(1, 2), event(2, 3)]));
 
   expect(showModel.showOrderedIds.value).toEqual([3, 1, 2]);
-  expect(showModel.showEvents.value[1]?.position).toBe(2);
+  // Order is carried by the ids array; a reorder-only snapshot must not
+  // rebuild the events map (position is order-derived, not event content).
+  expect(showModel.showEvents.peek()).toBe(eventsBefore);
   expect(showModel.timelineItemsById.value[1]).toBe(itemsBefore[1]);
   expect(showModel.timelineItemsById.value[2]).toBe(itemsBefore[2]);
   expect(showModel.timelineItemsById.value[3]).toBe(itemsBefore[3]);
@@ -157,6 +210,24 @@ test("applies a granular remove", () => {
   expect(applied).toBe(true);
   expect(1 in showModel.showEvents.value).toBe(false);
   expect(showModel.showOrderedIds.value).toEqual([2]);
+});
+
+test("skips the order write when a reorder echo matches the current order", () => {
+  showModel.hydrateFromSnapshot(makeShow(2, [event(1, 1), event(2, 2), event(3, 3)]));
+  const idsBefore = showModel.showOrderedIds.peek();
+
+  const applied = showModel.tryApplyShowMessage({
+    type: ShowMessageType.TimelineReordered,
+    showVersion: 3,
+    orderedEventIds: [1, 2, 3],
+  });
+
+  expect(applied).toBe(true);
+  // The echo carries the same order the optimistic apply already committed:
+  // keep the array identity so the reorder list does not re-render.
+  expect(showModel.showOrderedIds.peek()).toBe(idsBefore);
+  // Version handling still advances.
+  expect(showModel.dataVersion.value).toBe(3);
 });
 
 test("applies a reorder from the server's authoritative id list", () => {

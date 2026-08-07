@@ -2,6 +2,7 @@
 // The compiler and TUnit execute this file as part of the parser test project.
 // ReSharper disable CannotResolveSymbol
 
+using System.Xml.Linq;
 using IcpcParser = TGB.Resolver.IcpcXmlParser.IcpcXmlParser;
 
 namespace TGB.Resolver.IcpcXmlParser.Tests.Xml;
@@ -16,6 +17,8 @@ public sealed class IcpcXmlParserTests
     await Assert.That(result.Info.ContestId).IsEqualTo("contest");
     await Assert.That(result.Info.Title).IsEqualTo("Contest");
     await Assert.That(result.Info.StartTime).IsEqualTo(1723862700);
+    await Assert.That(result.Info.Length).IsEqualTo("3:05:00");
+    await Assert.That(result.Info.Penalty).IsEqualTo(5);
     await Assert.That(result.Info.ScoreboardFreezeLength).IsEqualTo("0:15:00");
     await Assert.That(result.Problem.Count).IsEqualTo(6);
     await Assert.That(result.Problem[1].Score).IsEqualTo(125d);
@@ -33,29 +36,128 @@ public sealed class IcpcXmlParserTests
   [Test]
   public async Task Parse_RejectsInvalidContestRoot()
   {
-    InvalidOperationException? invalidContestRootException = null;
-    InvalidOperationException? invalidXmlException = null;
+    await Assert.That(() => IcpcParser.Parse("<root></root>"))
+      .Throws<InvalidOperationException>()
+      .WithMessageContaining("missing or invalid <contest>");
+  }
 
-    try
-    {
-      IcpcParser.Parse("<root></root>");
-    }
-    catch (InvalidOperationException ex)
-    {
-      invalidContestRootException = ex;
-    }
+  [Test]
+  public async Task Parse_RejectsInvalidXml()
+  {
+    await Assert.That(() => IcpcParser.Parse("not xml"))
+      .Throws<InvalidOperationException>()
+      .WithMessageContaining("Failed to parse XML");
+  }
 
-    try
-    {
-      IcpcParser.Parse("not xml");
-    }
-    catch (InvalidOperationException ex)
-    {
-      invalidXmlException = ex;
-    }
+  [Test]
+  public async Task Parse_MissingRequiredElement_Throws()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Descendants("info").Single().Element("title")!.Remove();
 
-    await Assert.That(invalidContestRootException).IsNotNull();
-    await Assert.That(invalidXmlException).IsNotNull();
+    await Assert.That(() => IcpcParser.Parse(doc.ToString()))
+      .Throws<InvalidOperationException>()
+      .WithMessageContaining("Missing <title>");
+  }
+
+  [Test]
+  public async Task Parse_InvalidNumericValue_Throws()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Descendants("starttime").Single().Value = "not-a-number";
+
+    await Assert.That(() => IcpcParser.Parse(doc.ToString()))
+      .Throws<InvalidOperationException>()
+      .WithMessageContaining("Invalid numeric value for <starttime>");
+  }
+
+  [Test]
+  public async Task Parse_AbsentProblemScore_DefaultsTo100()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("problem").Single(p => (int)p.Element("id")! == 1).Element("score")!
+      .Remove();
+
+    var result = IcpcParser.Parse(doc.ToString());
+
+    await Assert.That(result.Problem[0].Score).IsEqualTo(100);
+    await Assert.That(result.Problem[1].Score).IsEqualTo(125);
+  }
+
+  [Test]
+  public async Task Parse_TrimsWhitespaceAroundNames()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("problem").Single(p => (int)p.Element("id")! == 1).Element("name")!
+      .Value = "   padded name   ";
+
+    var result = IcpcParser.Parse(doc.ToString());
+
+    await Assert.That(result.Problem[0].Name).IsEqualTo("padded name");
+  }
+
+  [Test]
+  public async Task Parse_MapsEveryVerdictAcronym()
+  {
+    var expected = new Dictionary<string, VerdictRunResult>
+    {
+      ["AC"] = VerdictRunResult.Accepted,
+      ["WA"] = VerdictRunResult.WrongAnswer,
+      ["TLE"] = VerdictRunResult.TimeLimitExceeded,
+      ["MLE"] = VerdictRunResult.MemoryLimitExceeded,
+      ["OLE"] = VerdictRunResult.OutputLimitExceeded,
+      ["IR"] = VerdictRunResult.InvalidReturn,
+      ["RTE"] = VerdictRunResult.RuntimeError,
+      ["CE"] = VerdictRunResult.CompileError,
+      ["IE"] = VerdictRunResult.InternalError,
+      ["SC"] = VerdictRunResult.ShortCircuited,
+      ["AB"] = VerdictRunResult.Aborted
+    };
+
+    foreach (var (acronym, verdict) in expected)
+    {
+      var doc = await LoadSampleAsync();
+      doc.Descendants("run").First().Element("result")!.Value = acronym;
+
+      var result = IcpcParser.Parse(doc.ToString());
+
+      await Assert.That(result.Run[0].Verdict).IsEqualTo(verdict);
+    }
+  }
+
+  [Test]
+  public async Task Parse_UnknownVerdictAcronym_MapsToUnknown()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Descendants("run").First().Element("result")!.Value = "??";
+
+    var result = IcpcParser.Parse(doc.ToString());
+
+    await Assert.That(result.Run[0].Verdict).IsEqualTo(VerdictRunResult.Unknown);
+  }
+
+  [Test]
+  public async Task Parse_ToleratesIgnoredBlocks()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Add(new XElement("mystery", new XElement("data", "1")));
+
+    var result = IcpcParser.Parse(doc.ToString());
+
+    // The real fixture carries <language>, <region>, <judgement>, <finalized>,
+    // team metadata, and run <timestamp>/<judged> elements that the parser
+    // must ignore; only contest/problem/team/run are surfaced.
+    await Assert.That(result.Team.Count).IsEqualTo(54);
+    await Assert.That(result.Problem.Count).IsEqualTo(6);
+    await Assert.That(result.Run.Count).IsEqualTo(809);
+    await Assert.That(result.Info.ContestId).IsEqualTo("contest");
+    await Assert.That(result.Info.Penalty).IsEqualTo(5);
+  }
+
+  private static async Task<XDocument> LoadSampleAsync()
+  {
+    var xml = await File.ReadAllTextAsync(ResolveSamplePath());
+    return XDocument.Parse(xml);
   }
 
   private static string ResolveSamplePath()

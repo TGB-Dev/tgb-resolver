@@ -15,19 +15,19 @@
     "lint": "biome lint . --write",
     "nuget:outdated": "turbo run nuget:outdated --filter=@tgb-resolver/server",
     "nuget:update": "turbo run nuget:update --filter=@tgb-resolver/server",
+    "prepare": "husky",
     "preview": "turbo run preview",
     "quality": "turbo run quality --filter=@tgb-resolver/server",
     "serve": "turbo run serve",
     "sync": "pnpm syncpack fix --dependency-types prod,dev,peer && pnpm syncpack format",
     "sync:check": "pnpm syncpack lint --dependency-types prod,dev,peer",
-    "test": "turbo run test",
-    "prepare": "husky"
+    "test": "turbo run test"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.6",
+    "@biomejs/biome": "2.5.7",
     "@types/node": "^26.1.2",
     "husky": "^9.1.7",
-    "knip": "^6.31.0",
+    "knip": "^6.32.0",
     "syncpack": "^15.3.2",
     "turbo": "^2.10.8",
     "typescript": "6.0.3",

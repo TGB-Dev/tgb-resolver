@@ -28,8 +28,8 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig
     maxW: "4ch",
   },
   triggerOffsetSeconds: {
-    minW: "4ch",
-    maxW: "4ch",
+    minW: "6ch",
+    maxW: "6ch",
   },
   requireManualInteraction: {
     minW: "5ch",
@@ -43,4 +43,10 @@ export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig
 
 export const TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS = gridTableTemplate(
   TIMELINE_TABLE_COLUMNS_CONFIG,
+);
+
+const { dragHandle: _dragHandle, ...TIMELINE_TABLE_STATIC_COLUMNS } = TIMELINE_TABLE_COLUMNS_CONFIG;
+
+export const TIMELINE_TABLE_GRID_TEMPLATE_COLUMNS_STATIC = gridTableTemplate(
+  TIMELINE_TABLE_STATIC_COLUMNS,
 );

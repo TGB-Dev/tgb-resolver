@@ -76,7 +76,7 @@ describe("CreateEventPanel", () => {
 
     expect(screen.getByLabelText("Asset")).toHaveValue("");
     expect(screen.getByRole("combobox", { name: "Fit Mode" })).toHaveTextContent("Cover");
-    expect(screen.getByLabelText("Asset").closest("form")).toHaveStyle({ gap: "4px" });
+    expect(screen.getByLabelText("Asset").closest("form")).toHaveStyle({ gap: "1rem" });
   }, 10_000);
 
   test("creates an Image event with the selected asset name and closes the panel", async () => {
