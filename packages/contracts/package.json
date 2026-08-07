@@ -27,7 +27,7 @@
     "@hey-api/openapi-ts": "^0.99.0",
     "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.1.2",
-    "bumpp": "^12.1.1",
+    "bumpp": "^12.2.0",
     "tsdown": "^0.22.14",
     "typescript": "6.0.3",
     "vitest": "^4.1.10"
