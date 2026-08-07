@@ -26,7 +26,7 @@ const {
 } = vi.hoisted(() => ({
   mutateAsync: vi.fn(async () => undefined),
   openFloatingPanel: vi.fn(),
-  isLiveMock: vi.fn(() => false),
+  isLiveMock: vi.fn(),
   seekMock: vi.fn(),
   moveMock: vi.fn(),
   reorderGroupSpy: vi.fn(),
@@ -89,7 +89,8 @@ beforeEach(() => {
   openFloatingPanel.mockClear();
   seekMock.mockClear();
   moveMock.mockClear();
-  isLiveMock.mockReset();
+  isLiveMock.mockClear();
+  isLiveMock.mockReturnValue(false);
   reorderGroupSpy.mockClear();
   reorderItemSpy.mockClear();
   playbackModel.reset();
@@ -269,6 +270,17 @@ describe("ControlTimelineTable", () => {
 });
 
 describe("ControlTimelineTable mode-dependent rendering", () => {
+  function gridDivs(container: HTMLElement): HTMLElement[] {
+    const isGrid = (el: HTMLElement) => getComputedStyle(el).gridTemplateColumns !== "none";
+    const rowGrids = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-event-id] > div"),
+    ).filter(isGrid);
+    const headerGrid = Array.from(container.querySelectorAll<HTMLElement>("div")).find(
+      (el) => isGrid(el) && !el.closest("[data-event-id]"),
+    );
+    return headerGrid ? [...rowGrids, headerGrid] : rowGrids;
+  }
+
   test("live mode: static rows without reorder wrappers, grip buttons, or grip column", () => {
     isLiveMock.mockReturnValue(true);
     showModel.hydrateFromSnapshot(makeShow([event(1), event(2), event(3)]));
@@ -282,10 +294,8 @@ describe("ControlTimelineTable mode-dependent rendering", () => {
     expect(reorderItemSpy).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "Drag to reorder event" })).toBeNull();
 
-    const grids = Array.from(container.querySelectorAll<HTMLElement>("div")).filter(
-      (el) => getComputedStyle(el).gridTemplateColumns !== "none",
-    );
-    expect(grids.length).toBe(4);
+    const grids = gridDivs(container);
+    expect(grids).toHaveLength(4);
     for (const grid of grids) {
       expect(getComputedStyle(grid).gridTemplateColumns).not.toContain("3ch");
     }
@@ -302,10 +312,8 @@ describe("ControlTimelineTable mode-dependent rendering", () => {
     expect(reorderItemSpy).toHaveBeenCalledTimes(3);
     expect(screen.getAllByRole("button", { name: "Drag to reorder event" })).toHaveLength(3);
 
-    const grids = Array.from(container.querySelectorAll<HTMLElement>("div")).filter(
-      (el) => getComputedStyle(el).gridTemplateColumns !== "none",
-    );
-    expect(grids.length).toBe(4);
+    const grids = gridDivs(container);
+    expect(grids).toHaveLength(4);
     for (const grid of grids) {
       expect(getComputedStyle(grid).gridTemplateColumns).toContain("minmax(3ch, 3ch)");
     }

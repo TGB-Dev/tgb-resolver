@@ -254,7 +254,7 @@ function TimelineEventPosition({
   );
 }
 
-export function ControlTimelineTableHeader({ isLive = false }: { isLive?: boolean }) {
+export function ControlTimelineTableHeader({ isLive }: { isLive: boolean }) {
   return (
     <GridTableRow
       templateColumns={

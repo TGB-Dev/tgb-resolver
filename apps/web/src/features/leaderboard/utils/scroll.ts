@@ -47,17 +47,18 @@ export function animateScrollIntoView(
   const maxScroll = container.scrollHeight - container.clientHeight;
   targetScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll));
 
-  // Already at the expected position: skip starting an animation (and do not
-  // touch the active map). The container must stay untouched for this to be
-  // observable, so the supersession stop below only runs when we animate.
-  if (Math.abs(targetScrollTop - container.scrollTop) < 0.5) {
-    return undefined;
-  }
-
   // A new scroll on the same container supersedes any in-flight one:
   // overlapping scrollTop writers would double layout invalidation per frame
   // and jitter the container. Animations on other containers run independently.
   activeByContainer.get(container)?.stop();
+
+  // Already at the expected position: skip starting an animation. The active
+  // map is left untouched (the supersession stop above is a no-op when no
+  // animation is running), and an in-flight animation cannot drag the
+  // container past the unchanged target.
+  if (Math.abs(targetScrollTop - container.scrollTop) < 0.5) {
+    return undefined;
+  }
 
   // Return animate's controls
   const controls = animate(container.scrollTop, targetScrollTop, {

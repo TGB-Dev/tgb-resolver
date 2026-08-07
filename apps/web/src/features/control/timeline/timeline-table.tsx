@@ -179,6 +179,8 @@ function TimelineReorderList({
 }) {
   const reorderStateRef = useRef<ReturnType<typeof createTimelineReorderState>>(null);
   if (!isLive && !reorderStateRef.current) reorderStateRef.current = createTimelineReorderState();
+  // The reorder state is lazily created above and is non-null on every
+  // edit-mode render; the `?.` only guards live mode, which never initializes it.
   const displayIds = reorderStateRef.current?.rows.value ?? orderedIds;
   const onCommitReorderRef = useRef(onCommitReorder);
   onCommitReorderRef.current = onCommitReorder;
@@ -188,6 +190,9 @@ function TimelineReorderList({
   }, [isMovePending]);
 
   if (isLive) {
+    // Drop any uncommitted drag order when leaving edit mode so it cannot
+    // resurface if the user toggles back.
+    reorderStateRef.current?.take();
     return (
       <Box as="ul" style={{ listStyle: "none", padding: 0, margin: 0 }}>
         <For each={orderedIds}>

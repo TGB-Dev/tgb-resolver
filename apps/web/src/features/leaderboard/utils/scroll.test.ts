@@ -82,6 +82,24 @@ describe("animateScrollIntoView", () => {
     expect(animateMock).not.toHaveBeenCalled();
   });
 
+  test("stops an in-flight animation before skipping when already at the target", () => {
+    const element = document.createElement("div");
+    const container = scrolledContainer();
+
+    const first = startedAnimation(element, container);
+
+    // The animation is registered in the active map (mid-flight) but the
+    // container has already reached the computed target: the old animation
+    // must be superseded so it cannot drag the container past the target,
+    // and no second animation may start.
+    container.scrollTop = 0;
+    const result = animateScrollIntoView(element, container);
+
+    expect(first.stop).toHaveBeenCalledTimes(1);
+    expect(animateMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeUndefined();
+  });
+
   test("leaves no handle behind in the active map after a skip", () => {
     const element = document.createElement("div");
     const container = document.createElement("div");
