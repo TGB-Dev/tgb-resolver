@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Xml.Linq;
 using TGB.Resolver.IcpcXmlParser;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Importing;
@@ -97,57 +98,146 @@ public sealed class IcpcResolverEngineTests
   }
 
   [Test]
-  public async Task Convert_UsesXmlPenaltyForWrongAttemptPenalty()
+  public async Task Convert_AccumulatesWrongAttemptPenaltyFromXml()
   {
-    const string xml = """
-      <contest>
-        <info>
-          <contest-id>c</contest-id>
-          <title>C</title>
-          <starttime>0</starttime>
-          <length>1:00:00</length>
-          <penalty>1</penalty>
-          <scoreboard-freeze-length>0:00:00</scoreboard-freeze-length>
-        </info>
-        <problem>
-          <id>1</id>
-          <label>A</label>
-          <name>P</name>
-          <score>100</score>
-        </problem>
-        <team>
-          <id>1</id>
-          <name>Team One</name>
-          <username>t1</username>
-        </team>
-        <run>
-          <id>1</id>
-          <problem>1</problem>
-          <team>1</team>
-          <time>10</time>
-          <solved>False</solved>
-          <penalty>True</penalty>
-          <score>0</score>
-          <result>WA</result>
-        </run>
-        <run>
-          <id>2</id>
-          <problem>1</problem>
-          <team>1</team>
-          <time>100</time>
-          <solved>True</solved>
-          <penalty>True</penalty>
-          <score>0</score>
-          <result>AC</result>
-        </run>
-      </contest>
-      """;
+    var doc = await LoadSampleAsync();
+    doc.Descendants("info").Single().Element("penalty")!.Value = "1";
+    doc.Root!.Elements("team").Where(team => !new[] { 5, 15 }.Contains((int)team.Element("id")!))
+      .Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => !new[] { 3717, 3710, 3714 }.Contains((int)run.Element("id")!)).Remove();
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:00:00";
 
-    var result = IcpcResolverEngine.Convert(xml);
+    var result = IcpcResolverEngine.Convert(doc.ToString());
 
-    var entry = result.PreFreezeSnapshot.Single();
-    // finish time (100s) + 1 wrong attempt * 60s penalty => 160s.
-    await Assert.That(entry.TotalPenalty).IsEqualTo(160);
+    // Run times are floored to whole seconds by the parser (Time) while the
+    // raw value lives in SubmissionSecondsSinceStart. Team 15: WA at 120 then
+    // AC at 178 -> finish 178 + 1 wrong attempt * 60s = 238.
+    var team15 = result.PreFreezeSnapshot.Single(entry => entry.UserId == 15);
+    await Assert.That(team15.TotalPenalty).IsEqualTo(238);
+    // Team 5: single AC at 186 -> no wrong attempts.
+    var team5 = result.PreFreezeSnapshot.Single(entry => entry.UserId == 5);
+    await Assert.That(team5.TotalPenalty).IsEqualTo(186);
+  }
+
+  [Test]
+  public async Task Convert_EmptyInput_ProducesEmptyResolution()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("team").Remove();
+    doc.Root!.Elements("problem").Remove();
+    doc.Root!.Elements("run").Remove();
+
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+
+    await Assert.That(result.DurationSeconds).IsEqualTo(11_100);
+    await Assert.That(result.Problems).IsEmpty();
+    await Assert.That(result.Users).IsEmpty();
+    await Assert.That(result.PreFreezeSnapshot).IsEmpty();
+    await Assert.That(result.ResolveEvents).IsEmpty();
+  }
+
+  [Test]
+  public async Task Convert_ZeroFreezeLength_LeavesNothingPending()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:00:00";
+
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+
+    await Assert.That(result.ResolveEvents).IsEmpty();
+    await Assert.That(result.PreFreezeSnapshot).Count().IsEqualTo(54);
+  }
+
+  [Test]
+  public async Task Convert_ResolveEventsCarryFullPenaltyAndTimingOutputs()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Descendants("info").Single().Element("penalty")!.Value = "1";
+    doc.Root!.Elements("team").Where(team => !new[] { 5, 15 }.Contains((int)team.Element("id")!))
+      .Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => !new[] { 3717, 3710, 3714 }.Contains((int)run.Element("id")!)).Remove();
+    doc.Descendants("length").Single().Value = "0:05:00";
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:03:00";
+
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+
+    // Freeze at 120s excludes every surviving run, so both teams resolve.
+    await Assert.That(result.ResolveEvents).Count().IsEqualTo(2);
+
+    // Team 15 was lowest before resolution (both teams started at 0).
+    // Times are floored by the parser; penalty = floor(178) + 60 for one WA.
+    var first = result.ResolveEvents[0];
+    await Assert.That(first.UserId).IsEqualTo(15);
+    await Assert.That(first.ProblemId).IsEqualTo(1);
+    await Assert.That(first.NewTotalScore).IsEqualTo(100);
+    await Assert.That(first.NewTotalPenalty).IsEqualTo(238);
+    await Assert.That(first.NewRank).IsEqualTo(1);
+    await Assert.That(first.NewProblemScore).IsEqualTo(100);
+    await Assert.That(first.Verdict).IsEqualTo(VerdictRunResult.Accepted);
+    await Assert.That(first.TimeSinceStart).IsEqualTo(178);
+
+    var second = result.ResolveEvents[1];
+    await Assert.That(second.UserId).IsEqualTo(5);
+    await Assert.That(second.NewTotalScore).IsEqualTo(100);
+    await Assert.That(second.NewTotalPenalty).IsEqualTo(186);
+    await Assert.That(second.NewRank).IsEqualTo(1);
+    await Assert.That(second.NewProblemScore).IsEqualTo(100);
+    await Assert.That(second.Verdict).IsEqualTo(VerdictRunResult.Accepted);
+    await Assert.That(second.TimeSinceStart).IsEqualTo(186);
+  }
+
+  [Test]
+  public async Task Convert_TiedTeamsShareRankAndSkipTheNextRank()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("team")
+      .Where(team => !new[] { 5, 15, 42 }.Contains((int)team.Element("id")!)).Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => !new[] { 3717, 3714 }.Contains((int)run.Element("id")!)).Remove();
+    // Force team 15's accepted run to exactly match team 5's finish time.
+    doc.Descendants("time").Single(t => t.Parent?.Element("id")?.Value == "3714").Value =
+      "186.084502";
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:00:00";
+
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+
+    var entries = result.PreFreezeSnapshot;
+    await Assert.That(entries.Single(entry => entry.UserId == 5).Rank).IsEqualTo(1);
+    await Assert.That(entries.Single(entry => entry.UserId == 15).Rank).IsEqualTo(1);
+    await Assert.That(entries.Single(entry => entry.UserId == 42).Rank).IsEqualTo(3);
+  }
+
+  [Test]
+  public async Task Convert_ExcludesUsernamesAndTheirRuns()
+  {
+    var xml = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures",
+      "sample.xml"));
+    var result = IcpcResolverEngine.Convert(xml, ["CONTEST_1", "CONTEST_5"]);
+
+    await Assert.That(result.Users).Count().IsEqualTo(52);
+    await Assert.That(result.PreFreezeSnapshot.Any(entry => entry.UserId is 1 or 5)).IsFalse();
+    await Assert.That(result.ResolveEvents.Any(entry => entry.UserId is 1 or 5)).IsFalse();
+  }
+
+  [Test]
+  public async Task Convert_DropsRunsBeyondTheContestDuration()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Descendants("length").Single().Value = "0:02:00";
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:00:00";
+
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+
+    await Assert.That(result.DurationSeconds).IsEqualTo(120);
+    await Assert.That(result.PreFreezeSnapshot.All(entry =>
+        entry.LastSubmittedSeconds is null || entry.LastSubmittedSeconds <= 120))
+      .IsTrue();
+    await Assert.That(result.ResolveEvents.All(entry => entry.TimeSinceStart <= 120)).IsTrue();
   }
 
   private static async Task AssertSubmissionCounts(
@@ -195,6 +285,13 @@ public sealed class IcpcResolverEngineTests
       await Assert.That(actualEvent.NewRank).IsEqualTo(expectedEvent.NewRank);
       await Assert.That(actualEvent.Verdict).IsEqualTo(expectedEvent.Verdict);
     }
+  }
+
+  private static async Task<XDocument> LoadSampleAsync()
+  {
+    var xml = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures",
+      "sample.xml"));
+    return XDocument.Parse(xml);
   }
 
   private static int UserIdFor(string username)
