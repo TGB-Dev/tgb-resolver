@@ -146,10 +146,44 @@ function PlaybackTransportState({
   resetPlayback: ReturnType<typeof useResetPlaybackMutation>;
   seekPlayback: ReturnType<typeof useSeekPlaybackMutation>;
 }) {
+  return (
+    <>
+      <IconButton
+        loading={startPlayback.isPending}
+        onClick={() => startPlayback.mutate()}
+        disabled={!canMutate}
+      >
+        <PlayPauseIcon />
+      </IconButton>
+      <IconButton
+        loading={resetPlayback.isPending}
+        onClick={() => resetPlayback.mutate()}
+        disabled={!canMutate}
+      >
+        <TimerReset />
+      </IconButton>
+
+      <SeekButtons rows={rows} canMutate={canMutate} seekPlayback={seekPlayback} />
+    </>
+  );
+}
+
+function PlayPauseIcon() {
+  return playbackModel.status.value === PlaybackStatus.RUNNING ? <Pause /> : <Play />;
+}
+
+function SeekButtons({
+  rows,
+  canMutate,
+  seekPlayback,
+}: {
+  rows: ReturnType<typeof useControlShowRows>;
+  canMutate: boolean;
+  seekPlayback: ReturnType<typeof useSeekPlaybackMutation>;
+}) {
   const currentEventId = playbackModel.currentEventId.value;
   const currentIndex =
     currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
-  const playbackStatus = playbackModel.status.value;
 
   const prevAction = useAction({
     handler: () => {
@@ -176,21 +210,6 @@ function PlaybackTransportState({
 
   return (
     <>
-      <IconButton
-        loading={startPlayback.isPending}
-        onClick={() => startPlayback.mutate()}
-        disabled={!canMutate}
-      >
-        {playbackStatus === PlaybackStatus.RUNNING ? <Pause /> : <Play />}
-      </IconButton>
-      <IconButton
-        loading={resetPlayback.isPending}
-        onClick={() => resetPlayback.mutate()}
-        disabled={!canMutate}
-      >
-        <TimerReset />
-      </IconButton>
-
       <IconButton {...prevAction.buttonProps}>
         <ChevronLeft />
       </IconButton>

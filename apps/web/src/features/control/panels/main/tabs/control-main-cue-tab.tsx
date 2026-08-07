@@ -1,4 +1,5 @@
-import { Grid } from "@chakra-ui/react";
+import { Grid, VStack } from "@chakra-ui/react";
+import { For } from "@preact/signals-react/utils";
 
 import { useControlShowRows } from "@/features/control/hooks";
 import { playbackModel } from "@/features/control/playback-model";
@@ -20,6 +21,7 @@ function CurrentEventCues() {
   const currentCueId = playbackModel.currentCueId.value;
   const currentIndex = rows.findIndex((row) => row.id === currentCueId);
   const current = currentIndex >= 0 ? rows[currentIndex] : undefined;
+  const concurrentChildren = rows.filter((row) => row.isActive && row.id !== currentCueId);
   const next =
     currentIndex >= 0 && currentIndex < rows.length - 1 ? rows[currentIndex + 1] : undefined;
   const previous = currentIndex > 0 ? rows[currentIndex - 1] : undefined;
@@ -27,7 +29,16 @@ function CurrentEventCues() {
   return (
     <>
       <CueItem cue={Cue.CURRENT}>
-        <CueContent cue={current} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+        <VStack gap={2} alignItems="start">
+          <CueContent cue={current} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+          {concurrentChildren.length > 0 && (
+            <For each={concurrentChildren}>
+              {(child) => (
+                <CueContent cue={child} contentSize={CUE_CONFIG[Cue.CURRENT].contentSize} />
+              )}
+            </For>
+          )}
+        </VStack>
       </CueItem>
       <NextCueTimer />
       <CueItem cue={Cue.NEXT}>

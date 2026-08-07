@@ -7,39 +7,34 @@ namespace TGB.Resolver.Server.Features.Show;
 ///   delayed operations related to timeline advancements. This class is thread-safe and ensures
 ///   proper handling of concurrent modifications.
 /// </summary>
-public sealed class TimelineOrchestrator(
+public class TimelineOrchestrator(
   IServiceScopeFactory scopeFactory)
 {
   private readonly Lock _lock = new();
-  private CancellationTokenSource? _cts;
+  private readonly HashSet<CancellationTokenSource> _ctsSet = [];
 
-  public void ScheduleAdvance(long delayMs)
+  public virtual void ScheduleAdvance(long delayMs)
   {
-    CancellationToken token;
-    lock (_lock)
-    {
-      _cts?.Cancel();
-      _cts = new CancellationTokenSource();
-      token = _cts.Token;
-    }
+    var cts = new CancellationTokenSource();
+    lock (_lock) _ctsSet.Add(cts);
 
-    _ = AdvanceAfterDelayAsync(delayMs, token);
+    _ = AdvanceAfterDelayAsync(delayMs, cts);
   }
 
-  public void CancelAdvance()
+  public virtual void CancelAdvance()
   {
     lock (_lock)
     {
-      _cts?.Cancel();
-      _cts = null;
+      foreach (var cts in _ctsSet) cts.Cancel();
+      _ctsSet.Clear();
     }
   }
 
-  private async Task AdvanceAfterDelayAsync(long delayMs, CancellationToken token)
+  private async Task AdvanceAfterDelayAsync(long delayMs, CancellationTokenSource cts)
   {
     try
     {
-      await Task.Delay(TimeSpan.FromMilliseconds(delayMs), token);
+      await Task.Delay(TimeSpan.FromMilliseconds(delayMs), cts.Token);
 
       using var scope = scopeFactory.CreateScope();
       var service = scope.ServiceProvider.GetRequiredService<ShowStateService>();
@@ -53,6 +48,11 @@ public sealed class TimelineOrchestrator(
       using var scope = scopeFactory.CreateScope();
       var service = scope.ServiceProvider.GetRequiredService<ShowStateService>();
       await service.RescheduleAdvanceAsync(CancellationToken.None);
+    }
+    finally
+    {
+      lock (_lock) _ctsSet.Remove(cts);
+      cts.Dispose();
     }
   }
 }

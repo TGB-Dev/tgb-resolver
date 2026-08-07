@@ -1,17 +1,43 @@
-import { useSignalEffect } from "@preact/signals-react";
+import { useComputed, useSignalEffect } from "@preact/signals-react";
 import { For, useLiveSignal } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
+import type { CustomEvent, ShowFile, TimelineEvent } from "@tgb-resolver/realtime";
 import { AnimatePresence } from "motion/react";
-import { createElement, memo, useMemo } from "react";
+import { createElement, memo } from "react";
 
 import { useControlShowQuery } from "@/features/control/hooks";
 import { playbackModel } from "@/features/control/playback-model";
 import { ExtensionType, extensionRegistry, getExtensionPayload } from "@/features/extensions";
 import { leaderboardModel } from "@/features/leaderboard/leaderboard-model";
 
-import { LeaderboardProvider } from "./leaderboard-provider";
+import { isBigScreenSignal } from "./leaderboard-provider";
 import { LeaderboardRow } from "./leaderboard-row";
 import { LeaderboardTable } from "./leaderboard-table";
+
+const ActiveExtensionsOverlay = memo(function ActiveExtensionsOverlay({
+  timeline,
+}: {
+  timeline: ShowFile | undefined;
+}) {
+  const overlays = useComputed(() => {
+    if (timeline == null) return [];
+    const activeEventIds = playbackModel.state.value.activeEventIds;
+    return timeline.timeline
+      .filter(isCustomEvent)
+      .filter((event) => activeEventIds.includes(event.id))
+      .map((event) => {
+        const extension = extensionRegistry.extensionWithExtId(event.payload.extId);
+        if (extension?.type !== ExtensionType.WithReactComponent) return null;
+        return createElement(extension.component, {
+          key: event.id,
+          payload: getExtensionPayload(event) ?? {},
+        });
+      })
+      .filter((overlay) => overlay !== null);
+  });
+
+  return <AnimatePresence mode="wait">{overlays.value}</AnimatePresence>;
+});
 
 const Row = memo(function Row({ userId }: { userId: number }) {
   const data = leaderboardModel.getSignal(userId).value;
@@ -19,6 +45,10 @@ const Row = memo(function Row({ userId }: { userId: number }) {
   if (data == null) return null;
   return <LeaderboardRow data={data} isCurrentResolved={isCurrentResolved} />;
 });
+
+function isCustomEvent(event: TimelineEvent): event is CustomEvent {
+  return event.type === TimelineEventType.CUS;
+}
 
 function LeaderboardRows() {
   return (
@@ -85,34 +115,16 @@ export function Resolve({ isBigScreen }: ResolveProps) {
     }
   });
 
-  const currentEventId = playbackModel.currentEventId.value;
-  const activeEvent = useMemo(
-    () => data.value?.timeline.find((event) => event.id === currentEventId),
-    [data.value, currentEventId],
-  );
-  const activeExtension = useMemo(
-    () =>
-      activeEvent?.type === TimelineEventType.CUS
-        ? extensionRegistry.extensionWithExtId(activeEvent.payload.extId)
-        : undefined,
-    [activeEvent],
-  );
-  const extensionOverlay = useMemo(() => {
-    if (!activeEvent || activeExtension?.type !== ExtensionType.WithReactComponent) return null;
-    return createElement(activeExtension.component, {
-      key: activeEvent.id,
-      payload: getExtensionPayload(activeEvent) ?? {},
-    });
-  }, [activeEvent, activeExtension]);
+  isBigScreenSignal.value = isBigScreen ?? false;
 
   if (data.value == null) return null;
 
   return (
-    <LeaderboardProvider isBigScreen={isBigScreen}>
+    <>
       <LeaderboardTable problems={data.value.contest.problems}>
         <LeaderboardRows />
       </LeaderboardTable>
-      <AnimatePresence mode="wait">{extensionOverlay}</AnimatePresence>
-    </LeaderboardProvider>
+      <ActiveExtensionsOverlay timeline={data.value} />
+    </>
   );
 }
