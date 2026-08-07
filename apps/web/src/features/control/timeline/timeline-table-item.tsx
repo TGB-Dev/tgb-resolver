@@ -152,7 +152,13 @@ export const ControlTimelineTableItem = memo(
                 : ""}
             </Box>
           )}
-          <ControlTimelineManualInteraction payload={payload} editable={!isLive} />
+          {!isLive ? (
+            <ControlTimelineManualInteraction payload={payload} />
+          ) : (
+            <Box display="flex" alignItems="center" justifyContent="center" h={6} m={1}>
+              {payload.requireManualInteraction ? <Check size={14} /> : null}
+            </Box>
+          )}
 
           {!isLive ? (
             <Box display="flex" alignItems="center" justifyContent="center" h="full">
@@ -308,13 +314,7 @@ export function ControlTimelineTableHeader({ isLive }: { isLive: boolean }) {
   );
 }
 
-function ControlTimelineManualInteraction({
-  payload,
-  editable,
-}: {
-  payload: TimelineTableItem;
-  editable: boolean;
-}) {
+function ControlTimelineManualInteraction({ payload }: { payload: TimelineTableItem }) {
   const patchEvent = usePatchTimelineEventMutation();
   return (
     <IconButton
@@ -324,9 +324,7 @@ function ControlTimelineManualInteraction({
       w="full"
       h={6}
       m={1}
-      disabled={!editable}
-      cursor={editable ? "pointer" : undefined}
-      title={editable ? "Double-click to toggle manual interaction" : undefined}
+      title="Double-click to toggle manual interaction"
       onDoubleClick={() => {
         void patchEvent.mutateAsync({
           eventId: payload.id,

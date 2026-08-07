@@ -229,41 +229,41 @@ describe("ControlTimelineTable", () => {
 
     const row = container.querySelector("[data-event-id='11']") as HTMLElement;
     const otherRow = container.querySelector("[data-event-id='22']") as HTMLElement;
-    const borders = container.querySelectorAll("[data-testid='current-event-border']");
-    const rowBorder = borders[0] as HTMLElement;
-    const otherBorder = borders[1] as HTMLElement;
     expect(row).not.toBeNull();
     expect(otherRow).not.toBeNull();
-    expect(rowBorder).not.toBeNull();
-    expect(otherBorder).not.toBeNull();
 
-    const unhighlightedClass = rowBorder.className;
-    expect(otherBorder.className).toBe(unhighlightedClass);
+    // no current row: no animated indicator subtree is mounted anywhere
+    expect(container.querySelectorAll("[data-testid='current-event-border']")).toHaveLength(0);
     expect(row.style.color).toBe("");
     expect(otherRow.style.color).toBe("");
 
     act(() => playbackModel.update({ currentEventId: 11 }));
 
-    await waitFor(() => expect(rowBorder.className).not.toBe(unhighlightedClass));
+    await waitFor(() => {
+      const borders = container.querySelectorAll("[data-testid='current-event-border']");
+      expect(borders).toHaveLength(1);
+      expect(borders[0]?.closest("[data-event-id='11']")).not.toBeNull();
+    });
     // dark mode is the default: the current row keeps the inherited text color
     expect(row.style.color).toBe("");
-    expect(otherBorder.className).toBe(unhighlightedClass);
     expect(otherRow.style.color).toBe("");
 
     fireEvent.click(screen.getByRole("button", { name: "light" }));
 
     await waitFor(() => expect(row.style.color).toBe("var(--chakra-colors-fg-inverted)"));
     expect(otherRow.style.color).toBe("");
-    expect(otherBorder.className).toBe(unhighlightedClass);
 
     fireEvent.click(screen.getByRole("button", { name: "dark" }));
 
     await waitFor(() => expect(row.style.color).toBe(""));
-    expect(rowBorder.className).not.toBe(unhighlightedClass);
 
     act(() => playbackModel.update({ currentEventId: 22 }));
 
-    await waitFor(() => expect(rowBorder.className).toBe(unhighlightedClass));
+    await waitFor(() => {
+      const borders = container.querySelectorAll("[data-testid='current-event-border']");
+      expect(borders).toHaveLength(1);
+      expect(borders[0]?.closest("[data-event-id='22']")).not.toBeNull();
+    });
     expect(row.style.color).toBe("");
     expect(otherRow.style.color).toBe("");
   });
@@ -293,6 +293,7 @@ describe("ControlTimelineTable mode-dependent rendering", () => {
     expect(reorderGroupSpy).not.toHaveBeenCalled();
     expect(reorderItemSpy).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "Drag to reorder event" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Toggle manual interaction" })).toBeNull();
 
     const grids = gridDivs(container);
     expect(grids).toHaveLength(4);

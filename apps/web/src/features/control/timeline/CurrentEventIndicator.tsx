@@ -23,14 +23,15 @@ interface CurrentEventIndicatorProps {
   durationInSeconds?: number;
 }
 
+// Only the current row mounts the animated indicator subtree (progress bar +
+// warning overlay + pulsing border); every other row renders a single inert
+// wrapper Box so per-row commit/style/layout cost stays flat. Same
+// static-until-needed trick as TimelineCellEditable's preview Box.
 export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEventIndicatorProps) {
-  const [success, error] = useToken("colors", ["green.600", "red.500"]);
-  const barRef = useRef<HTMLDivElement>(null);
-  const warnRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<AnimationPlaybackControls[]>([]);
   const isCurrent = useComputed(() => playbackModel.currentCueId.value === eventId);
   const { colorMode } = useColorMode();
   const colorModeSignal = useLiveSignal(colorMode);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   // The row container's "current" text color (previously driven by an isCurrent
   // prop that re-rendered the whole row subtree on every playback advance) is
@@ -38,11 +39,26 @@ export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEve
   // color mode is tracked as a signal so the gate stays live across theme
   // toggles without re-rendering the row.
   useSignalEffect(() => {
-    const rowEl = barRef.current?.closest<HTMLElement>("[data-event-id]");
+    const rowEl = rootRef.current?.closest<HTMLElement>("[data-event-id]");
     if (!rowEl) return;
     const currentInLightMode = isCurrent.value && colorModeSignal.value === "light";
     rowEl.style.color = currentInLightMode ? "var(--chakra-colors-fg-inverted)" : "";
   });
+
+  return (
+    <Box ref={rootRef} position="absolute" inset={0} pointerEvents="none">
+      {isCurrent.value ? (
+        <CurrentEventActiveIndicator durationInSeconds={durationInSeconds} />
+      ) : null}
+    </Box>
+  );
+}
+
+function CurrentEventActiveIndicator({ durationInSeconds }: { durationInSeconds?: number }) {
+  const [success, error] = useToken("colors", ["green.600", "red.500"]);
+  const barRef = useRef<HTMLDivElement>(null);
+  const warnRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<AnimationPlaybackControls[]>([]);
 
   useEffect(() => {
     const barEl = barRef.current;
@@ -56,24 +72,17 @@ export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEve
 
     const duration = durationInSeconds ?? 0;
 
-    if (isCurrent.value) {
-      animationRef.current = [
-        animate(barEl, { scaleX: [0, 1] }, { duration, ease: "linear" }),
-        animate(warnEl, { opacity: [0, 0, 1] }, { duration, ease: "linear" }),
-      ];
-    } else {
-      animationRef.current = [
-        animate(barEl, { scaleX: 0 }, { duration: 0 }),
-        animate(warnEl, { opacity: 0 }, { duration: 0 }),
-      ];
-    }
+    animationRef.current = [
+      animate(barEl, { scaleX: [0, 1] }, { duration, ease: "linear" }),
+      animate(warnEl, { opacity: [0, 0, 1] }, { duration, ease: "linear" }),
+    ];
 
     return () => {
       animationRef.current.forEach((controls) => {
         controls.stop();
       });
     };
-  }, [isCurrent.value, durationInSeconds]);
+  }, [durationInSeconds]);
 
   return (
     <>
@@ -87,7 +96,6 @@ export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEve
         transform="scaleX(0)"
         transformOrigin="left"
         backgroundColor={success}
-        pointerEvents="none"
         zIndex={0}
       >
         <Box ref={warnRef} position="absolute" inset={0} backgroundColor={error} opacity={0} />
@@ -97,9 +105,8 @@ export function CurrentEventIndicator({ eventId, durationInSeconds }: CurrentEve
         position="absolute"
         inset={0}
         borderWidth={2}
-        borderColor={isCurrent.value ? "border.success" : "transparent"}
-        animation={isCurrent.value ? `${pulseBorder} 1s infinite` : undefined}
-        pointerEvents="none"
+        borderColor="border.success"
+        animation={`${pulseBorder} 1s infinite`}
         zIndex={1}
       />
     </>
