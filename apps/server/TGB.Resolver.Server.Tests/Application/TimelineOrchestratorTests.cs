@@ -64,7 +64,7 @@ public sealed class TimelineOrchestratorTests
     var services = new ServiceCollection();
     services.AddSingleton(dbContext);
     services.AddSingleton(serializer);
-    services.AddSingleton(sp => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
+    services.AddSingleton(_ => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
     services.AddSingleton(hubContext);
     services.AddSingleton(CreateAssetStore());
     services.AddSingleton<TimelineOrchestrator>();

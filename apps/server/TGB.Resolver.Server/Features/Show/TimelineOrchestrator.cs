@@ -10,13 +10,16 @@ namespace TGB.Resolver.Server.Features.Show;
 public class TimelineOrchestrator(
   IServiceScopeFactory scopeFactory)
 {
-  private readonly Lock _lock = new();
   private readonly HashSet<CancellationTokenSource> _ctsSet = [];
+  private readonly Lock _lock = new();
 
   public virtual void ScheduleAdvance(long delayMs)
   {
     var cts = new CancellationTokenSource();
-    lock (_lock) _ctsSet.Add(cts);
+    lock (_lock)
+    {
+      _ctsSet.Add(cts);
+    }
 
     _ = AdvanceAfterDelayAsync(delayMs, cts);
   }
@@ -51,7 +54,11 @@ public class TimelineOrchestrator(
     }
     finally
     {
-      lock (_lock) _ctsSet.Remove(cts);
+      lock (_lock)
+      {
+        _ctsSet.Remove(cts);
+      }
+
       cts.Dispose();
     }
   }

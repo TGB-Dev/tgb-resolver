@@ -23,8 +23,8 @@ public sealed class ShowStateServiceTests
   {
     var (service, _) = await CreateServiceAsync();
 
-    var exception = (await Assert.That(
-        async () => await service.StartPlaybackAsync(new VersionedCommandRequest(999)))
+    var exception = (await Assert.That(async () =>
+        await service.StartPlaybackAsync(new VersionedCommandRequest(999)))
       .Throws<VersionDriftException>())!;
 
     await Assert.That(exception.ExpectedVersion).IsEqualTo(999);
@@ -686,7 +686,8 @@ public sealed class ShowStateServiceTests
   {
     var (service, _) = await CreateServiceAsync();
     var before = await service.GetSnapshotAsync();
-    await service.SetTimelineModeAsync(new SetTimelineModeRequest(before.ShowVersion, TimelineMode.Ro));
+    await service.SetTimelineModeAsync(new SetTimelineModeRequest(before.ShowVersion,
+      TimelineMode.Ro));
     var xml = await ReadSampleXmlAsync();
 
     await Assert.That(async () => await service.ImportXmlAsync(new ImportXmlRequest(xml, null)))
@@ -857,14 +858,23 @@ public sealed class ShowStateServiceTests
     return (service, repository);
   }
 
+  private static AssetStore CreateAssetStore(string? contentRootPath = null)
+  {
+    var environment = Substitute.For<IHostEnvironment>();
+    environment.ContentRootPath.Returns(contentRootPath
+                                        ?? Path.Combine(Path.GetTempPath(),
+                                          $"tgb-resolver-{Guid.NewGuid():N}"));
+    return new AssetStore(environment);
+  }
+
   private sealed class RecordingOrchestrator : TimelineOrchestrator
   {
-    public List<long> Delays { get; } = [];
-
     public RecordingOrchestrator()
       : base(null!)
     {
     }
+
+    public List<long> Delays { get; } = [];
 
     public override void ScheduleAdvance(long delayMs)
     {
@@ -874,13 +884,5 @@ public sealed class ShowStateServiceTests
     public override void CancelAdvance()
     {
     }
-  }
-
-  private static AssetStore CreateAssetStore(string? contentRootPath = null)
-  {
-    var environment = Substitute.For<IHostEnvironment>();
-    environment.ContentRootPath.Returns(contentRootPath
-      ?? Path.Combine(Path.GetTempPath(), $"tgb-resolver-{Guid.NewGuid():N}"));
-    return new AssetStore(environment);
   }
 }

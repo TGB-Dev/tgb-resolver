@@ -1068,7 +1068,7 @@ public sealed class ShowStateService(
 
     // Hold the next event until the CURRENT event finishes (its own duration wins).
     orchestrator.ScheduleAdvance(ToMs(currentEvent.DurationSeconds ??
-                                     state.Automation.AutoResolveSpeedMs / 1000d));
+                                      state.Automation.AutoResolveSpeedMs / 1000d));
   }
 
   public async Task<ShowStateSnapshot> SetAutomationAsync(SetAutomationRequest request,
@@ -1180,7 +1180,8 @@ public sealed class ShowStateService(
     TimelineEvent[] ordered, int currentIndex)
   {
     var ids = new List<int> { ordered[currentIndex].Id };
-    for (var i = currentIndex + 1; i < ordered.Length && ordered[i].TriggerOffsetSeconds is not null;
+    for (var i = currentIndex + 1;
+         i < ordered.Length && ordered[i].TriggerOffsetSeconds is not null;
          i++)
       ids.Add(ordered[i].Id);
     return ids;
