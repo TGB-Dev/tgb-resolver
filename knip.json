@@ -25,16 +25,17 @@
       "ignore": [
         "public",
         ".tanstack",
-        "src/components/control/timeline/timeline-table-column.config.ts",
-        "src/components/ui/color-mode.tsx",
-        "src/components/ui/provider.tsx",
-        "src/components/ui/toaster.tsx",
-        "src/features/control/realtime-cache.ts",
-        "src/features/control/show-store.ts",
         "src/lib/api.ts",
         "src/lib/realtime-client.ts",
-        "src/models/playback-state.ts"
+        "src/lib/sound-engine/audio.model.ts",
+        "src/lib/sound-engine/use-background-music.ts"
       ],
+      "ignoreIssues": {
+        "src/features/extensions/base/types.ts": ["types"],
+        "src/features/extensions/base/registry.ts": ["exports"],
+        "src/lib/sound-engine/index.ts": ["exports"],
+        "src/utils/preload-assets.ts": ["exports"]
+      },
       "ignoreDependencies": [
         "@fontsource-variable/inter",
         "@fontsource-variable/jetbrains-mono",

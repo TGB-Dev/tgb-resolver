@@ -1,7 +1,7 @@
 import { createModel, signal, useSignalEffect } from "@preact/signals-react";
 import { useRef } from "react";
 
-export interface ContextMenuTarget {
+interface ContextMenuTarget {
   id: string;
   name: string;
   isDirectory: boolean;

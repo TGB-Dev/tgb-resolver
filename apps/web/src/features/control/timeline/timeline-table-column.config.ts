@@ -1,6 +1,6 @@
 import { type GridTableColumnConfig, gridTableTemplate } from "@/features/shared/ui/grid-table";
 
-export const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig> = {
+const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig> = {
   id: {
     minW: "5ch",
     maxW: "5ch",

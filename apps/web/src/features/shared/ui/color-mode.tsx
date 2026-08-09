@@ -1,7 +1,7 @@
 "use client";
 
-import type { IconButtonProps, SpanProps } from "@chakra-ui/react";
-import { ClientOnly, IconButton, Skeleton, Span } from "@chakra-ui/react";
+import type { IconButtonProps } from "@chakra-ui/react";
+import { ClientOnly, IconButton, Skeleton } from "@chakra-ui/react";
 import { Moon, Sun } from "lucide-react";
 import { ThemeProvider, type ThemeProviderProps, useTheme } from "next-themes";
 
@@ -19,8 +19,7 @@ export function ColorModeProvider(props: ColorModeProviderProps) {
   );
 }
 
-export type ColorMode = "light" | "dark";
-
+type ColorMode = "light" | "dark";
 export interface UseColorModeReturn {
   colorMode: ColorMode;
   setColorMode: (colorMode: ColorMode) => void;
@@ -40,12 +39,7 @@ export function useColorMode(): UseColorModeReturn {
   };
 }
 
-export function useColorModeValue<T>(light: T, dark: T) {
-  const { colorMode } = useColorMode();
-  return colorMode === "dark" ? dark : light;
-}
-
-export function ColorModeIcon() {
+function ColorModeIcon() {
   const { colorMode } = useColorMode();
   return colorMode === "dark" ? <Moon /> : <Sun />;
 }
@@ -72,31 +66,5 @@ export const ColorModeButton = (props: ColorModeButtonProps) => {
         <ColorModeIcon />
       </IconButton>
     </ClientOnly>
-  );
-};
-
-export const LightMode = (props: SpanProps) => {
-  return (
-    <Span
-      color="fg"
-      display="contents"
-      className="chakra-theme light"
-      colorPalette="blue"
-      colorScheme="light"
-      {...props}
-    />
-  );
-};
-
-export const DarkMode = (props: SpanProps) => {
-  return (
-    <Span
-      color="fg"
-      display="contents"
-      className="chakra-theme dark"
-      colorPalette="blue"
-      colorScheme="dark"
-      {...props}
-    />
   );
 };

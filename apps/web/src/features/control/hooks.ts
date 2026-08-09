@@ -10,7 +10,6 @@ import {
   importShowBundle,
   importShowXml,
   moveTimelineEvent,
-  optimizeShow,
   patchNonResolveEvent,
   patchTimelineEvent,
   renameResolveEvent,
@@ -174,28 +173,6 @@ export function useSeekPlaybackMutation() {
     // timeline) and re-emits to every consumer, re-rendering ~111 timeline
     // rows + the cue tab on every seek. Playback state arrives via the SignalR
     // PlaybackStateChanged broadcast; a seek cannot bump the show version.
-  });
-}
-
-export function useOptimizeShowMutation() {
-  const queryClient = useQueryClient();
-  const showQuery = useControlShowQuery();
-
-  return useMutation({
-    mutationFn: async () => {
-      requireShow(showQuery.data);
-      return await withRetry(queryClient, async () => {
-        const { data } = await optimizeShow({
-          client: generatedClient,
-          body: { showVersion: playbackModel.state.value.showVersion },
-        });
-
-        return data as ShowStateSnapshot;
-      });
-    },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
   });
 }
 

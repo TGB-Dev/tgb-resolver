@@ -7,10 +7,7 @@ export function problemCellEqual(
   return a.score === b.score && a.verdict === b.verdict && a.timeSinceStart === b.timeSinceStart;
 }
 
-export function problemsEqual(
-  a: LeaderboardProblemResult[],
-  b: LeaderboardProblemResult[],
-): boolean {
+function problemsEqual(a: LeaderboardProblemResult[], b: LeaderboardProblemResult[]): boolean {
   if (a.length !== b.length) return false;
   return a.every(
     (p, i) =>

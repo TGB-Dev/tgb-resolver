@@ -9,7 +9,7 @@ import {
 import { playbackModel } from "@/features/control/playback-model";
 import { showModel } from "@/features/shared/show-model";
 
-export const SEEK_EVENTS_ANIM_THRESHOLD = 10;
+const SEEK_EVENTS_ANIM_THRESHOLD = 10;
 
 export function shouldSkipSeek(
   orderedEventIds: readonly number[],
