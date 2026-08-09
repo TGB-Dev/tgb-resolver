@@ -111,24 +111,22 @@ interface ScoreVerdictCellProps {
   verdictFg: ChakraColor;
 }
 
-export const ScoreVerdictCell = memo(
-  ({ score, verdict, scoreFg, verdictFg }: ScoreVerdictCellProps) => {
-    const isBigScreen = useIsBigScreen().value;
+const ScoreVerdictCell = memo(({ score, verdict, scoreFg, verdictFg }: ScoreVerdictCellProps) => {
+  const isBigScreen = useIsBigScreen().value;
 
-    return (
-      <Fragment>
-        <Text lineHeight="1.3" fontFamily="mono" color={scoreFg} whiteSpaceCollapse="preserve">
-          {score}
-        </Text>
-        <Text
-          fontSize={isBigScreen ? "md" : "xs"}
-          lineHeight="1.2"
-          color={verdictFg}
-          whiteSpaceCollapse="preserve"
-        >
-          {verdictShortCode(verdict)}
-        </Text>
-      </Fragment>
-    );
-  },
-);
+  return (
+    <Fragment>
+      <Text lineHeight="1.3" fontFamily="mono" color={scoreFg} whiteSpaceCollapse="preserve">
+        {score}
+      </Text>
+      <Text
+        fontSize={isBigScreen ? "md" : "xs"}
+        lineHeight="1.2"
+        color={verdictFg}
+        whiteSpaceCollapse="preserve"
+      >
+        {verdictShortCode(verdict)}
+      </Text>
+    </Fragment>
+  );
+});

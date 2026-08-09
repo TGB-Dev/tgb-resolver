@@ -7,7 +7,7 @@ import {
 } from "@preact/signals-react";
 import type { PlaybackStateSnapshot } from "@tgb-resolver/contracts";
 
-export interface PlaybackState {
+interface PlaybackState {
   showVersion: number;
   status: string | null;
   currentEventId: number | null;

@@ -10,6 +10,8 @@ import type { FloatingPanelHandle } from "@/features/control/floating-panel-mode
 import { showModel } from "@/features/shared/show-model";
 
 import { extensionRegistry } from "./base/registry";
+import { MediaExtension, type MediaExtensionPayload } from "./media";
+import { computeMediaExtensionDuration } from "./media/duration";
 import { usePatchExtensionPayload } from "./patch";
 import { sharedRendererRegistry } from "./renderers";
 import { toTgbFormInstance } from "./tgb-form-instance";
@@ -108,7 +110,16 @@ function ExtensionConfigForm({
       error.value = null;
       panel.setSaving(true);
       try {
-        await patchPayload(eventId, event.payload.extId, value);
+        let durationSeconds: number | undefined;
+        if (event.payload.extId === MediaExtension.extId) {
+          durationSeconds =
+            (await computeMediaExtensionDuration(value as MediaExtensionPayload)) ?? undefined;
+        }
+        if (durationSeconds !== undefined) {
+          await patchPayload(eventId, event.payload.extId, value, durationSeconds);
+        } else {
+          await patchPayload(eventId, event.payload.extId, value);
+        }
         panel.close(true);
       } catch (err) {
         error.value = err instanceof Error ? err.message : String(err);

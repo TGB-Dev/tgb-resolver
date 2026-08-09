@@ -8,7 +8,7 @@ export interface Rect {
   height: number;
 }
 
-export interface ContainerHandlers {
+interface ContainerHandlers {
   onPointerDown: (e: React.PointerEvent) => void;
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: (e: React.PointerEvent) => void;

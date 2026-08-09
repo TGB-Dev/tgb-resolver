@@ -17,10 +17,3 @@ export const sharedValidatorRegistry = createValidatorRegistry({
       String(rule.message ?? "Asset not found on the server"),
     ),
 });
-
-let initialized = false;
-
-export function initExtensions(): void {
-  if (initialized) return;
-  initialized = true;
-}

@@ -2,26 +2,14 @@ import { useSignal } from "@preact/signals-react";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 
-import { assetsManagerModel } from "@/features/assets-manager/assets-manager-model";
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
-import { showModel } from "@/features/shared/show-model";
 import { soundEngine } from "@/lib/sound-engine";
 import { getPreloadedAsset } from "@/utils/preload-assets";
 
+import { assetContentType } from "./duration";
 import type { MediaExtensionPayload } from "./index";
 
 const MotionBox = motion.div;
-
-function assetContentType(assetId: string): string | undefined {
-  const showFile = showModel.showFile.value;
-  if (showFile) {
-    const asset = showFile.assets?.items?.find((item) => item.id === assetId);
-    if (asset?.contentType) return asset.contentType;
-  }
-  const entry = assetsManagerModel.findEntry(assetId);
-  if (entry && !entry.isDirectory && entry.contentType) return entry.contentType;
-  return undefined;
-}
 
 function useAssetUrl(assetId: string): string | null {
   const url = useSignal<string | null>(null);

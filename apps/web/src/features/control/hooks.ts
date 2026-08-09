@@ -10,7 +10,6 @@ import {
   importShowBundle,
   importShowXml,
   moveTimelineEvent,
-  optimizeShow,
   patchNonResolveEvent,
   patchTimelineEvent,
   renameResolveEvent,
@@ -177,28 +176,6 @@ export function useSeekPlaybackMutation() {
   });
 }
 
-export function useOptimizeShowMutation() {
-  const queryClient = useQueryClient();
-  const showQuery = useControlShowQuery();
-
-  return useMutation({
-    mutationFn: async () => {
-      requireShow(showQuery.data);
-      return await withRetry(queryClient, async () => {
-        const { data } = await optimizeShow({
-          client: generatedClient,
-          body: { showVersion: playbackModel.state.value.showVersion },
-        });
-
-        return data as ShowStateSnapshot;
-      });
-    },
-    onSuccess: (data) => {
-      setShowInCache(queryClient, data);
-    },
-  });
-}
-
 export function useClearShowMutation() {
   const queryClient = useQueryClient();
   const showQuery = useControlShowQuery();
@@ -352,6 +329,7 @@ export function useCreateTimelineEventMutation() {
       relativeToEventId: number;
       before: boolean;
       customName?: string;
+      durationSeconds?: number | null;
       custom: { extId: string; extPayload: Record<string, unknown> };
     }) => {
       requireShow(showQuery.data);

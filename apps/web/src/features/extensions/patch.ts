@@ -1,6 +1,6 @@
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { getDefaultValues, toValibotSchema } from "@tgb-form/core";
-import { generatedClient, patchNonResolveEvent } from "@tgb-resolver/contracts";
+import { generatedClient, patchTimelineEvent } from "@tgb-resolver/contracts";
 import { TimelineEventType } from "@tgb-resolver/realtime";
 import { safeParse } from "valibot";
 
@@ -48,6 +48,7 @@ export async function patchExtensionPayload(
   eventId: number,
   extId: string,
   patch: Record<string, unknown>,
+  durationSeconds?: number | null,
 ): Promise<void> {
   const ext = extensionRegistry.extensionWithExtId(extId);
   if (!ext) throw new Error(`Unknown extension: ${extId}`);
@@ -70,11 +71,12 @@ export async function patchExtensionPayload(
   }
 
   await withRetry(queryClient, async () => {
-    const { data } = await patchNonResolveEvent({
+    const { data } = await patchTimelineEvent({
       client: generatedClient,
       path: { id: eventId },
       body: {
         showVersion: playbackModel.state.value.showVersion,
+        ...(durationSeconds !== undefined ? { durationSeconds } : {}),
         custom: { extId, extPayload: nextExtPayload },
       },
     });
@@ -84,6 +86,10 @@ export async function patchExtensionPayload(
 
 export function usePatchExtensionPayload() {
   const queryClient = useQueryClient();
-  return (eventId: number, extId: string, patch: Record<string, unknown>) =>
-    patchExtensionPayload(queryClient, eventId, extId, patch);
+  return (
+    eventId: number,
+    extId: string,
+    patch: Record<string, unknown>,
+    durationSeconds?: number | null,
+  ) => patchExtensionPayload(queryClient, eventId, extId, patch, durationSeconds);
 }
