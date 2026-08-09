@@ -19,6 +19,8 @@ import { useEffect } from "react";
 import { assetsManagerModel } from "@/features/assets-manager/assets-manager-model";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-model";
 import { type Extension, extensionRegistry } from "@/features/extensions";
+import type { MediaExtensionPayload } from "@/features/extensions/media";
+import { computeMediaExtensionDuration } from "@/features/extensions/media/duration";
 import { sharedRendererRegistry } from "@/features/extensions/renderers";
 import { toTgbFormInstance } from "@/features/extensions/tgb-form-instance";
 
@@ -119,6 +121,11 @@ function CreateEventForm({
       error.value = null;
       panel.setSaving(true);
       try {
+        let durationSeconds: number | undefined;
+        if (extension.extId === "media") {
+          durationSeconds =
+            (await computeMediaExtensionDuration(value as MediaExtensionPayload)) ?? undefined;
+        }
         await createTimelineEvent.mutateAsync({
           relativeToEventId,
           before,
@@ -127,6 +134,7 @@ function CreateEventForm({
             typeof value.assetId === "string"
               ? assetsManagerModel.findEntryName(value.assetId)
               : undefined,
+          durationSeconds,
           custom: { extId: extension.extId, extPayload: { ...value } },
         });
         panel.close(true);

@@ -352,6 +352,7 @@ export function useCreateTimelineEventMutation() {
       relativeToEventId: number;
       before: boolean;
       customName?: string;
+      durationSeconds?: number | null;
       custom: { extId: string; extPayload: Record<string, unknown> };
     }) => {
       requireShow(showQuery.data);

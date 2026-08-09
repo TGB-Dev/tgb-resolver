@@ -16,6 +16,7 @@ import { system } from "@/features/shared/ui/provider";
 import { CreateEventPanel } from "./create-event-panel";
 
 const imageExtensionLabel = "IMG - Showing fullscreen image in the audience view.";
+const mediaExtensionLabel = "MED - Play an image, video, or audio asset in the audience view.";
 
 const { createTimelineEvent } = vi.hoisted(() => ({
   createTimelineEvent: vi.fn<() => Promise<void>>(),
@@ -23,6 +24,10 @@ const { createTimelineEvent } = vi.hoisted(() => ({
 
 vi.mock("@/features/control/hooks", () => ({
   useCreateTimelineEventMutation: () => ({ mutateAsync: createTimelineEvent }),
+}));
+
+vi.mock("@/features/extensions/media/duration", () => ({
+  computeMediaExtensionDuration: vi.fn(async () => 3.25),
 }));
 
 function createPanel(): FloatingPanelHandle {
@@ -129,5 +134,27 @@ describe("CreateEventPanel", () => {
     view.rerender(makeUi(panel));
     expect(await screen.findByText("boom")).toBeInTheDocument();
     expect(close).not.toHaveBeenCalled();
+  });
+
+  test("creates a Media event with an auto-computed durationSeconds", async () => {
+    const user = userEvent.setup();
+    const panel = createPanel();
+    const close = vi.spyOn(panel, "close");
+    render(makeUi(panel));
+
+    await user.click(screen.getByRole("button", { name: "Toggle suggestions" }));
+    await user.click(await screen.findByRole("option", { name: mediaExtensionLabel }));
+    await user.type(screen.getByLabelText("Visual asset"), "asset-1");
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() =>
+      expect(createTimelineEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          durationSeconds: 3.25,
+          custom: expect.objectContaining({ extId: "media" }),
+        }),
+      ),
+    );
+    await waitFor(() => expect(close).toHaveBeenCalledWith(true));
   });
 });
