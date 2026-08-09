@@ -17,6 +17,7 @@ public sealed class ShowStateService(
   AppJsonSerializer serializer,
   IHubContext<ShowHub, IShowHubClient> hubContext,
   TimelineOrchestrator orchestrator,
+  RealtimeClock realtimeClock,
   IClock clock,
   AssetStore assetStore)
 {
@@ -1098,6 +1099,16 @@ public sealed class ShowStateService(
       ScheduleNextAdvanceAsync(updated);
     }
 
+    return await BroadcastReplacedAsync(updated);
+  }
+
+  public async Task<ShowStateSnapshot> SetSettingsAsync(SetSettingsRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    var updated = await repository.MutateShowAsync(request.ShowVersion, state =>
+      state with { TickRate = request.TickRate }, cancellationToken);
+
+    realtimeClock.SetTickRate(request.TickRate);
     return await BroadcastReplacedAsync(updated);
   }
 

@@ -11,6 +11,7 @@ using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
+using TGB.Resolver.Server.Tests.Realtime;
 // ReSharper disable once RedundantUsingDirective
 using NodaTime;
 
@@ -219,10 +220,19 @@ public sealed class TimelineOrchestratorTests
       serializer,
       hubContext,
       sp.GetRequiredService<TimelineOrchestrator>(),
+      CreateTestClock(),
       SystemClock.Instance,
       sp.GetRequiredService<AssetStore>()));
 
     return (services.BuildServiceProvider(), hubContext);
+  }
+
+  private static RealtimeClock CreateTestClock()
+  {
+    return new RealtimeClock(
+      new FakeClockTimer(),
+      new StopwatchTimeSource(),
+      SystemClock.Instance);
   }
 
   private static AssetStore CreateAssetStore()

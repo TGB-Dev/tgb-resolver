@@ -62,6 +62,9 @@ builder.Services.AddSignalR().AddMessagePackProtocol();
 builder.Services.AddScoped<ShowRawRepository>();
 builder.Services.AddScoped<ShowStateService>();
 builder.Services.AddSingleton<TimelineOrchestrator>();
+builder.Services.AddSingleton<IClockTimer, HrClockTimer>();
+builder.Services.AddSingleton<ITimeSource, StopwatchTimeSource>();
+builder.Services.AddSingleton<RealtimeClock>();
 
 var app = builder.Build();
 

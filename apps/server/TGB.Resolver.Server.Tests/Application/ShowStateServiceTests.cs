@@ -12,6 +12,7 @@ using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
+using TGB.Resolver.Server.Tests.Realtime;
 // ReSharper disable once RedundantUsingDirective
 using NodaTime;
 
@@ -843,6 +844,20 @@ public sealed class ShowStateServiceTests
     await Assert.That(updated.TickRate).IsEqualTo(120);
   }
 
+  [Test]
+  public async Task SetSettingsAsync_RejectsStaleVersion()
+  {
+    var (provider, _) = CreateProvider();
+    var service = provider.GetRequiredService<ShowStateService>();
+    await service.EnsureSeededAsync();
+    var version = (await service.GetSnapshotAsync()).ShowVersion;
+
+    await service.SetSettingsAsync(new SetSettingsRequest(version, 100));
+
+    await Assert.That(() => service.SetSettingsAsync(new SetSettingsRequest(version, 50)))
+      .Throws<VersionDriftException>();
+  }
+
   private static async Task<string> ReadSampleXmlAsync()
   {
     return await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures",
@@ -874,7 +889,8 @@ public sealed class ShowStateServiceTests
     var orchestrator = new TimelineOrchestrator(null!);
     assetStore ??= CreateAssetStore();
     var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
+      repository, serializer, hubContext, orchestrator, CreateTestClock(), SystemClock.Instance,
+      assetStore);
     await service.EnsureSeededAsync();
     return (service, hubContext);
   }
@@ -894,7 +910,8 @@ public sealed class ShowStateServiceTests
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
     var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance, CreateAssetStore());
+      repository, serializer, hubContext, orchestrator, CreateTestClock(), SystemClock.Instance,
+      CreateAssetStore());
     await service.EnsureSeededAsync();
     return (service, repository);
   }
@@ -926,10 +943,19 @@ public sealed class ShowStateServiceTests
       serializer,
       hubContext,
       sp.GetRequiredService<TimelineOrchestrator>(),
+      CreateTestClock(),
       SystemClock.Instance,
       sp.GetRequiredService<AssetStore>()));
 
     return (services.BuildServiceProvider(), hubContext);
+  }
+
+  private static RealtimeClock CreateTestClock()
+  {
+    return new RealtimeClock(
+      new FakeClockTimer(),
+      new StopwatchTimeSource(),
+      SystemClock.Instance);
   }
 
   private static AssetStore CreateAssetStore(string? contentRootPath = null)
