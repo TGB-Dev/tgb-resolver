@@ -11,7 +11,6 @@ using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
-using TGB.Resolver.Server.Tests.Realtime;
 // ReSharper disable once RedundantUsingDirective
 using NodaTime;
 

@@ -11,7 +11,7 @@ public sealed class RealtimeClock : IHostedService, IDisposable
   private readonly IClockTimer _timer;
   private readonly ITimeSource _time;
   private readonly IClock _wallClock;
-  private readonly object _gate = new();
+  private readonly Lock _gate = new();
   private readonly PriorityQueue<ScheduledOperation, long> _queue = new();
   private readonly HashSet<long> _cancelled = new();
   private long _nextId = 1;
@@ -43,9 +43,9 @@ public sealed class RealtimeClock : IHostedService, IDisposable
     return new ScheduleTicket(op.Id);
   }
 
-  public bool Cancel(ScheduleTicket ticket)
+  public void Cancel(ScheduleTicket ticket)
   {
-    lock (_gate) return _cancelled.Add(ticket.Id);
+    lock (_gate) _cancelled.Add(ticket.Id);
   }
 
   public void SetTickRate(double? tickRate)
@@ -70,7 +70,7 @@ public sealed class RealtimeClock : IHostedService, IDisposable
   {
     while (true)
     {
-      ScheduledOperation? op = null;
+      ScheduledOperation op;
       lock (_gate)
       {
         if (!_queue.TryPeek(out var candidate, out var deadline)) break;
@@ -81,7 +81,7 @@ public sealed class RealtimeClock : IHostedService, IDisposable
       }
       try
       {
-        op!.Action();
+        op.Action();
       }
       catch
       {

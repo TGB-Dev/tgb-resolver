@@ -5,30 +5,23 @@ namespace TGB.Resolver.Server.Tests.Realtime;
 
 internal sealed class FakeTimeSource : ITimeSource
 {
-  public long Timestamp { get; set; }
+  public long Timestamp { get; private set; }
   public long Frequency { get; } = 1_000_000;
   public void AdvanceMs(double ms) => Timestamp += (long)(ms / 1000.0 * Frequency);
 }
 
 internal sealed class FakeClockTimer : IClockTimer
 {
-  public double PeriodMs { get; private set; }
-  public bool IsRunning { get; private set; }
-  public int StartCount { get; private set; }
-  public void Configure(double periodMs) => PeriodMs = periodMs;
-  public void Start() { IsRunning = true; StartCount++; }
-  public void Stop() => IsRunning = false;
+  public void Configure(double periodMs) { }
+  public void Start() { }
+  public void Stop() { }
   public void WaitForTrigger() => throw new NotSupportedException("tests drive ProcessDue directly");
   public void Dispose() { }
 }
 
-internal sealed class FakeWallClock : IClock
+internal sealed class FakeWallClock(long startMs) : IClock
 {
-  private long _ms;
-  public FakeWallClock(long startMs) => _ms = startMs;
-  public void AdvanceMs(long ms) => _ms += ms;
-  public Instant GetCurrentInstant() => Instant.FromUnixTimeMilliseconds(_ms);
-  public DateTimeZone GetZone() => DateTimeZone.Utc;
+  public Instant GetCurrentInstant() => Instant.FromUnixTimeMilliseconds(startMs);
 }
 
 public sealed class RealtimeClockTests
@@ -76,7 +69,7 @@ public sealed class RealtimeClockTests
   public async Task SetTickRate_NullDefaultsToSixty()
   {
     var time = new FakeTimeSource();
-    var clock = CreateClock(time, new FakeWallClock(1_000_000), null);
+    var clock = CreateClock(time, new FakeWallClock(1_000_000));
     await Assert.That(clock.TickRate).IsEqualTo(60);
     await Assert.That(clock.PeriodMs).IsEqualTo(1000.0 / 60);
   }

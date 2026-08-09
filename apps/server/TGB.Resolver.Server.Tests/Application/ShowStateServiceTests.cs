@@ -830,7 +830,7 @@ public sealed class ShowStateServiceTests
   [Test]
   public async Task TickRate_DefaultsToNull_AndMapsToSnapshot()
   {
-    var (provider, _) = CreateProvider();
+    var provider = CreateProvider();
     var service = provider.GetRequiredService<ShowStateService>();
     var repository = provider.GetRequiredService<ShowRawRepository>();
     await service.EnsureSeededAsync();
@@ -847,14 +847,15 @@ public sealed class ShowStateServiceTests
   [Test]
   public async Task SetSettingsAsync_RejectsStaleVersion()
   {
-    var (provider, _) = CreateProvider();
+    var provider = CreateProvider();
     var service = provider.GetRequiredService<ShowStateService>();
     await service.EnsureSeededAsync();
     var version = (await service.GetSnapshotAsync()).ShowVersion;
 
     await service.SetSettingsAsync(new SetSettingsRequest(version, 100));
 
-    await Assert.That(() => service.SetSettingsAsync(new SetSettingsRequest(version, 50)))
+    await Assert.That(async () => await service.SetSettingsAsync(
+        new SetSettingsRequest(version, 50)))
       .Throws<VersionDriftException>();
   }
 
@@ -916,8 +917,7 @@ public sealed class ShowStateServiceTests
     return (service, repository);
   }
 
-  private static (ServiceProvider Provider, IHubContext<ShowHub, IShowHubClient> HubContext)
-    CreateProvider()
+  private static ServiceProvider CreateProvider()
   {
     var dbContext = new ResolverDbContext(
       new DbContextOptionsBuilder<ResolverDbContext>()
@@ -951,7 +951,7 @@ public sealed class ShowStateServiceTests
       SystemClock.Instance,
       sp.GetRequiredService<AssetStore>()));
 
-    return (services.BuildServiceProvider(), hubContext);
+    return services.BuildServiceProvider();
   }
 
   private static RealtimeClock CreateTestClock()

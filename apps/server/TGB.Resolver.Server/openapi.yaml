@@ -112,6 +112,27 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/show/settings:
+    patch:
+      tags:
+      - Api
+      operationId: TGBResolverServerFeaturesShowSetSettingsEndpoint
+      requestBody:
+        x-name: SetSettingsRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetSettingsRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowStateSnapshot'
   /timeline:
     get:
       tags:
@@ -714,6 +735,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TimelineEventSnapshot'
+        tickRate:
+          type: number
+          format: double
+          nullable: true
     ShowMode:
       type: string
       description: ''
@@ -1110,6 +1135,17 @@ components:
           format: int32
           minimum: 0
           exclusiveMinimum: true
+    SetSettingsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        showVersion:
+          type: integer
+          format: int32
+        tickRate:
+          type: number
+          format: double
+          nullable: true
     ImportXmlRequest:
       type: object
       additionalProperties: false

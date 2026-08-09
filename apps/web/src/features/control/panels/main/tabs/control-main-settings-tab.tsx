@@ -9,7 +9,17 @@ import {
 } from "@/features/control/hooks";
 
 const TICK_RATE_OPTIONS: { value: number; label: string }[] = [
-  120, 120 / 1.001, 100, 60, 60 / 1.001, 50, 30, 30 / 1.001, 25, 24, 24 / 1.001,
+  120,
+  120 / 1.001,
+  100,
+  60,
+  60 / 1.001,
+  50,
+  30,
+  30 / 1.001,
+  25,
+  24,
+  24 / 1.001,
 ].map((rate) => ({ value: rate, label: rate.toFixed(3) }));
 
 export function ControlMainSettingsTab() {
@@ -39,7 +49,7 @@ export function ControlMainSettingsTab() {
         </Switch.Root>
 
         <Stack gap={1}>
-          <Text textStyle="sm">Tick rate (fps)</Text>
+          <Text textStyle="sm">Tick rate for server-side timers (crucial for FXs) (fps)</Text>
           <Select.Root
             collection={collection}
             value={displayValue}

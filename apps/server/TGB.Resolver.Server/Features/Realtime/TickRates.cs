@@ -3,7 +3,7 @@ namespace TGB.Resolver.Server.Features.Realtime;
 public static class TickRates
 {
   public const double Default = 60;
-  public const double Epsilon = 1e-6;
+  private const double Epsilon = 1e-6;
 
   public static readonly double[] Allowed =
   [

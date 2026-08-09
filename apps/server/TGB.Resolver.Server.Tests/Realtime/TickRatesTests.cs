@@ -7,7 +7,7 @@ public sealed class TickRatesTests
   [Test]
   public async Task Allowed_ContainsEveryExpectedFrameRate()
   {
-    var expected = new double[] { 120, 120 / 1.001, 100, 60, 60 / 1.001, 50, 30, 30 / 1.001, 25, 24, 24 / 1.001 };
+    var expected = new[] { 120, 120 / 1.001, 100, 60, 60 / 1.001, 50, 30, 30 / 1.001, 25, 24, 24 / 1.001 };
     foreach (var rate in expected)
     {
       await Assert.That(TickRates.IsAllowed(rate)).IsTrue();
@@ -22,8 +22,8 @@ public sealed class TickRatesTests
   }
 
   [Test]
-  public async Task Default_IsSixty()
+  public async Task Default_IsAnAllowedFrameRate()
   {
-    await Assert.That(TickRates.Default).IsEqualTo(60);
+    await Assert.That(TickRates.IsAllowed(TickRates.Default)).IsTrue();
   }
 }

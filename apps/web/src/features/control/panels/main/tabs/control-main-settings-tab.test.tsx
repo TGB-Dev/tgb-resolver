@@ -21,7 +21,9 @@ describe("ControlMainSettingsTab", () => {
         <ControlMainSettingsTab />
       </ChakraProvider>,
     );
-    expect(screen.getByText("Tick rate (fps)")).toBeTruthy();
+    expect(
+      screen.getByText("Tick rate for server-side timers (crucial for FXs) (fps)"),
+    ).toBeTruthy();
     expect(screen.getAllByText("60.000").length).toBeGreaterThan(0);
   });
 });
