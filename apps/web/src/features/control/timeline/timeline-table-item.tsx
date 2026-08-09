@@ -12,7 +12,7 @@ import { TgbResolverCssEasings } from "@/features/shared/anim/easings";
 import { showModel } from "@/features/shared/show-model";
 import { GridTableRow } from "@/features/shared/ui/grid-table";
 
-import { CurrentEventIndicator } from "./CurrentEventIndicator";
+import { CurrentEventIndicator } from "./current-event-indicator";
 import { TimelineAddButtons } from "./timeline-add-buttons";
 import { ControlTimelineEventCustomNameEditable } from "./timeline-custom-name-editable";
 import { TimelineEventPosition } from "./timeline-event-position";

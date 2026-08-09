@@ -1,5 +1,6 @@
 import type { RuntimeFormDefinition } from "@tgb-form/core";
 
+import { ConfettiExtension } from "../confetti";
 import { ImageExtension } from "../image";
 import { MediaExtension } from "../media";
 import type { Extension } from "./types";
@@ -28,6 +29,7 @@ export class ExtensionRegistry {
 }
 
 export const extensionRegistry = new ExtensionRegistry({
+  [ConfettiExtension.extId]: ConfettiExtension,
   [ImageExtension.extId]: ImageExtension,
   [MediaExtension.extId]: MediaExtension,
 });
