@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { patchNonResolveEvent } from "@tgb-resolver/contracts";
+import { patchTimelineEvent } from "@tgb-resolver/contracts";
 import { type TimelineEvent, TimelineEventType } from "@tgb-resolver/realtime";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -10,7 +10,7 @@ import { ExtensionPayloadValidationError, patchExtensionPayload } from "./patch"
 
 vi.mock("@tgb-resolver/contracts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tgb-resolver/contracts")>()),
-  patchNonResolveEvent: vi.fn(),
+  patchTimelineEvent: vi.fn(),
 }));
 
 const imageEvent: TimelineEvent = {
@@ -25,16 +25,16 @@ const queryClient = new QueryClient();
 beforeEach(() => {
   showModel.showEvents.value = { [imageEvent.id]: imageEvent };
   playbackModel.state.value = { ...playbackModel.state.value, showVersion: 3 };
-  vi.mocked(patchNonResolveEvent).mockClear();
-  vi.mocked(patchNonResolveEvent).mockResolvedValue({ data: undefined } as never);
+  vi.mocked(patchTimelineEvent).mockClear();
+  vi.mocked(patchTimelineEvent).mockResolvedValue({ data: undefined } as never);
 });
 
 describe("patchExtensionPayload", () => {
   test("merges patch onto current payload and PATCHes with current showVersion", async () => {
     await patchExtensionPayload(queryClient, imageEvent.id, "img", { fit: "contain" });
 
-    expect(patchNonResolveEvent).toHaveBeenCalledTimes(1);
-    const body = vi.mocked(patchNonResolveEvent).mock.calls[0][0].body;
+    expect(patchTimelineEvent).toHaveBeenCalledTimes(1);
+    const body = vi.mocked(patchTimelineEvent).mock.calls[0][0].body;
     expect(body.showVersion).toBe(3);
     expect(body.custom).toEqual({
       extId: "img",
@@ -47,7 +47,7 @@ describe("patchExtensionPayload", () => {
       patchExtensionPayload(queryClient, imageEvent.id, "img", { assetId: 1 }),
     ).rejects.toBeInstanceOf(ExtensionPayloadValidationError);
 
-    expect(patchNonResolveEvent).not.toHaveBeenCalled();
+    expect(patchTimelineEvent).not.toHaveBeenCalled();
   });
 
   test("throws on unknown extension", async () => {
@@ -55,7 +55,7 @@ describe("patchExtensionPayload", () => {
       "Unknown extension",
     );
 
-    expect(patchNonResolveEvent).not.toHaveBeenCalled();
+    expect(patchTimelineEvent).not.toHaveBeenCalled();
   });
 
   test("partial patch on a fresh event without extPayload is completed from config-form defaults", async () => {
@@ -68,7 +68,7 @@ describe("patchExtensionPayload", () => {
       fit: "contain",
     });
 
-    const body = vi.mocked(patchNonResolveEvent).mock.calls[0][0].body;
+    const body = vi.mocked(patchTimelineEvent).mock.calls[0][0].body;
     expect(body.custom).toEqual({
       extId: "img",
       extPayload: { assetId: "asset-1", fit: "contain" },
@@ -85,7 +85,7 @@ describe("patchExtensionPayload", () => {
 
     await patchExtensionPayload(queryClient, imageEvent.id, "img", { fit: "contain" });
 
-    const body = vi.mocked(patchNonResolveEvent).mock.calls[0][0].body;
+    const body = vi.mocked(patchTimelineEvent).mock.calls[0][0].body;
     expect(body.custom).toEqual({
       extId: "img",
       extPayload: { assetId: "asset-1", fit: "contain" },
@@ -97,6 +97,24 @@ describe("patchExtensionPayload", () => {
       patchExtensionPayload(queryClient, 999, "img", { fit: "contain" }),
     ).rejects.toThrow("not a img custom event");
 
-    expect(patchNonResolveEvent).not.toHaveBeenCalled();
+    expect(patchTimelineEvent).not.toHaveBeenCalled();
+  });
+
+  test("includes durationSeconds in the body when provided", async () => {
+    await patchExtensionPayload(queryClient, imageEvent.id, "img", { fit: "contain" }, 4.5);
+
+    const body = vi.mocked(patchTimelineEvent).mock.calls[0][0].body;
+    expect(body.durationSeconds).toBe(4.5);
+    expect(body.custom).toEqual({
+      extId: "img",
+      extPayload: { assetId: "asset-1", fit: "contain" },
+    });
+  });
+
+  test("omits durationSeconds from the body when not provided", async () => {
+    await patchExtensionPayload(queryClient, imageEvent.id, "img", { fit: "contain" });
+
+    const body = vi.mocked(patchTimelineEvent).mock.calls[0][0].body;
+    expect(body).not.toHaveProperty("durationSeconds");
   });
 });
