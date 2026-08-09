@@ -47,6 +47,10 @@ public sealed record SetAutomationRequest(
   int? AutoResolveSpeedMs,
   bool? FullAutoEnabled);
 
+public sealed record SetSettingsRequest(
+  int ShowVersion,
+  double? TickRate);
+
 public sealed record UpsertAssetRequest(
   int ShowVersion,
   string FileName,

@@ -20,6 +20,7 @@ import {
   type ShowStateSnapshot,
   seekPlayback,
   setAutomation,
+  setSettings,
   startPlayback,
   TimelineEventType,
   tgbResolverServerFeaturesShowGetShowEndpointOptions,
@@ -460,6 +461,34 @@ export function useUpdateAutomationMutation() {
           body: {
             showVersion: playbackModel.state.value.showVersion,
             ...patch,
+          },
+        });
+        return data as ShowStateSnapshot;
+      });
+    },
+    onSuccess: (data) => {
+      setShowInCache(queryClient, data);
+    },
+  });
+}
+
+export function useControlTickRate() {
+  return useControlShowQuery().data?.tickRate ?? undefined;
+}
+
+export function useUpdateSettingsMutation() {
+  const queryClient = useQueryClient();
+  const showQuery = useControlShowQuery();
+
+  return useMutation({
+    mutationFn: async (tickRate: number | null) => {
+      requireShow(showQuery.data);
+      return await withRetry(queryClient, async () => {
+        const { data } = await setSettings({
+          client: generatedClient,
+          body: {
+            showVersion: playbackModel.state.value.showVersion,
+            tickRate,
           },
         });
         return data as ShowStateSnapshot;

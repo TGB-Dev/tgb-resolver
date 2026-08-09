@@ -14,7 +14,10 @@ public sealed record ShowStateSnapshot(
   AutomationSnapshot Automation,
   PlaybackStateSnapshot Playback,
   AssetCollectionSnapshot Assets,
-  IReadOnlyList<TimelineEventSnapshot> Timeline);
+  IReadOnlyList<TimelineEventSnapshot> Timeline)
+{
+  public double? TickRate { get; init; }
+}
 
 public sealed record ShowMetaSnapshot(
   string Title,

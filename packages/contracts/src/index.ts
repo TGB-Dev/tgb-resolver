@@ -25,6 +25,7 @@ export {
   tgbResolverServerFeaturesShowResetPlaybackEndpoint as resetPlayback,
   tgbResolverServerFeaturesShowSeekPlaybackEndpoint as seekPlayback,
   tgbResolverServerFeaturesShowSetAutomationEndpoint as setAutomation,
+  tgbResolverServerFeaturesShowSetSettingsEndpoint as setSettings,
   tgbResolverServerFeaturesShowStartPlaybackEndpoint as startPlayback,
 } from "./generated/sdk.gen";
 export type {

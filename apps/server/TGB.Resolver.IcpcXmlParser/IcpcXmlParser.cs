@@ -51,9 +51,8 @@ public static class IcpcXmlParser
   {
     var latestByTeamProblem =
       new Dictionary<(int TeamId, int ProblemId), (double Time, int RunId)>();
-    for (var i = 0; i < runs.Count; i++)
+    foreach (var run in runs)
     {
-      var run = runs[i];
       var key = (run.Team, run.Problem);
       if (!latestByTeamProblem.TryGetValue(key, out var latest))
       {

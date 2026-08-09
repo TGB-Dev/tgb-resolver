@@ -3,6 +3,16 @@ import { describe, expect, test } from "vitest";
 import { TimelineEventType, VerdictRunResult } from "./types";
 import { createEmptyShow, deriveLeaderboard } from "./utils";
 
+test("createEmptyShow defaults tickRate to undefined", () => {
+  const show = createEmptyShow();
+  expect(show.tickRate).toBeUndefined();
+});
+
+test("createEmptyShow keeps an explicit tickRate", () => {
+  const show = createEmptyShow({ tickRate: 59.94 });
+  expect(show.tickRate).toBe(59.94);
+});
+
 describe("deriveLeaderboard", () => {
   test("never produces duplicate userIds, even with multiple resolves per user", () => {
     const show = createEmptyShow({

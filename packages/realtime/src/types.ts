@@ -126,6 +126,7 @@ export interface ShowFile {
   playback: ShowPlaybackState;
   assets: ShowAssets;
   timeline: TimelineEvent[];
+  tickRate?: number;
 }
 
 export type ShowWebSocketMessage =

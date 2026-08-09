@@ -167,7 +167,8 @@ export const vShowStateSnapshot = v.strictObject({
     automation: v.optional(vAutomationSnapshot),
     playback: v.optional(vPlaybackStateSnapshot),
     assets: v.optional(vAssetCollectionSnapshot),
-    timeline: v.optional(v.array(vTimelineEventSnapshot))
+    timeline: v.optional(v.array(vTimelineEventSnapshot)),
+    tickRate: v.nullish(v.number())
 });
 
 export const vSetAutomationRequest = v.strictObject({
@@ -193,6 +194,11 @@ export const vErrorResponse = v.strictObject({
 export const vSeekPlaybackRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     eventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
+});
+
+export const vSetSettingsRequest = v.strictObject({
+    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    tickRate: v.nullish(v.number())
 });
 
 export const vImportXmlRequest = v.strictObject({
@@ -314,6 +320,13 @@ export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointBody = vSeekPlayb
  * Success
  */
 export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowSetSettingsEndpointBody = vSetSettingsRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowSetSettingsEndpointResponse = vShowStateSnapshot;
 
 /**
  * Success

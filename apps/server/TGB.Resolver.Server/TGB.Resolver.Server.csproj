@@ -15,6 +15,10 @@
     <PackageReference Include="FastEndpoints" Version="8.2.0" />
     <PackageReference Include="FastEndpoints.Swagger" Version="8.2.0" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="GTweens" Version="4.0.0" />
+    <PackageReference Include="Haukcode.ArtNet" Version="4.0.105" />
+    <PackageReference Include="Haukcode.HighResolutionTimer" Version="1.4.73" />
+    <PackageReference Include="Haukcode.sACN" Version="2.0.104" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
     <PackageReference Include="NodaTime" Version="3.3.3" />

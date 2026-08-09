@@ -62,6 +62,10 @@ builder.Services.AddSignalR().AddMessagePackProtocol();
 builder.Services.AddScoped<ShowRawRepository>();
 builder.Services.AddScoped<ShowStateService>();
 builder.Services.AddSingleton<TimelineOrchestrator>();
+builder.Services.AddSingleton<IClockTimer, HrClockTimer>();
+builder.Services.AddSingleton<ITimeSource, StopwatchTimeSource>();
+builder.Services.AddSingleton<RealtimeClock>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<RealtimeClock>());
 
 var app = builder.Build();
 
@@ -72,6 +76,10 @@ await using (var scope = app.Services.CreateAsyncScope())
 
   var showStateService = scope.ServiceProvider.GetRequiredService<ShowStateService>();
   await showStateService.EnsureSeededAsync();
+
+  var realtimeClock = scope.ServiceProvider.GetRequiredService<RealtimeClock>();
+  var seeded = await showStateService.GetSnapshotAsync();
+  realtimeClock.SetTickRate(seeded.TickRate);
 }
 
 app.UseCors(frontendCorsPolicy);

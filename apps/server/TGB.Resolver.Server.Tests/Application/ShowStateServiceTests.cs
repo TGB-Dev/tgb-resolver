@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
@@ -11,6 +12,7 @@ using TGB.Resolver.Server.Features.Realtime;
 using TGB.Resolver.Server.Features.Show;
 using TGB.Resolver.Server.Features.Show.Data;
 using TGB.Resolver.Server.Features.Show.Dto;
+using TGB.Resolver.Server.Tests.Realtime;
 // ReSharper disable once RedundantUsingDirective
 using NodaTime;
 
@@ -825,6 +827,38 @@ public sealed class ShowStateServiceTests
     await Assert.That(after.Playback.Status).IsEqualTo(PlaybackStatus.Idle);
   }
 
+  [Test]
+  public async Task TickRate_DefaultsToNull_AndMapsToSnapshot()
+  {
+    var provider = CreateProvider();
+    var service = provider.GetRequiredService<ShowStateService>();
+    var repository = provider.GetRequiredService<ShowRawRepository>();
+    await service.EnsureSeededAsync();
+
+    var snapshot = await service.GetSnapshotAsync();
+    await Assert.That(snapshot.TickRate).IsNull();
+
+    var show = await repository.GetStateAsync();
+    await repository.ReplaceAsync(show with { TickRate = 120 });
+    var updated = await service.GetSnapshotAsync();
+    await Assert.That(updated.TickRate).IsEqualTo(120);
+  }
+
+  [Test]
+  public async Task SetSettingsAsync_RejectsStaleVersion()
+  {
+    var provider = CreateProvider();
+    var service = provider.GetRequiredService<ShowStateService>();
+    await service.EnsureSeededAsync();
+    var version = (await service.GetSnapshotAsync()).ShowVersion;
+
+    await service.SetSettingsAsync(new SetSettingsRequest(version, 100));
+
+    await Assert.That(async () => await service.SetSettingsAsync(
+        new SetSettingsRequest(version, 50)))
+      .Throws<VersionDriftException>();
+  }
+
   private static async Task<string> ReadSampleXmlAsync()
   {
     return await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures",
@@ -853,10 +887,11 @@ public sealed class ShowStateServiceTests
     var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
-    var orchestrator = new TimelineOrchestrator(null!);
+    var orchestrator = new TimelineOrchestrator(null!, CreateTestClock());
     assetStore ??= CreateAssetStore();
     var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance, assetStore);
+      repository, serializer, hubContext, orchestrator, CreateTestClock(), SystemClock.Instance,
+      assetStore);
     await service.EnsureSeededAsync();
     return (service, hubContext);
   }
@@ -876,9 +911,55 @@ public sealed class ShowStateServiceTests
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
     var service = new ShowStateService(
-      repository, serializer, hubContext, orchestrator, SystemClock.Instance, CreateAssetStore());
+      repository, serializer, hubContext, orchestrator, CreateTestClock(), SystemClock.Instance,
+      CreateAssetStore());
     await service.EnsureSeededAsync();
     return (service, repository);
+  }
+
+  private static ServiceProvider CreateProvider()
+  {
+    var dbContext = new ResolverDbContext(
+      new DbContextOptionsBuilder<ResolverDbContext>()
+        .UseSqlite("Data Source=:memory:")
+        .Options);
+    dbContext.Database.OpenConnection();
+    dbContext.Database.EnsureCreated();
+
+    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
+    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
+    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
+    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
+
+    var services = new ServiceCollection();
+    services.AddSingleton(dbContext);
+    services.AddSingleton(serializer);
+    services.AddSingleton(_ => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
+    services.AddSingleton(hubContext);
+    services.AddSingleton(CreateAssetStore());
+    services.AddSingleton<ITimeSource>(new StopwatchTimeSource());
+    services.AddSingleton<IClockTimer>(new HrClockTimer());
+    services.AddSingleton<IClock>(SystemClock.Instance);
+    services.AddSingleton<RealtimeClock>();
+    services.AddSingleton<TimelineOrchestrator>();
+    services.AddSingleton(sp => new ShowStateService(
+      sp.GetRequiredService<ShowRawRepository>(),
+      serializer,
+      hubContext,
+      sp.GetRequiredService<TimelineOrchestrator>(),
+      sp.GetRequiredService<RealtimeClock>(),
+      SystemClock.Instance,
+      sp.GetRequiredService<AssetStore>()));
+
+    return services.BuildServiceProvider();
+  }
+
+  private static RealtimeClock CreateTestClock()
+  {
+    return new RealtimeClock(
+      new FakeClockTimer(),
+      new StopwatchTimeSource(),
+      SystemClock.Instance);
   }
 
   private static AssetStore CreateAssetStore(string? contentRootPath = null)
@@ -890,7 +971,7 @@ public sealed class ShowStateServiceTests
     return new AssetStore(environment);
   }
 
-  private sealed class RecordingOrchestrator() : TimelineOrchestrator(null!)
+  private sealed class RecordingOrchestrator() : TimelineOrchestrator(null!, CreateTestClock())
   {
     public List<long> Delays { get; } = [];
 

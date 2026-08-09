@@ -15,6 +15,7 @@ export type ShowStateSnapshot = {
     playback?: PlaybackStateSnapshot;
     assets?: AssetCollectionSnapshot;
     timeline?: Array<TimelineEventSnapshot>;
+    tickRate?: number | null;
 };
 
 export enum ShowMode {
@@ -289,6 +290,11 @@ export type SeekPlaybackRequest = {
     eventId?: number;
 };
 
+export type SetSettingsRequest = {
+    showVersion?: number;
+    tickRate?: number | null;
+};
+
 export type ImportXmlRequest = {
     xml: string;
     excludedUsernames?: Array<string> | null;
@@ -482,6 +488,22 @@ export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses = {
 };
 
 export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses];
+
+export type TgbResolverServerFeaturesShowSetSettingsEndpointData = {
+    body: SetSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/show/settings';
+};
+
+export type TgbResolverServerFeaturesShowSetSettingsEndpointResponses = {
+    /**
+     * Success
+     */
+    200: ShowStateSnapshot;
+};
+
+export type TgbResolverServerFeaturesShowSetSettingsEndpointResponse = TgbResolverServerFeaturesShowSetSettingsEndpointResponses[keyof TgbResolverServerFeaturesShowSetSettingsEndpointResponses];
 
 export type TgbResolverServerFeaturesShowGetShowEndpointData = {
     body?: never;

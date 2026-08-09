@@ -13,7 +13,10 @@ public sealed record ShowState(
   AutomationState Automation,
   PlaybackState Playback,
   AssetCollection Assets,
-  IReadOnlyList<TimelineEvent> Timeline);
+  IReadOnlyList<TimelineEvent> Timeline)
+{
+  public double? TickRate { get; init; }
+}
 
 public sealed record ShowMeta(
   string Title,
