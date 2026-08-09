@@ -6,7 +6,7 @@ public readonly record struct ScheduleTicket(long Id);
 
 internal sealed record ScheduledOperation(long Id, Action Action);
 
-public sealed class RealtimeClock : IDisposable
+public sealed class RealtimeClock : IHostedService, IDisposable
 {
   private readonly IClockTimer _timer;
   private readonly ITimeSource _time;
@@ -91,6 +91,18 @@ public sealed class RealtimeClock : IDisposable
   }
 
   // ---- Hosted lifecycle ----
+
+  public Task StartAsync(CancellationToken cancellationToken)
+  {
+    Start();
+    return Task.CompletedTask;
+  }
+
+  public Task StopAsync(CancellationToken cancellationToken)
+  {
+    Stop();
+    return Task.CompletedTask;
+  }
 
   public void Start()
   {

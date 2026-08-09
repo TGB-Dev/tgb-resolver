@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.SignalR;
-using NodaTime;
 using TGB.Resolver.Server.Features.Show.Dto;
 using TypedSignalR.Client;
 
@@ -12,7 +11,7 @@ public interface IShowHub
   Task<ClockSyncResponse> SyncClock(ClockSyncRequest request);
 }
 
-public sealed class ShowHub(IClock clock) : Hub<IShowHubClient>, IShowHub
+public sealed class ShowHub(RealtimeClock clock) : Hub<IShowHubClient>, IShowHub
 {
   public Task<ClockSyncResponse> SyncClock(ClockSyncRequest request)
   {
