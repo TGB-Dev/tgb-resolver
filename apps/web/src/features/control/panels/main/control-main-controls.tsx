@@ -188,6 +188,12 @@ function SeekButtons({
   const currentIndex =
     currentEventId != null ? rows.findIndex((row) => row.id === currentEventId) : -1;
 
+  // Seeking is only meaningful while playing or paused; an idle timeline has
+  // nothing to resume from, so the transport controls are disabled.
+  const canSeek =
+    playbackModel.status.value === PlaybackStatus.RUNNING ||
+    playbackModel.status.value === PlaybackStatus.PAUSED;
+
   const prevAction = useAction({
     handler: () => {
       if (currentIndex > 0) {
@@ -195,7 +201,7 @@ function SeekButtons({
         if (prev) seekPlayback.mutate(prev.id);
       }
     },
-    enabled: canMutate && currentIndex > 0 && !seekPlayback.isPending,
+    enabled: canMutate && canSeek && currentIndex > 0 && !seekPlayback.isPending,
     hotkeys: ["ArrowLeft"],
   });
 
@@ -207,7 +213,11 @@ function SeekButtons({
       }
     },
     enabled:
-      canMutate && currentIndex >= 0 && currentIndex < rows.length - 1 && !seekPlayback.isPending,
+      canMutate &&
+      canSeek &&
+      currentIndex >= 0 &&
+      currentIndex < rows.length - 1 &&
+      !seekPlayback.isPending,
     hotkeys: ["ArrowRight", "Space"],
   });
 

@@ -4,7 +4,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { useComputed, useSignalEffect } from "@preact/signals-react";
 import { For } from "@preact/signals-react/utils";
-import { TimelineEventType } from "@tgb-resolver/contracts";
+import { PlaybackStatus, TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineEvent, TimelineTableItem } from "@tgb-resolver/realtime";
 import { memo, type RefObject, useCallback, useRef } from "react";
 
@@ -52,7 +52,14 @@ export function ControlTimelineTable({ apiRef }: ControlTimelineTableProps) {
 
   const seekRef = useRef(seekPlayback.mutate);
   seekRef.current = seekPlayback.mutate;
-  const onSeek = useCallback((id: number) => seekRef.current(id), []);
+  const onSeek = useCallback((id: number) => {
+    // Seeking is only meaningful while playing or paused (an idle timeline
+    // cannot resume). Guarding here keeps row-click seeking consistent with
+    // the transport controls.
+    const status = playbackModel.status.value;
+    if (status !== PlaybackStatus.RUNNING && status !== PlaybackStatus.PAUSED) return;
+    seekRef.current(id);
+  }, []);
 
   const openContextMenuRef = useRef(timelineContextMenu.open);
   openContextMenuRef.current = timelineContextMenu.open;

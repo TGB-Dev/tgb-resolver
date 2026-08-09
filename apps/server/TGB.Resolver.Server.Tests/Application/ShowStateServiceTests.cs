@@ -174,6 +174,20 @@ public sealed class ShowStateServiceTests
   }
 
   [Test]
+  public async Task SetLiveMode_ResetsPlaybackToIdle()
+  {
+    var (service, _) = await CreateServiceAsync();
+    await service.StartPlaybackAsync(new VersionedCommandRequest(1));
+    var running = await service.GetSnapshotAsync();
+    await Assert.That(running.Playback.Status).IsEqualTo(PlaybackStatus.Running);
+
+    var snapshot = await service.SetLiveModeAsync(true);
+
+    await Assert.That(snapshot.Playback.Status).IsEqualTo(PlaybackStatus.Idle);
+    await Assert.That(snapshot.Playback.CurrentEventId).IsNull();
+  }
+
+  [Test]
   public async Task SeekPlayback_MovesTheCurrentEventToTheRequestedTimelineEvent()
   {
     var (service, _) = await CreateServiceAsync();
@@ -182,6 +196,33 @@ public sealed class ShowStateServiceTests
 
     await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
     await Assert.That(snapshot.Playback.ActiveEventIds).IsEquivalentTo([3]);
+  }
+
+  [Test]
+  public async Task SeekPlayback_WhilePaused_ResumesPlayback()
+  {
+    var (service, _) = await CreateServiceAsync();
+    await service.StartPlaybackAsync(new VersionedCommandRequest(1));
+    var paused = await service.StartPlaybackAsync(new VersionedCommandRequest(1));
+    await Assert.That(paused.Playback.Status).IsEqualTo(PlaybackStatus.Paused);
+
+    var snapshot = await service.SeekPlaybackAsync(new SeekPlaybackRequest(1, 3));
+
+    await Assert.That(snapshot.Playback.Status).IsEqualTo(PlaybackStatus.Running);
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
+  }
+
+  [Test]
+  public async Task SeekPlayback_WhileIdle_DoesNotPlay()
+  {
+    var (service, _) = await CreateServiceAsync();
+    var before = await service.GetSnapshotAsync();
+    await Assert.That(before.Playback.Status).IsEqualTo(PlaybackStatus.Idle);
+
+    var snapshot = await service.SeekPlaybackAsync(new SeekPlaybackRequest(1, 3));
+
+    await Assert.That(snapshot.Playback.Status).IsEqualTo(PlaybackStatus.Idle);
+    await Assert.That(snapshot.Playback.CurrentEventId).IsEqualTo(3);
   }
 
   [Test]

@@ -24,8 +24,8 @@ const TIMELINE_TABLE_COLUMNS_CONFIG: Record<string, GridTableColumnConfig> = {
     maxW: "6ch",
   },
   durationSeconds: {
-    minW: "4ch",
-    maxW: "4ch",
+    minW: "10ch",
+    maxW: "10ch",
   },
   triggerOffsetSeconds: {
     minW: "6ch",

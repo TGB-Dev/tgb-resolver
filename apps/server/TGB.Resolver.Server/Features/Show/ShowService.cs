@@ -858,13 +858,16 @@ public sealed class ShowStateService(
     var updated = await repository.MutateShowAsync(
       state => state with
       {
-        Mode = enabled ? ShowMode.Live : ShowMode.Editing
+        Mode = enabled ? ShowMode.Live : ShowMode.Editing,
+        Playback = NewPlayback(PlaybackStatus.Idle, null, [], null)
       },
       cancellationToken);
 
     var snapshot = ShowContractMapper.ToContract(updated);
     await hubContext.Clients.All.LiveModeChanged(
       new LiveModeChangedMessage(snapshot.ShowVersion, snapshot.Mode));
+    await BroadcastPlaybackAsync(updated);
+    orchestrator.CancelAdvance();
     return snapshot;
   }
 
@@ -948,10 +951,16 @@ public sealed class ShowStateService(
         if (targetIndex < 0)
           throw new InvalidOperationException($"Timeline event {request.EventId} does not exist.");
 
+        // Seeking resumes playback: a paused timeline jumps to the target and
+        // starts advancing again. Idle stays idle (seek alone does not play).
+        var status = state.Playback.Status == PlaybackStatus.Paused
+          ? PlaybackStatus.Running
+          : state.Playback.Status;
+
         return state with
         {
           Playback = NewPlayback(
-            state.Playback.Status,
+            status,
             request.EventId,
             ComputeActiveEventIds(ordered, targetIndex),
             state.Playback.StartedAt)
