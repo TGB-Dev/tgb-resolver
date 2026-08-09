@@ -20,11 +20,22 @@ vi.mock("./patch", async (importOriginal) => {
   return { ...actual, usePatchExtensionPayload: vi.fn() };
 });
 
+vi.mock("./media/duration", () => ({
+  computeMediaExtensionDuration: vi.fn(async () => 6.5),
+}));
+
 const imageEvent: TimelineEvent = {
   id: 7,
   position: 1,
   type: TimelineEventType.CUS,
   payload: { extId: "img", extPayload: { assetId: "asset-1", fit: "cover" } },
+};
+
+const mediaEvent: TimelineEvent = {
+  id: 8,
+  position: 2,
+  type: TimelineEventType.CUS,
+  payload: { extId: "media", extPayload: { assetId: "asset-1", audioAssetId: "" } },
 };
 
 const queryClient = new QueryClient();
@@ -124,5 +135,24 @@ describe("ExtensionConfigPanel", () => {
     render(makeUi(createPanel()));
 
     expect(screen.getByText('Extension "unknown-ext" has no config form.')).toBeInTheDocument();
+  });
+
+  test("saving a Media event passes an auto-computed durationSeconds to patch", async () => {
+    showModel.showEvents.value = { [mediaEvent.id]: mediaEvent };
+    const user = userEvent.setup();
+    const panel = createPanel();
+    render(
+      <ChakraProvider value={system}>
+        <QueryClientProvider client={queryClient}>
+          <ExtensionConfigPanel panel={panel} eventId={mediaEvent.id} />
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+
+    await user.type(screen.getByLabelText("Visual asset"), "asset-2");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(panel.close).toHaveBeenCalledWith(true));
+    expect(patchPayload).toHaveBeenCalledWith(mediaEvent.id, "media", expect.any(Object), 6.5);
   });
 });
