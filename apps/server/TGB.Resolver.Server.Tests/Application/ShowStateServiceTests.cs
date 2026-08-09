@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using TGB.Resolver.Server.Commons.Data;
@@ -825,6 +826,23 @@ public sealed class ShowStateServiceTests
     await Assert.That(after.Playback.Status).IsEqualTo(PlaybackStatus.Idle);
   }
 
+  [Test]
+  public async Task TickRate_DefaultsToNull_AndMapsToSnapshot()
+  {
+    var (provider, _) = CreateProvider();
+    var service = provider.GetRequiredService<ShowStateService>();
+    var repository = provider.GetRequiredService<ShowRawRepository>();
+    await service.EnsureSeededAsync();
+
+    var snapshot = await service.GetSnapshotAsync();
+    await Assert.That(snapshot.TickRate).IsNull();
+
+    var show = await repository.GetStateAsync();
+    await repository.ReplaceAsync(show with { TickRate = 120 });
+    var updated = await service.GetSnapshotAsync();
+    await Assert.That(updated.TickRate).IsEqualTo(120);
+  }
+
   private static async Task<string> ReadSampleXmlAsync()
   {
     return await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures",
@@ -879,6 +897,39 @@ public sealed class ShowStateServiceTests
       repository, serializer, hubContext, orchestrator, SystemClock.Instance, CreateAssetStore());
     await service.EnsureSeededAsync();
     return (service, repository);
+  }
+
+  private static (ServiceProvider Provider, IHubContext<ShowHub, IShowHubClient> HubContext)
+    CreateProvider()
+  {
+    var dbContext = new ResolverDbContext(
+      new DbContextOptionsBuilder<ResolverDbContext>()
+        .UseSqlite("Data Source=:memory:")
+        .Options);
+    dbContext.Database.OpenConnection();
+    dbContext.Database.EnsureCreated();
+
+    var serializer = new AppJsonSerializer(AppJsonSerializerContext.Default);
+    var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
+    hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
+    hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
+
+    var services = new ServiceCollection();
+    services.AddSingleton(dbContext);
+    services.AddSingleton(serializer);
+    services.AddSingleton(_ => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
+    services.AddSingleton(hubContext);
+    services.AddSingleton(CreateAssetStore());
+    services.AddSingleton<TimelineOrchestrator>();
+    services.AddSingleton(sp => new ShowStateService(
+      sp.GetRequiredService<ShowRawRepository>(),
+      serializer,
+      hubContext,
+      sp.GetRequiredService<TimelineOrchestrator>(),
+      SystemClock.Instance,
+      sp.GetRequiredService<AssetStore>()));
+
+    return (services.BuildServiceProvider(), hubContext);
   }
 
   private static AssetStore CreateAssetStore(string? contentRootPath = null)
