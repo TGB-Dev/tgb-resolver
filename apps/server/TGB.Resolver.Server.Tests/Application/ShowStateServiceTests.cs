@@ -886,7 +886,7 @@ public sealed class ShowStateServiceTests
     var hubContext = Substitute.For<IHubContext<ShowHub, IShowHubClient>>();
     hubContext.Clients.Returns(Substitute.For<IHubClients<IShowHubClient>>());
     hubContext.Clients.All.Returns(Substitute.For<IShowHubClient>());
-    var orchestrator = new TimelineOrchestrator(null!);
+    var orchestrator = new TimelineOrchestrator(null!, CreateTestClock());
     assetStore ??= CreateAssetStore();
     var service = new ShowStateService(
       repository, serializer, hubContext, orchestrator, CreateTestClock(), SystemClock.Instance,
@@ -937,13 +937,17 @@ public sealed class ShowStateServiceTests
     services.AddSingleton(_ => new ShowRawRepository(dbContext, serializer, SystemClock.Instance));
     services.AddSingleton(hubContext);
     services.AddSingleton(CreateAssetStore());
+    services.AddSingleton<ITimeSource>(new StopwatchTimeSource());
+    services.AddSingleton<IClockTimer>(new HrClockTimer());
+    services.AddSingleton<IClock>(SystemClock.Instance);
+    services.AddSingleton<RealtimeClock>();
     services.AddSingleton<TimelineOrchestrator>();
     services.AddSingleton(sp => new ShowStateService(
       sp.GetRequiredService<ShowRawRepository>(),
       serializer,
       hubContext,
       sp.GetRequiredService<TimelineOrchestrator>(),
-      CreateTestClock(),
+      sp.GetRequiredService<RealtimeClock>(),
       SystemClock.Instance,
       sp.GetRequiredService<AssetStore>()));
 
@@ -967,7 +971,7 @@ public sealed class ShowStateServiceTests
     return new AssetStore(environment);
   }
 
-  private sealed class RecordingOrchestrator() : TimelineOrchestrator(null!)
+  private sealed class RecordingOrchestrator() : TimelineOrchestrator(null!, CreateTestClock())
   {
     public List<long> Delays { get; } = [];
 
