@@ -10,7 +10,7 @@ import type { FloatingPanelHandle } from "@/features/control/floating-panel-mode
 import { showModel } from "@/features/shared/show-model";
 
 import { extensionRegistry } from "./base/registry";
-import type { MediaExtensionPayload } from "./media";
+import { MediaExtension, type MediaExtensionPayload } from "./media";
 import { computeMediaExtensionDuration } from "./media/duration";
 import { usePatchExtensionPayload } from "./patch";
 import { sharedRendererRegistry } from "./renderers";
@@ -111,7 +111,7 @@ function ExtensionConfigForm({
       panel.setSaving(true);
       try {
         let durationSeconds: number | undefined;
-        if (event.payload.extId === "media") {
+        if (event.payload.extId === MediaExtension.extId) {
           durationSeconds =
             (await computeMediaExtensionDuration(value as MediaExtensionPayload)) ?? undefined;
         }

@@ -19,11 +19,12 @@ import { useEffect } from "react";
 import { assetsManagerModel } from "@/features/assets-manager/assets-manager-model";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-model";
 import { type Extension, extensionRegistry } from "@/features/extensions";
-import type { MediaExtensionPayload } from "@/features/extensions/media";
+import { MediaExtension, type MediaExtensionPayload } from "@/features/extensions/media";
 import { computeMediaExtensionDuration } from "@/features/extensions/media/duration";
 import { sharedRendererRegistry } from "@/features/extensions/renderers";
 import { toTgbFormInstance } from "@/features/extensions/tgb-form-instance";
 
+import { ImageExtension } from "../extensions/image";
 import { useCreateTimelineEventMutation } from "./hooks";
 
 interface CreateEventPanelProps {
@@ -122,7 +123,7 @@ function CreateEventForm({
       panel.setSaving(true);
       try {
         let durationSeconds: number | undefined;
-        if (extension.extId === "media") {
+        if (extension.extId === MediaExtension.extId) {
           durationSeconds =
             (await computeMediaExtensionDuration(value as MediaExtensionPayload)) ?? undefined;
         }
@@ -130,7 +131,8 @@ function CreateEventForm({
           relativeToEventId,
           before,
           customName:
-            (extension.extId === "img" || extension.extId === "media") &&
+            (extension.extId === ImageExtension.extId ||
+              extension.extId === MediaExtension.extId) &&
             typeof value.assetId === "string"
               ? assetsManagerModel.findEntryName(value.assetId)
               : undefined,
