@@ -150,6 +150,7 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
         })),
       },
       timeline,
+      tickRate: snapshot.tickRate ?? undefined,
     }),
   );
 }
