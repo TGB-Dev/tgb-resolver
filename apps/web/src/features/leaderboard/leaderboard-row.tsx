@@ -102,7 +102,7 @@ export const LeaderboardRow = memo(
         transition={{
           layout: {
             duration: 0.8,
-            ease: TgbResolverEasings.swiftOut,
+            ease: TgbResolverEasings.inOutQuad,
           },
           backgroundColor: {
             duration: 0.15,

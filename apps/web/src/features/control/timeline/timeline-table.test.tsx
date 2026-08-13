@@ -73,7 +73,7 @@ beforeEach(() => {
   sortableSpy.mockClear();
   playbackModel.reset();
   showModel.hydrateFromSnapshot(makeShow([]));
-  localStorage.clear();
+  globalThis.localStorage?.clear();
 });
 
 function makeShow(events: TimelineEvent[]): ShowFile {
