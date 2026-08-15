@@ -22,6 +22,8 @@ import { type Extension, extensionRegistry } from "@/features/extensions";
 import { MediaExtension, type MediaExtensionPayload } from "@/features/extensions/media";
 import { computeMediaExtensionDuration } from "@/features/extensions/media/duration";
 import { sharedRendererRegistry } from "@/features/extensions/renderers";
+import { ScrollerExtension, type ScrollerExtensionPayload } from "@/features/extensions/scroller";
+import { computeScrollerExtensionDuration } from "@/features/extensions/scroller/duration";
 import { toTgbFormInstance } from "@/features/extensions/tgb-form-instance";
 
 import { ImageExtension } from "../extensions/image";
@@ -126,6 +128,8 @@ function CreateEventForm({
         if (extension.extId === MediaExtension.extId) {
           durationSeconds =
             (await computeMediaExtensionDuration(value as MediaExtensionPayload)) ?? undefined;
+        } else if (extension.extId === ScrollerExtension.extId) {
+          durationSeconds = computeScrollerExtensionDuration(value as ScrollerExtensionPayload);
         }
         await createTimelineEvent.mutateAsync({
           relativeToEventId,

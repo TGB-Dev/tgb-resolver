@@ -3,7 +3,7 @@ import { For, useLiveSignal } from "@preact/signals-react/utils";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { CustomEvent, ShowFile, TimelineEvent } from "@tgb-resolver/realtime";
 import { AnimatePresence } from "motion/react";
-import { createElement, memo } from "react";
+import { createElement, memo, useEffect, useRef } from "react";
 
 import { useControlShowQuery } from "@/features/control/hooks";
 import { playbackModel } from "@/features/control/playback-model";
@@ -14,7 +14,7 @@ import { isBigScreenSignal } from "./leaderboard-provider";
 import { LeaderboardRow } from "./leaderboard-row";
 import { LeaderboardTable } from "./leaderboard-table";
 
-const ActiveExtensionsOverlay = memo(function ActiveExtensionsOverlay({
+export const ActiveExtensionsOverlay = memo(function ActiveExtensionsOverlay({
   timeline,
 }: {
   timeline: ShowFile | undefined;
@@ -35,6 +35,50 @@ const ActiveExtensionsOverlay = memo(function ActiveExtensionsOverlay({
       })
       .filter((overlay) => overlay !== null);
   });
+
+  // ScriptOnly extensions have no render representation; run their scripts while
+  // their event is active and tear down (e.g. stop animations) once it is seeked
+  // away or the timeline is replaced.
+  //
+  // The runner is idempotent: scripts are keyed by event id in a ref, so a
+  // repeated trigger (dev StrictMode double-invoke, or a RealTime state push
+  // that re-runs this effect) does not re-execute a script that is already
+  // running for the same event. Deactivation runs the cleanup exactly once.
+  const runningScripts = useRef(new Map<number, () => void>());
+
+  useSignalEffect(() => {
+    const events = timeline?.timeline ?? [];
+    const activeEventIds = new Set(playbackModel.state.value.activeEventIds);
+
+    for (const [eventId, cleanup] of runningScripts.current) {
+      if (activeEventIds.has(eventId)) continue;
+      cleanup();
+      runningScripts.current.delete(eventId);
+    }
+
+    for (const event of events) {
+      if (!isCustomEvent(event) || !activeEventIds.has(event.id)) continue;
+      if (runningScripts.current.has(event.id)) continue;
+      const extension = extensionRegistry.extensionWithExtId(event.payload.extId);
+      if (extension?.type !== ExtensionType.ScriptOnly) continue;
+      if (import.meta.env.DEV)
+        console.debug("[extensions] executing script", {
+          extId: event.payload.extId,
+          eventId: event.id,
+        });
+      const cleanup = extension.execute(event.payload.extPayload ?? {});
+      if (typeof cleanup === "function") runningScripts.current.set(event.id, cleanup);
+    }
+  });
+
+  // Tear down everything when the overlay itself unmounts (strict-mode remount
+  // included); the effect above re-starts the scripts for still-active events.
+  useEffect(() => {
+    return () => {
+      for (const cleanup of runningScripts.current.values()) cleanup();
+      runningScripts.current.clear();
+    };
+  }, []);
 
   return <AnimatePresence mode="sync">{overlays.value}</AnimatePresence>;
 });

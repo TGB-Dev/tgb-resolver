@@ -66,9 +66,10 @@ export interface ScriptOnlyExtension extends BaseExtension {
 
   // TODO: should this be async?
   /**
-   * Function to execute. Need to return a cleanup function to be called when the timeline is seeked.
+   * Function to execute with the CUS event's extPayload. Need to return a
+   * cleanup function to be called when the timeline is seeked.
    */
-  execute(): () => void | Promise<void>;
+  execute(payload: Record<string, unknown>): () => void | Promise<void>;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogenous extension list

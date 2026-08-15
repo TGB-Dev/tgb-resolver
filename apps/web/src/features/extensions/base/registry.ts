@@ -1,8 +1,10 @@
 import type { RuntimeFormDefinition } from "@tgb-form/core";
 
+import { BlankExtension } from "../blank";
 import { ConfettiExtension } from "../confetti";
 import { ImageExtension } from "../image";
 import { MediaExtension } from "../media";
+import { ScrollerExtension } from "../scroller";
 import type { Extension } from "./types";
 
 export class ExtensionRegistry {
@@ -29,7 +31,9 @@ export class ExtensionRegistry {
 }
 
 export const extensionRegistry = new ExtensionRegistry({
+  [BlankExtension.extId]: BlankExtension,
   [ConfettiExtension.extId]: ConfettiExtension,
   [ImageExtension.extId]: ImageExtension,
   [MediaExtension.extId]: MediaExtension,
+  [ScrollerExtension.extId]: ScrollerExtension,
 });

@@ -1,3 +1,4 @@
+import { Box } from "@chakra-ui/react";
 import { useSignal } from "@preact/signals-react";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
@@ -9,7 +10,7 @@ import { getPreloadedAsset } from "@/utils/preload-assets";
 import { assetContentType } from "./duration";
 import type { MediaExtensionPayload } from "./index";
 
-const MotionBox = motion.div;
+const MotionBox = motion.create(Box);
 
 function useAssetUrl(assetId: string): string | null {
   const url = useSignal<string | null>(null);
@@ -54,16 +55,6 @@ export function MediaExtensionComponent({ payload }: MediaExtensionComponentProp
   const contentType = visualAssetId ? assetContentType(visualAssetId) : undefined;
   const isVideo = contentType?.startsWith("video/") ?? false;
 
-  const overlayStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "var(--chakra-colors-bg)",
-    zIndex: 1000,
-  };
-
   return (
     <>
       {audioAssetId && audioUrl && <AssetAudioPlayer url={audioUrl} loop={loop} volume={volume} />}
@@ -74,7 +65,13 @@ export function MediaExtensionComponent({ payload }: MediaExtensionComponentProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: TgbResolverEasings.swiftOut }}
-            style={overlayStyle}
+            position="absolute"
+            top={0}
+            left={0}
+            w="full"
+            h="full"
+            bg="bg"
+            zIndex={1000}
           >
             {/* biome-ignore lint/a11y/useMediaCaption: asset videos carry their own audio track; no caption file exists */}
             <video
@@ -95,7 +92,13 @@ export function MediaExtensionComponent({ payload }: MediaExtensionComponentProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: TgbResolverEasings.swiftOut }}
-            style={overlayStyle}
+            position="absolute"
+            top={0}
+            left={0}
+            w="full"
+            h="full"
+            bg="bg"
+            zIndex={1000}
           >
             <img
               src={visualUrl}

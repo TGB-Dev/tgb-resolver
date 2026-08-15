@@ -17,6 +17,8 @@ import { CreateEventPanel } from "./create-event-panel";
 
 const imageExtensionLabel = "IMG - Showing fullscreen image in the audience view.";
 const mediaExtensionLabel = "MED - Play an image, video, or audio asset in the audience view.";
+const scrollerExtensionLabel =
+  "SCR - Auto-scrolls the leaderboard from top to bottom over a set duration.";
 
 const { createTimelineEvent } = vi.hoisted(() => ({
   createTimelineEvent: vi.fn<() => Promise<void>>(),
@@ -28,6 +30,10 @@ vi.mock("@/features/control/hooks", () => ({
 
 vi.mock("@/features/extensions/media/duration", () => ({
   computeMediaExtensionDuration: vi.fn(async () => 3.25),
+}));
+
+vi.mock("@/features/extensions/scroller/duration", () => ({
+  computeScrollerExtensionDuration: vi.fn(() => 11),
 }));
 
 function createPanel(): FloatingPanelHandle {
@@ -152,6 +158,27 @@ describe("CreateEventPanel", () => {
         expect.objectContaining({
           durationSeconds: 3.25,
           custom: expect.objectContaining({ extId: "media" }),
+        }),
+      ),
+    );
+    await waitFor(() => expect(close).toHaveBeenCalledWith(true));
+  });
+
+  test("creates a Scroller event with an auto-computed durationSeconds", async () => {
+    const user = userEvent.setup();
+    const panel = createPanel();
+    const close = vi.spyOn(panel, "close");
+    render(makeUi(panel));
+
+    await user.click(screen.getByRole("button", { name: "Toggle suggestions" }));
+    await user.click(await screen.findByRole("option", { name: scrollerExtensionLabel }));
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() =>
+      expect(createTimelineEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          durationSeconds: 11,
+          custom: expect.objectContaining({ extId: "scroller" }),
         }),
       ),
     );

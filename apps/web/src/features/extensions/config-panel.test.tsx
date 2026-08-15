@@ -24,6 +24,10 @@ vi.mock("./media/duration", () => ({
   computeMediaExtensionDuration: vi.fn(async () => 6.5),
 }));
 
+vi.mock("./scroller/duration", () => ({
+  computeScrollerExtensionDuration: vi.fn(() => 11),
+}));
+
 const imageEvent: TimelineEvent = {
   id: 7,
   position: 1,
@@ -36,6 +40,13 @@ const mediaEvent: TimelineEvent = {
   position: 2,
   type: TimelineEventType.CUS,
   payload: { extId: "media", extPayload: { assetId: "asset-1", audioAssetId: "" } },
+};
+
+const scrollerEvent: TimelineEvent = {
+  id: 9,
+  position: 3,
+  type: TimelineEventType.CUS,
+  payload: { extId: "scroller", extPayload: { duration: 5 } },
 };
 
 const queryClient = new QueryClient();
@@ -154,5 +165,27 @@ describe("ExtensionConfigPanel", () => {
 
     await waitFor(() => expect(panel.close).toHaveBeenCalledWith(true));
     expect(patchPayload).toHaveBeenCalledWith(mediaEvent.id, "media", expect.any(Object), 6.5);
+  });
+
+  test("saving a Scroller event passes an auto-computed durationSeconds to patch", async () => {
+    showModel.showEvents.value = { [scrollerEvent.id]: scrollerEvent };
+    const user = userEvent.setup();
+    const panel = createPanel();
+    render(
+      <ChakraProvider value={system}>
+        <QueryClientProvider client={queryClient}>
+          <ExtensionConfigPanel panel={panel} eventId={scrollerEvent.id} />
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+
+    const duration = screen.getByRole("spinbutton");
+    await user.clear(duration);
+    await user.type(duration, "7");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(panel.close).toHaveBeenCalledWith(true));
+    expect(patchPayload).toHaveBeenCalledWith(scrollerEvent.id, "scroller", { duration: 7 }, 11);
   });
 });

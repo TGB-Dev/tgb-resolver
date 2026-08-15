@@ -14,6 +14,8 @@ import { MediaExtension, type MediaExtensionPayload } from "./media";
 import { computeMediaExtensionDuration } from "./media/duration";
 import { usePatchExtensionPayload } from "./patch";
 import { sharedRendererRegistry } from "./renderers";
+import { ScrollerExtension, type ScrollerExtensionPayload } from "./scroller";
+import { computeScrollerExtensionDuration } from "./scroller/duration";
 import { toTgbFormInstance } from "./tgb-form-instance";
 
 type CustomTimelineEvent = Extract<TimelineEvent, { type: TimelineEventType.CUS }>;
@@ -114,6 +116,8 @@ function ExtensionConfigForm({
         if (event.payload.extId === MediaExtension.extId) {
           durationSeconds =
             (await computeMediaExtensionDuration(value as MediaExtensionPayload)) ?? undefined;
+        } else if (event.payload.extId === ScrollerExtension.extId) {
+          durationSeconds = computeScrollerExtensionDuration(value as ScrollerExtensionPayload);
         }
         if (durationSeconds !== undefined) {
           await patchPayload(eventId, event.payload.extId, value, durationSeconds);
