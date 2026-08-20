@@ -12,8 +12,6 @@ import {
   timelineTableGridTemplateColumnsStatic,
 } from "./timeline-table-column-config";
 
-defineOptions({ name: "ControlTimelineTableHeader" });
-
 const props = defineProps<{
   isLive?: boolean;
 }>();

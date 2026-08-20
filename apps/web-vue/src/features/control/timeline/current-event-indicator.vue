@@ -5,8 +5,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
 
-defineOptions({ name: "CurrentEventIndicator" });
-
 const props = defineProps<{
   eventId: number;
   durationInSeconds?: number;

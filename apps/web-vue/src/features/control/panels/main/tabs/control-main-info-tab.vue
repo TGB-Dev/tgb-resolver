@@ -5,11 +5,9 @@ import { computed } from "vue";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import UiButton from "@/features/shared/ui/button.vue";
-import UiHeading from "@/features/shared/ui/heading.vue";
+import Button from "@/features/shared/ui/button.vue";
+import Heading from "@/features/shared/ui/heading.vue";
 import { useShowStore } from "@/stores/show-store";
-
-defineOptions({ name: "ControlMainInfoTab" });
 
 const showStore = useShowStore();
 const floatingPanelStore = useFloatingPanelStore();
@@ -27,14 +25,14 @@ const eventsCount = computed(() => Object.keys(events.value).length);
     <VStack gap="4" alignItems="stretch">
       <Box>
         <HStack justifyContent="space-between" mb="2">
-          <UiHeading size="md">Show Details</UiHeading>
-          <UiButton
+          <Heading size="md">Show Details</Heading>
+          <Button
             size="sm"
             variant="outline"
             @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.InspectShow, 'Inspect show')"
           >
             Inspect
-          </UiButton>
+          </Button>
         </HStack>
       </Box>
 

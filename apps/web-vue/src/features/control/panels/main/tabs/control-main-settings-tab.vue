@@ -28,8 +28,6 @@ import {
   useUpdateSettingsMutation,
 } from "@/features/control/composables/use-show";
 
-defineOptions({ name: "ControlMainSettingsTab" });
-
 const TICK_RATE_OPTIONS = [
   120,
   120 / 1.001,

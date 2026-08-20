@@ -14,8 +14,6 @@ import LeaderboardRow from "./leaderboard-row.vue";
 import { useLeaderboardStore } from "./leaderboard-store";
 import LeaderboardTable from "./leaderboard-table.vue";
 
-defineOptions({ name: "LeaderboardView" });
-
 const props = withDefaults(
   defineProps<{
     isBigScreen?: boolean;

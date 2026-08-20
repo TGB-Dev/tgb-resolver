@@ -2,8 +2,6 @@
 import { spinner } from "@styled-system/recipes";
 import { computed } from "vue";
 
-defineOptions({ name: "UiSpinner" });
-
 const props = withDefaults(
   defineProps<{
     size?: "inherit" | "xs" | "sm" | "md" | "lg" | "xl";

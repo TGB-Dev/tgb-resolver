@@ -16,8 +16,6 @@ import { createTimelineReorderState } from "./timeline-reorder-state";
 import TimelineSortableRow from "./timeline-sortable-row.vue";
 import TimelineTableHeader from "./timeline-table-header.vue";
 
-defineOptions({ name: "ControlTimelineTable" });
-
 const showQuery = useControlShowQuery();
 const showStore = useShowStore();
 const playback = usePlaybackStore();

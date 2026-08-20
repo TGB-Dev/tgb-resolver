@@ -44,8 +44,8 @@ import {
   useUpdateAutomationMutation,
 } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
-import UiButton from "@/features/shared/ui/button.vue";
-import UiIconButton from "@/features/shared/ui/icon-button.vue";
+import Button from "@/features/shared/ui/button.vue";
+import IconButton from "@/features/shared/ui/icon-button.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 import { useAction } from "@/lib/actions";
 import { useRealtimeStore } from "@/stores/realtime-store";
@@ -155,28 +155,28 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 
 <template>
   <HStack h="16" alignItems="center" borderTopWidth="1" borderColor="border" gap="2" p="2" class="tgb-controls">
-    <UiIconButton
+    <IconButton
       ariaLabel="Play or Pause"
       :disabled="!canMutate || startPlayback.isPending.value"
       @click="startPlayback.mutate()"
     >
       <Pause v-if="playbackStatus === PlaybackStatus.RUNNING" :size="16" aria-hidden />
       <Play v-else :size="16" aria-hidden />
-    </UiIconButton>
-    <UiIconButton
+    </IconButton>
+    <IconButton
       ariaLabel="Reset playback"
       :disabled="!canMutate || resetPlayback.isPending.value"
       @click="resetPlayback.mutate()"
     >
       <TimerReset :size="16" aria-hidden />
-    </UiIconButton>
+    </IconButton>
 
-    <UiIconButton v-bind="prevAction.buttonProps" ariaLabel="Previous event">
+    <IconButton v-bind="prevAction.buttonProps" ariaLabel="Previous event">
       <ChevronLeft :size="16" aria-hidden />
-    </UiIconButton>
-    <UiIconButton v-bind="nextAction.buttonProps" ariaLabel="Next event">
+    </IconButton>
+    <IconButton v-bind="nextAction.buttonProps" ariaLabel="Next event">
       <ChevronRight :size="16" aria-hidden />
-    </UiIconButton>
+    </IconButton>
 
     <Box :class="separatorClass" h="6" mx="1" aria-hidden />
 
@@ -218,17 +218,17 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
     <Box flex="1" />
 
     <Tooltip :content="connectionLabel">
-      <UiButton variant="ghost" disabled>
+      <Button variant="ghost" disabled>
         <Wifi v-if="realtimeStore.connectionStatus === ShowConnectionStatus.Connected" :size="16" aria-hidden />
         <RefreshCw v-else-if="realtimeStore.connectionStatus === ShowConnectionStatus.Connecting || realtimeStore.connectionStatus === ShowConnectionStatus.Reconnecting" :size="16" aria-hidden />
         <AlertTriangle v-else-if="realtimeStore.connectionStatus === ShowConnectionStatus.Failed" :size="16" aria-hidden />
         <WifiOff v-else :size="16" aria-hidden />
         {{ connectionLabel }}
-      </UiButton>
+      </Button>
     </Tooltip>
 
     <Tooltip :content="isLive ? 'Switch to Edit Mode' : 'Switch to Live Mode'">
-      <UiButton
+      <Button
         w="48"
         :variant="isLive ? 'solid' : 'outline'"
         :colorPalette="isLive ? 'red' : undefined"
@@ -238,7 +238,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
         <Radio v-if="isLive" :size="16" aria-hidden />
         <Pen v-else :size="16" aria-hidden />
         <span>Current Mode: {{ isLive ? 'Live' : 'Edit' }}</span>
-      </UiButton>
+      </Button>
     </Tooltip>
   </HStack>
 </template>

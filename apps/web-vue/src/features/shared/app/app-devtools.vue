@@ -4,8 +4,6 @@ import { TanStackDevtools } from "@tanstack/vue-devtools";
 import { HotkeysDevtoolsPanel } from "@tanstack/vue-hotkeys-devtools";
 import { VueQueryDevtoolsPanel } from "@tanstack/vue-query-devtools";
 
-defineOptions({ name: "AppDevtools" });
-
 const isDev = import.meta.env.DEV;
 
 const plugins: TanStackDevtoolsVuePlugin[] = [

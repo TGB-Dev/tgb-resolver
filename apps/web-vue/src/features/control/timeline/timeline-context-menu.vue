@@ -8,11 +8,8 @@ import { computed, onMounted, onUnmounted } from "vue";
 import { useDeleteTimelineEventMutation } from "@/features/control/composables/use-show";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import UiButton from "@/features/shared/ui/button.vue";
-import { useConfirmActionStore } from "@/stores/confirm-action-store";
-
-defineOptions({ name: "ControlTimelineContextMenu" });
-const props = defineProps<{ target: TimelineTableItem; x: number; y: number }>();
+import Button from "@/features/shared/ui/button.vue";
+import { useConfirmActionStore } from "@/stores/confirm-action-store";const props = defineProps<{ target: TimelineTableItem; x: number; y: number }>();
 const emit = defineEmits<{ close: [] }>();
 const floatingPanels = useFloatingPanelStore();
 const confirm = useConfirmActionStore();
@@ -39,8 +36,8 @@ onUnmounted(() => document.removeEventListener("pointerdown", closeOnPointerDown
 <template>
   <Box v-if="target.type === TimelineEventType.CUS" data-timeline-context-menu :class="positionClass" minW="40" borderWidth="1" borderColor="border" rounded="md" bg="bg.panel" shadow="lg" p="1">
     <VStack gap="0" alignItems="stretch">
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="edit">Edit</UiButton>
-      <UiButton variant="ghost" size="sm" colorPalette="red" justifyContent="flex-start" @click="remove">Delete</UiButton>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="edit">Edit</Button>
+      <Button variant="ghost" size="sm" colorPalette="red" justifyContent="flex-start" @click="remove">Delete</Button>
     </VStack>
   </Box>
 </template>

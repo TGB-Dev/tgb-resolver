@@ -18,8 +18,6 @@ import InspectShowPanel from "@/features/control/inspect-show-panel.vue";
 import ExtensionConfigPanel from "@/features/extensions/config-panel.vue";
 import { useShowStore } from "@/stores/show-store";
 
-defineOptions({ name: "FloatingPanelHost" });
-
 const store = useFloatingPanelStore();
 const show = useShowStore();
 const dialogClasses = dialog({ placement: "center", size: "md" });

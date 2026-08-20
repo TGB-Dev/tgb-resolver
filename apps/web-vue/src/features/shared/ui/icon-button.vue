@@ -3,7 +3,7 @@ import { css, cx } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import { computed } from "vue";
 
-defineOptions({ name: "UiIconButton", inheritAttrs: false });
+defineOptions({ name: "IconButton", inheritAttrs: false });
 
 const props = withDefaults(
   defineProps<{

@@ -5,7 +5,7 @@ import { HStack } from "@styled-system/jsx";
 import { useClearShowMutation, useControlCanMutate, useControlIsLive, useExportShowAction } from "@/features/control/composables/use-show";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import UiButton from "@/features/shared/ui/button.vue";
+import Button from "@/features/shared/ui/button.vue";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
 const props = defineProps<{ onJumpToCurrent?: () => void }>();
@@ -38,26 +38,26 @@ async function handleClearShow() {
 
 <template>
   <HStack h="16" alignItems="center" borderTopWidth="1" gap="2" p="2">
-    <UiButton v-if="props.onJumpToCurrent !== undefined" variant="solid" @click="props.onJumpToCurrent">
+    <Button v-if="props.onJumpToCurrent !== undefined" variant="solid" @click="props.onJumpToCurrent">
       <Crosshair :size="16" aria-hidden />
       <span>To Current</span>
-    </UiButton>
+    </Button>
 
     <template v-if="!isLive">
-      <UiButton variant="solid" :disabled="!canMutate" @click="exportCurrentShow">
+      <Button variant="solid" :disabled="!canMutate" @click="exportCurrentShow">
         <FileDown :size="16" aria-hidden />
         <span>Save</span>
-      </UiButton>
+      </Button>
 
-      <UiButton variant="solid" :disabled="!canMutate" @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.ImportShow, 'Import show')">
+      <Button variant="solid" :disabled="!canMutate" @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.ImportShow, 'Import show')">
         <FileUp :size="16" aria-hidden />
         <span>Load</span>
-      </UiButton>
+      </Button>
 
-      <UiButton variant="outline" color-palette="red" :disabled="!canMutate" @click="handleClearShow">
+      <Button variant="outline" color-palette="red" :disabled="!canMutate" @click="handleClearShow">
         <Trash2 :size="16" aria-hidden />
         <span>Clear</span>
-      </UiButton>
+      </Button>
     </template>
   </HStack>
 </template>

@@ -3,9 +3,7 @@ import { Check } from "@lucide/vue";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { usePatchTimelineEventMutation } from "@/features/control/composables/use-show";
-import UiIconButton from "@/features/shared/ui/icon-button.vue";
-
-defineOptions({ name: "ControlTimelineManualInteraction" });
+import IconButton from "@/features/shared/ui/icon-button.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -32,7 +30,7 @@ function toggle(event: MouseEvent) {
     :size="14"
     aria-hidden
   />
-  <UiIconButton
+  <IconButton
     v-else-if="isNear"
     size="2xs"
     ariaLabel="Toggle manual interaction"
@@ -43,5 +41,5 @@ function toggle(event: MouseEvent) {
       :size="14"
       aria-hidden
     />
-  </UiIconButton>
+  </IconButton>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Box, VStack } from "@styled-system/jsx";
 
-import UiButton from "@/features/shared/ui/button.vue";
+import Button from "@/features/shared/ui/button.vue";
 import { toaster } from "@/features/shared/ui/toaster";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
@@ -9,8 +9,6 @@ import { useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import { processUploadBatch } from "./upload-helpers";
 import type { ContextMenuState } from "./use-entry-context-menu";
-
-defineOptions({ name: "ContextMenuOverlay" });
 
 defineProps<{
   state: ContextMenuState;
@@ -187,22 +185,22 @@ async function handleDeleteFolder(target: NonNullable<ContextMenuState["target"]
         {{ state.target.name }}
       </Box>
       <Box h="px" bg="border" my="1" />
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFiles(state.target.id)">
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFiles(state.target.id)">
         Upload Files
-      </UiButton>
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFolder(state.target.id)">
+      </Button>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFolder(state.target.id)">
         Upload Folder
-      </UiButton>
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleCreateFolder(state.target.id)">
+      </Button>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleCreateFolder(state.target.id)">
         Create Folder
-      </UiButton>
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.copySelection(state.target.id); }">
+      </Button>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.copySelection(state.target.id); }">
         Copy
-      </UiButton>
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.cutSelection(state.target.id); }">
+      </Button>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.cutSelection(state.target.id); }">
         Cut
-      </UiButton>
-      <UiButton
+      </Button>
+      <Button
         variant="ghost"
         size="sm"
         justifyContent="flex-start"
@@ -210,42 +208,42 @@ async function handleDeleteFolder(target: NonNullable<ContextMenuState["target"]
         @click="handlePaste(state.target.id)"
       >
         Paste
-      </UiButton>
+      </Button>
       <Box h="px" bg="border" my="1" />
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleRenameFolder(state.target)">
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleRenameFolder(state.target)">
         Rename
-      </UiButton>
-      <UiButton variant="ghost" size="sm" colorPalette="red" justifyContent="flex-start" @click="handleDeleteFolder(state.target)">
+      </Button>
+      <Button variant="ghost" size="sm" colorPalette="red" justifyContent="flex-start" @click="handleDeleteFolder(state.target)">
         Delete
-      </UiButton>
+      </Button>
     </VStack>
 
     <!-- File Item Context Menu -->
     <VStack v-else-if="state.target" alignItems="stretch" gap="0">
-      <UiButton
+      <Button
         variant="ghost"
         size="sm"
         justifyContent="flex-start"
         @click="handleOpenFile(state.target)"
       >
         Open
-      </UiButton>
-      <UiButton
+      </Button>
+      <Button
         variant="ghost"
         size="sm"
         justifyContent="flex-start"
         @click="handleDownloadFile(state.target)"
       >
         Download
-      </UiButton>
+      </Button>
       <Box h="px" bg="border" my="1" />
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.copySelection(state.target.id); }">
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.copySelection(state.target.id); }">
         Copy
-      </UiButton>
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.cutSelection(state.target.id); }">
+      </Button>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="() => { emit('close'); if (state.target) interactionStore.cutSelection(state.target.id); }">
         Cut
-      </UiButton>
-      <UiButton
+      </Button>
+      <Button
         variant="ghost"
         size="sm"
         justifyContent="flex-start"
@@ -253,25 +251,25 @@ async function handleDeleteFolder(target: NonNullable<ContextMenuState["target"]
         @click="handlePaste(store.selectedEntryId)"
       >
         Paste
-      </UiButton>
+      </Button>
       <Box h="px" bg="border" my="1" />
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleRenameFile(state.target)">
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleRenameFile(state.target)">
         Rename
-      </UiButton>
-      <UiButton variant="ghost" size="sm" colorPalette="red" justifyContent="flex-start" @click="handleDeleteFile(state.target)">
+      </Button>
+      <Button variant="ghost" size="sm" colorPalette="red" justifyContent="flex-start" @click="handleDeleteFile(state.target)">
         Delete
-      </UiButton>
+      </Button>
     </VStack>
 
     <!-- Container / Blank Area Context Menu -->
     <VStack v-else alignItems="stretch" gap="0">
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFiles(state.targetFolderId)">
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFiles(state.targetFolderId)">
         Upload Files
-      </UiButton>
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFolder(state.targetFolderId)">
+      </Button>
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleUploadFolder(state.targetFolderId)">
         Upload Folder
-      </UiButton>
-      <UiButton
+      </Button>
+      <Button
         variant="ghost"
         size="sm"
         justifyContent="flex-start"
@@ -279,11 +277,11 @@ async function handleDeleteFolder(target: NonNullable<ContextMenuState["target"]
         @click="handlePaste(state.targetFolderId)"
       >
         Paste
-      </UiButton>
+      </Button>
       <Box h="px" bg="border" my="1" />
-      <UiButton variant="ghost" size="sm" justifyContent="flex-start" @click="handleCreateFolder(state.targetFolderId)">
+      <Button variant="ghost" size="sm" justifyContent="flex-start" @click="handleCreateFolder(state.targetFolderId)">
         Create Folder
-      </UiButton>
+      </Button>
     </VStack>
   </Box>
 </template>

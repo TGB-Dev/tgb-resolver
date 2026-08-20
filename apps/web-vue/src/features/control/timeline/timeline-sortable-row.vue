@@ -5,8 +5,6 @@ import { useTemplateRef } from "vue";
 
 import TimelineTableItemView from "./timeline-table-item.vue";
 
-defineOptions({ name: "ControlTimelineSortableRow" });
-
 const props = defineProps<{
   payload: TimelineTableItem;
   index: number;

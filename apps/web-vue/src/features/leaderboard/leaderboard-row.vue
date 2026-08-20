@@ -11,8 +11,6 @@ import { useLeaderboardStore } from "./leaderboard-store";
 import ProblemCell from "./problem-cell.vue";
 import { animateScrollIntoView } from "./utils/scroll";
 
-defineOptions({ name: "LeaderboardRow" });
-
 const props = defineProps<{
   data: LeaderboardEntry;
   isCurrentResolved: boolean;

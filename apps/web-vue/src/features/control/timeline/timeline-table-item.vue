@@ -9,7 +9,7 @@ import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
 import { extensionRegistry } from "@/features/extensions/registry";
 import GridTableRow from "@/features/shared/ui/grid-table-row.vue";
-import UiIconButton from "@/features/shared/ui/icon-button.vue";
+import IconButton from "@/features/shared/ui/icon-button.vue";
 import { useShowStore } from "@/stores/show-store";
 
 import CurrentEventIndicator from "./current-event-indicator.vue";
@@ -22,8 +22,6 @@ import {
   timelineTableGridTemplateColumns,
   timelineTableGridTemplateColumnsStatic,
 } from "./timeline-table-column-config";
-
-defineOptions({ name: "ControlTimelineTableItem" });
 
 const props = defineProps<{
   payload: TimelineTableItem;
@@ -169,7 +167,7 @@ function handleDoubleClick() {
         justifyContent="center"
         h="full"
       >
-        <UiIconButton
+        <IconButton
           ariaLabel="Drag to reorder event"
           size="2xs"
           variant="ghost"
@@ -179,7 +177,7 @@ function handleDoubleClick() {
           :_hover="{ color: 'fg' }"
         >
           <GripVertical :size="14" aria-hidden />
-        </UiIconButton>
+        </IconButton>
       </Box>
     </GridTableRow>
 

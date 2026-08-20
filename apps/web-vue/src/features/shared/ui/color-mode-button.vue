@@ -3,16 +3,16 @@ import { ClientOnly } from "@ark-ui/vue";
 import { Moon, Sun } from "@lucide/vue";
 
 import { useColorMode } from "./color-mode";
-import UiIconButton from "./icon-button.vue";
+import IconButton from "./icon-button.vue";
 
 const { colorMode, toggleColorMode } = useColorMode();
 </script>
 
 <template>
   <ClientOnly>
-    <UiIconButton ariaLabel="Toggle color mode" @click="toggleColorMode">
+    <IconButton ariaLabel="Toggle color mode" @click="toggleColorMode">
       <Moon v-if="colorMode === 'dark'" :size="18" aria-hidden />
       <Sun v-else :size="18" aria-hidden />
-    </UiIconButton>
+    </IconButton>
   </ClientOnly>
 </template>

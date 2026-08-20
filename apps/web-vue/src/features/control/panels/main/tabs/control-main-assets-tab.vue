@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import AssetsManager from "@/features/assets-manager/assets-manager.vue";
-
-defineOptions({ name: "ControlMainAssetsTab" });
-</script>
+import AssetsManager from "@/features/assets-manager/assets-manager.vue";</script>
 
 <template>
   <AssetsManager />

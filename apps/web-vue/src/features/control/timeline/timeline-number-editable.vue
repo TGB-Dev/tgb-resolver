@@ -6,8 +6,6 @@ import { usePatchTimelineEventMutation } from "@/features/control/composables/us
 
 import TimelineCellEditable from "./timeline-cell-editable.vue";
 
-defineOptions({ name: "ControlTimelineNumberEditable" });
-
 const props = defineProps<{
   payload: TimelineTableItem;
   field: "durationSeconds" | "triggerOffsetSeconds";

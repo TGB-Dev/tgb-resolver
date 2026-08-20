@@ -3,15 +3,13 @@ import { ChevronsDownUp, ChevronsUpDown, Folder } from "@lucide/vue";
 import { Box, HStack } from "@styled-system/jsx";
 import { computed } from "vue";
 
-import UiIconButton from "@/features/shared/ui/icon-button.vue";
+import IconButton from "@/features/shared/ui/icon-button.vue";
 
 import { useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import ContextMenuOverlay from "./context-menu-overlay.vue";
 import FolderNode from "./folder-node.vue";
 import { useEntryContextMenu } from "./use-entry-context-menu";
-
-defineOptions({ name: "FolderTreeView" });
 
 const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
@@ -85,22 +83,22 @@ function handleContextMenu(
       </Box>
 
       <HStack gap="0">
-        <UiIconButton
+        <IconButton
           ariaLabel="Expand all folders"
           size="xs"
           variant="ghost"
           @click="store.expandAll"
         >
           <ChevronsUpDown :size="14" aria-hidden />
-        </UiIconButton>
-        <UiIconButton
+        </IconButton>
+        <IconButton
           ariaLabel="Collapse all folders"
           size="xs"
           variant="ghost"
           @click="store.collapseAll"
         >
           <ChevronsDownUp :size="14" aria-hidden />
-        </UiIconButton>
+        </IconButton>
       </HStack>
     </Box>
 

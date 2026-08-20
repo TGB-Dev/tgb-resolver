@@ -17,8 +17,6 @@ import AssetsToolbar from "./assets-toolbar.vue";
 import FolderTreeView from "./folder-tree-view.vue";
 import UploadZone from "./upload-zone.vue";
 
-defineOptions({ name: "AssetsManager" });
-
 const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
 const confirmStore = useConfirmActionStore();

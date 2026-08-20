@@ -3,9 +3,9 @@ import { css, cx } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import { computed } from "vue";
 
-import UiSpinner from "./spinner.vue";
+import Spinner from "./spinner.vue";
 
-defineOptions({ name: "UiButton", inheritAttrs: false });
+defineOptions({ name: "Button", inheritAttrs: false });
 
 const props = withDefaults(
   defineProps<{
@@ -32,7 +32,7 @@ const classes = computed(() => cx(button({ variant: props.variant, size: props.s
     :aria-label="ariaLabel"
     v-bind="$attrs"
   >
-    <UiSpinner v-if="loading" size="inherit" label="" aria-hidden="true" />
+    <Spinner v-if="loading" size="inherit" label="" aria-hidden="true" />
     <slot />
   </button>
 </template>

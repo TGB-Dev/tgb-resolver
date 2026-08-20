@@ -3,8 +3,6 @@ import { Copy } from "@lucide/vue";
 import { Box, Stack, VStack } from "@styled-system/jsx";
 import { ref } from "vue";
 
-defineOptions({ name: "ErrorPage" });
-
 const props = defineProps<{ error: Error }>();
 
 const isCopied = ref(false);

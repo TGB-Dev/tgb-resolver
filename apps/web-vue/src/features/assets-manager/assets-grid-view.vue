@@ -12,8 +12,6 @@ import type { FsEntry } from "./types";
 import { useEntryContextMenu } from "./use-entry-context-menu";
 import { useRubberBandSelect } from "./use-rubber-band-select";
 
-defineOptions({ name: "AssetsGridView" });
-
 const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
 const contextMenu = useEntryContextMenu();

@@ -2,8 +2,6 @@
 import { Center } from "@styled-system/jsx";
 import { ref } from "vue";
 
-defineOptions({ name: "UploadZone" });
-
 const emit = defineEmits<{
   files: [files: File[]];
 }>();

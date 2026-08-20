@@ -13,10 +13,8 @@ import { ref } from "vue";
 
 import { useImportShowMutation } from "@/features/control/composables/use-show";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
-import UiButton from "@/features/shared/ui/button.vue";
+import Button from "@/features/shared/ui/button.vue";
 import { toaster } from "@/features/shared/ui/toaster";
-
-defineOptions({ name: "ImportShowPanel" });
 
 const props = defineProps<{
   panel: FloatingPanelHandle;
@@ -79,14 +77,14 @@ async function accept() {
       <FileUploadLabel :class="fileUploadClasses.label">Show file</FileUploadLabel>
       <HStack gap="2" mt="2">
         <FileUploadTrigger asChild>
-          <UiButton variant="outline" size="sm">
+          <Button variant="outline" size="sm">
             {{ file ? file.name : "Choose file for upload" }}
-          </UiButton>
+          </Button>
         </FileUploadTrigger>
         <FileUploadClearTrigger v-if="file" asChild>
-          <UiButton variant="ghost" size="sm">
+          <Button variant="ghost" size="sm">
             Clear
-          </UiButton>
+          </Button>
         </FileUploadClearTrigger>
       </HStack>
     </FileUploadRoot>
@@ -109,12 +107,12 @@ async function accept() {
     </Box>
 
     <HStack justifyContent="flex-end" gap="2" mt="4">
-      <UiButton variant="outline" @click="panel.close(false)">
+      <Button variant="outline" @click="panel.close(false)">
         Cancel
-      </UiButton>
-      <UiButton :disabled="!file || importShow.isPending.value" @click="accept">
+      </Button>
+      <Button :disabled="!file || importShow.isPending.value" @click="accept">
         Import
-      </UiButton>
+      </Button>
     </HStack>
   </VStack>
 </template>

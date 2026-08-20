@@ -7,8 +7,6 @@ import { useControlShowRows } from "@/features/control/composables/use-show";
 import { useControlNowStore } from "@/features/control/control-now-store";
 import { usePlaybackStore } from "@/features/control/playback-store";
 
-defineOptions({ name: "NextCueTimer" });
-
 const controlNowStore = useControlNowStore();
 const playbackStore = usePlaybackStore();
 const rows = useControlShowRows();

@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { Box, VStack } from "@styled-system/jsx";
-
-defineOptions({ name: "NotFoundPage" });
-</script>
+import { Box, VStack } from "@styled-system/jsx";</script>
 
 <template>
   <VStack minH="100dvh" justify="center" gap="2" bg="bg.subtle" p="6">

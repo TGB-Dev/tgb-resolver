@@ -2,11 +2,9 @@
 import { Grid, LayoutList } from "@lucide/vue";
 import { Box, HStack } from "@styled-system/jsx";
 
-import UiIconButton from "@/features/shared/ui/icon-button.vue";
+import IconButton from "@/features/shared/ui/icon-button.vue";
 
 import { useAssetsManagerStore } from "./assets-manager-store";
-
-defineOptions({ name: "AssetsToolbar" });
 
 const store = useAssetsManagerStore();
 </script>
@@ -19,22 +17,22 @@ const store = useAssetsManagerStore();
     </HStack>
 
     <HStack gap="1">
-      <UiIconButton
+      <IconButton
         ariaLabel="List view"
         size="sm"
         :variant="store.viewMode === 'list' ? 'solid' : 'ghost'"
         @click="store.setViewMode('list')"
       >
         <LayoutList :size="16" aria-hidden />
-      </UiIconButton>
-      <UiIconButton
+      </IconButton>
+      <IconButton
         ariaLabel="Grid view"
         size="sm"
         :variant="store.viewMode === 'grid' ? 'solid' : 'ghost'"
         @click="store.setViewMode('grid')"
       >
         <Grid :size="16" aria-hidden />
-      </UiIconButton>
+      </IconButton>
     </HStack>
   </HStack>
 </template>

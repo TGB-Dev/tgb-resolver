@@ -9,8 +9,6 @@ import { INTERNAL_DRAG_MIME, useAssetsInteractionStore } from "./assets-interact
 import { useAssetsManagerStore } from "./assets-manager-store";
 import type { FsEntry } from "./types";
 
-defineOptions({ name: "FolderNode" });
-
 const props = defineProps<{
   node: FsEntry;
 }>();

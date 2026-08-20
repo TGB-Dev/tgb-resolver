@@ -5,10 +5,8 @@ import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import UiIconButton from "@/features/shared/ui/icon-button.vue";
+import IconButton from "@/features/shared/ui/icon-button.vue";
 import { useShowStore } from "@/stores/show-store";
-
-defineOptions({ name: "ControlTimelineAddButtons" });
 
 const props = defineProps<{
   payload: TimelineTableItem;
@@ -45,19 +43,19 @@ function handleCreate(before: boolean) {
     justifyContent="space-between"
     zIndex="popover"
   >
-    <UiIconButton
+    <IconButton
       size="2xs"
       ariaLabel="Add event before"
       @click.stop="handleCreate(true)"
     >
       <Plus :size="12" aria-hidden />
-    </UiIconButton>
-    <UiIconButton
+    </IconButton>
+    <IconButton
       size="2xs"
       ariaLabel="Add event after"
       @click.stop="handleCreate(false)"
     >
       <Plus :size="12" aria-hidden />
-    </UiIconButton>
+    </IconButton>
   </Box>
 </template>

@@ -3,8 +3,6 @@ import { onMounted, onUnmounted, provide, readonly, ref } from "vue";
 
 import { useFullscreenStore } from "@/stores/fullscreen-store";
 
-defineOptions({ name: "LeaderboardProvider" });
-
 const props = defineProps<{
   isBigScreen?: boolean;
 }>();

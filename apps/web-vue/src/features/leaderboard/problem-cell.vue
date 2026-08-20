@@ -6,8 +6,6 @@ import { computed, inject, type Ref } from "vue";
 
 import { useVerdictColor, verdictShortCode } from "@/lib/verdict";
 
-defineOptions({ name: "ProblemCell" });
-
 const props = defineProps<{
   problem: LeaderboardProblemResult;
 }>();

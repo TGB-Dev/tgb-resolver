@@ -10,10 +10,8 @@ import { Box, VStack } from "@styled-system/jsx";
 import { dialog, field, input } from "@styled-system/recipes";
 import { nextTick, ref, watch } from "vue";
 
-import UiButton from "@/features/shared/ui/button.vue";
+import Button from "@/features/shared/ui/button.vue";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
-
-defineOptions({ name: "ControlConfirmDialog" });
 
 const store = useConfirmActionStore();
 const dialogClasses = dialog({ placement: "center", size: "sm" });
@@ -62,15 +60,15 @@ watch(
           <Box v-else color="fg.muted" fontSize="sm">{{ store.message }}</Box>
 
           <Box display="flex" justifyContent="flex-end" gap="3">
-            <UiButton variant="outline" @click="store.resolveConfirmAction(false)">
+            <Button variant="outline" @click="store.resolveConfirmAction(false)">
               {{ store.cancelLabel }}
-            </UiButton>
-            <UiButton
+            </Button>
+            <Button
               :colorPalette="store.showInput ? 'blue' : 'red'"
               @click="store.resolveConfirmAction(true)"
             >
               {{ store.confirmLabel }}
-            </UiButton>
+            </Button>
           </Box>
         </VStack>
       </DialogContent>

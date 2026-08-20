@@ -9,8 +9,6 @@ import { Box } from "@styled-system/jsx";
 import { editable } from "@styled-system/recipes";
 import { ref, watch } from "vue";
 
-defineOptions({ name: "TimelineCellEditable" });
-
 const props = withDefaults(
   defineProps<{
     value: string;

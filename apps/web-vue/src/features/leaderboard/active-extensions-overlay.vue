@@ -7,8 +7,6 @@ import { usePlaybackStore } from "@/features/control/playback-store";
 import { ExtensionType, extensionRegistry, getExtensionPayload } from "@/features/extensions";
 import { useShowStore } from "@/stores/show-store";
 
-defineOptions({ name: "ActiveExtensionsOverlay" });
-
 const playback = usePlaybackStore();
 const show = useShowStore();
 const running = new Map<number, () => void>();

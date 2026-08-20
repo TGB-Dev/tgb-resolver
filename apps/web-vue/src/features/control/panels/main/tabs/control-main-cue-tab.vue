@@ -11,8 +11,6 @@ import CueContent from "./cue-content.vue";
 import CueItem from "./cue-item.vue";
 import NextCueTimer from "./next-cue-timer.vue";
 
-defineOptions({ name: "ControlMainCueTab" });
-
 const rows = useControlShowRows();
 const playbackStore = usePlaybackStore();
 const currentCueId = computed(() => playbackStore.currentCueId);

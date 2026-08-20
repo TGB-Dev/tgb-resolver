@@ -4,8 +4,6 @@ import { table } from "@styled-system/recipes";
 import type { ProblemDefinition } from "@tgb-resolver/realtime";
 import { computed, inject, type Ref } from "vue";
 
-defineOptions({ name: "LeaderboardTable" });
-
 defineProps<{
   problems?: ProblemDefinition[];
 }>();

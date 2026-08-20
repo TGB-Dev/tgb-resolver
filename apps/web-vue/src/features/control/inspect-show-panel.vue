@@ -5,8 +5,6 @@ import { computed } from "vue";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
 import { useShowStore } from "@/stores/show-store";
 
-defineOptions({ name: "InspectShowPanel" });
-
 defineProps<{
   panel?: FloatingPanelHandle;
 }>();

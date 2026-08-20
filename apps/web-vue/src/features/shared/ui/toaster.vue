@@ -1,17 +1,10 @@
 <script setup lang="ts">
-import {
-  ToastActionTrigger,
-  ToastCloseTrigger,
-  ToastDescription,
-  Toaster,
-  ToastRoot,
-  ToastTitle,
-} from "@ark-ui/vue";
+import { Toast } from "@ark-ui/vue";
 import { X } from "@lucide/vue";
 import { Stack } from "@styled-system/jsx";
 import { toast } from "@styled-system/recipes";
 
-import UiSpinner from "./spinner.vue";
+import Spinner from "./spinner.vue";
 import { toaster } from "./toaster";
 
 const toastClasses = toast();
@@ -20,17 +13,23 @@ const toastClasses = toast();
 <template>
   <Toaster :toaster="toaster">
     <template #default="t">
-      <ToastRoot :class="toastClasses.root">
-        <UiSpinner v-if="t.type === 'loading'" size="sm" label="" aria-hidden="true" />
+      <Toast.Root :class="toastClasses.root">
+        <Spinner v-if="t.type === 'loading'" size="sm" label="" aria-hidden="true" />
         <Stack gap="1" flex="1" maxWidth="100%">
-          <ToastTitle v-if="t.title" :class="toastClasses.title">{{ t.title }}</ToastTitle>
-          <ToastDescription v-if="t.description" :class="toastClasses.description">{{ t.description }}</ToastDescription>
+          <Toast.Title v-if="t.title" :class="toastClasses.title">{{ t.title }}</Toast.Title>
+          <Toast.Description v-if="t.description" :class="toastClasses.description">{{
+            t.description
+          }}</Toast.Description>
         </Stack>
-        <ToastActionTrigger v-if="t.action">{{ t.action.label }}</ToastActionTrigger>
-        <ToastCloseTrigger v-if="t.closable" :class="toastClasses.closeTrigger" aria-label="Close toast">
+        <Toast.ActionTrigger v-if="t.action">{{ t.action.label }}</Toast.ActionTrigger>
+        <Toast.CloseTrigger
+          v-if="t.closable"
+          :class="toastClasses.closeTrigger"
+          aria-label="Close toast"
+        >
           <X aria-hidden />
-        </ToastCloseTrigger>
-      </ToastRoot>
+        </Toast.CloseTrigger>
+      </Toast.Root>
     </template>
   </Toaster>
 </template>

@@ -26,9 +26,7 @@ import { extensionRegistry } from "@/features/extensions/registry";
 import { extensionRendererRegistry } from "@/features/extensions/renderers";
 import { computeScrollerExtensionDuration } from "@/features/extensions/scroller/duration";
 import { createTgbFormInstance } from "@/features/extensions/tgb-form-instance";
-import UiButton from "@/features/shared/ui/button.vue";
-
-defineOptions({ name: "CreateEventPanel" });
+import Button from "@/features/shared/ui/button.vue";
 
 const props = defineProps<{
   panel: FloatingPanelHandle;
@@ -131,15 +129,15 @@ async function handleCreate() {
         :renderers="extensionRendererRegistry"
       />
       <HStack justifyContent="flex-end" gap="2" mt="4">
-        <UiButton variant="outline" @click="panel.requestClose()">
+        <Button variant="outline" @click="panel.requestClose()">
           Cancel
-        </UiButton>
-        <UiButton
+        </Button>
+        <Button
           :loading="panel.isSaving.value"
           @click="handleCreate"
         >
           Create
-        </UiButton>
+        </Button>
       </HStack>
       <Box v-if="error" color="fg.error" fontSize="sm">
         {{ error }}

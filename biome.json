@@ -9,7 +9,13 @@
         "noUselessFragments": "off"
       },
       "style": {
-        "useVueHyphenatedAttributes": "off"
+        "useVueHyphenatedAttributes": "off",
+        "useVueMultiWordComponentNames": {
+          "level": "on",
+          "options": {
+            "ignores": ["Tooltip", "Toaster", "Leaderboard", "Button", "Heading", "Spinner"]
+          }
+        }
       }
     }
   },
@@ -52,6 +58,7 @@
       "!!**/TestResults",
       "!!**/gen",
       "!!**/styled-system",
+      "!!**/playwright-report",
       "vite.config.ts"
     ]
   },

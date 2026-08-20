@@ -4,8 +4,6 @@ import { Box, Grid } from "@styled-system/jsx";
 
 import type { FsEntry } from "./types";
 
-defineOptions({ name: "EntryRow" });
-
 defineProps<{
   entry: FsEntry;
   isSelected?: boolean;

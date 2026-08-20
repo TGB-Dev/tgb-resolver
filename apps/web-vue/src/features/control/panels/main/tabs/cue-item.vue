@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { Box, VStack } from "@styled-system/jsx";
 
-import { CUE_CONFIG, type Cue } from "./cue";
-
-defineOptions({ name: "CueItem" });
-const props = defineProps<{ cue: Cue }>();
+import { CUE_CONFIG, type Cue } from "./cue";const props = defineProps<{ cue: Cue }>();
 </script>
 
 <template>

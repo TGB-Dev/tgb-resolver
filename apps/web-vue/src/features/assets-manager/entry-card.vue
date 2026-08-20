@@ -5,8 +5,6 @@ import { computed, ref } from "vue";
 
 import type { FsEntry } from "./types";
 
-defineOptions({ name: "EntryCard" });
-
 const props = defineProps<{
   entry: FsEntry;
   isSelected?: boolean;

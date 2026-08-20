@@ -3,16 +3,13 @@ import { Box, VStack } from "@styled-system/jsx";
 import { TgbForm } from "@tgb-form/vue";
 import { computed, ref } from "vue";
 
-import UiButton from "@/features/shared/ui/button.vue";
+import Button from "@/features/shared/ui/button.vue";
 
 import { patchExtensionEvent } from "./patch";
 import { useExtensionRegistry } from "./registry";
 import { extensionRendererRegistry } from "./renderers";
 import { computeScrollerExtensionDuration } from "./scroller/duration";
-import { createTgbFormInstance } from "./tgb-form-instance";
-
-defineOptions({ name: "ExtensionConfigPanel" });
-const props = defineProps<{ eventId?: number; extId?: string; payload?: Record<string, unknown> }>();
+import { createTgbFormInstance } from "./tgb-form-instance";const props = defineProps<{ eventId?: number; extId?: string; payload?: Record<string, unknown> }>();
 const emit = defineEmits<{ save: [payload: Record<string, unknown>]; cancel: [] }>();
 const registry = useExtensionRegistry();
 const extension = computed(() => registry.extensionWithExtId(props.extId ?? ""));
@@ -37,4 +34,4 @@ async function save() {
   }
 }
 </script>
-<template><VStack alignItems="stretch" gap="4"><Box>{{ extension?.description ?? 'Extension configuration' }}</Box><TgbForm v-if="extension?.configForm" :definition="extension.configForm" :instance="instance.values" :renderers="extensionRendererRegistry" /><Box v-if="error" color="fg.error" fontSize="sm">{{ error }}</Box><Box display="flex" justifyContent="flex-end" gap="2"><UiButton variant="outline" :disabled="saving" @click="emit('cancel')">Cancel</UiButton><UiButton :loading="saving" @click="save">Save</UiButton></Box></VStack></template>
+<template><VStack alignItems="stretch" gap="4"><Box>{{ extension?.description ?? 'Extension configuration' }}</Box><TgbForm v-if="extension?.configForm" :definition="extension.configForm" :instance="instance.values" :renderers="extensionRendererRegistry" /><Box v-if="error" color="fg.error" fontSize="sm">{{ error }}</Box><Box display="flex" justifyContent="flex-end" gap="2"><Button variant="outline" :disabled="saving" @click="emit('cancel')">Cancel</Button><Button :loading="saving" @click="save">Save</Button></Box></VStack></template>
