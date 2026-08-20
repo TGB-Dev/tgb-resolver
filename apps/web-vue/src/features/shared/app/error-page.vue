@@ -9,13 +9,13 @@ const props = defineProps<{ error: Error }>();
 
 const isCopied = ref(false);
 
-function handleCopyError() {
+async function handleCopyError() {
   const errorData = {
     name: props.error.name,
     message: props.error.message,
     stack: props.error.stack,
   };
-  void navigator.clipboard.writeText(JSON.stringify(errorData, null, 2));
+  await navigator.clipboard.writeText(JSON.stringify(errorData, null, 2));
   isCopied.value = true;
   setTimeout(() => (isCopied.value = false), 2000);
 }
