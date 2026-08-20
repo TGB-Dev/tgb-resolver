@@ -20,7 +20,7 @@ const toastClasses = toast();
 <template>
   <Toaster :toaster="toaster">
     <template #default="toast">
-      <ToastRoot :class="toastClasses.root" w="min(24rem, calc(100vw - 2rem))">
+      <ToastRoot :class="toastClasses.root">
         <UiSpinner v-if="toast.type === 'loading'" size="sm" label="" aria-hidden="true" />
         <Stack gap="1" flex="1" maxWidth="100%">
           <ToastTitle v-if="toast.title" :class="toastClasses.title">{{ toast.title }}</ToastTitle>

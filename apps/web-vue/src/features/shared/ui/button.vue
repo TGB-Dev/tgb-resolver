@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { css } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import { computed } from "vue";
 
@@ -20,37 +21,18 @@ const props = withDefaults(
   { variant: "solid", size: "md", type: "button" },
 );
 
-const classes = computed(() => button({ variant: props.variant, size: props.size }));
-const style = computed(() => (props.aspectRatio ? { aspectRatio: props.aspectRatio } : undefined));
+const classes = computed(() => `${button({ variant: props.variant, size: props.size })} ${css({ colorPalette: props.colorPalette, aspectRatio: props.aspectRatio })}`);
 </script>
 
 <template>
   <button
     :type="type"
     :class="classes"
-    :style="style"
     :disabled="props.disabled || loading"
     :aria-label="ariaLabel"
     v-bind="$attrs"
-    class="tgb-button"
   >
     <UiSpinner v-if="loading" size="inherit" label="" aria-hidden="true" />
     <slot />
   </button>
 </template>
-
-<style scoped>
-.tgb-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  cursor: pointer;
-}
-
-.tgb-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-</style>
