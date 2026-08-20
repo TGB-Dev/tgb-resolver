@@ -18,7 +18,7 @@ driving audience and control UIs from a single source of truth.
 | Layer       | Tech                                                                                     |
 | ----------- | ---------------------------------------------------------------------------------------- |
 | Workspace   | Turborepo, pnpm workspaces                                                               |
-| Frontend    | React 19, TanStack Router (file-based routing, SPA), Vite 8, Chakra UI 3, Preact Signals |
+| Frontend    | Vue 3.5, Pinia, vue-router, Vite 8, Panda CSS + Chakra preset, Ark UI, motion-v           |
 | Server      | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly           |
 | Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot                                 |
 | Parsers     | .NET `TGB.Resolver.IcpcXmlParser` (server-side)                                          |
@@ -44,7 +44,7 @@ cp .env.example .env    # VITE_API_URL defaults to http://localhost:5001
 pnpm dev
 ```
 
-Runs the server (port 5001) and frontend (port 3000) in parallel.
+Runs the server (port 5001), canonical Vue frontend (port 5173), and legacy React frontend (port 3000) in parallel.
 
 | Route      | UI       |
 | ---------- | -------- |
@@ -52,7 +52,7 @@ Runs the server (port 5001) and frontend (port 3000) in parallel.
 | `/control` | Control  |
 
 Server solution: `apps/server/TGB.Resolver.Server.slnx` (.slnx format).
-Frontend app: `apps/web/` (TanStack Router SPA).
+Canonical frontend: `apps/web-vue/`. Legacy React port source: `apps/web/`.
 
 ## Build & Test
 

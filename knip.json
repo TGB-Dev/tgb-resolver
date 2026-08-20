@@ -43,6 +43,20 @@
         "@testing-library/dom"
       ]
     },
+    "apps/web-vue": {
+      "entry": ["src/main.ts", "src/App.vue", "index.html"],
+      "ignore": ["public", "styled-system", "e2e"],
+      "ignoreIssues": {
+        "src/features/extensions/base/types.ts": ["types"],
+        "src/features/extensions/base/registry.ts": ["exports"]
+      },
+      "ignoreDependencies": [
+        "@fontsource-variable/jetbrains-mono",
+        "@fontsource-variable/lora",
+        "@fontsource-variable/noto-sans-display",
+        "@pandacss/studio"
+      ]
+    },
     "packages/contracts": {
       "entry": ["src/index.ts", "openapi-ts.config.ts"],
       "ignoreDependencies": ["@tgb-resolver/server"]

@@ -1,6 +1,10 @@
-# web-vue
+# web-vue — canonical frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+The canonical Vue 3 SPA for tgb-resolver. The legacy React app remains in `apps/web` as the
+porting reference until migration parity is complete.
+
+Stack: Vue 3.5, Pinia, vue-router, TanStack Vue Query, Panda CSS with the Chakra preset, Ark UI,
+`motion-v`, and the vanilla `motion` core package.
 
 ## Recommended IDE Setup
 
@@ -23,28 +27,30 @@ TypeScript cannot handle type information for `.vue` imports by default, so we r
 
 See [Vite Configuration Reference](https://vite.dev/config/).
 
-## Project Setup
+## Commands
 
 ```sh
 pnpm install
 ```
 
-### Compile and Hot-Reload for Development
+### Development
 
 ```sh
 pnpm dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### Production build and preview
 
 ```sh
-pnpm build
+  pnpm build
+  pnpm serve
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+### Unit tests and type-check
 
 ```sh
-pnpm test:unit
+pnpm test
+pnpm type-check
 ```
 
 ### Run End-to-End Tests with [Playwright](https://playwright.dev)
@@ -53,15 +59,9 @@ pnpm test:unit
 # Install browsers for the first run
 npx playwright install
 
-# When testing on CI, must build the project first
-pnpm build
-
-# Runs the end-to-end tests
 pnpm test:e2e
-# Runs the tests only on Chromium
-pnpm test:e2e --project=chromium
-# Runs the tests of a specific file
-pnpm test:e2e tests/example.spec.ts
-# Runs the tests in debug mode
-pnpm test:e2e --debug
 ```
+
+Feature code is vertically sliced under `src/features/`; shared state uses Pinia setup stores.
+Use generated styled-system JSX components and recipes for layout and component styling. See the
+root `AGENTS.md` for the complete React-to-Vue porting rules.

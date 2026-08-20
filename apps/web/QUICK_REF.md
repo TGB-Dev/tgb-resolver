@@ -91,3 +91,7 @@ function Counter() {
 - Preact Signals: https://preactjs.com/guide/v10/signals/
 - `createModel` / `useModel`: https://github.com/preactjs/signals/tree/main/packages/react-runtime
 - `@preact/signals-react`: https://www.npmjs.com/package/@preact/signals-react
+# Legacy frontend reference
+
+The React app is retained as the legacy porting reference. For the canonical frontend, see
+[`apps/web-vue/QUICK_REF.md`](../web-vue/QUICK_REF.md) and the root `AGENTS.md`.

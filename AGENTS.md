@@ -1,5 +1,12 @@
 # tgb-resolver
 
+## Frontend status
+
+`apps/web-vue/` is the canonical frontend (Vue 3, Pinia, Panda CSS, Ark UI, and motion-v).
+`apps/web/` is the legacy React implementation and porting reference. Vue components must use
+generated styled-system JSX factories and recipes for styling; do not recreate Chakra component
+styles with bespoke CSS when a Panda recipe exists.
+
 ## Commands
 
 - `pnpm dev` — run all apps in parallel (server + web)

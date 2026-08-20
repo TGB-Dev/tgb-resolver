@@ -12,6 +12,7 @@
     "generate": "panda codegen",
     "prepare": "panda codegen",
     "preview": "vite preview",
+    "serve": "vite preview",
     "test": "vitest run --passWithNoTests",
     "test:e2e": "playwright test",
     "test:unit": "vitest",
