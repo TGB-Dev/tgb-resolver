@@ -5,7 +5,7 @@ import { useFullscreenStore } from "@/stores/fullscreen-store";
 
 defineOptions({ name: "LeaderboardProvider" });
 const fullscreen = useFullscreenStore();
-function onKeydown(event: KeyboardEvent) { if (event.key.toLowerCase() === "f") void fullscreen.toggleFullscreen(); }
+function onKeydown(event: KeyboardEvent) { if (event.key.toLowerCase() === "f") fullscreen.toggleFullscreen(); }
 onMounted(() => window.addEventListener("keydown", onKeydown)); onUnmounted(() => window.removeEventListener("keydown", onKeydown));
 </script>
 <template><slot /></template>
