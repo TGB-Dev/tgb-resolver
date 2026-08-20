@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Toast } from "@ark-ui/vue";
+import { Toaster as ArkToaster, Toast } from "@ark-ui/vue";
 import { X } from "@lucide/vue";
 import { Stack } from "@styled-system/jsx";
 import { toast } from "@styled-system/recipes";
@@ -11,7 +11,7 @@ const toastClasses = toast();
 </script>
 
 <template>
-  <Toaster :toaster="toaster">
+  <ArkToaster :toaster="toaster">
     <template #default="t">
       <Toast.Root :class="toastClasses.root">
         <Spinner v-if="t.type === 'loading'" size="sm" label="" aria-hidden="true" />
@@ -31,5 +31,5 @@ const toastClasses = toast();
         </Toast.CloseTrigger>
       </Toast.Root>
     </template>
-  </Toaster>
+  </ArkToaster>
 </template>

@@ -7,10 +7,19 @@ import { VueQueryDevtoolsPanel } from "@tanstack/vue-query-devtools";
 const isDev = import.meta.env.DEV;
 
 const plugins: TanStackDevtoolsVuePlugin[] = [
-  { name: "TanStack Query", component: VueQueryDevtoolsPanel },
+  {
+    name: "TanStack Query",
+    component: VueQueryDevtoolsPanel,
+    props: {
+      theme: "dark",
+    },
+  },
   {
     name: "TanStack Hotkeys",
     component: HotkeysDevtoolsPanel,
+    props: {
+      theme: "dark",
+    },
   },
 ];
 </script>

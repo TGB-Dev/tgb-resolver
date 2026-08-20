@@ -3,9 +3,10 @@ import { createPinia } from "pinia";
 import { createApp } from "vue";
 
 import { queryClient } from "@/features/shared/app/providers";
+import "@/lib/api";
 
 import App from "./App.vue";
-import router from "./router";
+import { router } from "./router";
 
 import "@/assets/css/main.css";
 

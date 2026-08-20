@@ -19,6 +19,8 @@ const isUnresolved = computed(() => props.problem.verdict === VerdictRunResult.U
 const verdictColors = computed(() => useVerdictColor(props.problem.verdict));
 const scoreFg = computed(() => (isUnresolved.value || isPending.value ? verdictColors.value.fg : undefined));
 const score = computed(() => (isUnknown.value ? " " : props.problem.score));
+
+// TODO: convert into recipes; Panda CSS can't detect dynamic colors from computed properties
 </script>
 
 <template>

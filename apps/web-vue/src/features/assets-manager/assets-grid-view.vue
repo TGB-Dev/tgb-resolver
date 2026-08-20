@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Box, Grid } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
+import { Box } from "@styled-system/jsx";
 import { ref } from "vue";
 
 import { toaster } from "@/features/shared/ui/toaster";
@@ -66,43 +67,53 @@ function handleDropError(error: unknown): void {
     userSelect="none"
     tabindex="-1"
     @click="handleContainerClick"
-    @contextmenu="(e) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-entry-id]')) {
-        contextMenu.openForContainer(e);
+    @contextmenu="
+      (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-entry-id]')) {
+          contextMenu.openForContainer(e);
+        }
       }
-    }"
-    @pointerdown="(e) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('[data-context-menu]')) return;
-      store.focusedPanel = 'content';
-      containerHandlers.onPointerDown(e);
-    }"
+    "
+    @pointerdown="
+      (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('[data-context-menu]')) return;
+        store.focusedPanel = 'content';
+        containerHandlers.onPointerDown(e);
+      }
+    "
     @pointermove="containerHandlers.onPointerMove"
     @pointerup="containerHandlers.onPointerUp"
-    @click.capture="(e) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('[data-context-menu]')) return;
-      containerHandlers.onClickCapture(e);
-    }"
-    @keydown.esc="store.clearSelection"
-    @dragover="(e) => {
-      if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
-      e.preventDefault();
-      const effect = e.altKey ? 'copy' : 'move';
-      interactionStore.setDragEffect(effect);
-      if (e.dataTransfer) e.dataTransfer.dropEffect = effect;
-    }"
-    @drop="async (e) => {
-      if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
-      e.preventDefault();
-      const effect = e.altKey ? 'copy' : 'move';
-      try {
-        await interactionStore.dropInto(store.selectedEntryId, effect);
-      } catch (err) {
-        handleDropError(err);
+    @click.capture="
+      (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('[data-context-menu]')) return;
+        containerHandlers.onClickCapture(e);
       }
-    }"
+    "
+    @keydown.esc="store.clearSelection"
+    @dragover="
+      (e) => {
+        if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        const effect = e.altKey ? 'copy' : 'move';
+        interactionStore.setDragEffect(effect);
+        if (e.dataTransfer) e.dataTransfer.dropEffect = effect;
+      }
+    "
+    @drop="
+      async (e) => {
+        if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        const effect = e.altKey ? 'copy' : 'move';
+        try {
+          await interactionStore.dropInto(store.selectedEntryId, effect);
+        } catch (err) {
+          handleDropError(err);
+        }
+      }
+    "
   >
     <Box
       v-if="store.entries.length === 0"
@@ -115,11 +126,16 @@ function handleDropError(error: unknown): void {
       Empty
     </Box>
 
-    <Grid
+    <div
       v-else
-      templateColumns="repeat(auto-fill, minmax(200px, 1fr))"
-      gap="4"
-      p="4"
+      :class="
+        css({
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: 4,
+          p: 4,
+        })
+      "
     >
       <EntryCard
         v-for="(entry, index) in store.entries"
@@ -128,45 +144,53 @@ function handleDropError(error: unknown): void {
         :is-selected="store.selectedIds.has(entry.id)"
         @click="handleEntryClick($event, index)"
         @dblclick="handleDoubleClick(entry)"
-        @contextmenu="(e) => {
-          if (!store.selectedIds.has(entry.id)) {
-            store.selectedIds = new Set([entry.id]);
+        @contextmenu="
+          (e) => {
+            if (!store.selectedIds.has(entry.id)) {
+              store.selectedIds = new Set([entry.id]);
+            }
+            contextMenu.openForEntry(e, {
+              id: entry.id,
+              name: entry.name,
+              isDirectory: entry.isDirectory,
+            });
           }
-          contextMenu.openForEntry(e, {
-            id: entry.id,
-            name: entry.name,
-            isDirectory: entry.isDirectory,
-          });
-        }"
-        @dragstart="(e) => {
-          const effect = e.altKey ? 'copy' : 'move';
-          const dragIds = interactionStore.beginDrag(entry.id, effect);
-          if (e.dataTransfer) {
-            e.dataTransfer.effectAllowed = 'copyMove';
-            e.dataTransfer.setData(INTERNAL_DRAG_MIME, JSON.stringify(dragIds));
+        "
+        @dragstart="
+          (e) => {
+            const effect = e.altKey ? 'copy' : 'move';
+            const dragIds = interactionStore.beginDrag(entry.id, effect);
+            if (e.dataTransfer) {
+              e.dataTransfer.effectAllowed = 'copyMove';
+              e.dataTransfer.setData(INTERNAL_DRAG_MIME, JSON.stringify(dragIds));
+            }
           }
-        }"
+        "
         @dragend="interactionStore.clearDrag"
-        @dragover="(e) => {
-          if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
-          e.preventDefault();
-          const effect = e.altKey ? 'copy' : 'move';
-          interactionStore.setDragEffect(effect);
-          if (e.dataTransfer) e.dataTransfer.dropEffect = effect;
-        }"
-        @drop="async (e) => {
-          if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
-          e.preventDefault();
-          e.stopPropagation();
-          const effect = e.altKey ? 'copy' : 'move';
-          try {
-            await interactionStore.dropInto(entry.id, effect);
-          } catch (err) {
-            handleDropError(err);
+        @dragover="
+          (e) => {
+            if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+            e.preventDefault();
+            const effect = e.altKey ? 'copy' : 'move';
+            interactionStore.setDragEffect(effect);
+            if (e.dataTransfer) e.dataTransfer.dropEffect = effect;
           }
-        }"
+        "
+        @drop="
+          async (e) => {
+            if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const effect = e.altKey ? 'copy' : 'move';
+            try {
+              await interactionStore.dropInto(entry.id, effect);
+            } catch (err) {
+              handleDropError(err);
+            }
+          }
+        "
       />
-    </Grid>
+    </div>
 
     <Box
       v-if="selectionRect"

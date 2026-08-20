@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { VStack } from "@styled-system/jsx";
 import { computed } from "vue";
 
 import { useControlShowRows } from "@/features/control/composables/use-show";
@@ -68,43 +67,83 @@ const previousCue = computed(() =>
     ? rows.value[prevGroupIndex.value]
     : undefined,
 );
+
+const containerStyles = css({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 0,
+  minWidth: 0,
+  overflow: 'hidden',
+  padding: '16px',
+  gap: '16px',
+});
+
+const cueItemStyles = css({
+  flex: '1 1 0',
+  minHeight: 0,
+  minWidth: 0,
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+});
+
+const nextCueTimerStyles = css({
+  flexShrink: 0,
+});
 </script>
 
 <template>
-  <div :class="css({ display: 'grid', h: 'full', gridTemplateRows: '1fr auto 1fr 1fr', p: '4' })">
+  <div :class="containerStyles">
     <!-- If no current cue -->
     <template v-if="currentIndex < 0">
-      <CueItem :cue="Cue.CURRENT">
-        <CueContent :cue="undefined" :contentSize="CUE_CONFIG[Cue.CURRENT].contentSize" />
-      </CueItem>
-      <NextCueTimer />
-      <CueItem :cue="Cue.NEXT">
-        <CueContent :cue="undefined" :contentSize="CUE_CONFIG[Cue.NEXT].contentSize" />
-      </CueItem>
-      <CueItem :cue="Cue.PREVIOUS">
-        <CueContent :cue="undefined" :contentSize="CUE_CONFIG[Cue.PREVIOUS].contentSize" />
-      </CueItem>
+      <div :class="cueItemStyles">
+        <CueItem :cue="Cue.CURRENT">
+          <CueContent :cue="undefined" :contentSize="CUE_CONFIG[Cue.CURRENT].contentSize" />
+        </CueItem>
+      </div>
+      <div :class="nextCueTimerStyles">
+        <NextCueTimer />
+      </div>
+      <div :class="cueItemStyles">
+        <CueItem :cue="Cue.NEXT">
+          <CueContent :cue="undefined" :contentSize="CUE_CONFIG[Cue.NEXT].contentSize" />
+        </CueItem>
+      </div>
+      <div :class="cueItemStyles">
+        <CueItem :cue="Cue.PREVIOUS">
+          <CueContent :cue="undefined" :contentSize="CUE_CONFIG[Cue.PREVIOUS].contentSize" />
+        </CueItem>
+      </div>
     </template>
 
     <!-- With current cue -->
     <template v-else>
-      <CueItem :cue="Cue.CURRENT">
-        <VStack gap="2" alignItems="start">
-          <CueContent :cue="parentCue" :contentSize="CUE_CONFIG[Cue.CURRENT].contentSize" />
-          <CueContent
-            v-if="latestChild"
-            :cue="latestChild"
-            :contentSize="CUE_CONFIG[Cue.CURRENT].contentSize"
-          />
-        </VStack>
-      </CueItem>
-      <NextCueTimer />
-      <CueItem :cue="Cue.NEXT">
-        <CueContent :cue="nextCue" :contentSize="CUE_CONFIG[Cue.NEXT].contentSize" />
-      </CueItem>
-      <CueItem :cue="Cue.PREVIOUS">
-        <CueContent :cue="previousCue" :contentSize="CUE_CONFIG[Cue.PREVIOUS].contentSize" />
-      </CueItem>
+      <div :class="cueItemStyles">
+        <CueItem :cue="Cue.CURRENT">
+          <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+            <CueContent :cue="parentCue" :contentSize="CUE_CONFIG[Cue.CURRENT].contentSize" />
+            <CueContent
+              v-if="latestChild"
+              :cue="latestChild"
+              :contentSize="CUE_CONFIG[Cue.CURRENT].contentSize"
+            />
+          </div>
+        </CueItem>
+      </div>
+      <div :class="nextCueTimerStyles">
+        <NextCueTimer />
+      </div>
+      <div :class="cueItemStyles">
+        <CueItem :cue="Cue.NEXT">
+          <CueContent :cue="nextCue" :contentSize="CUE_CONFIG[Cue.NEXT].contentSize" />
+        </CueItem>
+      </div>
+      <div :class="cueItemStyles">
+        <CueItem :cue="Cue.PREVIOUS">
+          <CueContent :cue="previousCue" :contentSize="CUE_CONFIG[Cue.PREVIOUS].contentSize" />
+        </CueItem>
+      </div>
     </template>
   </div>
 </template>

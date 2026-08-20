@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { css, cx } from "@styled-system/css";
 import { Box, Center, Grid } from "@styled-system/jsx";
 import { table } from "@styled-system/recipes";
 import type { ProblemDefinition } from "@tgb-resolver/realtime";
@@ -8,7 +9,10 @@ defineProps<{
   problems?: ProblemDefinition[];
 }>();
 
-const isBigScreen = inject<Ref<boolean>>("isBigScreen", computed(() => false));
+const isBigScreen = inject<Ref<boolean>>(
+  "isBigScreen",
+  computed(() => false),
+);
 const classes = computed(() =>
   table({
     size: isBigScreen.value ? "lg" : "sm",
@@ -27,12 +31,9 @@ const classes = computed(() =>
       fontSize: isBigScreen ? 'var(--font-sizes-2xl)' : undefined,
     }"
   >
-    <thead
-      :class="classes.header"
-      style="position: relative; z-index: 50;"
-    >
+    <thead :class="cx(classes.header, css({position: 'relative', zIndex: 50}))">
       <tr :class="classes.row">
-        <th :class="classes.columnHeader" style="text-align: end;">Rank</th>
+        <th :class="cx(classes.columnHeader, css({ textAlign: 'end' }))">Rank</th>
         <th :class="classes.columnHeader">User</th>
 
         <th
@@ -48,7 +49,13 @@ const classes = computed(() =>
             <Center>
               <Box fontFamily="mono">{{ problem.label }}</Box>
             </Center>
-            <Box textAlign="center" maxW="full" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+            <Box
+              textAlign="center"
+              maxW="full"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+            >
               {{ problem.name }}
             </Box>
           </Grid>
@@ -57,9 +64,9 @@ const classes = computed(() =>
           </Center>
         </th>
 
-        <th :class="classes.columnHeader" style="text-align: end;">Score</th>
-        <th :class="classes.columnHeader" style="text-align: end;">Penalty</th>
-        <th :class="classes.columnHeader" style="text-align: end;">Time</th>
+        <th :class="classes.columnHeader" style="text-align: end">Score</th>
+        <th :class="classes.columnHeader" style="text-align: end">Penalty</th>
+        <th :class="classes.columnHeader" style="text-align: end">Time</th>
       </tr>
     </thead>
     <tbody :class="classes.body">

@@ -82,35 +82,21 @@ watchEffect(() => {
 </script>
 
 <template>
-  <ControlRealtimeProvider>
-    <LeaderboardProvider :isBigScreen="props.isBigScreen">
-      <Box position="relative">
-        <Box h="100dvh" overflowY="auto" style="overflow-anchor: none;" data-audience-scroll>
-          <template v-if="query.data.value">
-            <LeaderboardTable :problems="query.data.value.contest.problems">
-              <LeaderboardRow
-                v-for="row in rows"
-                :key="row.userId"
-                :data="row.data"
-                :is-current-resolved="leaderboard.currentResolvedUserId === row.userId"
-              />
-            </LeaderboardTable>
-            <ActiveExtensionsOverlay />
-          </template>
-        </Box>
-
-        <!-- Overlay to prevent manual interaction to the resolve leaderboard by absorbing all events -->
-        <Box
-          position="absolute"
-          top="0"
-          left="0"
-          w="full"
-          h="full"
-          overflow="hidden"
-          pointerEvents="auto"
-          zIndex="9999"
-        />
+  <LeaderboardProvider :isBigScreen="props.isBigScreen">
+    <Box position="relative">
+      <Box h="100dvh" overflowY="auto" overflowAnchor="none" data-audience-scroll>
+        <template v-if="query.data.value">
+          <LeaderboardTable :problems="query.data.value.contest.problems">
+            <LeaderboardRow
+              v-for="row in rows"
+              :key="row.userId"
+              :data="row.data"
+              :is-current-resolved="leaderboard.currentResolvedUserId === row.userId"
+            />
+          </LeaderboardTable>
+          <ActiveExtensionsOverlay />
+        </template>
       </Box>
-    </LeaderboardProvider>
-  </ControlRealtimeProvider>
+    </Box>
+  </LeaderboardProvider>
 </template>

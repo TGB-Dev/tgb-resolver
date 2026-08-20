@@ -1,3 +1,5 @@
+import type { Ref } from "vue";
+
 export enum FloatingPanelType {
   ImportShow = "import-show",
   InspectShow = "inspect-show",
@@ -5,7 +7,20 @@ export enum FloatingPanelType {
   CreateEvent = "create-event",
 }
 
-export type { FloatingPanelHandle } from "./floating-panel-store";
+export interface FloatingPanelHandle {
+  readonly id: string;
+  readonly type: FloatingPanelType;
+  readonly title: Ref<string>;
+  readonly props: Ref<Record<string, unknown>>;
+  readonly result: Promise<boolean>;
+  isDirty: Ref<boolean>;
+  isSaving: Ref<boolean>;
+  setTitle(title: string): void;
+  setDirty(dirty: boolean): void;
+  setSaving(saving: boolean): void;
+  requestClose(reason?: "close" | "replace"): Promise<boolean>;
+  close(accepted: boolean): void;
+}
 
 export interface FloatingPanelConfig {
   size: { width: number; height: number };

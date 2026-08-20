@@ -1,25 +1,10 @@
 import { defineStore } from "pinia";
 import { v7 as uuidv7 } from "uuid";
-import { computed, type Ref, ref, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
 
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
-import type { FloatingPanelType } from "./floating-panel-types";
-
-export interface FloatingPanelHandle {
-  readonly id: string;
-  readonly type: FloatingPanelType;
-  readonly title: Ref<string>;
-  readonly props: Ref<Record<string, unknown>>;
-  readonly result: Promise<boolean>;
-  isDirty: Ref<boolean>;
-  isSaving: Ref<boolean>;
-  setTitle(title: string): void;
-  setDirty(dirty: boolean): void;
-  setSaving(saving: boolean): void;
-  requestClose(reason?: "close" | "replace"): Promise<boolean>;
-  close(accepted: boolean): void;
-}
+import type { FloatingPanelHandle, FloatingPanelType } from "./floating-panel-types";
 
 export const useFloatingPanelStore = defineStore("floating-panel", () => {
   const panels = shallowRef<FloatingPanelHandle[]>([]);

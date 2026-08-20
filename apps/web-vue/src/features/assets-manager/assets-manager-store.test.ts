@@ -40,4 +40,17 @@ describe("assets manager store", () => {
     store.handleEntryClick({ metaKey: false, ctrlKey: false, shiftKey: true }, 2);
     expect([...store.selectedIds]).toEqual(["a", "b", "c"]);
   });
+
+  it("ignores cyclic folder descendants while hydrating", () => {
+    const store = useAssetsManagerStore();
+    const folder = { id: "folder", name: "Folder", children: [] as unknown[] };
+    folder.children.push(folder);
+
+    store.applyShowState({
+      showVersion: 1,
+      assets: { folders: [folder], items: [] },
+    } as never);
+
+    expect(store.folderTree[0]?.children).toEqual([]);
+  });
 });

@@ -13,7 +13,16 @@
         "useVueMultiWordComponentNames": {
           "level": "on",
           "options": {
-            "ignores": ["Tooltip", "Toaster", "Leaderboard", "Button", "Heading", "Spinner"]
+            "ignores": [
+              "Tooltip",
+              "Toaster",
+              "Leaderboard",
+              "Button",
+              "Heading",
+              "Spinner",
+              "Control",
+              "Index"
+            ]
           }
         }
       }
@@ -59,6 +68,7 @@
       "!!**/gen",
       "!!**/styled-system",
       "!!**/playwright-report",
+      "!!**/typed-router.d.ts",
       "vite.config.ts"
     ]
   },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Grid } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { ref } from "vue";
 
 import ControlTimelineControls from "@/features/control/panels/timeline/control-timeline-controls.vue";
@@ -9,10 +9,17 @@ const timelineTableRef = ref<InstanceType<typeof ControlTimelineTable> | null>(n
 </script>
 
 <template>
-  <Grid templateRows="1fr auto" h="full">
+  <div
+    :class="
+      css({
+        display: 'grid',
+        gridTemplateRows: '1fr auto',
+        h: 'full',
+        minH: 0,
+      })
+    "
+  >
     <ControlTimelineTable ref="timelineTableRef" />
-    <ControlTimelineControls
-      :onJumpToCurrent="() => timelineTableRef?.scrollToCurrent()"
-    />
-  </Grid>
+    <ControlTimelineControls :onJumpToCurrent="() => timelineTableRef?.scrollToCurrent()" />
+  </div>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { css, cx } from "@styled-system/css";
 import { Box, VStack } from "@styled-system/jsx";
 import { table } from "@styled-system/recipes";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
@@ -18,8 +19,13 @@ const props = defineProps<{
 
 const rowRef = ref<HTMLTableRowElement | null>(null);
 const leaderboardStore = useLeaderboardStore();
-const isBigScreen = inject<Ref<boolean>>("isBigScreen", computed(() => false));
-const classes = computed(() => table({ size: isBigScreen.value ? "lg" : "md", variant: "line", stickyHeader: true }));
+const isBigScreen = inject<Ref<boolean>>(
+  "isBigScreen",
+  computed(() => false),
+);
+const classes = computed(() =>
+  table({ size: isBigScreen.value ? "lg" : "md", variant: "line", stickyHeader: true }),
+);
 
 const submissionTimeSinceStartSeconds = computed(() =>
   Math.max(
@@ -29,9 +35,7 @@ const submissionTimeSinceStartSeconds = computed(() =>
   ),
 );
 
-const formattedTime = computed(() =>
-  formatTime(submissionTimeSinceStartSeconds.value),
-);
+const formattedTime = computed(() => formatTime(submissionTimeSinceStartSeconds.value));
 
 function checkAndScroll() {
   const targetId = leaderboardStore.currentBottomView;
@@ -67,20 +71,34 @@ onMounted(checkAndScroll);
 <template>
   <tr
     ref="rowRef"
-    :class="classes.row"
+    :class="
+      cx(
+        classes.row,
+        css({
+          position: 'relative',
+          zIndex: isCurrentResolved ? 5 : 0,
+          backgroundColor: isCurrentResolved ? 'yellow.700' : undefined,
+          transition: 'background-color 0.15s cubic-bezier(0.45, 0, 0.55, 1)',
+        }),
+      )
+    "
     :data-current="isCurrentResolved || undefined"
-    :style="{
-      position: 'relative',
-      zIndex: isCurrentResolved ? 5 : 0,
-      backgroundColor: isCurrentResolved ? 'var(--colors-yellow-700, #b45309)' : undefined,
-      transition: 'background-color 0.15s cubic-bezier(0.45, 0, 0.55, 1)',
-    }"
   >
-    <td :class="classes.cell" style="text-align: end; font-family: var(--fonts-mono);">
+    <td
+      :class="
+        cx(
+          classes.cell,
+          css({
+            textAlign: 'end',
+            fontFamily: 'mono',
+          }),
+        )
+      "
+    >
       {{ data.rank }}
     </td>
 
-    <td :class="classes.cell" style="max-width: 30ch;">
+    <td :class="classes.cell" style="max-width: 30ch">
       <VStack alignItems="start" gap="1">
         <Box fontWeight="medium">{{ data.realName }}</Box>
         <Box fontFamily="mono" fontStyle="italic" fontSize="xs" color="fg.muted">
@@ -89,23 +107,47 @@ onMounted(checkAndScroll);
       </VStack>
     </td>
 
-    <ProblemCell
-      v-for="problem in data.problems"
-      :key="problem.problemId"
-      :problem="problem"
-    />
+    <ProblemCell v-for="problem in data.problems" :key="problem.problemId" :problem="problem" />
 
-    <td :class="classes.cell" style="text-align: end; font-family: var(--fonts-mono);">
+    <td
+      :class="
+        cx(
+          classes.cell,
+          css({
+            textAlign: 'end',
+            fontFamily: 'mono',
+          }),
+        )
+      "
+    >
       {{ data.totalScore }}
     </td>
 
-    <td :class="classes.cell" style="text-align: end; font-family: var(--fonts-mono);">
+    <td
+      :class="
+        cx(
+          classes.cell,
+          css({
+            textAlign: 'end',
+            fontFamily: 'mono',
+          }),
+        )
+      "
+    >
       {{ data.totalPenalty }}
     </td>
 
     <td
-      :class="classes.cell"
-      style="text-align: end; font-family: var(--fonts-mono); font-weight: bold; font-style: italic;"
+      :class="
+        cx(
+          classes.cell,
+          css({
+            textAlign: 'end',
+            fontFamily: 'mono',
+            fontStyle: 'italic',
+          }),
+        )
+      "
     >
       {{ formattedTime }}
     </td>

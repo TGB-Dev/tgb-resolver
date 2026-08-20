@@ -106,13 +106,21 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
       name: string;
       children: Array<{ id: string; name: string; children: unknown[] }>;
     }>;
-    const build = (nodes: typeof folders): FsEntry[] =>
-      nodes.map((node) => ({
-        id: node.id,
-        name: node.name,
-        isDirectory: true,
-        children: build(node.children as typeof folders),
-      }));
+    const build = (nodes: typeof folders, ancestorIds = new Set<string>()): FsEntry[] =>
+      nodes.flatMap((node) => {
+        if (ancestorIds.has(node.id)) return [];
+
+        const nextAncestorIds = new Set(ancestorIds);
+        nextAncestorIds.add(node.id);
+        return [
+          {
+            id: node.id,
+            name: node.name,
+            isDirectory: true,
+            children: build(node.children as typeof folders, nextAncestorIds),
+          },
+        ];
+      });
     folderTree.value = build(folders);
     allFiles.value = (data.assets?.items ?? []).map((item) => ({
       id: item.id ?? "",

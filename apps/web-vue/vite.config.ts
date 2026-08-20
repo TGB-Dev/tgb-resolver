@@ -3,6 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import { defineConfig } from "vite";
 import vueDevTools from "vite-plugin-vue-devtools";
+import vueRouter from "vue-router/vite";
 
 import { resolve } from "node:path";
 import { fileURLToPath, URL } from "node:url";
@@ -19,7 +20,7 @@ export default defineConfig({
     },
   },
   envDir: resolve(import.meta.dirname, "../.."),
-  plugins: [devtools(), vue(), vueJsx(), vueDevTools()],
+  plugins: [devtools(), vueRouter(), vue(), vueJsx(), vueDevTools()],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
