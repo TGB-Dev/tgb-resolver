@@ -1,21 +1,13 @@
-import { QueryClient, VueQueryPlugin } from "@tanstack/vue-query";
+import { VueQueryPlugin } from "@tanstack/vue-query";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
+
+import { queryClient } from "@/features/shared/app/providers";
 
 import App from "./App.vue";
 import router from "./router";
 
 import "@/assets/css/main.css";
-
-export const queryClient: QueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 0,
-      retry: 1,
-    },
-  },
-});
 
 const app = createApp(App);
 
