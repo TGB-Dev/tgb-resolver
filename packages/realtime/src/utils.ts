@@ -351,11 +351,14 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     state.score = event.payload.newTotalScore;
     state.rank = event.payload.newRank;
     state.penalty = event.payload.newTotalPenalty;
-    state.problems.set(event.payload.problemId, {
-      score: event.payload.newProblemScore,
-      verdict: event.payload.verdict,
-      timeSinceStart: event.payload.timeSinceStart,
-    });
+    // Finalization RES events (problemId 0) only lock in the team's rank and
+    // carry no problem result, so they must not add a phantom problem cell.
+    if (event.payload.problemId !== 0)
+      state.problems.set(event.payload.problemId, {
+        score: event.payload.newProblemScore,
+        verdict: event.payload.verdict,
+        timeSinceStart: event.payload.timeSinceStart,
+      });
   }
 
   const sorted: LeaderboardEntry[] = [...entries.entries()]

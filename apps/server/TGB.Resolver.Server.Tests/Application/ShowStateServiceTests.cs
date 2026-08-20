@@ -744,7 +744,10 @@ public sealed class ShowStateServiceTests
     await Assert.That(snapshot.Meta.Title).IsEqualTo("Contest");
     await Assert.That(snapshot.Meta.Source).IsEqualTo(ShowSource.Xml);
     await Assert.That(snapshot.Contest.Users).Count().IsEqualTo(54);
-    await Assert.That(snapshot.Timeline).Count().IsEqualTo(78);
+    // Every team now yields timeline events: resolving teams get a Pre + Res
+    // pair, the rest a single finalization Res, so the count exceeds the old
+    // resolve-only tally.
+    await Assert.That(snapshot.Timeline).Count().IsEqualTo(100);
   }
 
   [Test]

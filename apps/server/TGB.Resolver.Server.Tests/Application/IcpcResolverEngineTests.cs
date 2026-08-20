@@ -45,12 +45,18 @@ public sealed class IcpcResolverEngineTests
   private static readonly ExpectedResolveEvent[] ExpectedResolveEvents =
   [
     new(42, 6, 0, 53, VerdictRunResult.WrongAnswer),
+    new(24, 0, 1, 52, VerdictRunResult.Unknown),
     new(46, 1, 32, 50, VerdictRunResult.TimeLimitExceeded),
     new(20, 2, 21, 51, VerdictRunResult.WrongAnswer),
     new(32, 6, 41, 49, VerdictRunResult.WrongAnswer),
+    new(16, 0, 58, 48, VerdictRunResult.Unknown),
     new(17, 6, 100, 47, VerdictRunResult.WrongAnswer),
+    new(29, 0, 100, 46, VerdictRunResult.Unknown),
+    new(10, 0, 100, 45, VerdictRunResult.Unknown),
     new(3, 6, 100, 44, VerdictRunResult.WrongAnswer),
+    new(2, 0, 100, 43, VerdictRunResult.Unknown),
     new(9, 2, 118.75, 39, VerdictRunResult.WrongAnswer),
+    new(41, 0, 100, 42, VerdictRunResult.Unknown),
     new(11, 3, 100, 41, VerdictRunResult.TimeLimitExceeded),
     new(23, 2, 118.75, 40, VerdictRunResult.TimeLimitExceeded),
     new(23, 6, 118.75, 40, VerdictRunResult.WrongAnswer),
@@ -59,17 +65,23 @@ public sealed class IcpcResolverEngineTests
     new(6, 6, 118.75, 37, VerdictRunResult.WrongAnswer),
     new(33, 6, 118.75, 36, VerdictRunResult.WrongAnswer),
     new(38, 6, 118.75, 35, VerdictRunResult.WrongAnswer),
+    new(19, 0, 118.75, 34, VerdictRunResult.Unknown),
     new(13, 3, 118.75, 33, VerdictRunResult.RuntimeError),
+    new(37, 0, 118.75, 32, VerdictRunResult.Unknown),
+    new(51, 0, 118.75, 31, VerdictRunResult.Unknown),
     new(30, 3, 126.25, 30, VerdictRunResult.RuntimeError),
     new(40, 3, 126.25, 29, VerdictRunResult.TimeLimitExceeded),
     new(39, 6, 126.25, 28, VerdictRunResult.WrongAnswer),
+    new(47, 0, 126.25, 27, VerdictRunResult.Unknown),
     new(8, 6, 145, 26, VerdictRunResult.WrongAnswer),
     new(18, 3, 145, 25, VerdictRunResult.TimeLimitExceeded),
     new(18, 6, 145, 25, VerdictRunResult.WrongAnswer),
     new(21, 3, 145, 24, VerdictRunResult.TimeLimitExceeded),
     new(26, 2, 156.25, 23, VerdictRunResult.WrongAnswer),
     new(26, 3, 216.25, 18, VerdictRunResult.TimeLimitExceeded),
+    new(48, 0, 167.5, 23, VerdictRunResult.Unknown),
     new(12, 6, 175, 22, VerdictRunResult.WrongAnswer),
+    new(36, 0, 181.25, 21, VerdictRunResult.Unknown),
     new(50, 3, 200, 20, VerdictRunResult.TimeLimitExceeded),
     new(28, 4, 208.75, 19, VerdictRunResult.WrongAnswer),
     new(26, 6, 216.25, 18, VerdictRunResult.WrongAnswer),
@@ -77,12 +89,21 @@ public sealed class IcpcResolverEngineTests
     new(53, 4, 255, 11, VerdictRunResult.TimeLimitExceeded),
     new(7, 3, 226.25, 16, VerdictRunResult.TimeLimitExceeded),
     new(7, 6, 226.25, 16, VerdictRunResult.WrongAnswer),
+    new(31, 0, 226.25, 15, VerdictRunResult.Unknown),
+    new(22, 0, 227.5, 14, VerdictRunResult.Unknown),
+    new(52, 0, 235, 13, VerdictRunResult.Unknown),
     new(34, 6, 235, 12, VerdictRunResult.WrongAnswer),
+    new(54, 0, 268.75, 10, VerdictRunResult.Unknown),
+    new(25, 0, 278.75, 9, VerdictRunResult.Unknown),
+    new(49, 0, 313.75, 8, VerdictRunResult.Unknown),
+    new(43, 0, 321.25, 7, VerdictRunResult.Unknown),
     new(44, 4, 350, 6, VerdictRunResult.WrongAnswer),
     new(44, 6, 350, 6, VerdictRunResult.WrongAnswer),
     new(27, 4, 437.5, 3, VerdictRunResult.TimeLimitExceeded),
     new(4, 4, 427.5, 5, VerdictRunResult.RuntimeError),
-    new(35, 4, 506.25, 2, VerdictRunResult.Accepted)
+    new(35, 4, 506.25, 2, VerdictRunResult.Accepted),
+    new(15, 0, 437.5, 3, VerdictRunResult.Unknown),
+    new(5, 0, 550, 1, VerdictRunResult.Unknown)
   ];
 
   [Test]
@@ -146,7 +167,12 @@ public sealed class IcpcResolverEngineTests
 
     var result = IcpcResolverEngine.Convert(doc.ToString());
 
-    await Assert.That(result.ResolveEvents).IsEmpty();
+    // With no freeze, every run is already applied, so no team has anything
+    // left to resolve. Each still receives a single finalization RES that
+    // locks in its rank.
+    await Assert.That(result.ResolveEvents).Count().IsEqualTo(54);
+    await Assert.That(result.ResolveEvents.All(e => e.IsFinalize)).IsTrue();
+    await Assert.That(result.ResolveEvents.All(e => e.ProblemId == 0)).IsTrue();
     await Assert.That(result.PreFreezeSnapshot).Count().IsEqualTo(54);
   }
 

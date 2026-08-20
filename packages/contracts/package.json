@@ -27,10 +27,10 @@
     "@hey-api/openapi-ts": "^0.99.0",
     "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.2.0",
-    "bumpp": "^12.2.0",
+    "bumpp": "^12.2.1",
     "tsdown": "^0.22.14",
     "typescript": "6.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "files": [
     "dist"

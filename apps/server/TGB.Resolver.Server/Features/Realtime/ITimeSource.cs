@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace TGB.Resolver.Server.Features.Realtime;
 
 public interface ITimeSource
@@ -8,6 +10,6 @@ public interface ITimeSource
 
 public sealed class StopwatchTimeSource : ITimeSource
 {
-  public long Timestamp => System.Diagnostics.Stopwatch.GetTimestamp();
-  public long Frequency => System.Diagnostics.Stopwatch.Frequency;
+  public long Timestamp => Stopwatch.GetTimestamp();
+  public long Frequency => Stopwatch.Frequency;
 }

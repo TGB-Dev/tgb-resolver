@@ -149,7 +149,9 @@ export const ControlTimelineTableItem = memo(
           </Box>
           <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis">
             {payload.problem ? `${payload.problem}` : ""}
-            {payload.newProblemScore !== undefined ? ` (${payload.newProblemScore})` : ""}
+            {payload.problem && payload.newProblemScore !== undefined
+              ? ` (${payload.newProblemScore})`
+              : ""}
           </Box>
           <Box textAlign="end" fontFamily="mono">
             {payload.newTotalScore}

@@ -17,6 +17,8 @@ const string frontendCorsPolicy = "Frontend";
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = null);
+
 var allowedOrigins =
   builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
   ?? ["http://127.0.0.1:3000", "http://localhost:3000"];

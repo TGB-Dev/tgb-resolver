@@ -158,6 +158,16 @@ public sealed class ShowRawRepository(
         resolve.NewTotalScore, resolve.NewTotalPenalty, resolve.NewRank, resolve.NewProblemScore,
         resolve.Verdict, resolve.TimeSinceStart);
 
+      if (resolve.IsFinalize)
+      {
+        // A team with nothing left to resolve gets a single RES that locks in
+        // its final rank; there is no pre-resolve cue to preview.
+        events.Add(new TimelineEvent(id, id, TimelineEventType.Res, null, null, false, null,
+          payload, null, null));
+        id++;
+        continue;
+      }
+
       // Pre-resolve cue immediately precedes its resolve event so the
       // frontend can focus on the upcoming resolution.
       events.Add(new TimelineEvent(id, id, TimelineEventType.Pre, null, null, false, null, null,

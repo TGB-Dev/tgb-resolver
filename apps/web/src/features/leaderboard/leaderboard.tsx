@@ -145,7 +145,16 @@ export function Resolve({ isBigScreen }: ResolveProps) {
         leaderboardModel.currentBottomView.value = leaderboardModel.userIds.value[viewIndex];
       }
     } else if (currentEvent.type === TimelineEventType.RES) {
-      leaderboardModel.currentResolvedUserId.value = currentEvent.payload.userId;
+      const userId = currentEvent.payload.userId;
+      leaderboardModel.currentResolvedUserId.value = userId;
+
+      // Re-follow the contestant on resolve so the view tracks their (possibly
+      // changed) final rank, not just the pre-resolve preview position.
+      const rank = leaderboardModel.userIds.value.indexOf(userId);
+      if (rank >= 0) {
+        const viewIndex = Math.min(rank + 2, leaderboardModel.userIds.value.length - 1);
+        leaderboardModel.currentBottomView.value = leaderboardModel.userIds.value[viewIndex];
+      }
     } else {
       leaderboardModel.currentResolvedUserId.value = 0;
       leaderboardModel.currentBottomView.value = 0;

@@ -13,9 +13,8 @@ public static class TickRates
   public static bool IsAllowed(double value)
   {
     foreach (var candidate in Allowed)
-    {
-      if (Math.Abs(value - candidate) < Epsilon) return true;
-    }
+      if (Math.Abs(value - candidate) < Epsilon)
+        return true;
     return false;
   }
 }

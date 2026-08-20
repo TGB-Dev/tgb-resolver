@@ -7,21 +7,43 @@ internal sealed class FakeTimeSource : ITimeSource
 {
   public long Timestamp { get; private set; }
   public long Frequency { get; } = 1_000_000;
-  public void AdvanceMs(double ms) => Timestamp += (long)(ms / 1000.0 * Frequency);
+
+  public void AdvanceMs(double ms)
+  {
+    Timestamp += (long)(ms / 1000.0 * Frequency);
+  }
 }
 
 internal sealed class FakeClockTimer : IClockTimer
 {
-  public void Configure(double periodMs) { }
-  public void Start() { }
-  public void Stop() { }
-  public void WaitForTrigger() => throw new NotSupportedException("tests drive ProcessDue directly");
-  public void Dispose() { }
+  public void Configure(double periodMs)
+  {
+  }
+
+  public void Start()
+  {
+  }
+
+  public void Stop()
+  {
+  }
+
+  public void WaitForTrigger()
+  {
+    throw new NotSupportedException("tests drive ProcessDue directly");
+  }
+
+  public void Dispose()
+  {
+  }
 }
 
 internal sealed class FakeWallClock(long startMs) : IClock
 {
-  public Instant GetCurrentInstant() => Instant.FromUnixTimeMilliseconds(startMs);
+  public Instant GetCurrentInstant()
+  {
+    return Instant.FromUnixTimeMilliseconds(startMs);
+  }
 }
 
 public sealed class RealtimeClockTests

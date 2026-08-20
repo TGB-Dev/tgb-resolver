@@ -8,23 +8,20 @@ internal sealed record ScheduledOperation(long Id, Action Action);
 
 public sealed class RealtimeClock : IHostedService, IDisposable
 {
-  private readonly IClockTimer _timer;
-  private readonly ITimeSource _time;
-  private readonly IClock _wallClock;
+  private readonly HashSet<long> _cancelled = new();
   private readonly Lock _gate = new();
   private readonly PriorityQueue<ScheduledOperation, long> _queue = new();
-  private readonly HashSet<long> _cancelled = new();
-  private long _nextId = 1;
-  private long _wallAnchorMs;
+  private readonly ITimeSource _time;
+  private readonly IClockTimer _timer;
+  private readonly IClock _wallClock;
   private long _anchorTimestamp;
-  private double _tickRate = TickRates.Default;
-  private long _configureEpoch;
   private long _appliedEpoch;
-  private Thread? _thread;
+  private long _configureEpoch;
   private CancellationTokenSource? _cts;
-
-  public double TickRate => Volatile.Read(ref _tickRate);
-  public double PeriodMs => 1000.0 / Volatile.Read(ref _tickRate);
+  private long _nextId = 1;
+  private Thread? _thread;
+  private double _tickRate = TickRates.Default;
+  private long _wallAnchorMs;
 
   public RealtimeClock(IClockTimer timer, ITimeSource time, IClock wallClock)
   {
@@ -35,24 +32,55 @@ public sealed class RealtimeClock : IHostedService, IDisposable
     _anchorTimestamp = _time.Timestamp;
   }
 
+  public double TickRate => Volatile.Read(ref _tickRate);
+  public double PeriodMs => 1000.0 / Volatile.Read(ref _tickRate);
+
+  public void Dispose()
+  {
+    Stop();
+    _timer.Dispose();
+  }
+
+  // ---- Hosted lifecycle ----
+
+  public Task StartAsync(CancellationToken cancellationToken)
+  {
+    Start();
+    return Task.CompletedTask;
+  }
+
+  public Task StopAsync(CancellationToken cancellationToken)
+  {
+    Stop();
+    return Task.CompletedTask;
+  }
+
   public ScheduleTicket ScheduleIn(TimeSpan delay, Action action)
   {
     var deadline = _time.Timestamp + (long)(delay.TotalSeconds * _time.Frequency);
     var op = new ScheduledOperation(Interlocked.Increment(ref _nextId), action);
-    lock (_gate) _queue.Enqueue(op, deadline);
+    lock (_gate)
+    {
+      _queue.Enqueue(op, deadline);
+    }
+
     return new ScheduleTicket(op.Id);
   }
 
   public void Cancel(ScheduleTicket ticket)
   {
-    lock (_gate) _cancelled.Add(ticket.Id);
+    lock (_gate)
+    {
+      _cancelled.Add(ticket.Id);
+    }
   }
 
   public void SetTickRate(double? tickRate)
   {
     var rate = tickRate ?? TickRates.Default;
     if (!TickRates.IsAllowed(rate))
-      throw new ArgumentOutOfRangeException(nameof(tickRate), rate, "Tick rate not in allowed set.");
+      throw new ArgumentOutOfRangeException(nameof(tickRate), rate,
+        "Tick rate not in allowed set.");
     Volatile.Write(ref _tickRate, rate);
     Interlocked.Increment(ref _configureEpoch);
   }
@@ -61,7 +89,8 @@ public sealed class RealtimeClock : IHostedService, IDisposable
   {
     lock (_gate)
     {
-      return Instant.FromUnixTimeMilliseconds(_wallAnchorMs + ElapsedMs(_time.Timestamp - _anchorTimestamp));
+      return Instant.FromUnixTimeMilliseconds(_wallAnchorMs +
+                                              ElapsedMs(_time.Timestamp - _anchorTimestamp));
     }
   }
 
@@ -79,6 +108,7 @@ public sealed class RealtimeClock : IHostedService, IDisposable
         if (_cancelled.Remove(candidate.Id)) continue;
         op = candidate;
       }
+
       try
       {
         op.Action();
@@ -88,20 +118,6 @@ public sealed class RealtimeClock : IHostedService, IDisposable
         // A scheduled action must never kill the tick loop.
       }
     }
-  }
-
-  // ---- Hosted lifecycle ----
-
-  public Task StartAsync(CancellationToken cancellationToken)
-  {
-    Start();
-    return Task.CompletedTask;
-  }
-
-  public Task StopAsync(CancellationToken cancellationToken)
-  {
-    Stop();
-    return Task.CompletedTask;
   }
 
   public void Start()
@@ -116,7 +132,15 @@ public sealed class RealtimeClock : IHostedService, IDisposable
   public void Stop()
   {
     _cts?.Cancel();
-    try { _timer.Stop(); } catch { /* ignore */ }
+    try
+    {
+      _timer.Stop();
+    }
+    catch
+    {
+      /* ignore */
+    }
+
     _thread?.Join(TimeSpan.FromSeconds(1));
     _thread = null;
   }
@@ -125,8 +149,15 @@ public sealed class RealtimeClock : IHostedService, IDisposable
   {
     while (!ct.IsCancellationRequested)
     {
-      try { _timer.WaitForTrigger(); }
-      catch { if (ct.IsCancellationRequested) break; }
+      try
+      {
+        _timer.WaitForTrigger();
+      }
+      catch
+      {
+        if (ct.IsCancellationRequested) break;
+      }
+
       ProcessDue();
       MaybeReanchor();
       ApplyTimerPeriodIfChanged();
@@ -162,11 +193,8 @@ public sealed class RealtimeClock : IHostedService, IDisposable
     }
   }
 
-  private long ElapsedMs(long elapsedTicks) => (long)(elapsedTicks * 1000.0 / _time.Frequency);
-
-  public void Dispose()
+  private long ElapsedMs(long elapsedTicks)
   {
-    Stop();
-    _timer.Dispose();
+    return (long)(elapsedTicks * 1000.0 / _time.Frequency);
   }
 }

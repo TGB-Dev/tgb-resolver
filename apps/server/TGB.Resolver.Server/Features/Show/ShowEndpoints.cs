@@ -91,9 +91,9 @@ public sealed class ImportBundleEndpoint(ShowStateService showStateService)
     }
     catch (Exception exception)
       when (exception is FormatException
-        or InvalidDataException
-        or InvalidOperationException
-        or JsonException)
+              or InvalidDataException
+              or InvalidOperationException
+              or JsonException)
     {
       // Bad base64, corrupt zip, missing/hash-mismatched entries, or an
       // unreadable show.json are all user input errors.

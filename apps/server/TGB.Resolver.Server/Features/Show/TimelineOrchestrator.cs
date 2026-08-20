@@ -7,8 +7,8 @@ public class TimelineOrchestrator(
   IServiceScopeFactory scopeFactory,
   RealtimeClock clock)
 {
-  private readonly HashSet<ScheduleTicket> _tickets = [];
   private readonly Lock _lock = new();
+  private readonly HashSet<ScheduleTicket> _tickets = [];
 
   public virtual void ScheduleAdvance(long delayMs)
   {

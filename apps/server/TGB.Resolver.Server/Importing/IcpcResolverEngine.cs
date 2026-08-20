@@ -47,35 +47,61 @@ public static class IcpcResolverEngine
 
     var pending = CreatePendingProblems(frozen, final, teams, problemDefs);
     var resolving = frozen.Clone();
-    var events = new List<IcpcResolveEvent>(pending.Count);
+    var remaining = teams.Select(team => team.Id).ToHashSet();
+    // Every team needs a finalization cue. Teams with pending problems get one
+    // RES per resolved run; the rest get a single finalization RES that locks
+    // in their (unchanged) final rank so the walk never skips past them.
+    var events = new List<IcpcResolveEvent>(pending.Count + remaining.Count);
 
     // ICPC's resolver walks the current standings from the bottom. VNOI's
     // scorer supplies the point/penalty state; each pending problem resolves
-    // to its final score-altering run.
-    while (pending.Count > 0)
+    // to its final score-altering run. Teams with nothing left to resolve are
+    // still visited, in rank order, to finalize their placement.
+    while (remaining.Count > 0)
     {
-      var team = resolving.Snapshot()
-        .Last(snapshot => pending.Keys.Any(key => key.TeamId == snapshot.TeamId));
-      var pendingProblem = pending.Keys
+      var team = resolving.Snapshot().Last(snapshot => remaining.Contains(snapshot.TeamId));
+      var teamPending = pending.Keys
         .Where(key => key.TeamId == team.TeamId)
         .OrderBy(key => problemOrder[key.ProblemId])
-        .First();
-      var run = pending[pendingProblem];
+        .ToArray();
 
-      resolving.Apply(run);
-      pending.Remove(pendingProblem);
+      if (teamPending.Length > 0)
+      {
+        var pendingProblem = teamPending[0];
+        var run = pending[pendingProblem];
 
-      var after = resolving.SnapshotFor(team.TeamId);
-      var problemScore = resolving.ResultFor(run.Team, run.Problem).Points;
-      events.Add(new IcpcResolveEvent(
-        run.Team,
-        run.Problem,
-        after.Score,
-        after.Penalty,
-        after.Rank,
-        problemScore,
-        run.Verdict,
-        run.Time));
+        resolving.Apply(run);
+        pending.Remove(pendingProblem);
+
+        var after = resolving.SnapshotFor(team.TeamId);
+        var problemScore = resolving.ResultFor(run.Team, run.Problem).Points;
+        events.Add(new IcpcResolveEvent(
+          run.Team,
+          run.Problem,
+          after.Score,
+          after.Penalty,
+          after.Rank,
+          problemScore,
+          run.Verdict,
+          run.Time));
+
+        if (pending.Keys.All(key => key.TeamId != team.TeamId)) remaining.Remove(team.TeamId);
+      }
+      else
+      {
+        var after = resolving.SnapshotFor(team.TeamId);
+        events.Add(new IcpcResolveEvent(
+          team.TeamId,
+          0,
+          after.Score,
+          after.Penalty,
+          after.Rank,
+          0,
+          VerdictRunResult.Unknown,
+          freezeAtSeconds,
+          true));
+        remaining.Remove(team.TeamId);
+      }
     }
 
     var preFreeze = teams.Select(team =>
@@ -90,10 +116,14 @@ public static class IcpcResolverEngine
         var postFreezeCount = teamProblemRuns.Count(r => r.Time >= freezeAtSeconds);
 
         var verdict = VerdictRunResult.Unknown;
-        if (result.LastAlteringRunId is { } runId && frozen.RunById(runId) is { } run)
-          verdict = run.Verdict;
-        else if (postFreezeCount > 0)
+        // A problem with a pending post-freeze submission is still unresolved at
+        // freeze time — it must read as not-resolved (not its last pre-freeze
+        // verdict) so the audience sees Unresolved -> PENDING (PRE-RES) -> final,
+        // rather than a misleading WA flipping into pending.
+        if (pending.ContainsKey(new PendingProblem(team.Id, problemDef.Id)))
           verdict = VerdictRunResult.Unresolved;
+        else if (result.LastAlteringRunId is { } runId && frozen.RunById(runId) is { } run)
+          verdict = run.Verdict;
 
         return new ProblemFreezeResult(problemDef.Id, result.Points, verdict, preFreezeCount,
           postFreezeCount);
@@ -322,4 +352,5 @@ public sealed record IcpcResolveEvent(
   int NewRank,
   double NewProblemScore,
   VerdictRunResult Verdict,
-  double TimeSinceStart);
+  double TimeSinceStart,
+  bool IsFinalize = false);
