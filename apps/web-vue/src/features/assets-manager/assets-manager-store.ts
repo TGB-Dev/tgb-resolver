@@ -1,4 +1,11 @@
 import type { ShowStateSnapshot } from "@tgb-resolver/contracts";
+import {
+  createFolderEndpoint,
+  deleteEntryEndpoint,
+  renameEntryEndpoint,
+  transferEntryEndpoint,
+  uploadAssetEndpoint,
+} from "@tgb-resolver/contracts";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
@@ -13,6 +20,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
   const viewMode = ref<ViewMode>("grid");
   const expandedFolderIds = ref(new Set<string>());
   const focusedPanel = ref<"tree" | "content">("content");
+  const showVersion = ref(0);
   const entries = computed(() => {
     const folders = selectedEntryId.value
       ? (findEntry(selectedEntryId.value)?.children ?? [])
@@ -86,6 +94,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     expandedFolderIds.value = new Set();
   }
   function applyShowState(data: ShowStateSnapshot) {
+    showVersion.value = data.showVersion ?? 0;
     const folders = (data.assets?.folders ?? []) as Array<{
       id: string;
       name: string;
@@ -109,6 +118,72 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     }));
     if (folders.length) expandAll();
   }
+  function arrayBufferToBase64(buffer: ArrayBuffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 8192)
+      binary += String.fromCodePoint(...bytes.subarray(i, i + 8192));
+    return btoa(binary);
+  }
+  async function createFolder(parentId: string | null, name: string) {
+    const response = await createFolderEndpoint({
+      body: { showVersion: showVersion.value, parentFolderId: parentId ?? "", name },
+      throwOnError: true,
+    });
+    applyShowState(response.data as ShowStateSnapshot);
+  }
+  async function uploadAsset(folderId: string | null, file: File) {
+    const response = await uploadAssetEndpoint({
+      path: { id: `asset-${Date.now()}` },
+      body: {
+        fileName: file.name,
+        contentType: file.type || "application/octet-stream",
+        bytes: arrayBufferToBase64(await file.arrayBuffer()),
+        showVersion: showVersion.value,
+        ...(folderId ? { folderId } : {}),
+      },
+      throwOnError: true,
+    });
+    applyShowState(response.data as ShowStateSnapshot);
+  }
+  async function renameEntry(id: string, isDirectory: boolean, newName: string) {
+    const response = await renameEntryEndpoint({
+      path: { id },
+      body: { showVersion: showVersion.value, isDirectory, newName },
+      throwOnError: true,
+    });
+    applyShowState(response.data as ShowStateSnapshot);
+  }
+  async function deleteEntry(id: string, isDirectory: boolean) {
+    const response = await deleteEntryEndpoint({
+      path: { id },
+      body: { showVersion: showVersion.value, isDirectory },
+      throwOnError: true,
+    });
+    applyShowState(response.data as ShowStateSnapshot);
+    const next = new Set(selectedIds.value);
+    next.delete(id);
+    selectedIds.value = next;
+    if (selectedEntryId.value === id) selectedEntryId.value = null;
+  }
+  async function transferEntry(
+    id: string,
+    isDirectory: boolean,
+    targetFolderId: string | null,
+    copy: boolean,
+  ) {
+    const response = await transferEntryEndpoint({
+      path: { id },
+      body: {
+        showVersion: showVersion.value,
+        isDirectory,
+        targetFolderId: targetFolderId ?? "",
+        copy,
+      },
+      throwOnError: true,
+    });
+    applyShowState(response.data as ShowStateSnapshot);
+  }
   return {
     folderTree,
     allFiles,
@@ -128,5 +203,11 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     expandAll,
     collapseAll,
     applyShowState,
+    showVersion,
+    createFolder,
+    uploadAsset,
+    renameEntry,
+    deleteEntry,
+    transferEntry,
   };
 });
