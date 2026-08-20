@@ -27,6 +27,7 @@ const emptyRegistry: ExtensionLike = {
     return extensions[extId];
   },
 };
+export const extensionRegistry = emptyRegistry;
 
 export function useExtensionRegistry(): ExtensionLike {
   return emptyRegistry;
