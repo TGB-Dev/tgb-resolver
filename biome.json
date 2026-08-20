@@ -48,6 +48,7 @@
       "!!**/*.gen.ts",
       "!!**/TestResults",
       "!!**/gen",
+      "!!**/styled-system",
       "vite.config.ts"
     ]
   }

@@ -12,10 +12,10 @@
       "outputs": ["dist/**"]
     },
     "check-types": {
-      "dependsOn": ["generate"]
+      "dependsOn": ["generate", "^build", "^check-types"]
     },
     "test": {
-      "dependsOn": ["generate"],
+      "dependsOn": ["generate", "^build", "^test"],
       "outputs": []
     }
   }
