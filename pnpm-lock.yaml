@@ -215,6 +215,9 @@ importers:
       '@chakra-ui/panda-preset':
         specifier: ^3.36.1
         version: 3.36.1
+      '@dnd-kit/helpers':
+        specifier: ^0.5.0
+        version: 0.5.0
       '@dnd-kit/vue':
         specifier: ^0.5.0
         version: 0.5.0(vue@3.5.41(typescript@6.0.3))
@@ -230,6 +233,12 @@ importers:
       '@lucide/vue':
         specifier: ^1.32.0
         version: 1.32.0(vue@3.5.41(typescript@6.0.3))
+      '@microsoft/signalr':
+        specifier: ^10.0.11
+        version: 10.0.11
+      '@microsoft/signalr-protocol-msgpack':
+        specifier: ^10.0.11
+        version: 10.0.11
       '@pandacss/plugin-lightningcss':
         specifier: ^1.12.0
         version: 1.12.0
@@ -260,15 +269,36 @@ importers:
       '@tgb-form/vue':
         specifier: ^0.0.4
         version: 0.0.4(@tanstack/vue-form@1.33.5(vue@3.5.41(typescript@6.0.3)))(vue@3.5.41(typescript@6.0.3))
+      '@tgb-resolver/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@tgb-resolver/realtime':
+        specifier: workspace:*
+        version: link:../../packages/realtime
       '@vueuse/core':
         specifier: ^14.4.0
         version: 14.4.0(vue@3.5.41(typescript@6.0.3))
+      canvas-confetti:
+        specifier: ^1.9.4
+        version: 1.9.4
+      effect:
+        specifier: ^3.22.1
+        version: 3.22.1
+      mediabunny:
+        specifier: ^1.55.1
+        version: 1.55.1
+      motion:
+        specifier: ^13.1.0
+        version: 13.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       motion-v:
         specifier: ^2.4.0
         version: 2.4.0(@vueuse/core@14.4.0(vue@3.5.41(typescript@6.0.3)))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vue@3.5.41(typescript@6.0.3))
       pinia:
         specifier: ^4.0.2
         version: 4.0.3(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
+      uuid:
+        specifier: ^14.0.2
+        version: 14.0.2
       valibot:
         specifier: ^1.4.2
         version: 1.4.2(typescript@6.0.3)
@@ -294,6 +324,9 @@ importers:
       '@tsconfig/node24':
         specifier: ^24.0.4
         version: 24.0.5
+      '@types/canvas-confetti':
+        specifier: ^1.9.0
+        version: 1.9.0
       '@types/jsdom':
         specifier: ^28.0.3
         version: 28.0.3
@@ -13604,6 +13637,14 @@ snapshots:
     transitivePeerDependencies:
       - react
       - react-dom
+
+  motion@13.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      framer-motion: 13.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
 
   motion@13.1.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
