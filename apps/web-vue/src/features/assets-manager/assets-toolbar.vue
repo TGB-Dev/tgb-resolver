@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { HStack } from "@styled-system/jsx";
+import { Grid, LayoutList } from "@lucide/vue";
+import { Box, HStack } from "@styled-system/jsx";
 
-import UiButton from "@/features/shared/ui/button.vue";
+import UiIconButton from "@/features/shared/ui/icon-button.vue";
 
 import { useAssetsManagerStore } from "./assets-manager-store";
 
@@ -11,26 +12,29 @@ const store = useAssetsManagerStore();
 </script>
 
 <template>
-  <HStack gap="2" p="2" borderBottomWidth="1" borderColor="border">
-    <UiButton
-      size="sm"
-      :variant="store.viewMode === 'grid' ? 'solid' : 'outline'"
-      @click="store.setViewMode('grid')"
-    >
-      Grid
-    </UiButton>
-    <UiButton
-      size="sm"
-      :variant="store.viewMode === 'list' ? 'solid' : 'outline'"
-      @click="store.setViewMode('list')"
-    >
-      List
-    </UiButton>
-    <UiButton size="sm" variant="ghost" @click="store.expandAll">
-      Expand all
-    </UiButton>
-    <UiButton size="sm" variant="ghost" @click="store.collapseAll">
-      Collapse all
-    </UiButton>
+  <HStack justify="space-between" px="4" py="2" borderBottomWidth="1" borderColor="border" w="full">
+    <HStack gap="2" fontSize="sm">
+      <Box color="fg.muted" fontWeight="medium">Assets</Box>
+      <Box color="fg.subtle">{{ store.entries.length }} items</Box>
+    </HStack>
+
+    <HStack gap="1">
+      <UiIconButton
+        ariaLabel="List view"
+        size="sm"
+        :variant="store.viewMode === 'list' ? 'solid' : 'ghost'"
+        @click="store.setViewMode('list')"
+      >
+        <LayoutList :size="16" aria-hidden />
+      </UiIconButton>
+      <UiIconButton
+        ariaLabel="Grid view"
+        size="sm"
+        :variant="store.viewMode === 'grid' ? 'solid' : 'ghost'"
+        @click="store.setViewMode('grid')"
+      >
+        <Grid :size="16" aria-hidden />
+      </UiIconButton>
+    </HStack>
   </HStack>
 </template>

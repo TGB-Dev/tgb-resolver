@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Box, Center } from "@styled-system/jsx";
+import { Box, Center, Grid } from "@styled-system/jsx";
 import { table } from "@styled-system/recipes";
 import type { ProblemDefinition } from "@tgb-resolver/realtime";
+import { computed, inject, type Ref } from "vue";
 
 defineOptions({ name: "LeaderboardTable" });
 
@@ -9,13 +10,24 @@ defineProps<{
   problems?: ProblemDefinition[];
 }>();
 
-const classes = table({ size: "md", variant: "line", stickyHeader: true });
+const isBigScreen = inject<Ref<boolean>>("isBigScreen", computed(() => false));
+const classes = computed(() =>
+  table({
+    size: isBigScreen.value ? "lg" : "sm",
+    variant: "line",
+    stickyHeader: true,
+  }),
+);
 </script>
 
 <template>
   <table
     :class="classes.root"
-    style="border-collapse: separate; border-spacing: 0;"
+    :style="{
+      borderCollapse: 'separate',
+      borderSpacing: 0,
+      fontSize: isBigScreen ? 'var(--font-sizes-2xl)' : undefined,
+    }"
   >
     <thead
       :class="classes.header"
@@ -29,9 +41,20 @@ const classes = table({ size: "md", variant: "line", stickyHeader: true });
           v-for="problem in problems"
           :key="problem.id"
           :class="classes.columnHeader"
-          style="width: 8ch; height: 2rem;"
+          :style="{
+            width: isBigScreen ? '14rem' : '8ch',
+            height: '2rem',
+          }"
         >
-          <Center>
+          <Grid v-if="isBigScreen" templateRows="1fr 2fr" h="full" gap="2">
+            <Center>
+              <Box fontFamily="mono">{{ problem.label }}</Box>
+            </Center>
+            <Box textAlign="center" maxW="full" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+              {{ problem.name }}
+            </Box>
+          </Grid>
+          <Center v-else>
             <Box fontFamily="mono">{{ problem.label }}</Box>
           </Center>
         </th>

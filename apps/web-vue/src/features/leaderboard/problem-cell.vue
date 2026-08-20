@@ -2,7 +2,7 @@
 import { Box } from "@styled-system/jsx";
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 import type { LeaderboardProblemResult } from "@tgb-resolver/realtime";
-import { computed } from "vue";
+import { computed, inject, type Ref } from "vue";
 
 import { useVerdictColor, verdictShortCode } from "@/lib/verdict";
 
@@ -11,6 +11,8 @@ defineOptions({ name: "ProblemCell" });
 const props = defineProps<{
   problem: LeaderboardProblemResult;
 }>();
+
+const isBigScreen = inject<Ref<boolean>>("isBigScreen", computed(() => false));
 
 const isPending = computed(() => props.problem.verdict === VerdictRunResult.PENDING);
 const isUnknown = computed(() => props.problem.verdict === VerdictRunResult.UNKNOWN);
@@ -38,7 +40,9 @@ const score = computed(() => (isUnknown.value ? " " : props.problem.score));
       textAlign="center"
       :borderColor="verdictColors.border"
       :bg="verdictColors.bg"
-      :animation="isPending ? 'pulse' : undefined"
+      :style="{
+        animation: isPending ? 'pulse 2s cubic-bezier(0.45, 0, 0.55, 1) infinite' : undefined,
+      }"
     >
       <Box
         lineHeight="1.3"
@@ -49,7 +53,7 @@ const score = computed(() => (isUnknown.value ? " " : props.problem.score));
         {{ score }}
       </Box>
       <Box
-        fontSize="xs"
+        :fontSize="isBigScreen ? 'md' : 'xs'"
         lineHeight="1.2"
         :color="verdictColors.fg"
         whiteSpace="pre"

@@ -15,10 +15,11 @@ const props = withDefaults(
   defineProps<{
     showArrow?: boolean;
     disabled?: boolean;
-    content: string;
+    content?: string;
+    openDelay?: number;
     contentProps?: TooltipContentBaseProps;
   }>(),
-  { showArrow: false, disabled: false, contentProps: undefined },
+  { showArrow: false, disabled: false, content: "", openDelay: undefined, contentProps: undefined },
 );
 
 const rootProps = computed(() => {
@@ -39,7 +40,7 @@ const classes = tooltip();
         <TooltipArrow v-if="showArrow">
           <TooltipArrowTip />
         </TooltipArrow>
-        {{ content }}
+        <slot name="content">{{ content }}</slot>
       </TooltipContent>
     </TooltipPositioner>
   </TooltipRoot>

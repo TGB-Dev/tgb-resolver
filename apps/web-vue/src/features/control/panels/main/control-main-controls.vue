@@ -26,7 +26,7 @@ import {
   WifiOff,
 } from "@lucide/vue";
 import { Box, HStack } from "@styled-system/jsx";
-import { slider, swittch } from "@styled-system/recipes";
+import { separator, slider, swittch } from "@styled-system/recipes";
 import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus } from "@tgb-resolver/realtime";
 import { computed, ref } from "vue";
@@ -45,6 +45,7 @@ import {
 } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
 import UiButton from "@/features/shared/ui/button.vue";
+import UiIconButton from "@/features/shared/ui/icon-button.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 import { useAction } from "@/lib/actions";
 import { useRealtimeStore } from "@/stores/realtime-store";
@@ -118,6 +119,7 @@ const rateIndex = computed(() => {
 const sliderValue = computed(() => (dragValue.value.length > 0 ? dragValue.value : [rateIndex.value]));
 const sliderClasses = slider({ size: "sm", variant: "outline" });
 const switchClasses = swittch({ size: "sm" });
+const separatorClass = separator({ orientation: "vertical", size: "sm" });
 
 function handleSpeedChange(details: { value: number[] }) {
   dragValue.value = details.value;
@@ -153,22 +155,30 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 
 <template>
   <HStack h="16" alignItems="center" borderTopWidth="1" borderColor="border" gap="2" p="2" class="tgb-controls">
-    <UiButton :loading="startPlayback.isPending.value" :disabled="!canMutate" @click="startPlayback.mutate()">
+    <UiIconButton
+      ariaLabel="Play or Pause"
+      :disabled="!canMutate || startPlayback.isPending.value"
+      @click="startPlayback.mutate()"
+    >
       <Pause v-if="playbackStatus === PlaybackStatus.RUNNING" :size="16" aria-hidden />
       <Play v-else :size="16" aria-hidden />
-    </UiButton>
-    <UiButton :loading="resetPlayback.isPending.value" :disabled="!canMutate" @click="resetPlayback.mutate()">
+    </UiIconButton>
+    <UiIconButton
+      ariaLabel="Reset playback"
+      :disabled="!canMutate || resetPlayback.isPending.value"
+      @click="resetPlayback.mutate()"
+    >
       <TimerReset :size="16" aria-hidden />
-    </UiButton>
+    </UiIconButton>
 
-    <UiButton v-bind="prevAction.buttonProps" ariaLabel="Previous event">
+    <UiIconButton v-bind="prevAction.buttonProps" ariaLabel="Previous event">
       <ChevronLeft :size="16" aria-hidden />
-    </UiButton>
-    <UiButton v-bind="nextAction.buttonProps" ariaLabel="Next event">
+    </UiIconButton>
+    <UiIconButton v-bind="nextAction.buttonProps" ariaLabel="Next event">
       <ChevronRight :size="16" aria-hidden />
-    </UiButton>
+    </UiIconButton>
 
-    <Box w="px" h="6" bg="border.muted" flex="none" aria-hidden />
+    <Box :class="separatorClass" h="6" mx="1" aria-hidden />
 
     <SwitchRoot
       :checked="autoResolveEnabled"
@@ -176,11 +186,11 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       :class="switchClasses.root"
       @checked-change="(details) => updateAutomation.mutate({ autoResolveEnabled: details.checked })"
     >
+      <SwitchLabel :class="switchClasses.label">Autoplay</SwitchLabel>
       <SwitchControl :class="switchClasses.control">
         <SwitchThumb :class="switchClasses.thumb" />
+        <SwitchHiddenInput />
       </SwitchControl>
-      <SwitchHiddenInput />
-      <SwitchLabel :class="switchClasses.label">Autoplay</SwitchLabel>
     </SwitchRoot>
 
     <SliderRoot
@@ -219,8 +229,9 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 
     <Tooltip :content="isLive ? 'Switch to Edit Mode' : 'Switch to Live Mode'">
       <UiButton
+        w="48"
         :variant="isLive ? 'solid' : 'outline'"
-        colorPalette="red"
+        :colorPalette="isLive ? 'red' : undefined"
         :disabled="!canMutate || toggleLiveMode.isPending.value"
         @click="toggleLiveMode.mutate()"
       >

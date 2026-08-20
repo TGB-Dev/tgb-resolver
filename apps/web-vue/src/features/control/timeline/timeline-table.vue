@@ -2,12 +2,13 @@
 import type { DragEndEvent } from "@dnd-kit/vue";
 import { DragDropProvider } from "@dnd-kit/vue";
 import { Box, Center, VStack } from "@styled-system/jsx";
-import { TimelineEventType } from "@tgb-resolver/contracts";
+import { PlaybackStatus, TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem as TimelineRowPayload } from "@tgb-resolver/realtime";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
-import { useControlShowQuery, useMoveTimelineEventMutation, useSeekPlaybackMutation } from "@/features/control/composables/use-show";
+import { useControlIsLive, useControlShowQuery, useMoveTimelineEventMutation, useSeekPlaybackMutation } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
+import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 import { useShowStore } from "@/stores/show-store";
 
 import TimelineContextMenu from "./timeline-context-menu.vue";
@@ -16,16 +17,58 @@ import TimelineSortableRow from "./timeline-sortable-row.vue";
 import TimelineTableHeader from "./timeline-table-header.vue";
 
 defineOptions({ name: "ControlTimelineTable" });
+
 const showQuery = useControlShowQuery();
 const showStore = useShowStore();
 const playback = usePlaybackStore();
+const isLive = useControlIsLive();
 const seekPlayback = useSeekPlaybackMutation();
 const moveEvent = useMoveTimelineEventMutation();
+
+const containerRef = ref<HTMLElement | null>(null);
 const contextTarget = ref<{ payload: TimelineRowPayload; x: number; y: number } | null>(null);
 const reorderState = createTimelineReorderState();
-const displayIds = computed(() => reorderState.rows.value ?? showStore.showOrderedIds);
-const displayRows = computed(() => displayIds.value.map((id) => showStore.timelineItemsById[id]).filter((row): row is TimelineRowPayload => row !== undefined));
+
+const displayIds = computed(() => (isLive.value ? showStore.showOrderedIds : (reorderState.rows.value ?? showStore.showOrderedIds)));
+const displayRows = computed(() =>
+  displayIds.value
+    .map((id) => showStore.timelineItemsById[id])
+    .filter((row): row is TimelineRowPayload => row !== undefined),
+);
+
+function onSeek(id: number) {
+  const status = playback.status;
+  if (status !== PlaybackStatus.RUNNING && status !== PlaybackStatus.PAUSED) return;
+  seekPlayback.mutate(id);
+}
+
+function scrollEventToTop(eventId: number | null) {
+  if (!containerRef.value || eventId == null) return;
+  const el = containerRef.value.querySelector<HTMLElement>(`[data-event-id="${eventId}"]`);
+  if (!el) return;
+  animateScrollIntoView(el, containerRef.value, { block: "start", duration: 0.15 });
+}
+
+function scrollToCurrent() {
+  scrollEventToTop(playback.currentCueId);
+}
+
+defineExpose({
+  scrollToCurrent,
+});
+
+watch(
+  () => playback.currentCueId,
+  (target) => {
+    if (target != null && showStore.timelineItemsById[target]?.triggerOffsetSeconds != null) {
+      return;
+    }
+    requestAnimationFrame(() => scrollEventToTop(target));
+  },
+);
+
 function reorder(event: DragEndEvent) {
+  if (isLive.value) return;
   const sourceId = event.operation.source?.id;
   const targetId = event.operation.target?.id;
   if (event.canceled || typeof sourceId !== "number" || typeof targetId !== "number") {
@@ -44,24 +87,79 @@ function reorder(event: DragEndEvent) {
   const relativeToEventId = before ? current[1] : current[targetIndex - 1];
   if (relativeToEventId == null) return;
   reorderState.set(current);
-  moveEvent.mutate({ eventId: sourceId, relativeToEventId, before }, { onError: () => reorderState.take(), onSettled: () => reorderState.take() });
+  moveEvent.mutate(
+    { eventId: sourceId, relativeToEventId, before },
+    {
+      onError: () => reorderState.take(),
+      onSettled: () => reorderState.take(),
+    },
+  );
 }
+
 function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
   event.preventDefault();
   event.stopPropagation();
-  contextTarget.value = { payload, x: Math.max(8, Math.min(event.clientX, window.innerWidth - 180)), y: Math.max(8, Math.min(event.clientY, window.innerHeight - 110)) };
+  contextTarget.value = {
+    payload,
+    x: Math.max(8, Math.min(event.clientX, window.innerWidth - 180)),
+    y: Math.max(8, Math.min(event.clientY, window.innerHeight - 110)),
+  };
 }
 </script>
 
 <template>
-  <Center h="full" px="4" overflow="auto">
-    <VStack w="full" alignItems="stretch">
-      <TimelineTableHeader />
-      <DragDropProvider v-if="displayIds.length" @drag-end="reorder">
-        <TimelineSortableRow v-for="(row, index) in displayRows" :key="row.id" :payload="row" :index="index" :is-live="playback.currentEventId === row.id" @seek="seekPlayback.mutate" @contextmenu="openContextMenu" />
-      </DragDropProvider>
-      <Box v-if="showQuery.isLoading.value || showStore.rows.length === 0" color="fg.muted" fontSize="sm">{{ showQuery.isLoading.value ? "Loading timeline…" : "No timeline events" }}</Box>
-    </VStack>
-    <TimelineContextMenu v-if="contextTarget" :target="contextTarget.payload" :x="contextTarget.x" :y="contextTarget.y" @close="contextTarget = null" />
-  </Center>
+  <Box boxSize="full" display="flex" flexDirection="column" minH="0" overflow="hidden">
+    <TimelineTableHeader :is-live="isLive" />
+
+    <Box
+      ref="containerRef"
+      flex="1"
+      minH="0"
+      overflow="auto"
+      px="4"
+      :style="{
+        '--row-odd-bg': 'var(--colors-bg)',
+        '--row-even-bg': 'var(--colors-bg-emphasized, rgba(0,0,0,0.04))',
+      }"
+    >
+      <VStack w="full" alignItems="stretch">
+        <template v-if="displayIds.length > 0">
+          <DragDropProvider v-if="!isLive" @drag-end="reorder">
+            <TimelineSortableRow
+              v-for="(row, index) in displayRows"
+              :key="row.id"
+              :payload="row"
+              :index="index"
+              :is-live="playback.currentEventId === row.id"
+              @seek="onSeek"
+              @contextmenu="openContextMenu"
+            />
+          </DragDropProvider>
+          <template v-else>
+            <TimelineSortableRow
+              v-for="(row, index) in displayRows"
+              :key="row.id"
+              :payload="row"
+              :index="index"
+              :is-live="playback.currentEventId === row.id"
+              @seek="onSeek"
+              @contextmenu="openContextMenu"
+            />
+          </template>
+        </template>
+
+        <Center v-if="showQuery.isLoading.value || displayIds.length === 0" h="40" color="fg.muted" fontSize="sm">
+          {{ showQuery.isLoading.value ? "Loading timeline…" : "No timeline events" }}
+        </Center>
+      </VStack>
+    </Box>
+
+    <TimelineContextMenu
+      v-if="contextTarget"
+      :target="contextTarget.payload"
+      :x="contextTarget.x"
+      :y="contextTarget.y"
+      @close="contextTarget = null"
+    />
+  </Box>
 </template>
