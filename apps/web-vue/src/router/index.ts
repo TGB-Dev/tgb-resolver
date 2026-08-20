@@ -11,7 +11,7 @@ const router = createRouter({
     {
       path: "/control/",
       name: "control",
-      component: () => import("@/components/placeholder-route.vue"),
+      component: () => import("@/features/control/control-route.vue"),
     },
     { path: "/:pathMatch(.*)*", redirect: "/" },
   ],
