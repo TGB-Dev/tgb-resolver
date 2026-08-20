@@ -24,7 +24,7 @@ const styles = dialog();
           </div>
           <div :class="styles.footer">
             <Dialog.CloseTrigger :class="button({ variant: 'outline' })">Cancel</Dialog.CloseTrigger>
-            <button :class="button({ variant: 'solid' })">Save</button>
+            <button type="button" :class="button({ variant: 'solid' })">Save</button>
           </div>
           <Dialog.CloseTrigger :class="styles.closeTrigger">
             <XIcon />

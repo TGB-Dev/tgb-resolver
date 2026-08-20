@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
   "root": true,
   "linter": {
     "enabled": true,
@@ -51,5 +51,8 @@
       "!!**/styled-system",
       "vite.config.ts"
     ]
+  },
+  "html": {
+    "experimentalFullSupportEnabled": true
   }
 }
