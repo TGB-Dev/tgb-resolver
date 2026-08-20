@@ -10,7 +10,6 @@ const realtimeStore = useRealtimeStore();
 <template>
   <Box
     v-if="realtimeStore.bigRefetching"
-    class="tgb-big-refetch"
     alignItems="center"
     display="flex"
     inset="0"

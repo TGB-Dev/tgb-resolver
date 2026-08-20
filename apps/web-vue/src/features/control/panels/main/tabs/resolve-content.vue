@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Box } from "@styled-system/jsx";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { verdictShortCode } from "@/lib/verdict";
@@ -21,47 +22,30 @@ const rankImprovement =
     ? props.cue.oldRank - props.cue.newRank
     : 0;
 
-function tokenToCssVar(token: string): string {
-  return `var(--colors-${token.replace(/\./g, "-")})`;
-}
 </script>
 
 <template>
-  <span v-if="!cue.problem" class="tgb-resolve-line">{{ resolvedName }}</span>
-  <span v-else>
+  <Box v-if="!cue.problem" as="span" fontFamily="mono">{{ resolvedName }}</Box>
+  <Box v-else as="span" fontFamily="mono">
     {{ resolvedName }} |
-    <span :style="{ color: tokenToCssVar(fg), fontFamily: 'var(--fonts-mono)' }">
+    <Box as="span" :color="fg">
       {{ verdictShortCode(cue.verdict) }}
-    </span>
+    </Box>
     <span> | </span>
-    <span class="tgb-resolve-success">
+    <Box as="span" color="fg.success">
       {{ cue.problem }}. {{ cue.problemDisplayName }}
       <template v-if="cue.newProblemScore !== undefined"> ({{ cue.newProblemScore }} PTS)</template>
-    </span>
+    </Box>
     <template v-if="hasOld">
       <span> | Total </span>
-      <span class="tgb-resolve-mono">{{ cue.oldScore }}</span>
+      <Box as="span">{{ cue.oldScore }}</Box>
       <span> to </span>
-      <span class="tgb-resolve-success">{{ cue.newTotalScore }}</span>
+      <Box as="span" color="fg.success">{{ cue.newTotalScore }}</Box>
       <span> | Rank </span>
-      <span class="tgb-resolve-mono">{{ cue.oldRank }}</span>
+      <Box as="span">{{ cue.oldRank }}</Box>
       <span> to </span>
-      <span class="tgb-resolve-success">{{ cue.newRank }}</span>
+      <Box as="span" color="fg.success">{{ cue.newRank }}</Box>
       <template v-if="rankImprovement > 0"> (+{{ rankImprovement }})</template>
     </template>
-  </span>
+  </Box>
 </template>
-
-<style scoped>
-.tgb-resolve-line,
-.tgb-resolve-mono {
-  font-family: var(--fonts-mono);
-  font-size: inherit;
-}
-
-.tgb-resolve-success {
-  font-family: var(--fonts-mono);
-  font-size: inherit;
-  color: var(--colors-fg-success);
-}
-</style>

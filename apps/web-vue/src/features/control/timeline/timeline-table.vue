@@ -16,7 +16,7 @@ const seekPlayback = useSeekPlaybackMutation();
 </script>
 
 <template>
-  <Center h="full" px="4" overflow="auto" class="tgb-timeline-stub">
+  <Center h="full" px="4" overflow="auto">
     <VStack w="full" alignItems="stretch">
       <TimelineTableHeader />
       <TimelineTableItem v-for="row in showStore.rows" :key="row.id" :payload="row" :is-live="playback.currentEventId === row.id" @seek="seekPlayback.mutate" />
