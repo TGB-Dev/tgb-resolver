@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Box } from "@styled-system/jsx";
 
+import AppDevtools from "@/features/shared/app/app-devtools.vue";
 import { useColorModeStore } from "@/stores/color-mode-store";
 
 useColorModeStore(); // applies initial theme class (FOUC-safe, matches index.html bootstrap)
@@ -9,6 +10,7 @@ useColorModeStore(); // applies initial theme class (FOUC-safe, matches index.ht
 <template>
   <Box minH="dvh" w="full" px="0">
     <RouterView />
+    <AppDevtools />
   </Box>
 </template>
 
