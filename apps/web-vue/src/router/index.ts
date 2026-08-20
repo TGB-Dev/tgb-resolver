@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: "/",
       name: "audience",
-      component: () => import("@/components/placeholder-route.vue"),
+      component: () => import("@/features/leaderboard/leaderboard.vue"),
     },
     {
       path: "/control/",
