@@ -34,6 +34,7 @@ Pre-commit hook runs: `sync:check || sync` → `test` → `biome check --write -
 | Path                  | Role                                                                                                               |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------|
 | `apps/server/`        | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format               |
+| `apps/web-vue/`       | Canonical Vue 3 SPA (Pinia, TanStack Vue Query, Panda CSS + Chakra preset, Ark UI). Dev port 5173          |
 | `apps/web/`           | TanStack Router SPA (React 19, Vite, Chakra UI 3, Preact Signals). Dev port 3000                                    |
 | `apps/web/src/features/` | 5 feature-sliced UI modules, each owning their own models |
 | `apps/web/src/features/control/` | Models: playback, control-now, floating-panel (+types). UI: timeline, transport, cue tab |
@@ -92,7 +93,20 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
 - **Selection semantics**: single-click → select/highlight, double-click → navigate/open.
   Modifier + click for multi-select; click outside deselects all.
 
-### Frontend state (Preact Signals)
+### Frontend state (Vue canonical frontend)
+
+- Shared and feature state uses Pinia setup stores with `ref` and `computed`; do not introduce
+  React state patterns into `apps/web-vue`.
+- Use `@tanstack/vue-query` for server cache and async mutations.
+- Use generated `@styled-system/jsx` components for layout and generated Chakra Panda recipes
+  for component anatomy. Ark UI primitives must receive the corresponding generated slot recipe
+  classes; Ark primitives do not accept styled-system layout props.
+- Merge recipe and atomic overrides with Panda `cx(recipe(...), css(...))`, not string concatenation
+  or bespoke scoped CSS. Use Panda conditional styles (`_hover`, `_disabled`, `_selected`, etc.)
+  for state styling.
+- Use `motion-v`/vanilla `motion` for animation and keep hot-path animation imperative.
+
+### Legacy frontend state (React reference)
 
 - Import signals **only** from `@preact/signals-react` (never `@preact/signals`).
 - **BANNED for shared state:** React `useState`, `useReducer`, `createContext`,
@@ -125,7 +139,7 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
   re-renders, not a large ancestor subtree.
 - `batch()` correlated multi-signal writes; `peek()` for signal reads that must
   not subscribe a component (reads used only inside callbacks/effects).
-- Wrap non-urgent `@tanstack/react-query` invalidations in `startTransition`.
+- The rules below apply only to `apps/web`, which remains the legacy reference implementation.
 
 ## Testing
 
