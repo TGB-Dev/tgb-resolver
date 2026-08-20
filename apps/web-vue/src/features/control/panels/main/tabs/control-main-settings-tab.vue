@@ -1,3 +1,3 @@
 <script setup lang="ts">defineOptions({ name: "ControlMainSettingsTab" });</script>
-<template><div class="tab-placeholder">Settings</div></template>
-<style scoped>.tab-placeholder { padding: 1rem; }</style>
+<script setup lang="ts">import { Box } from "@styled-system/jsx";</script>
+<template><Box p="4">Settings</Box></template>
