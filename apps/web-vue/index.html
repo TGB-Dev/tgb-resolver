@@ -1,13 +1,35 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TGB Resolver</title>
+    <script>
+      // Run BEFORE any CSS: Chakra Panda preset semantic tokens need
+      // html[class="light"|"dark"] at first paint — no FOUC, no flash.
+      (() => {
+        var mode = null;
+        try {
+          mode = localStorage.getItem("color-mode");
+        } catch {}
+        var root = document.documentElement;
+        if (mode === "light") root.classList.remove("dark");
+        else if (mode === "dark") root.classList.add("dark");
+        if (mode !== "light" && mode !== "dark") root.classList.add("dark");
+      })();
+    </script>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- Static splash: shown until Vue mounts (#app content replaced) -->
+      <div id="splash">
+        <div class="splash-inner">
+          <div class="splash-logo">TGB</div>
+          <div class="splash-spinner" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

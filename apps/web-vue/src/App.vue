@@ -1,38 +1,15 @@
 <script setup lang="ts">
-import { Dialog } from "@ark-ui/vue";
-import { XIcon } from "@lucide/vue";
-import { button, dialog } from "@styled-system/recipes";
-
-const styles = dialog();
+import { Box } from "@styled-system/jsx";
 </script>
 
 <template>
-  <Dialog.Root role="alertdialog">
-    <Dialog.Trigger :class="button({ variant: 'solid' })">Open Dialog</Dialog.Trigger>
-    <Teleport to="body">
-      <Dialog.Backdrop :class="styles.backdrop" />
-      <Dialog.Positioner :class="styles.positioner">
-        <Dialog.Content :class="styles.content">
-          <div :class="styles.header">
-            <Dialog.Title :class="styles.title">Dialog Title</Dialog.Title>
-          </div>
-          <div :class="styles.body">
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua.
-            </p>
-          </div>
-          <div :class="styles.footer">
-            <Dialog.CloseTrigger :class="button({ variant: 'outline' })">Cancel</Dialog.CloseTrigger>
-            <button type="button" :class="button({ variant: 'solid' })">Save</button>
-          </div>
-          <Dialog.CloseTrigger :class="styles.closeTrigger">
-            <XIcon />
-          </Dialog.CloseTrigger>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Teleport>
-  </Dialog.Root>
+  <Box minH="dvh" w="full" px="0">
+    <RouterView />
+  </Box>
 </template>
 
-<style scoped></style>
+<style scoped>
+:global(html.dark) {
+  color-scheme: dark;
+}
+</style>
