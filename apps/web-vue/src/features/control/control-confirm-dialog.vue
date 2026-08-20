@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { DialogContent, DialogPositioner, DialogRoot, DialogTitle } from "@ark-ui/vue";
 import { Box, VStack } from "@styled-system/jsx";
+import { dialog } from "@styled-system/recipes";
 
 import UiButton from "@/features/shared/ui/button.vue";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
 defineOptions({ name: "ControlConfirmDialog" });
 const store = useConfirmActionStore();
+const dialogClasses = dialog({ placement: "center", size: "sm" });
 </script>
 <template>
   <DialogRoot :open="store.open" role="alertdialog" @escape-key-down="store.resolveConfirmAction(false)">
-    <DialogPositioner><DialogContent>
+    <DialogPositioner :class="dialogClasses.positioner"><DialogContent :class="dialogClasses.content">
       <VStack alignItems="stretch" gap="4" p="6">
         <DialogTitle>{{ store.title }}</DialogTitle>
         <Box>{{ store.message }}</Box>
@@ -22,6 +24,3 @@ const store = useConfirmActionStore();
     </DialogContent></DialogPositioner>
   </DialogRoot>
 </template>
-<style scoped>
-[data-part="content"] { background: var(--colors-bg); border: 1px solid var(--colors-border); border-radius: var(--radii-md); }
-</style>

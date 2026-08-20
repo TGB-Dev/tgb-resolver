@@ -8,6 +8,7 @@ import {
   TooltipRoot,
   TooltipTrigger,
 } from "@ark-ui/vue";
+import { tooltip } from "@styled-system/recipes";
 import { computed } from "vue";
 
 const props = withDefaults(
@@ -25,6 +26,7 @@ const rootProps = computed(() => {
     props;
   return rest;
 });
+const classes = tooltip();
 </script>
 
 <template>
@@ -32,8 +34,8 @@ const rootProps = computed(() => {
     <TooltipTrigger asChild>
       <slot />
     </TooltipTrigger>
-    <TooltipPositioner>
-      <TooltipContent v-bind="contentProps">
+    <TooltipPositioner :class="classes.positioner">
+      <TooltipContent :class="classes.content" v-bind="contentProps">
         <TooltipArrow v-if="showArrow">
           <TooltipArrowTip />
         </TooltipArrow>

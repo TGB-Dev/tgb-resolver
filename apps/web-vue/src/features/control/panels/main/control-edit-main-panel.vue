@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TabContent, TabList, TabsRoot, TabTrigger } from "@ark-ui/vue";
 import { Images, Info, Logs, ScanEye, Settings } from "@lucide/vue";
+import { tabs } from "@styled-system/recipes";
 import { useHotkey } from "@tanstack/vue-hotkeys";
 import { ref } from "vue";
 
@@ -19,6 +20,7 @@ enum ControlEditMainPanelTabs {
 }
 
 const activeTab = ref<ControlEditMainPanelTabs>(ControlEditMainPanelTabs.PREVIEW);
+const tabClasses = tabs({ variant: "line", size: "sm" });
 
 useHotkey("Mod+1", () => (activeTab.value = ControlEditMainPanelTabs.PREVIEW));
 useHotkey("Mod+2", () => (activeTab.value = ControlEditMainPanelTabs.ASSETS));
@@ -28,85 +30,44 @@ useHotkey("Mod+5", () => (activeTab.value = ControlEditMainPanelTabs.SETTINGS));
 </script>
 
 <template>
-  <TabsRoot v-model="activeTab" class="tgb-edit-tabs" defaultValue="preview">
-    <TabList class="tgb-edit-tabs-list">
-      <TabTrigger value="preview">
+  <TabsRoot v-model="activeTab" :class="tabClasses.root" defaultValue="preview">
+    <TabList :class="tabClasses.list">
+      <TabTrigger value="preview" :class="tabClasses.trigger">
         <ScanEye :size="16" aria-hidden />
         Preview
       </TabTrigger>
-      <TabTrigger value="assets">
+      <TabTrigger value="assets" :class="tabClasses.trigger">
         <Images :size="16" aria-hidden />
         Assets
       </TabTrigger>
-      <TabTrigger value="cue">
+      <TabTrigger value="cue" :class="tabClasses.trigger">
         <Logs :size="16" aria-hidden />
         Cue
       </TabTrigger>
-      <TabTrigger value="info">
+      <TabTrigger value="info" :class="tabClasses.trigger">
         <Info :size="16" aria-hidden />
         Info
       </TabTrigger>
-      <TabTrigger value="settings">
+      <TabTrigger value="settings" :class="tabClasses.trigger">
         <Settings :size="16" aria-hidden />
         Settings
       </TabTrigger>
     </TabList>
 
-    <TabContent value="preview" class="tgb-edit-tabs-content">
+    <TabContent value="preview" :class="tabClasses.content">
       <ControlMainPreviewTab />
     </TabContent>
-    <TabContent value="assets" class="tgb-edit-tabs-content">
+    <TabContent value="assets" :class="tabClasses.content">
       <ControlMainAssetsTab />
     </TabContent>
-    <TabContent value="cue" class="tgb-edit-tabs-content">
+    <TabContent value="cue" :class="tabClasses.content">
       <ControlMainCueTab />
     </TabContent>
-    <TabContent value="info" class="tgb-edit-tabs-content">
+    <TabContent value="info" :class="tabClasses.content">
       <ControlMainInfoTab />
     </TabContent>
-    <TabContent value="settings" class="tgb-edit-tabs-content">
+    <TabContent value="settings" :class="tabClasses.content">
       <ControlMainSettingsTab />
     </TabContent>
   </TabsRoot>
 </template>
-
-<style scoped>
-.tgb-edit-tabs {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.tgb-edit-tabs-list {
-  display: flex;
-  gap: 0.125rem;
-  padding-inline: 0.5rem;
-  border-bottom: 1px solid var(--colors-border-muted);
-}
-
-.tgb-edit-tabs-list [data-part="trigger"] {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  color: var(--colors-fg-muted);
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-}
-
-.tgb-edit-tabs-list [data-part="trigger"][data-selected] {
-  color: var(--colors-fg);
-  border-bottom-color: var(--colors-color-palette-600);
-}
-
-.tgb-edit-tabs-content {
-  min-height: 0;
-  height: 100%;
-  overflow: auto;
-}
-</style>
