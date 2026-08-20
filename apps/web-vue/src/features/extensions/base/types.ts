@@ -14,16 +14,16 @@ export enum ExtensionType {
   ScriptOnly,
   WithVueComponent,
 }
-export interface WithVueComponentExtension<TPayload = unknown> extends BaseExtension {
+export interface WithVueComponentExtension<_TPayload = unknown> extends BaseExtension {
   readonly type: ExtensionType.WithVueComponent;
-  component: Component<{ payload: TPayload }>;
+  component: Component;
   earlyDestruction?: () => void;
 }
 export interface ScriptOnlyExtension extends BaseExtension {
   readonly type: ExtensionType.ScriptOnly;
   execute(payload: Record<string, unknown>): () => void | Promise<void>;
 }
-export type Extension = WithVueComponentExtension<any> | ScriptOnlyExtension;
+export type Extension = WithVueComponentExtension<unknown> | ScriptOnlyExtension;
 export function getExtensionPayload<TConfig extends Record<string, unknown>>(
   event: TimelineEvent | TimelineTableItem,
 ): TConfig | undefined {

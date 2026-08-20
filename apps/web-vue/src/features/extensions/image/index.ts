@@ -1,3 +1,4 @@
+import { css } from "@styled-system/css";
 import { h } from "vue";
 
 import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
@@ -5,6 +6,11 @@ export interface ImageExtensionPayload extends Record<string, unknown> {
   assetId: string;
   fit?: "cover" | "contain" | "fill";
 }
+const imageClasses: Record<NonNullable<ImageExtensionPayload["fit"]>, string> = {
+  cover: css({ width: "full", height: "full", objectFit: "cover" }),
+  contain: css({ width: "full", height: "full", objectFit: "contain" }),
+  fill: css({ width: "full", height: "full", objectFit: "fill" }),
+};
 export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = {
   type: ExtensionType.WithVueComponent,
   extId: "img",
@@ -16,11 +22,7 @@ export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = 
     setup: (props) => () =>
       h("img", {
         src: `/assets/${(props.payload as ImageExtensionPayload).assetId}`,
-        style: {
-          objectFit: (props.payload as ImageExtensionPayload).fit ?? "cover",
-          width: "100%",
-          height: "100%",
-        },
+        class: imageClasses[(props.payload as ImageExtensionPayload).fit ?? "cover"],
       }),
   },
   formatCueMessage: (event) =>
