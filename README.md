@@ -81,8 +81,10 @@ Pre-commit runs: `sync:check || sync` → `test` → `biome check --write --stag
 ```text
 apps/
   server/     .NET 10 solution (server + parser + tests)
-  web/        TanStack Router SPA frontend
-              src/features/   — 5 feature dirs each owning their own models
+  web-vue/    Canonical Vue 3 SPA frontend (Pinia, Panda CSS, Ark UI)
+              src/features/   — vertical feature slices
+  web/        Legacy TanStack Router React reference frontend
+              src/features/   — 5 feature dirs retained for parity comparison
                 control/        — playback, timeline, transport, cue tab models
                 leaderboard/    — leaderboard grid/table models
                 assets-manager/ — folder/file asset browser model
