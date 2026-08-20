@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [
     "@hey-api/client-ofetch",
     "@tanstack/react-query",
+    "@tanstack/vue-query",
     "valibot",
     {
       name: "@hey-api/typescript",

@@ -29,6 +29,7 @@ const config = defineConfig(async () => {
       reactScan(),
     ],
     build: {
+      cssMinify: "lightningcss",
       rolldownOptions: {
         output: {
           strictExecutionOrder: true,
