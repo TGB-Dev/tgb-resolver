@@ -1,3 +1,7 @@
-<script setup lang="ts">defineOptions({ name: "ControlMainAssetsTab" });</script>
-<template><div class="tab-placeholder">Assets</div></template>
-<style scoped>.tab-placeholder { padding: 1rem; }</style>
+<script setup lang="ts">
+import AssetsManager from "@/features/assets-manager/assets-manager.vue";
+
+defineOptions({ name: "ControlMainAssetsTab" });
+</script>
+<template><AssetsManager /></template>
+<style scoped></style>
