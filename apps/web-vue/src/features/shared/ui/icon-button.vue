@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import { computed } from "vue";
 
@@ -16,7 +16,7 @@ const props = withDefaults(
   { variant: "ghost", size: "md", type: "button" },
 );
 
-const classes = computed(() => `${button({ variant: props.variant, size: props.size })} ${css({ aspectRatio: "1", p: "0" })}`);
+const classes = computed(() => cx(button({ variant: props.variant, size: props.size }), css({ aspectRatio: "1", p: "0" })));
 </script>
 
 <template>
