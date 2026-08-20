@@ -23,7 +23,7 @@ export interface ScriptOnlyExtension extends BaseExtension {
   readonly type: ExtensionType.ScriptOnly;
   execute(payload: Record<string, unknown>): () => void | Promise<void>;
 }
-export type Extension = WithVueComponentExtension | ScriptOnlyExtension;
+export type Extension = WithVueComponentExtension<any> | ScriptOnlyExtension;
 export function getExtensionPayload<TConfig extends Record<string, unknown>>(
   event: TimelineEvent | TimelineTableItem,
 ): TConfig | undefined {
