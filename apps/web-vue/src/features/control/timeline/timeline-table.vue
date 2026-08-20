@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Center, VStack } from "@styled-system/jsx";
+import { Box, Center, VStack } from "@styled-system/jsx";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
 import { useShowStore } from "@/stores/show-store";
@@ -17,19 +17,7 @@ const showStore = useShowStore();
     <VStack w="full" alignItems="stretch">
       <TimelineTableHeader />
       <TimelineTableItem v-for="row in showStore.rows" :key="row.id" :payload="row" />
-      <p v-if="showQuery.isLoading.value || showStore.rows.length === 0" class="tgb-timeline-stub-sub">{{ showQuery.isLoading.value ? "Loading timeline…" : "No timeline events" }}</p>
+      <Box v-if="showQuery.isLoading.value || showStore.rows.length === 0" color="fg.muted" fontSize="sm">{{ showQuery.isLoading.value ? "Loading timeline…" : "No timeline events" }}</Box>
     </VStack>
   </Center>
 </template>
-
-<style scoped>
-.tgb-timeline-stub-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.tgb-timeline-stub-sub {
-  color: var(--colors-fg-muted);
-  font-size: 0.875rem;
-}
-</style>

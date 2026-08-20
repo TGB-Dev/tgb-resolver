@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Box } from "@styled-system/jsx";
 import { computed } from "vue";
 
 import { useControlNowStore } from "@/features/control/control-now-store";
@@ -13,13 +14,5 @@ const formatted = computed(() => formatHms(new Date(controlNowStore.now)));
 </script>
 
 <template>
-  <span class="tgb-clock-now">{{ formatted }}</span>
+  <Box fontFamily="mono" fontVariantNumeric="tabular-nums" fontSize="sm">{{ formatted }}</Box>
 </template>
-
-<style scoped>
-.tgb-clock-now {
-  font-family: var(--fonts-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.875rem;
-}
-</style>

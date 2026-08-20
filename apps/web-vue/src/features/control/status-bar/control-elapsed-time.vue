@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Box } from "@styled-system/jsx";
 import { computed } from "vue";
 
 import { useControlNowStore } from "@/features/control/control-now-store";
@@ -24,20 +25,7 @@ const elapsedText = computed(() => {
 </script>
 
 <template>
-  <span class="tgb-clock-elapsed" :class="{ 'tgb-clock-elapsed--idle': !isStarted }">
+  <Box fontFamily="mono" fontVariantNumeric="tabular-nums" fontSize="3xl" lineHeight="1.1" :opacity="isStarted ? 1 : 0.5">
     T+{{ elapsedText }}
-  </span>
+  </Box>
 </template>
-
-<style scoped>
-.tgb-clock-elapsed {
-  font-family: var(--fonts-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 1.875rem;
-  line-height: 1.1;
-}
-
-.tgb-clock-elapsed--idle {
-  opacity: 0.5;
-}
-</style>
