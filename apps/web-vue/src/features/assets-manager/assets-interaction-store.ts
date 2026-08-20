@@ -34,6 +34,36 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
       (targetFolderId === null || assets.findEntry(targetFolderId)?.isDirectory === true)
     );
   }
+  function canTransferToFolder(entryIds: string[], targetFolderId: string | null, copy: boolean) {
+    if (targetFolderId !== null && assets.findEntry(targetFolderId)?.isDirectory !== true)
+      return false;
+    if (copy) return entryIds.length > 0;
+    return !entryIds.includes(targetFolderId ?? "");
+  }
+  async function pasteInto(targetFolderId: string | null) {
+    const state = clipboard.value;
+    if (!state || !canTransferToFolder(state.entryIds, targetFolderId, state.mode === "copy"))
+      return false;
+    for (const id of state.entryIds) {
+      const entry = assets.findEntry(id);
+      if (entry)
+        await assets.transferEntry(id, entry.isDirectory, targetFolderId, state.mode === "copy");
+    }
+    if (state.mode === "cut") clearClipboard();
+    return true;
+  }
+  async function dropInto(targetFolderId: string | null, dropEffect: "copy" | "move") {
+    const state = dragState.value;
+    if (!state || !canTransferToFolder(state.entryIds, targetFolderId, dropEffect === "copy"))
+      return false;
+    for (const id of state.entryIds) {
+      const entry = assets.findEntry(id);
+      if (entry)
+        await assets.transferEntry(id, entry.isDirectory, targetFolderId, dropEffect === "copy");
+    }
+    clearDrag();
+    return true;
+  }
   function beginDrag(primaryId: string, dropEffect: "copy" | "move") {
     const entryIds = resolveIds(primaryId);
     dragState.value = { entryIds, dropEffect };
@@ -54,6 +84,9 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
     cutSelection,
     clearClipboard,
     canPasteInto,
+    canTransferToFolder,
+    pasteInto,
+    dropInto,
     beginDrag,
     setDropTarget,
     clearDrag,
