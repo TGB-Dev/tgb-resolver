@@ -28,13 +28,14 @@ a relative timeline with a main panel showing the current, next, and prior cues.
   - `TGB.Resolver.Server`: API + SignalR host
   - `TGB.Resolver.IcpcXmlParser`: server-side ICPC XML parser
   - `TGB.Resolver.Server.Tests`, `TGB.Resolver.IcpcXmlParser.Tests`
-- `apps/web/`: TanStack Router SPA — audience and control UIs
+- `apps/web-vue/`: canonical Vue 3 SPA — audience and control UIs
+- `apps/web/`: legacy React reference implementation retained during migration
 - `packages/contracts/`: OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
 - `packages/realtime/`: client-side clock sync, timeline, and domain helpers
 
 ### Client-side architecture
 
-The frontend (`apps/web/`) organizes state and UI into feature-sliced modules under `src/features/`:
+The canonical frontend (`apps/web-vue/`) organizes state and UI into feature-sliced modules under `src/features/`:
 
 - **`control/`** — playback model, timeline cursor, multi-panel floating panel model + types (handle-based). All control-domain state.
 - **`leaderboard/`** — leaderboard state model.
@@ -42,7 +43,7 @@ The frontend (`apps/web/`) organizes state and UI into feature-sliced modules un
 - **`shared/`** — cross-cutting models: show state, realtime connection, confirm dialogs, fullscreen toggle.
 - **`extensions/`** — extension base types, static registry (`extensionRegistry`), config UI, and the `patchExtensionPayload` server-patch API.
 
-All models use `@preact/signals-react` — never React `useState`/`useReducer`/`createContext` for shared state. Import directly from a feature's model path (e.g. `@/features/control/playback-model`, `@/features/shared/show-model`).
+Vue feature state uses Pinia setup stores and Vue's fine-grained `ref`/`computed` reactivity. The legacy React implementation uses `@preact/signals-react`; it remains a porting reference only. Shared Vue state is imported from Pinia stores (for example `@/features/control/playback-store` and `@/stores/show-store`).
 
 ## Engineering conventions
 
@@ -56,7 +57,9 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 | Decision                                     | Rationale                                                                                               |
 |----------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | **Turborepo**                                | Pruned Docker images + caching; handles .NET + TS projects efficiently                                  |
-| **Preact Signals (`@preact/signals-react`)** | Fine-grained reactivity; render display-only signals directly to skip React reconciliation on hot paths |
+| **Pinia + Vue reactivity** | Fine-grained state updates with feature-owned setup stores and computed derivations |
+| **Panda CSS + Chakra preset** | Generated recipes, slot recipes, atomic classes, and conditional styles for consistent visual fidelity |
+| **Ark UI Vue** | Accessible headless behavior, always bound to the corresponding Panda slot recipe |
 | **SignalR + MessagePack**                    | Smaller wire payload than JSON for realtime frames                                                      |
 | **Source-generated JSON serializer**          | `JsonSourceGenerationOptions` for AOT-compatible serialization; keeps most endpoints at 8–9 ms         |
 | **Feature-based server structure**           | Domain-organized endpoints, dtos, and services per feature                                              |
