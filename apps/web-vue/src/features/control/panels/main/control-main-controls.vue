@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { SliderControl, SliderRange, SliderRoot, SliderThumb, SliderTrack, SliderValueText, SwitchControl, SwitchHiddenInput, SwitchLabel, SwitchRoot, SwitchThumb } from "@ark-ui/vue";
+import { SliderControl, SliderRange, SliderRoot, SliderThumb, SliderTrack, SliderValueText, SwitchControl, SwitchHiddenInput, SwitchLabel, SwitchRoot } from "@ark-ui/vue";
 import { AlertTriangle, ChevronLeft, ChevronRight, Pause, Pen, Play, Radio, RefreshCw, TimerReset, Wifi, WifiOff } from "@lucide/vue";
-import { Box, HStack, VStack } from "@styled-system/jsx";
+import { Box, HStack } from "@styled-system/jsx";
 import { slider } from "@styled-system/recipes";
 import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus } from "@tgb-resolver/realtime";
@@ -143,7 +143,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       <ChevronRight :size="16" aria-hidden />
     </UiButton>
 
-    <span class="tgb-controls-separator" aria-hidden />
+    <Box w="px" h="6" bg="border.muted" flex="none" aria-hidden />
 
     <SwitchRoot
       :checked="autoResolveEnabled"
@@ -203,13 +203,3 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
     </Tooltip>
   </HStack>
 </template>
-
-<style scoped>
-.tgb-controls-separator {
-  width: 1px;
-  height: 1.5rem;
-  background: var(--colors-border-muted);
-  flex: none;
-}
-
-</style>

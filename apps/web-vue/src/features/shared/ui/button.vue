@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { css } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
-import { type CSSProperties, computed } from "vue";
+import { computed } from "vue";
 
 import UiSpinner from "./spinner.vue";
 
@@ -22,12 +21,7 @@ const props = withDefaults(
 );
 
 const classes = computed(() => button({ variant: props.variant, size: props.size }));
-const style = computed<CSSProperties & Record<string, string>>(() => {
-  const result: CSSProperties & Record<string, string> = {};
-  if (props.colorPalette) result["--colors-color-palette"] = props.colorPalette;
-  if (props.aspectRatio) result.aspectRatio = props.aspectRatio;
-  return result;
-});
+const style = computed(() => (props.aspectRatio ? { aspectRatio: props.aspectRatio } : undefined));
 </script>
 
 <template>

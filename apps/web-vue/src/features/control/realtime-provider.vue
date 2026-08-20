@@ -12,7 +12,6 @@ import { useRealtimeStore } from "@/stores/realtime-store";
 import { useShowStore } from "@/stores/show-store";
 
 import { applyControlRealtimeMessage, controlShowQueryKey } from "./realtime-handler";
-import { mapShowStateSnapshotToShowFile } from "./show-mapper";
 
 const queryClient = useQueryClient();
 const realtimeStore = useRealtimeStore();

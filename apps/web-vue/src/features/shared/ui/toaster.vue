@@ -10,14 +10,15 @@ import {
 import { X } from "@lucide/vue";
 import { Stack } from "@styled-system/jsx";
 
+import UiSpinner from "./spinner.vue";
 import { toaster } from "./toaster";
 </script>
 
 <template>
   <Toaster :toaster="toaster">
     <template #default="toast">
-      <ToastRoot class="tgb-toast-root">
-        <span v-if="toast.type === 'loading'" aria-hidden class="tgb-toast-spinner" />
+      <ToastRoot w="min(24rem, calc(100vw - 2rem))">
+        <UiSpinner v-if="toast.type === 'loading'" size="sm" label="" aria-hidden="true" />
         <Stack gap="1" flex="1" maxWidth="100%">
           <ToastTitle v-if="toast.title">{{ toast.title }}</ToastTitle>
           <ToastDescription v-if="toast.description">{{ toast.description }}</ToastDescription>
@@ -30,25 +31,3 @@ import { toaster } from "./toaster";
     </template>
   </Toaster>
 </template>
-
-<style scoped>
-.tgb-toast-root {
-  width: min(24rem, calc(100vw - 2rem));
-}
-
-.tgb-toast-spinner {
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 2px solid var(--colors-border-muted);
-  border-top-color: var(--colors-fg-muted);
-  border-radius: 9999px;
-  animation: tgb-toast-spin 0.9s linear infinite;
-  flex: none;
-}
-
-@keyframes tgb-toast-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>
