@@ -5,6 +5,8 @@ export enum FloatingPanelType {
   CreateEvent = "create-event",
 }
 
+export type { FloatingPanelHandle } from "./floating-panel-store";
+
 export interface FloatingPanelConfig {
   size: { width: number; height: number };
   minSize?: { width: number; height: number };

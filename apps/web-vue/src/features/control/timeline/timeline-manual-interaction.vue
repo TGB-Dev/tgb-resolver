@@ -6,8 +6,42 @@ import { usePatchTimelineEventMutation } from "@/features/control/composables/us
 import UiIconButton from "@/features/shared/ui/icon-button.vue";
 
 defineOptions({ name: "ControlTimelineManualInteraction" });
-const props = withDefaults(defineProps<{ payload: TimelineTableItem; isNear?: boolean }>(), { isNear: false });
+
+const props = withDefaults(
+  defineProps<{
+    payload: TimelineTableItem;
+    isNear?: boolean;
+  }>(),
+  { isNear: false },
+);
+
 const patchEvent = usePatchTimelineEventMutation();
-function toggle(event: MouseEvent) { event.stopPropagation(); patchEvent.mutate({ eventId: props.payload.id, requireManualInteraction: !props.payload.requireManualInteraction }); }
+
+function toggle(event: MouseEvent) {
+  event.stopPropagation();
+  patchEvent.mutate({
+    eventId: props.payload.id,
+    requireManualInteraction: !props.payload.requireManualInteraction,
+  });
+}
 </script>
-<template><Check v-if="!isNear && payload.requireManualInteraction" :size="14" aria-hidden /><UiIconButton v-else-if="isNear" size="2xs" ariaLabel="Toggle manual interaction" @dblclick="toggle"><Check v-if="payload.requireManualInteraction" :size="14" aria-hidden /></UiIconButton></template>
+
+<template>
+  <Check
+    v-if="!isNear && payload.requireManualInteraction"
+    :size="14"
+    aria-hidden
+  />
+  <UiIconButton
+    v-else-if="isNear"
+    size="2xs"
+    ariaLabel="Toggle manual interaction"
+    @dblclick="toggle"
+  >
+    <Check
+      v-if="payload.requireManualInteraction"
+      :size="14"
+      aria-hidden
+    />
+  </UiIconButton>
+</template>

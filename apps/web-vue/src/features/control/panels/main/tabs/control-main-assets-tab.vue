@@ -3,5 +3,7 @@ import AssetsManager from "@/features/assets-manager/assets-manager.vue";
 
 defineOptions({ name: "ControlMainAssetsTab" });
 </script>
-<template><AssetsManager /></template>
-<style scoped></style>
+
+<template>
+  <AssetsManager />
+</template>

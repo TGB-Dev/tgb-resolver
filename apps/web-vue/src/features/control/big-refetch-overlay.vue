@@ -20,7 +20,7 @@ const realtimeStore = useRealtimeStore();
   >
     <VStack gap="4">
       <UiSpinner size="xl" label="" aria-hidden="true" />
-      <p color="fg.muted" fontSize="sm">Syncing show…</p>
+      <Box as="p" color="fg.muted" fontSize="sm">Syncing show…</Box>
     </VStack>
   </Box>
 </template>

@@ -1,18 +1,29 @@
 <script setup lang="ts">
-import { Grid } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 
 defineOptions({ name: "GridTableRow", inheritAttrs: false });
+defineProps<{ templateColumns: string }>();
 </script>
 
 <template>
-  <Grid class="_grid-table-row" w="full" gapX="2" minH="8" alignItems="center" v-bind="$attrs">
+  <div
+    v-bind="$attrs"
+    :class="css({
+      display: 'grid',
+      w: 'full',
+      gap: '2',
+      minH: '8',
+      alignItems: 'center',
+    })"
+    :style="{ gridTemplateColumns: templateColumns }"
+  >
     <slot />
-  </Grid>
+  </div>
 </template>
 
 <style scoped>
-._grid-table-row > * {
+div > :deep(*) {
+  position: relative;
   z-index: 10;
-  align-items: center;
 }
 </style>

@@ -19,15 +19,15 @@ const toastClasses = toast();
 
 <template>
   <Toaster :toaster="toaster">
-    <template #default="toast">
+    <template #default="t">
       <ToastRoot :class="toastClasses.root">
-        <UiSpinner v-if="toast.type === 'loading'" size="sm" label="" aria-hidden="true" />
+        <UiSpinner v-if="t.type === 'loading'" size="sm" label="" aria-hidden="true" />
         <Stack gap="1" flex="1" maxWidth="100%">
-          <ToastTitle v-if="toast.title" :class="toastClasses.title">{{ toast.title }}</ToastTitle>
-          <ToastDescription v-if="toast.description" :class="toastClasses.description">{{ toast.description }}</ToastDescription>
+          <ToastTitle v-if="t.title" :class="toastClasses.title">{{ t.title }}</ToastTitle>
+          <ToastDescription v-if="t.description" :class="toastClasses.description">{{ t.description }}</ToastDescription>
         </Stack>
-        <ToastActionTrigger v-if="toast.action">{{ toast.action.label }}</ToastActionTrigger>
-        <ToastCloseTrigger v-if="toast.closable" :class="toastClasses.closeTrigger" aria-label="Close toast">
+        <ToastActionTrigger v-if="t.action">{{ t.action.label }}</ToastActionTrigger>
+        <ToastCloseTrigger v-if="t.closable" :class="toastClasses.closeTrigger" aria-label="Close toast">
           <X aria-hidden />
         </ToastCloseTrigger>
       </ToastRoot>

@@ -27,8 +27,13 @@ onUnmounted(() => {
   <ControlRealtimeProvider>
     <Grid templateRows="auto 1fr" h="100dvh" maxH="100dvh" w="100dvw" maxW="100dvw" overflow="hidden">
       <ControlStatusBar />
-      <Box w="full" h="full" borderWidth="1">
-        <SplitterRoot :class="splitterClasses.root" orientation="horizontal" :defaultSize="[55, 45]" :panels="[{ id: 'main', minSize: 35 }, { id: 'timeline', minSize: 45 }]">
+      <Box w="full" h="full" borderWidth="1" borderColor="border">
+        <SplitterRoot
+          :class="splitterClasses.root"
+          orientation="horizontal"
+          :defaultSize="[55, 45]"
+          :panels="[{ id: 'main', minSize: 35 }, { id: 'timeline', minSize: 45 }]"
+        >
           <SplitterPanel id="main" :minSize="35" :class="splitterClasses.panel">
             <ControlMainPanel />
           </SplitterPanel>
@@ -38,8 +43,8 @@ onUnmounted(() => {
           </SplitterPanel>
         </SplitterRoot>
       </Box>
-      <ControlConfirmDialog />
-      <FloatingPanelHost />
     </Grid>
+    <ControlConfirmDialog />
+    <FloatingPanelHost />
   </ControlRealtimeProvider>
 </template>

@@ -41,6 +41,9 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     };
     return allFiles.value.find((file) => file.id === id) ?? search(folderTree.value);
   }
+  function findEntryName(id: string): string | undefined {
+    return findEntry(id)?.name;
+  }
   function selectEntry(id: string | null) {
     selectedEntryId.value = id;
     selectedIds.value = new Set();
@@ -51,7 +54,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     lastClickedIndex.value = null;
   }
   function handleEntryClick(
-    event: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean },
+    event: { metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean },
     index: number,
   ) {
     const entry = entries.value[index];
@@ -67,7 +70,10 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
         const rangeEntry = entries.value[i];
         if (rangeEntry) next.add(rangeEntry.id);
       }
-    } else next.clear(), next.add(entry.id);
+    } else {
+      next.clear();
+      next.add(entry.id);
+    }
     selectedIds.value = next;
     lastClickedIndex.value = index;
   }
@@ -195,6 +201,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     focusedPanel,
     entries,
     findEntry,
+    findEntryName,
     selectEntry,
     clearSelection,
     handleEntryClick,

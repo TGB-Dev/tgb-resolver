@@ -1,8 +1,32 @@
 <script setup lang="ts">
-import { SliderControl, SliderRange, SliderRoot, SliderThumb, SliderTrack, SliderValueText, SwitchControl, SwitchHiddenInput, SwitchLabel, SwitchRoot } from "@ark-ui/vue";
-import { AlertTriangle, ChevronLeft, ChevronRight, Pause, Pen, Play, Radio, RefreshCw, TimerReset, Wifi, WifiOff } from "@lucide/vue";
+import {
+  SliderControl,
+  SliderRange,
+  SliderRoot,
+  SliderThumb,
+  SliderTrack,
+  SliderValueText,
+  SwitchControl,
+  SwitchHiddenInput,
+  SwitchLabel,
+  SwitchRoot,
+  SwitchThumb,
+} from "@ark-ui/vue";
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Pause,
+  Pen,
+  Play,
+  Radio,
+  RefreshCw,
+  TimerReset,
+  Wifi,
+  WifiOff,
+} from "@lucide/vue";
 import { Box, HStack } from "@styled-system/jsx";
-import { slider } from "@styled-system/recipes";
+import { slider, swittch } from "@styled-system/recipes";
 import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus } from "@tgb-resolver/realtime";
 import { computed, ref } from "vue";
@@ -93,6 +117,7 @@ const rateIndex = computed(() => {
 });
 const sliderValue = computed(() => (dragValue.value.length > 0 ? dragValue.value : [rateIndex.value]));
 const sliderClasses = slider({ size: "sm", variant: "outline" });
+const switchClasses = swittch({ size: "sm" });
 
 function handleSpeedChange(details: { value: number[] }) {
   dragValue.value = details.value;
@@ -127,7 +152,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 </script>
 
 <template>
-  <HStack h="16" alignItems="center" borderTopWidth="1" gap="2" p="2" class="tgb-controls">
+  <HStack h="16" alignItems="center" borderTopWidth="1" borderColor="border" gap="2" p="2" class="tgb-controls">
     <UiButton :loading="startPlayback.isPending.value" :disabled="!canMutate" @click="startPlayback.mutate()">
       <Pause v-if="playbackStatus === PlaybackStatus.RUNNING" :size="16" aria-hidden />
       <Play v-else :size="16" aria-hidden />
@@ -136,10 +161,10 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       <TimerReset :size="16" aria-hidden />
     </UiButton>
 
-    <UiButton v-bind="prevAction.buttonProps" :aria-label="'Previous event'">
+    <UiButton v-bind="prevAction.buttonProps" ariaLabel="Previous event">
       <ChevronLeft :size="16" aria-hidden />
     </UiButton>
-    <UiButton v-bind="nextAction.buttonProps" :aria-label="'Next event'">
+    <UiButton v-bind="nextAction.buttonProps" ariaLabel="Next event">
       <ChevronRight :size="16" aria-hidden />
     </UiButton>
 
@@ -148,11 +173,14 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
     <SwitchRoot
       :checked="autoResolveEnabled"
       :disabled="!canMutate || updateAutomation.isPending.value"
+      :class="switchClasses.root"
       @checked-change="(details) => updateAutomation.mutate({ autoResolveEnabled: details.checked })"
     >
-      <SwitchControl />
+      <SwitchControl :class="switchClasses.control">
+        <SwitchThumb :class="switchClasses.thumb" />
+      </SwitchControl>
       <SwitchHiddenInput />
-      <SwitchLabel>Autoplay</SwitchLabel>
+      <SwitchLabel :class="switchClasses.label">Autoplay</SwitchLabel>
     </SwitchRoot>
 
     <SliderRoot
@@ -192,7 +220,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
     <Tooltip :content="isLive ? 'Switch to Edit Mode' : 'Switch to Live Mode'">
       <UiButton
         :variant="isLive ? 'solid' : 'outline'"
-        color-palette="red"
+        colorPalette="red"
         :disabled="!canMutate || toggleLiveMode.isPending.value"
         @click="toggleLiveMode.mutate()"
       >

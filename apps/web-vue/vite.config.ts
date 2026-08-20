@@ -14,6 +14,9 @@ export default defineConfig({
   },
   server: {
     host: "127.0.0.1",
+    watch: {
+      ignored: ["**/playwright-report/**", "**/test-results/**", "**/e2e/**"],
+    },
   },
   envDir: resolve(import.meta.dirname, "../.."),
   plugins: [devtools(), vue(), vueJsx(), vueDevTools()],
