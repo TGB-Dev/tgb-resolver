@@ -42,6 +42,7 @@ export default defineConfig({
   jsxFramework: "vue",
   outdir: "styled-system",
   lightningcss: true,
+  browserslist: ["baseline widely available", "defaults"],
 
   // Theme
   globalCss: {
