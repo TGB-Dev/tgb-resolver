@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 
 defineProps<{
   eventId: number;
@@ -12,14 +12,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <Box
-    cursor="pointer"
-    fontFamily="mono"
-    textAlign="end"
-    color="fg.muted"
-    :_hover="{ color: 'fg' }"
+  <button
+    type="button"
+    :class="css({ cursor: 'pointer', fontFamily: 'mono', textAlign: 'end', color: 'fg.muted', _hover: { color: 'fg' } })"
     @dblclick.stop="emit('seek', eventId)"
   >
     {{ position }}
-  </Box>
+  </button>
 </template>

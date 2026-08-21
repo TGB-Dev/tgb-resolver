@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronsDownUp, ChevronsUpDown, Folder } from "@lucide/vue";
-import { Box, HStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed } from "vue";
 
 import IconButton from "@/features/shared/ui/icon-button.vue";
@@ -20,6 +20,25 @@ const isAllAssetsDropTarget = computed(
   () => interactionStore.dropTargetId === null && interactionStore.dragState !== null,
 );
 
+const allAssetsClass = computed(() =>
+  css({
+    display: "flex",
+    alignItems: "center",
+    gap: "2",
+    w: "full",
+    px: "2",
+    py: "1.5",
+    fontSize: "sm",
+    fontWeight: "normal",
+    cursor: "pointer",
+    borderLeftWidth: 3,
+    borderLeftColor: isAllAssetsDropTarget || isAllAssetsSelected ? "colorPalette.border" : "transparent",
+    bg: isAllAssetsDropTarget || isAllAssetsSelected ? "bg.muted" : undefined,
+    color: isAllAssetsSelected ? "colorPalette" : undefined,
+    _hover: { bg: "bg.subtle" },
+  }),
+);
+
 function handleContextMenu(
   e: MouseEvent,
   target: { id: string; name: string; isDirectory: boolean } | null,
@@ -35,11 +54,9 @@ function handleContextMenu(
 </script>
 
 <template>
-  <Box
-    overflowY="auto"
-    h="full"
-    px="2"
-    pt="2"
+  <!-- biome-ignore lint/a11y/noStaticElementInteractions: folder tree drag/drop + context-menu surface (React reference used Box) -->
+  <div
+    :class="css({ overflowY: 'auto', h: 'full', px: '2', pt: '2' })"
     @pointerdown="store.focusedPanel = 'tree'"
     @contextmenu="handleContextMenu($event, null)"
     @dragover="(e) => {
@@ -56,33 +73,13 @@ function handleContextMenu(
       void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
     }"
   >
-    <Box display="flex" alignItems="center" justifyContent="space-between" px="1" mb="1">
-      <Box
-        as="button"
-        display="flex"
-        alignItems="center"
-        gap="2"
-        w="full"
-        px="2"
-        py="1.5"
-        fontSize="sm"
-        fontWeight="normal"
-        cursor="pointer"
-        borderLeftWidth="3"
-        :borderLeftColor="isAllAssetsDropTarget || isAllAssetsSelected ? 'colorPalette.border' : 'transparent'"
-        :bg="isAllAssetsDropTarget ? 'bg.muted' : isAllAssetsSelected ? 'bg.muted' : undefined"
-        :color="isAllAssetsSelected ? 'colorPalette' : undefined"
-        :_hover="{ bg: 'bg.subtle' }"
-        @click="() => {
-          store.focusedPanel = 'tree';
-          store.selectEntry(null);
-        }"
-      >
+    <div :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: '1', mb: '1' })">
+      <button type="button" :class="allAssetsClass" @click="() => { store.focusedPanel = 'tree'; store.selectEntry(null); }">
         <Folder :size="14" aria-hidden />
-        <Box as="span">All Assets</Box>
-      </Box>
+        <span>All Assets</span>
+      </button>
 
-      <HStack gap="0">
+      <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0' })">
         <IconButton
           ariaLabel="Expand all folders"
           size="xs"
@@ -99,18 +96,18 @@ function handleContextMenu(
         >
           <ChevronsDownUp :size="14" aria-hidden />
         </IconButton>
-      </HStack>
-    </Box>
+      </div>
+    </div>
 
-    <Box pl="4">
+    <div :class="css({ pl: '4' })">
       <FolderNode
         v-for="folder in store.folderTree"
         :key="folder.id"
         :node="folder"
         @contextmenu="handleContextMenu"
       />
-    </Box>
+    </div>
 
     <ContextMenuOverlay :state="contextMenu.state.value" @close="contextMenu.close" />
-  </Box>
+  </div>
 </template>

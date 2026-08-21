@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { GripVertical } from "@lucide/vue";
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { computed, ref } from "vue";
@@ -77,12 +77,9 @@ function handleDoubleClick() {
 </script>
 
 <template>
-  <Box
-    w="full"
-    minH="8"
-    position="relative"
-    borderBottomWidth="1"
-    borderColor="border"
+  <!-- biome-ignore lint/a11y/noStaticElementInteractions: timeline row with context-menu + dblclick (React reference used Box) -->
+  <div
+    :class="css({ w: 'full', minH: '8', position: 'relative', borderBottomWidth: 1, borderColor: 'border' })"
     :data-event-id="payload.id"
     :data-current="isLive || undefined"
     @pointerenter="isNear = true"
@@ -102,70 +99,67 @@ function handleDoubleClick() {
         @seek="emit('seek', $event)"
       />
 
-      <Box fontFamily="mono" textTransform="uppercase">
+      <div :class="css({ fontFamily: 'mono', textTransform: 'uppercase' })">
         {{ type }}
-      </Box>
+      </div>
 
-      <Box minW="0">
+      <div :class="css({ minW: 0 })">
         <TimelineCustomNameEditable
           v-if="!isLive"
           :payload="payload"
         />
-        <Box v-else>
+        <div v-else>
           {{ resolveDisplayName(payload) }}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Box fontFamily="mono" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+      <div :class="css({ fontFamily: 'mono', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })">
         {{ payload.problem ?? "" }}
         <template v-if="payload.problem && payload.newProblemScore !== undefined">
           ({{ payload.newProblemScore }})
         </template>
-      </Box>
+      </div>
 
-      <Box textAlign="end" fontFamily="mono">
+      <div :class="css({ textAlign: 'end', fontFamily: 'mono' })">
         {{ payload.newTotalScore ?? "" }}
-      </Box>
+      </div>
 
-      <Box textAlign="end" fontFamily="mono">
+      <div :class="css({ textAlign: 'end', fontFamily: 'mono' })">
         {{ payload.newRank ?? "" }}
-      </Box>
+      </div>
 
       <TimelineNumberEditable
         v-if="!isLive"
         :payload="payload"
         field="durationSeconds"
       />
-      <Box v-else textAlign="end" fontFamily="mono">
+      <div v-else :class="css({ textAlign: 'end', fontFamily: 'mono' })">
         {{ payload.durationSeconds ?? "" }}
-      </Box>
+      </div>
 
       <TimelineNumberEditable
         v-if="!isLive"
         :payload="payload"
         field="triggerOffsetSeconds"
       />
-      <Box v-else textAlign="end" fontFamily="mono">
+      <div v-else :class="css({ textAlign: 'end', fontFamily: 'mono' })">
         {{
           payload.triggerOffsetSeconds != null && payload.triggerOffsetSeconds > 0
             ? `+${payload.triggerOffsetSeconds}`
             : ""
         }}
-      </Box>
+      </div>
 
-      <Box display="flex" alignItems="center" justifyContent="center" h="6">
+      <div :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: '6' })">
         <TimelineManualInteraction
           :payload="payload"
           :is-near="isNear"
         />
-      </Box>
+      </div>
 
-      <Box
+      <div
         v-if="!isLive"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        h="full"
+        :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: 'full' })"
       >
         <IconButton
           ariaLabel="Drag to reorder event"
@@ -178,7 +172,7 @@ function handleDoubleClick() {
         >
           <GripVertical :size="14" aria-hidden />
         </IconButton>
-      </Box>
+      </div>
     </GridTableRow>
 
     <TimelineAddButtons
@@ -186,5 +180,5 @@ function handleDoubleClick() {
       :payload="payload"
       :is-near="isNear"
     />
-  </Box>
+  </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed } from "vue";
 
 import { useControlIsLive } from "@/features/control/composables/use-show";
@@ -33,54 +33,54 @@ const templateColumns = computed(() =>
     py="2"
   >
     <Tooltip content="Event ID" :openDelay="0">
-      <Box textAlign="end">No.</Box>
+      <div :class="css({ textAlign: 'end' })">No.</div>
     </Tooltip>
 
     <Tooltip :openDelay="0">
       <template #content>
-        <Box display="flex" flexDirection="column" gap="1" fontSize="xs">
-          <Box><Box as="span" fontWeight="bold">RES</Box>: Contestant Resolve</Box>
-          <Box><Box as="span" fontWeight="bold">PRE</Box>: Pre-Resolve (preview upcoming resolve)</Box>
-          <Box><Box as="span" fontWeight="bold">UNK</Box>: Unknown</Box>
-          <Box v-for="ext in extensionRegistry.extensionList" :key="ext.extId">
-            <Box as="span" fontWeight="bold">{{ ext.shortName }}</Box>: {{ ext.description }}
-          </Box>
-        </Box>
+        <div :class="css({ display: 'flex', flexDirection: 'column', gap: '1', fontSize: 'xs' })">
+          <div><span :class="css({ fontWeight: 'bold' })">RES</span>: Contestant Resolve</div>
+          <div><span :class="css({ fontWeight: 'bold' })">PRE</span>: Pre-Resolve (preview upcoming resolve)</div>
+          <div><span :class="css({ fontWeight: 'bold' })">UNK</span>: Unknown</div>
+          <div v-for="ext in extensionRegistry.extensionList" :key="ext.extId">
+            <span :class="css({ fontWeight: 'bold' })">{{ ext.shortName }}</span>: {{ ext.description }}
+          </div>
+        </div>
       </template>
-      <Box>Type</Box>
+      <div>Type</div>
     </Tooltip>
 
     <Tooltip content="Name for this event. Double-click to customize." :openDelay="0">
-      <Box>Name</Box>
+      <div>Name</div>
     </Tooltip>
 
     <Tooltip content="Problem name and score for this resolve event." :openDelay="0">
-      <Box>Prob.</Box>
+      <div>Prob.</div>
     </Tooltip>
 
     <Tooltip content="New total team score after this resolve event." :openDelay="0">
-      <Box textAlign="end">NScore</Box>
+      <div :class="css({ textAlign: 'end' })">NScore</div>
     </Tooltip>
 
     <Tooltip content="New rank after this resolve event." :openDelay="0">
-      <Box textAlign="end">NRank</Box>
+      <div :class="css({ textAlign: 'end' })">NRank</div>
     </Tooltip>
 
     <Tooltip content="Duration in seconds. Cannot be negative." :openDelay="0">
-      <Box textAlign="end">Dur.</Box>
+      <div :class="css({ textAlign: 'end' })">Dur.</div>
     </Tooltip>
 
     <Tooltip
       content="Trigger offset from the start of previous event in seconds. Can be negative."
       :openDelay="0"
     >
-      <Box textAlign="end">Trig. Off.</Box>
+      <div :class="css({ textAlign: 'end' })">Trig. Off.</div>
     </Tooltip>
 
     <Tooltip content="Whether this event requires manual interaction to proceed." :openDelay="0">
-      <Box>Man.?</Box>
+      <div>Man.?</div>
     </Tooltip>
 
-    <Box v-if="!isLiveEffective" />
+    <div v-if="!isLiveEffective" />
   </GridTableRow>
 </template>

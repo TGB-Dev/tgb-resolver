@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
@@ -22,23 +22,23 @@ function teamName(cue: TimelineTableItem): string {
 </script>
 
 <template>
-  <Box v-if="!cue" as="span" color="fg.muted" fontFamily="mono">-</Box>
+  <span v-if="!cue" :class="css({ color: 'fg.muted', fontFamily: 'mono' })">-</span>
 
   <span v-else-if="cue.type === TimelineEventType.RES">
-    <Box as="span" color="fg.muted" fontFamily="mono">RES</Box>
+    <span :class="css({ color: 'fg.muted', fontFamily: 'mono' })">RES</span>
     <span> | </span>
     <ResolveContent :cue="cue" :fg="fg" :content-size="contentSize" />
   </span>
 
   <span v-else-if="cue.type === TimelineEventType.PRE">
-    <Box as="span" color="fg.muted" fontFamily="mono">PRE-RES</Box>
+    <span :class="css({ color: 'fg.muted', fontFamily: 'mono' })">PRE-RES</span>
     <span> | </span>
     <ResolveContent :cue="cue" :fg="fg" :content-size="contentSize" :name-override="teamName(cue)" />
   </span>
 
-  <Box v-else-if="cue.type === TimelineEventType.CUS && extensionRegistry.extensionWithExtId(cue.extId ?? '')" as="span" fontFamily="mono">
+  <span v-else-if="cue.type === TimelineEventType.CUS && extensionRegistry.extensionWithExtId(cue.extId ?? '')" :class="css({ fontFamily: 'mono' })">
     {{ cue.customName ?? cue.name }}
-  </Box>
+  </span>
 
-  <Box v-else as="span" fontFamily="mono">{{ cue.customName ?? cue.name }}</Box>
+  <span v-else :class="css({ fontFamily: 'mono' })">{{ cue.customName ?? cue.name }}</span>
 </template>

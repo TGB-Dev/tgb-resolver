@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box, HStack, VStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { ShowMode } from "@tgb-resolver/realtime";
 import { computed } from "vue";
 
@@ -21,10 +21,10 @@ const eventsCount = computed(() => Object.keys(events.value).length);
 </script>
 
 <template>
-  <Box h="full" p="4" overflow="auto">
-    <VStack gap="4" alignItems="stretch">
-      <Box>
-        <HStack justifyContent="space-between" mb="2">
+  <div :class="css({ h: 'full', p: '4', overflow: 'auto' })">
+    <div :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'stretch' })">
+      <div>
+        <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', mb: '2' })">
           <Heading size="md">Show Details</Heading>
           <Button
             size="sm"
@@ -33,46 +33,38 @@ const eventsCount = computed(() => Object.keys(events.value).length);
           >
             Inspect
           </Button>
-        </HStack>
-      </Box>
+        </div>
+      </div>
 
-      <VStack gap="2" alignItems="stretch">
-        <Box>
-          <Box fontSize="sm" color="fg.muted">Mode</Box>
-          <Box fontFamily="mono" fontSize="md">
+      <div :class="css({ display: 'flex', flexDirection: 'column', gap: '2', alignItems: 'stretch' })">
+        <div>
+          <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">Mode</div>
+          <div :class="css({ fontFamily: 'mono', fontSize: 'md' })">
             {{ mode === ShowMode.EDITING ? "Editing" : mode === ShowMode.LIVE ? "Live" : "Unknown" }}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box v-if="eventsCount > 0">
-          <Box fontSize="sm" color="fg.muted">Timeline</Box>
-          <Box fontFamily="mono" fontSize="md">
+        <div v-if="eventsCount > 0">
+          <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">Timeline</div>
+          <div :class="css({ fontFamily: 'mono', fontSize: 'md' })">
             {{ eventsCount }} event{{ eventsCount !== 1 ? "s" : "" }} | {{ orderedIds.length }} ordered
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box v-if="meta">
-          <Box fontSize="sm" color="fg.muted">Metadata</Box>
-          <Box
-            as="pre"
-            fontFamily="mono"
-            fontSize="xs"
-            whiteSpace="pre-wrap"
-            p="2"
-            bg="bg.muted"
-            rounded="md"
-          >
+        <div v-if="meta">
+          <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">Metadata</div>
+          <pre :class="css({ fontFamily: 'mono', fontSize: 'xs', whiteSpace: 'pre-wrap', p: '2', bg: 'bg.muted', rounded: 'md' })">
             {{ JSON.stringify(meta, null, 2) }}
-          </Box>
-        </Box>
+          </pre>
+        </div>
 
-        <Box>
-          <Box fontSize="sm" color="fg.muted">Version</Box>
-          <Box fontFamily="mono" fontSize="md">
+        <div>
+          <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">Version</div>
+          <div :class="css({ fontFamily: 'mono', fontSize: 'md' })">
             {{ dataVersion }}
-          </Box>
-        </Box>
-      </VStack>
-    </VStack>
-  </Box>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>

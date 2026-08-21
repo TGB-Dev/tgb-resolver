@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Copy } from "@lucide/vue";
-import { Box, Stack, VStack } from "@styled-system/jsx";
+import { css, cx } from "@styled-system/css";
 import { ref } from "vue";
 
 const props = defineProps<{ error: Error }>();
@@ -17,78 +17,92 @@ async function handleCopyError() {
   isCopied.value = true;
   setTimeout(() => (isCopied.value = false), 2000);
 }
+
+const stackClass = css({
+  margin: 0,
+  padding: 3,
+  borderWidth: 1,
+  borderRadius: "sm",
+  bg: "bg.subtle",
+  fontFamily: "mono",
+  fontSize: "sm",
+  whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  overflow: "auto",
+  maxHeight: "24rem",
+});
+
+const copyClass = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 1,
+  width: "fit-content",
+  paddingInline: 2,
+  paddingBlock: 0.5,
+  borderWidth: 1,
+  borderRadius: "sm",
+  bg: "bg.subtle",
+  color: "fg",
+  fontSize: "xs",
+  cursor: "pointer",
+  transition: "background 0.15s ease",
+  _hover: { bg: "bg.muted" },
+});
 </script>
 
 <template>
-  <VStack minH="100dvh" justify="center" bg="bg.subtle" p="6">
-    <Stack w="full" maxW="4xl" gap="4" rounded="md" bg="bg.panel" p="6" shadow="md" borderWidth="1" borderColor="border.error">
-      <Stack gap="1">
-        <Box fontSize="lg" fontWeight="medium" color="fg.error">
-          Error
-        </Box>
-        <Box fontSize="sm" color="fg.muted">
+  <div
+    :class="
+      css({
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100dvh',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bg: 'bg.subtle',
+        padding: 6,
+      })
+    "
+  >
+    <div
+      :class="
+        css({
+          width: 'full',
+          maxWidth: '4xl',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          borderRadius: 'md',
+          bg: 'bg.panel',
+          padding: 6,
+          boxShadow: 'md',
+          borderWidth: 1,
+          borderColor: 'border.error',
+        })
+      "
+    >
+      <div :class="css({ display: 'flex', flexDirection: 'column', gap: 1 })">
+        <p :class="css({ fontSize: 'lg', fontWeight: 'medium', color: 'fg.error' })">Error</p>
+        <p :class="css({ fontSize: 'sm', color: 'fg.muted' })">
           Please retry or contact support if the issue persists. You can copy the error details
           below for reference.
-        </Box>
-      </Stack>
+        </p>
+      </div>
 
-      <Stack gap="2">
-        <button type="button" class="_copy" @click="handleCopyError">
-          <Copy class="_copy-icon" aria-hidden />
+      <div :class="css({ display: 'flex', flexDirection: 'column', gap: 2 })">
+        <button type="button" :class="copyClass" @click="handleCopyError">
+          <Copy :size="12" aria-hidden />
           {{ isCopied ? "Copied" : "Copy Error" }}
         </button>
 
-        <Box fontSize="sm" fontWeight="bold" color="fg">
+        <p :class="css({ fontSize: 'sm', fontWeight: 'bold', color: 'fg' })">
           {{ error.name }}
-        </Box>
-        <pre class="_stack">{{ error.message }}</pre>
-        <pre v-if="error.stack" class="_stack _stack-xs">{{ error.stack }}</pre>
-      </Stack>
-    </Stack>
-  </VStack>
+        </p>
+        <pre :class="stackClass">{{ error.message }}</pre>
+        <pre v-if="error.stack" :class="cx(css({ fontSize: 'xs', maxHeight: '16rem' }), stackClass)">{{
+          error.stack
+        }}</pre>
+      </div>
+    </div>
+  </div>
 </template>
-
-<style scoped>
-._copy {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: fit-content;
-  padding: 0.125rem 0.5rem;
-  border: 1px solid var(--colors-border-muted);
-  border-radius: var(--radii-sm);
-  background: var(--colors-bg-subtle);
-  color: var(--colors-fg);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-._copy:hover {
-  background: var(--colors-bg-muted);
-}
-
-._copy-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-._stack {
-  margin: 0;
-  padding: 0.75rem;
-  border: 1px solid var(--colors-border-muted);
-  border-radius: var(--radii-sm);
-  background: var(--colors-bg-subtle);
-  font-family: var(--fonts-mono);
-  font-size: 0.875rem;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  overflow: auto;
-  max-height: 24rem;
-}
-
-._stack-xs {
-  font-size: 0.75rem;
-  max-height: 16rem;
-}
-</style>

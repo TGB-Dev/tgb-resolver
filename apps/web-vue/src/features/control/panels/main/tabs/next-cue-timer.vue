@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronDown } from "@lucide/vue";
-import { Box, HStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed, ref, watch } from "vue";
 
 import { useControlShowRows } from "@/features/control/composables/use-show";
@@ -49,22 +49,33 @@ const remainingMs = computed(() => {
 });
 
 const formatted = computed(() => formatRemaining(remainingMs.value));
+
+const row = css({
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: "2",
+  paddingY: "4",
+  fontSize: "lg",
+  fontFamily: "mono",
+});
+const muted = css({ color: "fg.muted", fontVariantNumeric: "tabular-nums" });
+const value = css({ fontFamily: "mono", fontVariantNumeric: "tabular-nums", fontWeight: "bold" });
+const small = css({ fontSize: "sm" });
 </script>
 
 <template>
-  <HStack v-if="playingEvents.length === 0" gap="2" alignItems="center" py="4" fontSize="lg" fontFamily="mono">
+  <div v-if="playingEvents.length === 0" :class="row">
     <ChevronDown :size="20" aria-hidden />
-    <Box as="span" color="fg.muted" fontVariantNumeric="tabular-nums">
-      No active cue
-    </Box>
-  </HStack>
+    <span :class="muted">No active cue</span>
+  </div>
 
-  <HStack v-else gap="2" alignItems="center" py="4" fontSize="lg" fontFamily="mono">
+  <div v-else :class="row">
     <ChevronDown :size="20" aria-hidden />
     <span>Next cue in </span>
-    <Box as="span" fontFamily="mono" fontVariantNumeric="tabular-nums" fontWeight="bold">
+    <span :class="value">
       {{ formatted.minutes }}:{{ formatted.seconds }}.
-      <Box as="span" fontSize="sm">{{ formatted.hundredMillis }}</Box>
-    </Box>
-  </HStack>
+      <span :class="small">{{ formatted.hundredMillis }}</span>
+    </span>
+  </div>
 </template>

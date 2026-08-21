@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 
 import Leaderboard from "@/features/leaderboard/leaderboard.vue";</script>
 
 <template>
-  <Box h="full" overflowY="auto">
+  <div :class="css({ h: 'full', overflowY: 'auto' })">
     <Leaderboard />
-  </Box>
+  </div>
 </template>

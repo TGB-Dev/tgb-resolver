@@ -13,10 +13,10 @@ import {
   ComboboxTrigger,
   createListCollection,
 } from "@ark-ui/vue";
-import { Box, HStack, VStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { combobox } from "@styled-system/recipes";
 import { TgbForm } from "@tgb-form/vue";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
 import { useCreateTimelineEventMutation } from "@/features/control/composables/use-show";
@@ -30,8 +30,6 @@ import Button from "@/features/shared/ui/button.vue";
 
 const props = defineProps<{
   panel: FloatingPanelHandle;
-  relativeToEventId: number;
-  before: boolean;
 }>();
 
 const createTimelineEvent = useCreateTimelineEventMutation();
@@ -48,6 +46,14 @@ const selectedExtension = ref<Extension | null>(null);
 const formInstance = ref(createTgbFormInstance({}));
 const error = ref<string | null>(null);
 const comboboxClasses = combobox();
+
+const createProps = computed(
+  () =>
+    props.panel.props.value as {
+      relativeToEventId: number;
+      before: boolean;
+    },
+);
 
 watch(selectedExtension, (ext) => {
   if (ext?.configForm) {
@@ -74,8 +80,8 @@ async function handleCreate() {
         : undefined;
 
     await createTimelineEvent.mutateAsync({
-      relativeToEventId: props.relativeToEventId,
-      before: props.before,
+      relativeToEventId: createProps.value.relativeToEventId,
+      before: createProps.value.before,
       customName,
       durationSeconds,
       custom: { extId: ext.extId, extPayload: { ...values } },
@@ -87,14 +93,18 @@ async function handleCreate() {
     props.panel.setSaving(false);
   }
 }
+
+const stack = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "stretch", height: "full" });
+const row = css({ display: "flex", justifyContent: "flex-end", gap: "2", marginTop: "4" });
+const errorText = css({ color: "fg.error", fontSize: "sm" });
 </script>
 
 <template>
-  <VStack gap="4" alignItems="stretch" h="full" p="4">
+  <div :class="stack">
     <ComboboxRoot
       :collection="collection"
       :class="comboboxClasses.root"
-      @value-change="(details) => {
+      @value-change="(details: { value: string[] }) => {
         const item = collection.items.find((ext: Extension) => ext.extId === details.value[0]);
         selectedExtension = item ?? null;
       }"
@@ -128,7 +138,7 @@ async function handleCreate() {
         :instance="formInstance.values"
         :renderers="extensionRendererRegistry"
       />
-      <HStack justifyContent="flex-end" gap="2" mt="4">
+      <div :class="row">
         <Button variant="outline" @click="panel.requestClose()">
           Cancel
         </Button>
@@ -138,10 +148,10 @@ async function handleCreate() {
         >
           Create
         </Button>
-      </HStack>
-      <Box v-if="error" color="fg.error" fontSize="sm">
+      </div>
+      <p v-if="error" :class="errorText">
         {{ error }}
-      </Box>
+      </p>
     </template>
-  </VStack>
+  </div>
 </template>

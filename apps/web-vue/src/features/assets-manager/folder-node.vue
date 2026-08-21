@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Folder, FolderOpen } from "@lucide/vue";
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed } from "vue";
 
 import { toaster } from "@/features/shared/ui/toaster";
@@ -27,6 +27,25 @@ const isExpanded = computed(() => store.expandedFolderIds.has(props.node.id));
 const isSelected = computed(() => store.selectedEntryId === props.node.id);
 const isDropTarget = computed(() => interactionStore.dropTargetId === props.node.id);
 
+const nodeClass = computed(() =>
+  css({
+    display: "flex",
+    alignItems: "center",
+    gap: "2",
+    w: "full",
+    px: "2",
+    py: "1.5",
+    fontSize: "sm",
+    fontWeight: "normal",
+    cursor: "pointer",
+    borderLeftWidth: 3,
+    borderLeftColor: isDropTarget || isSelected ? "colorPalette.border" : "transparent",
+    bg: isDropTarget || isSelected ? "bg.muted" : undefined,
+    color: isSelected ? "colorPalette" : undefined,
+    _hover: { bg: "bg.subtle" },
+  }),
+);
+
 function handleDropError(error: unknown): void {
   toaster.create({
     title: "Move assets",
@@ -52,24 +71,11 @@ function handleClick() {
 </script>
 
 <template>
-  <Box>
-    <Box
-      as="button"
+  <div>
+    <button
+      type="button"
+      :class="nodeClass"
       draggable="true"
-      display="flex"
-      alignItems="center"
-      gap="2"
-      w="full"
-      px="2"
-      py="1.5"
-      fontSize="sm"
-      fontWeight="normal"
-      cursor="pointer"
-      borderLeftWidth="3"
-      :borderLeftColor="isDropTarget || isSelected ? 'colorPalette.border' : 'transparent'"
-      :bg="isDropTarget ? 'bg.muted' : isSelected ? 'bg.muted' : undefined"
-      :color="isSelected ? 'colorPalette' : undefined"
-      :_hover="{ bg: 'bg.subtle' }"
       @click="handleClick"
       @contextmenu.stop.prevent="emit('contextmenu', $event, { id: node.id, name: node.name, isDirectory: true })"
       @dragstart="(e) => {
@@ -104,19 +110,19 @@ function handleClick() {
     >
       <FolderOpen v-if="isExpanded" :size="14" aria-hidden />
       <Folder v-else :size="14" aria-hidden />
-      <Box as="span">{{ node.name }}</Box>
-      <Box v-if="isDropTarget" as="span" ms="auto" fontSize="xs">
+      <span>{{ node.name }}</span>
+      <span v-if="isDropTarget" :class="css({ ms: 'auto', fontSize: 'xs' })">
         Drop here
-      </Box>
-    </Box>
+      </span>
+    </button>
 
-    <Box v-if="isExpanded && node.children && node.children.length > 0" pl="4">
+    <div v-if="isExpanded && node.children && node.children.length > 0" :class="css({ pl: '4' })">
       <FolderNode
         v-for="child in node.children"
         :key="child.id"
         :node="child"
         @contextmenu="(event, target) => emit('contextmenu', event, target)"
       />
-    </Box>
-  </Box>
+    </div>
+  </div>
 </template>

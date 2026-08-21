@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Crosshair, FileDown, FileUp, Trash2 } from "@lucide/vue";
-import { HStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 
 import { useClearShowMutation, useControlCanMutate, useControlIsLive, useExportShowAction } from "@/features/control/composables/use-show";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
@@ -37,7 +37,7 @@ async function handleClearShow() {
 </script>
 
 <template>
-  <HStack h="16" alignItems="center" borderTopWidth="1" gap="2" p="2">
+  <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', h: '16', borderTopWidth: 1, gap: '2', p: '2' })">
     <Button v-if="props.onJumpToCurrent !== undefined" variant="solid" @click="props.onJumpToCurrent">
       <Crosshair :size="16" aria-hidden />
       <span>To Current</span>
@@ -59,5 +59,5 @@ async function handleClearShow() {
         <span>Clear</span>
       </Button>
     </template>
-  </HStack>
+  </div>
 </template>

@@ -60,11 +60,9 @@
         "src/features/extensions/renderers.ts",
         "src/features/extensions/tgb-form-instance.ts",
         "src/features/leaderboard/utils/scroll.ts",
-        "src/features/shared/anim/easings.ts",
         "src/features/shared/app/error-page.vue",
         "src/features/shared/app/not-found-page.vue",
-        "src/lib/motion-factories.ts",
-        "src/lib/verdict.ts"
+        "src/lib/motion-factories.ts"
       ],
       "ignoreIssues": {
         "src/features/extensions/base/types.ts": ["types"],

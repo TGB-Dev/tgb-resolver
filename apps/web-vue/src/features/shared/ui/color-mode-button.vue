@@ -10,7 +10,7 @@ const { colorMode, toggleColorMode } = useColorMode();
 
 <template>
   <ClientOnly>
-    <IconButton ariaLabel="Toggle color mode" @click="toggleColorMode">
+    <IconButton ariaLabel="Toggle color mode" @click="toggleColorMode" variant="ghost">
       <Moon v-if="colorMode === 'dark'" :size="18" aria-hidden />
       <Sun v-else :size="18" aria-hidden />
     </IconButton>

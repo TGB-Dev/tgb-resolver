@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Grid, LayoutList } from "@lucide/vue";
-import { Box, HStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 
 import IconButton from "@/features/shared/ui/icon-button.vue";
 
@@ -10,13 +10,13 @@ const store = useAssetsManagerStore();
 </script>
 
 <template>
-  <HStack justify="space-between" px="4" py="2" borderBottomWidth="1" borderColor="border" w="full">
-    <HStack gap="2" fontSize="sm">
-      <Box color="fg.muted" fontWeight="medium">Assets</Box>
-      <Box color="fg.subtle">{{ store.entries.length }} items</Box>
-    </HStack>
+  <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', px: '4', py: '2', borderBottomWidth: 1, borderColor: 'border', w: 'full' })">
+    <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '2', fontSize: 'sm' })">
+      <div :class="css({ color: 'fg.muted', fontWeight: 'medium' })">Assets</div>
+      <div :class="css({ color: 'fg.subtle' })">{{ store.entries.length }} items</div>
+    </div>
 
-    <HStack gap="1">
+    <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1' })">
       <IconButton
         ariaLabel="List view"
         size="sm"
@@ -33,6 +33,6 @@ const store = useAssetsManagerStore();
       >
         <Grid :size="16" aria-hidden />
       </IconButton>
-    </HStack>
-  </HStack>
+    </div>
+  </div>
 </template>

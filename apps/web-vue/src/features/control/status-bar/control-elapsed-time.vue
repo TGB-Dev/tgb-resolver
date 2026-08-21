@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed } from "vue";
 
 import { useControlNowStore } from "@/features/control/control-now-store";
@@ -7,6 +7,13 @@ import { usePlaybackStore } from "@/features/control/playback-store";
 
 const controlNowStore = useControlNowStore();
 const playbackStore = usePlaybackStore();
+
+const root = css({
+  fontFamily: "mono",
+  fontVariantNumeric: "tabular-nums",
+  fontSize: "3xl",
+  lineHeight: "1.1",
+});
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -25,7 +32,5 @@ const elapsedText = computed(() => {
 </script>
 
 <template>
-  <Box fontFamily="mono" fontVariantNumeric="tabular-nums" fontSize="3xl" lineHeight="1.1" :opacity="isStarted ? 1 : 0.5">
-    T+{{ elapsedText }}
-  </Box>
+  <span :class="root" :style="{ opacity: isStarted ? 1 : 0.5 }">T+{{ elapsedText }}</span>
 </template>

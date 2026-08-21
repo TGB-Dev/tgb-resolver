@@ -3,8 +3,6 @@ import { css, cx } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import { computed } from "vue";
 
-defineOptions({ name: "IconButton", inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     variant?: "solid" | "subtle" | "surface" | "outline" | "ghost" | "plain";
@@ -13,10 +11,10 @@ const props = withDefaults(
     ariaLabel: string;
     disabled?: boolean;
   }>(),
-  { variant: "ghost", size: "md", type: "button" },
+  { variant: "solid", size: "md", type: "button" },
 );
 
-const classes = computed(() => cx(button({ variant: props.variant, size: props.size }), css({ aspectRatio: "1", p: "0" })));
+const classes = computed(() => cx(button({ variant: props.variant, size: props.size }), css({ aspectRatio: "1" })));
 </script>
 
 <template>

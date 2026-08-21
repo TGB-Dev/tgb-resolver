@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Plus } from "@lucide/vue";
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
@@ -32,16 +32,9 @@ function handleCreate(before: boolean) {
 </script>
 
 <template>
-  <Box
+  <div
     v-if="isNear"
-    position="absolute"
-    right="0"
-    top="0"
-    bottom="0"
-    display="flex"
-    flexDirection="column"
-    justifyContent="space-between"
-    zIndex="popover"
+    :class="css({ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 'popover' })"
   >
     <IconButton
       size="2xs"
@@ -57,5 +50,5 @@ function handleCreate(before: boolean) {
     >
       <Plus :size="12" aria-hidden />
     </IconButton>
-  </Box>
+  </div>
 </template>

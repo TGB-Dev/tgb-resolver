@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { File, Folder } from "@lucide/vue";
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed, ref } from "vue";
 
 import type { FsEntry } from "./types";
@@ -26,6 +26,25 @@ const isImage = computed(
   () => !props.entry.isDirectory && props.entry.contentType?.startsWith("image/"),
 );
 
+const rootClass = computed(() =>
+  css({
+    borderWidth: 2,
+    borderColor: props.isSelected ? "colorPalette.border" : "border",
+    borderRadius: "md",
+    overflow: "hidden",
+    cursor: "pointer",
+    bg: "bg.panel",
+    width: "100%",
+    display: "block",
+    p: 0,
+    textAlign: "left",
+    fontFamily: "inherit",
+    color: "inherit",
+    appearance: "none",
+    _hover: { shadow: "md" },
+  }),
+);
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -34,16 +53,11 @@ function formatSize(bytes: number): string {
 </script>
 
 <template>
-  <Box
+  <button
+    type="button"
     :data-entry-id="entry.id"
     draggable="true"
-    borderWidth="2"
-    :borderColor="isSelected ? 'colorPalette.border' : 'border'"
-    rounded="md"
-    overflow="hidden"
-    cursor="pointer"
-    :_hover="{ shadow: 'md' }"
-    bg="bg.panel"
+    :class="rootClass"
     @click.stop="emit('click', $event)"
     @dblclick.stop="emit('dblclick')"
     @contextmenu.stop="emit('contextmenu', $event)"
@@ -52,7 +66,17 @@ function formatSize(bytes: number): string {
     @dragover="entry.isDirectory ? emit('dragover', $event) : undefined"
     @drop="entry.isDirectory ? emit('drop', $event) : undefined"
   >
-    <Box h="32" display="flex" alignItems="center" justifyContent="center" bg="bg.subtle">
+    <div
+      :class="
+        css({
+          height: '32',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bg: 'bg.subtle',
+        })
+      "
+    >
       <Folder v-if="entry.isDirectory" :size="40" aria-hidden />
       <img
         v-else-if="isImage && !imgError"
@@ -62,14 +86,17 @@ function formatSize(bytes: number): string {
         @error="imgError = true"
       />
       <File v-else :size="40" aria-hidden />
-    </Box>
-    <Box p="3">
-      <Box fontSize="sm" fontWeight="medium" wordBreak="break-all">
+    </div>
+    <div :class="css({ p: 3 })">
+      <p :class="css({ fontSize: 'sm', fontWeight: 'medium', wordBreak: 'break-all', margin: 0 })">
         {{ entry.name }}
-      </Box>
-      <Box v-if="!entry.isDirectory" fontSize="xs" color="fg.muted" mt="1">
+      </p>
+      <p
+        v-if="!entry.isDirectory"
+        :class="css({ fontSize: 'xs', color: 'fg.muted', mt: 1, margin: 0 })"
+      >
         {{ formatSize(entry.sizeBytes ?? 0) }}
-      </Box>
-    </Box>
-  </Box>
+      </p>
+    </div>
+  </button>
 </template>

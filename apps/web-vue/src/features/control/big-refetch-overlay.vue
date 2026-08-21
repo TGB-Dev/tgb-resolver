@@ -1,26 +1,29 @@
 <script setup lang="ts">
-import { Box, VStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 
 import Spinner from "@/features/shared/ui/spinner.vue";
 import { useRealtimeStore } from "@/stores/realtime-store";
 
 const realtimeStore = useRealtimeStore();
+
+const overlay = css({
+  position: "fixed",
+  inset: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bg: "blackAlpha.700",
+  zIndex: "toast",
+});
+const stack = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "center" });
+const label = css({ color: "fg.muted", fontSize: "sm" });
 </script>
 
 <template>
-  <Box
-    v-if="realtimeStore.bigRefetching"
-    alignItems="center"
-    display="flex"
-    inset="0"
-    justifyContent="center"
-    position="fixed"
-    zIndex="toast"
-    bg="blackAlpha.700"
-  >
-    <VStack gap="4">
+  <div v-if="realtimeStore.bigRefetching" :class="overlay">
+    <div :class="stack">
       <Spinner size="xl" label="" aria-hidden="true" />
-      <Box as="p" color="fg.muted" fontSize="sm">Syncing show…</Box>
-    </VStack>
-  </Box>
+      <p :class="label">Syncing show…</p>
+    </div>
+  </div>
 </template>

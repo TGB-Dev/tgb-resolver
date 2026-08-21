@@ -5,8 +5,6 @@ import { computed } from "vue";
 
 import Spinner from "./spinner.vue";
 
-defineOptions({ name: "Button", inheritAttrs: false });
-
 const props = withDefaults(
   defineProps<{
     variant?: "solid" | "subtle" | "surface" | "outline" | "ghost" | "plain";

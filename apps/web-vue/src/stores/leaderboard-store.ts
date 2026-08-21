@@ -7,15 +7,16 @@ import { entryEqual } from "@/lib/leaderboard-comparators";
 
 export const useLeaderboardStore = defineStore("leaderboard", () => {
   const userIds = ref<number[]>([]);
-  const signals = new Map<number, Ref<LeaderboardEntry | null>>();
+  const signals: Record<number, Ref<LeaderboardEntry | null>> = {};
   const currentBottomView = ref(0);
   const currentResolvedUserId = ref(0);
+  const isBigScreen = ref(false);
   let lastDeriveKey: { show: ShowFile; upToEventId?: number } | null = null;
   function getSignal(userId: number) {
-    let result = signals.get(userId);
+    let result = signals[userId];
     if (!result) {
       result = ref(null);
-      signals.set(userId, result);
+      signals[userId] = result;
     }
     return result;
   }
@@ -31,5 +32,5 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
     if (ids.length !== userIds.value.length || ids.some((id, index) => id !== userIds.value[index]))
       userIds.value = ids;
   }
-  return { userIds, getSignal, sync, currentBottomView, currentResolvedUserId };
+  return { userIds, getSignal, sync, currentBottomView, currentResolvedUserId, isBigScreen };
 });

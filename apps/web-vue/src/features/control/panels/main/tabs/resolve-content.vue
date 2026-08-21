@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { verdictShortCode } from "@/lib/verdict";
@@ -21,31 +21,30 @@ const rankImprovement =
   props.cue.oldRank !== undefined && props.cue.newRank !== undefined
     ? props.cue.oldRank - props.cue.newRank
     : 0;
-
 </script>
 
 <template>
-  <Box v-if="!cue.problem" as="span" fontFamily="mono">{{ resolvedName }}</Box>
-  <Box v-else as="span" fontFamily="mono">
+  <span v-if="!cue.problem" :class="css({ fontFamily: 'mono' })">{{ resolvedName }}</span>
+  <span v-else :class="css({ fontFamily: 'mono' })">
     {{ resolvedName }} |
-    <Box as="span" :color="fg">
+    <span :class="css({ color: fg })">
       {{ verdictShortCode(cue.verdict) }}
-    </Box>
+    </span>
     <span> | </span>
-    <Box as="span" color="fg.success">
+    <span :class="css({ color: 'fg.success' })">
       {{ cue.problem }}. {{ cue.problemDisplayName }}
       <template v-if="cue.newProblemScore !== undefined"> ({{ cue.newProblemScore }} PTS)</template>
-    </Box>
+    </span>
     <template v-if="hasOld">
       <span> | Total </span>
-      <Box as="span">{{ cue.oldScore }}</Box>
+      <span>{{ cue.oldScore }}</span>
       <span> to </span>
-      <Box as="span" color="fg.success">{{ cue.newTotalScore }}</Box>
+      <span :class="css({ color: 'fg.success' })">{{ cue.newTotalScore }}</span>
       <span> | Rank </span>
-      <Box as="span">{{ cue.oldRank }}</Box>
+      <span>{{ cue.oldRank }}</span>
       <span> to </span>
-      <Box as="span" color="fg.success">{{ cue.newRank }}</Box>
+      <span :class="css({ color: 'fg.success' })">{{ cue.newRank }}</span>
       <template v-if="rankImprovement > 0"> (+{{ rankImprovement }})</template>
     </template>
-  </Box>
+  </span>
 </template>

@@ -25,7 +25,7 @@ import {
   Wifi,
   WifiOff,
 } from "@lucide/vue";
-import { Box, HStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { separator, slider, swittch } from "@styled-system/recipes";
 import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus } from "@tgb-resolver/realtime";
@@ -154,7 +154,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 </script>
 
 <template>
-  <HStack h="16" alignItems="center" borderTopWidth="1" borderColor="border" gap="2" p="2" class="tgb-controls">
+  <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', h: '16', borderTopWidth: 1, borderColor: 'border', gap: '2', p: '2' })" class="tgb-controls">
     <IconButton
       ariaLabel="Play or Pause"
       :disabled="!canMutate || startPlayback.isPending.value"
@@ -178,7 +178,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       <ChevronRight :size="16" aria-hidden />
     </IconButton>
 
-    <Box :class="separatorClass" h="6" mx="1" aria-hidden />
+    <div :class="[separatorClass, css({ h: '6', mx: 1 })]" aria-hidden />
 
     <SwitchRoot
       :checked="autoResolveEnabled"
@@ -204,7 +204,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       @value-change="handleSpeedChange"
       @value-change-end="handleSpeedChangeEnd"
     >
-      <HStack gap="4">
+      <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4' })">
         <SliderControl :class="sliderClasses.control">
           <SliderTrack :class="sliderClasses.track">
             <SliderRange :class="sliderClasses.range" />
@@ -212,10 +212,10 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
           <SliderThumb :index="0" :class="sliderClasses.thumb" />
         </SliderControl>
         <SliderValueText :class="sliderClasses.valueText">{{ SPEED_RATES[rateIndex] }}x</SliderValueText>
-      </HStack>
+      </div>
     </SliderRoot>
 
-    <Box flex="1" />
+    <div :class="css({ flex: 1 })" />
 
     <Tooltip :content="connectionLabel">
       <Button variant="ghost" disabled>
@@ -240,5 +240,5 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
         <span>Current Mode: {{ isLive ? 'Live' : 'Edit' }}</span>
       </Button>
     </Tooltip>
-  </HStack>
+  </div>
 </template>

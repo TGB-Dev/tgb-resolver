@@ -6,7 +6,7 @@ import {
   DialogRoot,
   DialogTitle,
 } from "@ark-ui/vue";
-import { Box, VStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { dialog, field, input } from "@styled-system/recipes";
 import { nextTick, ref, watch } from "vue";
 
@@ -17,6 +17,10 @@ const store = useConfirmActionStore();
 const dialogClasses = dialog({ placement: "center", size: "sm" });
 const fieldClasses = field();
 const inputClasses = input({ size: "md" });
+
+const content = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "stretch", padding: "6" });
+const message = css({ color: "fg.muted", fontSize: "sm" });
+const actions = css({ display: "flex", justifyContent: "flex-end", gap: "3" });
 
 const inputRef = ref<HTMLInputElement | null>(null);
 
@@ -43,23 +47,23 @@ watch(
     <DialogBackdrop :class="dialogClasses.backdrop" />
     <DialogPositioner :class="dialogClasses.positioner">
       <DialogContent :class="dialogClasses.content">
-        <VStack alignItems="stretch" gap="4" p="6">
+        <div :class="content">
           <DialogTitle :class="dialogClasses.title">{{ store.title }}</DialogTitle>
 
-          <Box v-if="store.showInput" :class="fieldClasses.root">
+          <div v-if="store.showInput" :class="fieldClasses.root">
             <label for="control-dialog-input" :class="fieldClasses.label">{{ store.inputLabel || store.message }}</label>
             <input
               id="control-dialog-input"
               ref="inputRef"
               :class="inputClasses"
               :value="store.inputValue"
-              @input="(e) => store.setInputValue((e.target as HTMLInputElement).value)"
+              @input="(e: Event) => store.setInputValue((e.target as HTMLInputElement).value)"
               @keydown.enter="store.resolveConfirmAction(true)"
             />
-          </Box>
-          <Box v-else color="fg.muted" fontSize="sm">{{ store.message }}</Box>
+          </div>
+          <p v-else :class="message">{{ store.message }}</p>
 
-          <Box display="flex" justifyContent="flex-end" gap="3">
+          <div :class="actions">
             <Button variant="outline" @click="store.resolveConfirmAction(false)">
               {{ store.cancelLabel }}
             </Button>
@@ -69,8 +73,8 @@ watch(
             >
               {{ store.confirmLabel }}
             </Button>
-          </Box>
-        </VStack>
+          </div>
+        </div>
       </DialogContent>
     </DialogPositioner>
   </DialogRoot>

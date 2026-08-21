@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Center } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { ref } from "vue";
 
 const emit = defineEmits<{
@@ -18,19 +18,14 @@ function receive(event: DragEvent) {
 </script>
 
 <template>
-  <Center
-    minH="8rem"
-    borderWidth="2"
-    borderStyle="dashed"
-    borderColor="border"
-    rounded="md"
-    color="fg.muted"
-    fontSize="sm"
+  <!-- biome-ignore lint/a11y/noStaticElementInteractions: drop target surface (React reference used Box) -->
+  <div
+    :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', minH: '8rem', borderWidth: 2, borderStyle: 'dashed', borderColor: 'border', rounded: 'md', color: 'fg.muted', fontSize: 'sm' })"
     :data-dragging="dragging || undefined"
     @dragover.prevent="dragging = true"
     @dragleave="dragging = false"
     @drop.prevent="receive"
   >
     Drop assets here to upload
-  </Center>
+  </div>
 </template>

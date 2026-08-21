@@ -16,7 +16,7 @@ import {
   SwitchRoot,
   SwitchThumb,
 } from "@ark-ui/vue";
-import { Box, Stack, VStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { select, swittch } from "@styled-system/recipes";
 import { computed } from "vue";
 
@@ -61,8 +61,8 @@ const switchClasses = swittch({ size: "md" });
 </script>
 
 <template>
-  <Box h="full" p="4">
-    <VStack gap="6" alignItems="stretch">
+  <div :class="css({ h: 'full', p: '4' })">
+    <div :class="css({ display: 'flex', flexDirection: 'column', gap: '6', alignItems: 'stretch' })">
       <SwitchRoot
         :checked="fullAutoEnabled"
         :disabled="!canMutate || updateAutomation.isPending.value"
@@ -76,10 +76,10 @@ const switchClasses = swittch({ size: "md" });
         <SwitchLabel :class="switchClasses.label">Full auto advance</SwitchLabel>
       </SwitchRoot>
 
-      <Stack gap="2">
-        <Box fontSize="sm" color="fg.muted">
+      <div :class="css({ display: 'flex', flexDirection: 'column', gap: '2' })">
+        <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">
           Tick rate for server-side timers (crucial for FXs) (fps)
-        </Box>
+        </div>
 
         <SelectRoot
           :collection="collection"
@@ -111,7 +111,7 @@ const switchClasses = swittch({ size: "md" });
             </SelectContent>
           </SelectPositioner>
         </SelectRoot>
-      </Stack>
-    </VStack>
-  </Box>
+      </div>
+    </div>
+  </div>
 </template>

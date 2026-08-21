@@ -1,82 +1,121 @@
 <script setup lang="ts">
-import {
-  DialogBackdrop,
-  DialogContent,
-  DialogPositioner,
-  DialogRoot,
-} from "@ark-ui/vue";
-import { Box } from "@styled-system/jsx";
-import { dialog } from "@styled-system/recipes";
-import { TimelineEventType } from "@tgb-resolver/contracts";
-import { computed } from "vue";
+import { FloatingPanel } from "@ark-ui/vue";
+import { GripHorizontal, Maximize2, Minimize2, X } from "@lucide/vue";
+import { css, cx } from "@styled-system/css";
+import { floatingPanel } from "@styled-system/recipes";
+import { type Component, computed, onMounted, onScopeDispose } from "vue";
 
 import CreateEventPanel from "@/features/control/create-event-panel.vue";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
-import { FloatingPanelType } from "@/features/control/floating-panel-types";
+import {
+  type FloatingPanelHandle,
+  FloatingPanelType,
+  floatingPanelConfig,
+} from "@/features/control/floating-panel-types";
 import ImportShowPanel from "@/features/control/import-show-panel.vue";
 import InspectShowPanel from "@/features/control/inspect-show-panel.vue";
 import ExtensionConfigPanel from "@/features/extensions/config-panel.vue";
-import { useShowStore } from "@/stores/show-store";
 
 const store = useFloatingPanelStore();
-const show = useShowStore();
-const dialogClasses = dialog({ placement: "center", size: "md" });
+const classes = floatingPanel();
 
-const activePanel = computed(() => store.panels[store.panels.length - 1]);
-const extensionEvent = computed(() => {
-  const eventId = activePanel.value?.props.value.eventId;
-  const event = typeof eventId === "number" ? show.showEvents[eventId] : undefined;
-  return event && event.type === TimelineEventType.CUS ? event : undefined;
-});
+const RESIZE_AXES = ["e", "se", "s", "sw", "w", "nw", "n", "ne"] as const;
 
-function close(accepted: boolean) {
-  const panel = activePanel.value;
-  if (panel) store.closeFloatingPanel(panel, accepted);
+const PANEL_REGISTRY: Record<FloatingPanelType, Component> = {
+  [FloatingPanelType.ExtensionConfig]: ExtensionConfigPanel,
+  [FloatingPanelType.CreateEvent]: CreateEventPanel,
+  [FloatingPanelType.ImportShow]: ImportShowPanel,
+  [FloatingPanelType.InspectShow]: InspectShowPanel,
+};
+
+const panelsView = computed(() =>
+  store.panels.map((panel) => ({
+    panel,
+    config: floatingPanelConfig[panel.type],
+    title: panel.title.value,
+  })),
+);
+
+function getDefaultPosition(size: { width: number; height: number }) {
+  return {
+    x: Math.max(0, (window.innerWidth - size.width) / 2),
+    y: Math.max(0, (window.innerHeight - size.height) / 2),
+  };
 }
+
+function onOpenChange(panel: FloatingPanelHandle, open: boolean) {
+  if (!open) void store.requestFloatingPanelClose(panel);
+}
+
+onMounted(() => {
+  const onBeforeUnload = (event: BeforeUnloadEvent) => {
+    if (store.hasDirtyPanels) {
+      event.preventDefault();
+    }
+  };
+  window.addEventListener("beforeunload", onBeforeUnload);
+  onScopeDispose(() => window.removeEventListener("beforeunload", onBeforeUnload));
+});
 </script>
 
 <template>
-  <DialogRoot :open="store.panels.length > 0">
-    <DialogBackdrop :class="dialogClasses.backdrop" />
-    <DialogPositioner :class="dialogClasses.positioner">
-      <DialogContent :class="dialogClasses.content">
-        <template v-if="activePanel">
-          <!-- Extension Config -->
-          <ExtensionConfigPanel
-            v-if="activePanel.type === FloatingPanelType.ExtensionConfig && extensionEvent"
-            :event-id="extensionEvent.id"
-            :ext-id="extensionEvent.payload.extId"
-            :payload="extensionEvent.payload.extPayload"
-            @cancel="close(false)"
-            @save="close(true)"
-          />
-
-          <!-- Create Event Panel -->
-          <CreateEventPanel
-            v-else-if="activePanel.type === FloatingPanelType.CreateEvent"
-            :panel="activePanel"
-            :relative-to-event-id="Number(activePanel.props.value.relativeToEventId ?? 0)"
-            :before="Boolean(activePanel.props.value.before)"
-          />
-
-          <!-- Import Show Panel -->
-          <ImportShowPanel
-            v-else-if="activePanel.type === FloatingPanelType.ImportShow"
-            :panel="activePanel"
-          />
-
-          <!-- Inspect Show Panel -->
-          <InspectShowPanel
-            v-else-if="activePanel.type === FloatingPanelType.InspectShow"
-            :panel="activePanel"
-          />
-
-          <!-- Fallback -->
-          <Box v-else p="4">
-            {{ activePanel.title }}
-          </Box>
-        </template>
-      </DialogContent>
-    </DialogPositioner>
-  </DialogRoot>
+  <FloatingPanel.Root
+    v-for="entry in panelsView"
+    :key="entry.panel.id"
+    :open="true"
+    :default-size="entry.config.size"
+    :min-size="entry.config.minSize"
+    :default-position="getDefaultPosition(entry.config.size)"
+    :resizable="entry.config.resizable ?? true"
+    :allow-overflow="false"
+    :close-on-escape="true"
+    strategy="fixed"
+    @open-change="(details: { open: boolean }) => onOpenChange(entry.panel, details.open)"
+  >
+    <FloatingPanel.Positioner :class="classes.positioner">
+      <FloatingPanel.Content :class="classes.content">
+        <FloatingPanel.Header :class="classes.header">
+          <FloatingPanel.DragTrigger :class="classes.dragTrigger">
+            <GripHorizontal aria-hidden />
+            <FloatingPanel.Title :class="classes.title">{{ entry.title }}</FloatingPanel.Title>
+          </FloatingPanel.DragTrigger>
+          <FloatingPanel.Control :class="classes.control">
+            <FloatingPanel.StageTrigger
+              v-if="entry.config.maximizable"
+              stage="maximized"
+              :class="classes.stageTrigger"
+              aria-label="Maximize panel"
+            >
+              <Maximize2 :size="14" aria-hidden />
+            </FloatingPanel.StageTrigger>
+            <FloatingPanel.StageTrigger
+              v-if="entry.config.maximizable"
+              stage="default"
+              :class="classes.stageTrigger"
+              aria-label="Restore panel"
+            >
+              <Minimize2 :size="14" aria-hidden />
+            </FloatingPanel.StageTrigger>
+            <FloatingPanel.CloseTrigger
+              :class="classes.closeTrigger"
+              aria-label="Close panel"
+              @click="store.requestFloatingPanelClose(entry.panel)"
+            >
+              <X :size="14" aria-hidden />
+            </FloatingPanel.CloseTrigger>
+          </FloatingPanel.Control>
+        </FloatingPanel.Header>
+        <FloatingPanel.Body :class="cx(classes.body, css({ padding: 4 }))">
+          <component :is="PANEL_REGISTRY[entry.panel.type]" :panel="entry.panel" />
+        </FloatingPanel.Body>
+        <FloatingPanel.ResizeTrigger
+          v-for="axis in RESIZE_AXES"
+          v-show="entry.config.resizable"
+          :key="axis"
+          :axis="axis"
+          :class="classes.resizeTrigger"
+        />
+      </FloatingPanel.Content>
+    </FloatingPanel.Positioner>
+  </FloatingPanel.Root>
 </template>

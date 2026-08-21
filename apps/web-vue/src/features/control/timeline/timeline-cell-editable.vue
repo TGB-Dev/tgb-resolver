@@ -5,7 +5,7 @@ import {
   EditablePreview,
   EditableRoot,
 } from "@ark-ui/vue";
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { editable } from "@styled-system/recipes";
 import { ref, watch } from "vue";
 
@@ -67,22 +67,14 @@ function handleValueRevert() {
 </script>
 
 <template>
-  <Box
+  <button
     v-if="!editing"
-    px="1"
-    py="0.5"
-    minH="6"
-    rounded="sm"
-    :textAlign="textAlign"
-    :fontFamily="fontFamily"
-    cursor="text"
-    overflow="hidden"
-    textOverflow="ellipsis"
-    whiteSpace="nowrap"
+    type="button"
+    :class="css({ px: '1', py: '0.5', minH: '6', rounded: 'sm', textAlign: textAlign, fontFamily: fontFamily, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })"
     @dblclick="handleDoubleClickPreview"
   >
     {{ displayValue ?? value }}
-  </Box>
+  </button>
 
   <EditableRoot
     v-else

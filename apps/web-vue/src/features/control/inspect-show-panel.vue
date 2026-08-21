@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { computed } from "vue";
 
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
@@ -11,24 +11,25 @@ defineProps<{
 
 const showStore = useShowStore();
 const file = computed(() => showStore.showFile);
+
+const root = css({ height: "full", overflow: "auto" });
+const empty = css({ color: "fg.muted" });
+const code = css({
+  display: "block",
+  fontFamily: "mono",
+  fontSize: "xs",
+  whiteSpace: "pre-wrap",
+  padding: "2",
+  bg: "bg.muted",
+  rounded: "md",
+});
 </script>
 
 <template>
-  <Box h="full" overflow="auto" p="4">
-    <Box v-if="!file" color="fg.muted">
+  <div :class="root">
+    <p v-if="!file" :class="empty">
       No show loaded.
-    </Box>
-    <Box
-      v-else
-      as="pre"
-      fontFamily="mono"
-      fontSize="xs"
-      whiteSpace="pre-wrap"
-      p="2"
-      bg="bg.muted"
-      rounded="md"
-    >
-      {{ JSON.stringify(file, null, 2) }}
-    </Box>
-  </Box>
+    </p>
+    <pre v-else :class="code">{{ JSON.stringify(file, null, 2) }}</pre>
+  </div>
 </template>

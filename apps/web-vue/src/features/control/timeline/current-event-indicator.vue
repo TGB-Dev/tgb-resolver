@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { type AnimationPlaybackControls, animate } from "motion";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
@@ -45,31 +45,20 @@ onUnmounted(stop);
 </script>
 
 <template>
-  <Box position="absolute" inset="0" pointerEvents="none">
-    <Box
+  <div :class="css({ position: 'absolute', inset: 0, pointerEvents: 'none' })">
+    <div
       v-if="active"
       ref="bar"
-      position="absolute"
-      inset="0"
-      transform="scaleX(0)"
-      transformOrigin="left"
-      bg="green.600"
+      :class="css({ position: 'absolute', inset: 0, transform: 'scaleX(0)', transformOrigin: 'left', bg: 'green.600' })"
     >
-      <Box
+      <div
         ref="warning"
-        position="absolute"
-        inset="0"
-        bg="red.500"
-        opacity="0"
+        :class="css({ position: 'absolute', inset: 0, bg: 'red.500', opacity: 0 })"
       />
-    </Box>
-    <Box
+    </div>
+    <div
       v-if="active"
-      position="absolute"
-      inset="0"
-      borderWidth="2"
-      borderColor="border.success"
-      animation="pulse"
+      :class="css({ position: 'absolute', inset: 0, borderWidth: 2, borderColor: 'border.success', animation: 'pulse' })"
     />
-  </Box>
+  </div>
 </template>

@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, ref } from "vue";
+import { ref } from "vue";
 
 export interface ContextMenuTarget {
   id: string;
@@ -55,21 +55,6 @@ export function useContextMenu() {
   function close() {
     state.value = closedState();
   }
-
-  function handleGlobalPointerDown(e: PointerEvent) {
-    if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
-    if (state.value.isOpen) {
-      close();
-    }
-  }
-
-  onMounted(() => {
-    document.addEventListener("pointerdown", handleGlobalPointerDown);
-  });
-
-  onUnmounted(() => {
-    document.removeEventListener("pointerdown", handleGlobalPointerDown);
-  });
 
   return { state, open, close };
 }

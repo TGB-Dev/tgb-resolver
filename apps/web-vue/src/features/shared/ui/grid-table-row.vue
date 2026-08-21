@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
 
-defineOptions({ name: "GridTableRow", inheritAttrs: false });
 defineProps<{ templateColumns: string }>();
 </script>
 

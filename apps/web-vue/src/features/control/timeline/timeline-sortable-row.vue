@@ -26,7 +26,7 @@ const sortable = useSortable({
 </script>
 
 <template>
-  <div ref="row" :data-dragging="sortable.isDragging.value || undefined">
+  <div ref="row" data-timeline-row :data-dragging="sortable.isDragging.value || undefined">
     <TimelineTableItemView
       :payload="payload"
       :is-live="isLive"

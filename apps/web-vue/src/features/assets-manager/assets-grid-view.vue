@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { Box } from "@styled-system/jsx";
 import { ref } from "vue";
 
 import { toaster } from "@/features/shared/ui/toaster";
@@ -60,12 +59,11 @@ function handleDropError(error: unknown): void {
 </script>
 
 <template>
-  <Box
+  <!-- biome-ignore lint/a11y/noStaticElementInteractions: rubber-band selection + drag/drop surface (React reference used Box) -->
+  <div
     ref="containerRef"
-    overflowY="auto"
-    h="full"
-    userSelect="none"
     tabindex="-1"
+    :class="css({ overflowY: 'auto', h: 'full', userSelect: 'none' })"
     @click="handleContainerClick"
     @contextmenu="
       (e) => {
@@ -115,16 +113,12 @@ function handleDropError(error: unknown): void {
       }
     "
   >
-    <Box
+    <div
       v-if="store.entries.length === 0"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      h="full"
-      color="fg.muted"
+      :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'fg.muted' })"
     >
       Empty
-    </Box>
+    </div>
 
     <div
       v-else
@@ -192,20 +186,22 @@ function handleDropError(error: unknown): void {
       />
     </div>
 
-    <Box
+    <div
       v-if="selectionRect"
-      position="fixed"
-      :left="`${selectionRect.left}px`"
-      :top="`${selectionRect.top}px`"
-      :width="`${selectionRect.width}px`"
-      :height="`${selectionRect.height}px`"
-      bg="colorPalette.solid/10"
-      borderWidth="1"
-      borderColor="colorPalette.solid"
-      pointerEvents="none"
-      zIndex="floating"
+      :class="css({
+        position: 'fixed',
+        left: `${selectionRect.left}px`,
+        top: `${selectionRect.top}px`,
+        width: `${selectionRect.width}px`,
+        height: `${selectionRect.height}px`,
+        bg: 'colorPalette.solid/10',
+        borderWidth: 1,
+        borderColor: 'colorPalette.solid',
+        pointerEvents: 'none',
+        zIndex: 'floating',
+      })"
     />
 
     <ContextMenuOverlay :state="contextMenu.state.value" @close="contextMenu.close" />
-  </Box>
+  </div>
 </template>

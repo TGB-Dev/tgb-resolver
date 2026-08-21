@@ -1,31 +1,27 @@
 <script setup lang="ts">
-import { css, cx } from "@styled-system/css";
-import { Box, VStack } from "@styled-system/jsx";
-import { table } from "@styled-system/recipes";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
-import { computed, inject, onMounted, type Ref, ref, watch } from "vue";
+import { motion } from "motion-v";
+import { computed, onMounted, ref, watch } from "vue";
 
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
+import { useColorModeStore } from "@/stores/color-mode-store";
+import { useLeaderboardStore } from "@/stores/leaderboard-store";
 
-import { formatTime } from "./cells";
-import { useLeaderboardStore } from "./leaderboard-store";
+import PenaltyCell from "./cells/penalty-cell.vue";
+import RankCell from "./cells/rank-cell.vue";
+import ScoreCell from "./cells/score-cell.vue";
+import SubmissionTimeCell from "./cells/submission-time-cell.vue";
+import UsernameCell from "./cells/username-cell.vue";
 import ProblemCell from "./problem-cell.vue";
 import { animateScrollIntoView } from "./utils/scroll";
 
-const props = defineProps<{
-  data: LeaderboardEntry;
-  isCurrentResolved: boolean;
-}>();
+const MotionTr = motion.create("tr");
+
+const props = defineProps<{ data: LeaderboardEntry; isCurrentResolved: boolean }>();
 
 const rowRef = ref<HTMLTableRowElement | null>(null);
 const leaderboardStore = useLeaderboardStore();
-const isBigScreen = inject<Ref<boolean>>(
-  "isBigScreen",
-  computed(() => false),
-);
-const classes = computed(() =>
-  table({ size: isBigScreen.value ? "lg" : "md", variant: "line", stickyHeader: true }),
-);
+const colorModeStore = useColorModeStore();
 
 const submissionTimeSinceStartSeconds = computed(() =>
   Math.max(
@@ -35,7 +31,15 @@ const submissionTimeSinceStartSeconds = computed(() =>
   ),
 );
 
-const formattedTime = computed(() => formatTime(submissionTimeSinceStartSeconds.value));
+const isDark = computed(() => colorModeStore.colorMode === "dark");
+const animateBg = computed(() =>
+  props.isCurrentResolved ? (isDark.value ? "yellow.700" : "yellow.300") : "bg",
+);
+
+const transition = {
+  layout: { duration: 0.8, ease: TgbResolverEasings.inOutQuad },
+  backgroundColor: { duration: 0.15, ease: TgbResolverEasings.inOutQuad },
+};
 
 function checkAndScroll() {
   const targetId = leaderboardStore.currentBottomView;
@@ -69,87 +73,23 @@ onMounted(checkAndScroll);
 </script>
 
 <template>
-  <tr
+  <MotionTr
     ref="rowRef"
-    :class="
-      cx(
-        classes.row,
-        css({
-          position: 'relative',
-          zIndex: isCurrentResolved ? 5 : 0,
-          backgroundColor: isCurrentResolved ? 'yellow.700' : undefined,
-          transition: 'background-color 0.15s cubic-bezier(0.45, 0, 0.55, 1)',
-        }),
-      )
-    "
-    :data-current="isCurrentResolved || undefined"
+    :style="{ position: 'relative', zIndex: isCurrentResolved ? 5 : 0 }"
+    layout="position"
+    :layout-scroll="true"
+    :animate="{ backgroundColor: animateBg }"
+    :transition="transition"
   >
-    <td
-      :class="
-        cx(
-          classes.cell,
-          css({
-            textAlign: 'end',
-            fontFamily: 'mono',
-          }),
-        )
-      "
-    >
-      {{ data.rank }}
-    </td>
+    <RankCell :rank="data.rank" />
 
-    <td :class="classes.cell" style="max-width: 30ch">
-      <VStack alignItems="start" gap="1">
-        <Box fontWeight="medium">{{ data.realName }}</Box>
-        <Box fontFamily="mono" fontStyle="italic" fontSize="xs" color="fg.muted">
-          {{ data.username }}
-        </Box>
-      </VStack>
-    </td>
+    <UsernameCell :real-name="data.realName" :username="data.username" />
 
     <ProblemCell v-for="problem in data.problems" :key="problem.problemId" :problem="problem" />
 
-    <td
-      :class="
-        cx(
-          classes.cell,
-          css({
-            textAlign: 'end',
-            fontFamily: 'mono',
-          }),
-        )
-      "
-    >
-      {{ data.totalScore }}
-    </td>
+    <ScoreCell :score="data.totalScore" />
+    <PenaltyCell :penalty="data.totalPenalty" />
 
-    <td
-      :class="
-        cx(
-          classes.cell,
-          css({
-            textAlign: 'end',
-            fontFamily: 'mono',
-          }),
-        )
-      "
-    >
-      {{ data.totalPenalty }}
-    </td>
-
-    <td
-      :class="
-        cx(
-          classes.cell,
-          css({
-            textAlign: 'end',
-            fontFamily: 'mono',
-            fontStyle: 'italic',
-          }),
-        )
-      "
-    >
-      {{ formattedTime }}
-    </td>
-  </tr>
+    <SubmissionTimeCell :submission-time-since-start-seconds="submissionTimeSinceStartSeconds" />
+  </MotionTr>
 </template>

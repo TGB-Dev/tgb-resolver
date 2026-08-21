@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DragEndEvent } from "@dnd-kit/vue";
 import { DragDropProvider } from "@dnd-kit/vue";
-import { Box, Center, VStack } from "@styled-system/jsx";
+import { css } from "@styled-system/css";
 import { PlaybackStatus, TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem as TimelineRowPayload } from "@tgb-resolver/realtime";
 import { computed, ref, watch } from "vue";
@@ -106,21 +106,21 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
 </script>
 
 <template>
-  <Box boxSize="full" display="flex" flexDirection="column" minH="0" overflow="hidden">
+  <div :class="css({ boxSize: 'full', display: 'flex', flexDirection: 'column', minH: 0, overflow: 'hidden' })">
     <TimelineTableHeader :is-live="isLive" />
 
-    <Box
+    <div
       ref="containerRef"
-      flex="1"
-      minH="0"
-      overflow="auto"
-      px="4"
-      :style="{
-        '--row-odd-bg': 'var(--colors-bg)',
-        '--row-even-bg': 'var(--colors-bg-emphasized, rgba(0,0,0,0.04))',
-      }"
+      :class="css({
+        flex: 1,
+        minH: 0,
+        overflow: 'auto',
+        px: 4,
+        '& [data-timeline-row]:nth-of-type(odd) [data-event-id]': { bg: 'bg' },
+        '& [data-timeline-row]:nth-of-type(even) [data-event-id]': { bg: 'bg.emphasized' },
+      })"
     >
-      <VStack w="full" alignItems="stretch">
+      <div :class="css({ w: 'full', display: 'flex', flexDirection: 'column', alignItems: 'stretch' })">
         <template v-if="displayIds.length > 0">
           <DragDropProvider v-if="!isLive" @drag-end="reorder">
             <TimelineSortableRow
@@ -146,11 +146,11 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
           </template>
         </template>
 
-        <Center v-if="showQuery.isLoading.value || displayIds.length === 0" h="40" color="fg.muted" fontSize="sm">
+        <div v-if="showQuery.isLoading.value || displayIds.length === 0" :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: '40', color: 'fg.muted', fontSize: 'sm' })">
           {{ showQuery.isLoading.value ? "Loading timeline…" : "No timeline events" }}
-        </Center>
-      </VStack>
-    </Box>
+        </div>
+      </div>
+    </div>
 
     <TimelineContextMenu
       v-if="contextTarget"
@@ -159,5 +159,5 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
       :y="contextTarget.y"
       @close="contextTarget = null"
     />
-  </Box>
+  </div>
 </template>
