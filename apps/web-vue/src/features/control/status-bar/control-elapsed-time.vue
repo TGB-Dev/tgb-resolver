@@ -4,16 +4,10 @@ import { computed } from "vue";
 
 import { useControlNowStore } from "@/features/control/control-now-store";
 import { usePlaybackStore } from "@/features/control/playback-store";
+import MonoText from "@/features/shared/ui/mono-text.vue";
 
 const controlNowStore = useControlNowStore();
 const playbackStore = usePlaybackStore();
-
-const root = css({
-  fontFamily: "mono",
-  fontVariantNumeric: "tabular-nums",
-  fontSize: "3xl",
-  lineHeight: "1.1",
-});
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -32,5 +26,7 @@ const elapsedText = computed(() => {
 </script>
 
 <template>
-  <span :class="root" :style="{ opacity: isStarted ? 1 : 0.5 }">T+{{ elapsedText }}</span>
+  <MonoText :class="css({ fontSize: '3xl', opacity: isStarted ? 1 : 0.5 })">
+    T+{{ elapsedText }}
+  </MonoText>
 </template>

@@ -115,7 +115,6 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
         flex: 1,
         minH: 0,
         overflow: 'auto',
-        px: 4,
         '& [data-timeline-row]:nth-of-type(odd) [data-event-id]': { bg: 'bg' },
         '& [data-timeline-row]:nth-of-type(even) [data-event-id]': { bg: 'bg.emphasized' },
       })"

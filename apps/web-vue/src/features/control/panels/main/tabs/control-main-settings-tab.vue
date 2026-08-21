@@ -61,8 +61,8 @@ const switchClasses = swittch({ size: "md" });
 </script>
 
 <template>
-  <div :class="css({ h: 'full', p: '4' })">
-    <div :class="css({ display: 'flex', flexDirection: 'column', gap: '6', alignItems: 'stretch' })">
+  <div :class="css({ boxSize: 'full', p: '4' })">
+    <div :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'stretch' })">
       <SwitchRoot
         :checked="fullAutoEnabled"
         :disabled="!canMutate || updateAutomation.isPending.value"
@@ -76,8 +76,8 @@ const switchClasses = swittch({ size: "md" });
         <SwitchLabel :class="switchClasses.label">Full auto advance</SwitchLabel>
       </SwitchRoot>
 
-      <div :class="css({ display: 'flex', flexDirection: 'column', gap: '2' })">
-        <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">
+      <div :class="css({ display: 'flex', flexDirection: 'column', gap: '1' })">
+        <div :class="css({ fontSize: 'sm' })">
           Tick rate for server-side timers (crucial for FXs) (fps)
         </div>
 

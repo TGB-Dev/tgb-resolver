@@ -25,7 +25,7 @@ import {
   Wifi,
   WifiOff,
 } from "@lucide/vue";
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
 import { separator, slider, swittch } from "@styled-system/recipes";
 import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus } from "@tgb-resolver/realtime";
@@ -117,7 +117,7 @@ const rateIndex = computed(() => {
   return idx >= 0 ? idx : SPEED_RATES.length - 1;
 });
 const sliderValue = computed(() => (dragValue.value.length > 0 ? dragValue.value : [rateIndex.value]));
-const sliderClasses = slider({ size: "sm", variant: "outline" });
+const sliderClasses = slider({ variant: "outline" });
 const switchClasses = swittch({ size: "sm" });
 const separatorClass = separator({ orientation: "vertical", size: "sm" });
 
@@ -199,8 +199,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       :max="4"
       :step="1"
       :disabled="!canMutate || updateAutomation.isPending.value"
-      w="32"
-      :class="sliderClasses.root"
+      :class="cx(sliderClasses.root, css({ width: '32' }))"
       @value-change="handleSpeedChange"
       @value-change-end="handleSpeedChangeEnd"
     >
@@ -229,7 +228,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 
     <Tooltip :content="isLive ? 'Switch to Edit Mode' : 'Switch to Live Mode'">
       <Button
-        w="48"
+        :class="css({ w: '48' })"
         :variant="isLive ? 'solid' : 'outline'"
         :colorPalette="isLive ? 'red' : undefined"
         :disabled="!canMutate || toggleLiveMode.isPending.value"

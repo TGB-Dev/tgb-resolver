@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, type Ref, ref } from "vue";
+import { useEventListener } from "@vueuse/core";
+import { type Ref, ref } from "vue";
 
 export interface Rect {
   left: number;
@@ -123,13 +124,7 @@ export function useRubberBandSelect(
     }
   }
 
-  onMounted(() => {
-    window.addEventListener("keydown", onKeyDown);
-  });
-
-  onUnmounted(() => {
-    window.removeEventListener("keydown", onKeyDown);
-  });
+  useEventListener(window, "keydown", onKeyDown);
 
   function handleClickCapture(e: MouseEvent) {
     if (Date.now() - dragEndTime.value < 100) {

@@ -33,21 +33,26 @@ function handleCreate(before: boolean) {
 
 <template>
   <div
-    v-if="isNear"
-    :class="css({ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 'popover' })"
+    :class="
+      css({
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        zIndex: 'popover',
+        opacity: isNear ? 1 : 0,
+        pointerEvents: isNear ? 'auto' : 'none',
+        transition: 'opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+      })
+    "
   >
-    <IconButton
-      size="2xs"
-      ariaLabel="Add event before"
-      @click.stop="handleCreate(true)"
-    >
+    <IconButton size="2xs" ariaLabel="Add event before" @click.stop="handleCreate(true)">
       <Plus :size="12" aria-hidden />
     </IconButton>
-    <IconButton
-      size="2xs"
-      ariaLabel="Add event after"
-      @click.stop="handleCreate(false)"
-    >
+    <IconButton size="2xs" ariaLabel="Add event after" @click.stop="handleCreate(false)">
       <Plus :size="12" aria-hidden />
     </IconButton>
   </div>

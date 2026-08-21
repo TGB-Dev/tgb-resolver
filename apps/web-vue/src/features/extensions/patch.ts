@@ -1,10 +1,3 @@
-export function patchExtensionPayload(
-  payload: Record<string, unknown>,
-  patch: Record<string, unknown>,
-) {
-  return { ...payload, ...patch };
-}
-
 import { getDefaultValues, toValibotSchema } from "@tgb-form/core";
 import { generatedClient, patchTimelineEvent } from "@tgb-resolver/contracts";
 import { TimelineEventType } from "@tgb-resolver/realtime";
@@ -15,7 +8,11 @@ import { useShowStore } from "@/stores/show-store";
 
 import { extensionRegistry } from "./registry";
 
-export class ExtensionPayloadValidationError extends Error {
+function patchExtensionPayload(payload: Record<string, unknown>, patch: Record<string, unknown>) {
+  return { ...payload, ...patch };
+}
+
+class ExtensionPayloadValidationError extends Error {
   constructor(readonly issues: readonly unknown[]) {
     super("Extension payload validation failed");
     this.name = "ExtensionPayloadValidationError";

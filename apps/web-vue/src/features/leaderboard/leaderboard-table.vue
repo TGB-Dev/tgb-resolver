@@ -30,7 +30,7 @@ const classes = computed(() =>
       )
     "
   >
-    <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 999 }))">
+    <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 'sticky' }))">
       <tr :class="classes.row">
         <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
           Rank

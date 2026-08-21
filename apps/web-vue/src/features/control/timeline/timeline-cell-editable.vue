@@ -5,9 +5,9 @@ import {
   EditablePreview,
   EditableRoot,
 } from "@ark-ui/vue";
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
 import { editable } from "@styled-system/recipes";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -30,7 +30,6 @@ const emit = defineEmits<{
   blankCommit: [];
 }>();
 
-const editing = ref(false);
 const draft = ref(props.value);
 
 watch(
@@ -41,12 +40,20 @@ watch(
 );
 
 const editableClasses = editable();
-
-function handleDoubleClickPreview(event: MouseEvent) {
-  event.stopPropagation();
-  draft.value = props.value;
-  editing.value = true;
-}
+const cellClass = computed(() =>
+  css({
+    px: "1",
+    py: "0.5",
+    minH: "6",
+    rounded: "sm",
+    textAlign: props.textAlign,
+    fontFamily: props.fontFamily,
+    cursor: "text",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  }),
+);
 
 function handleValueChange(details: { value: string }) {
   draft.value = details.value;
@@ -58,59 +65,26 @@ function handleValueCommit(details: { value: string }) {
   } else {
     emit("commit", details.value);
   }
-  editing.value = false;
-}
-
-function handleValueRevert() {
-  editing.value = false;
 }
 </script>
 
 <template>
-  <button
-    v-if="!editing"
-    type="button"
-    :class="css({ px: '1', py: '0.5', minH: '6', rounded: 'sm', textAlign: textAlign, fontFamily: fontFamily, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })"
-    @dblclick="handleDoubleClickPreview"
-  >
-    {{ displayValue ?? value }}
-  </button>
-
   <EditableRoot
-    v-else
-    :defaultEdit="true"
-    submitMode="both"
-    :value="draft"
+    activation-mode="dblclick"
+    submit-mode="both"
+    :model-value="draft"
     :placeholder="placeholder"
     :class="editableClasses.root"
     @dblclick.stop
     @value-change="handleValueChange"
     @value-commit="handleValueCommit"
-    @value-revert="handleValueRevert"
   >
     <EditableArea :class="editableClasses.area">
-      <EditablePreview
-        :class="editableClasses.preview"
-        px="1"
-        py="0.5"
-        minH="6"
-        rounded="sm"
-        :textAlign="textAlign"
-        :fontFamily="fontFamily"
-        cursor="text"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-      />
+      <EditablePreview :class="cx(editableClasses.preview, cellClass)">
+        {{ displayValue ?? value }}
+      </EditablePreview>
       <EditableInput
-        :class="editableClasses.input"
-        px="1"
-        py="0.5"
-        minH="6"
-        rounded="sm"
-        :textAlign="textAlign"
-        :fontFamily="fontFamily"
-        bg="bg.panel"
+        :class="cx(editableClasses.input, cellClass, css({ bg: 'bg.panel' }))"
       />
     </EditableArea>
   </EditableRoot>

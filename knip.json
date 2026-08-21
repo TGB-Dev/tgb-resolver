@@ -49,21 +49,7 @@
     },
     "apps/web-vue": {
       "entry": ["src/main.ts", "src/App.vue", "index.html"],
-      "ignore": [
-        "public",
-        "styled-system",
-        "e2e",
-        "src/components/placeholder-route.vue",
-        "src/features/control/show-mapper.ts",
-        "src/features/extensions/init.ts",
-        "src/features/extensions/patch.ts",
-        "src/features/extensions/renderers.ts",
-        "src/features/extensions/tgb-form-instance.ts",
-        "src/features/leaderboard/utils/scroll.ts",
-        "src/features/shared/app/error-page.vue",
-        "src/features/shared/app/not-found-page.vue",
-        "src/lib/motion-factories.ts"
-      ],
+      "ignore": ["public", "styled-system", "e2e", "src/components/placeholder-route.vue"],
       "ignoreIssues": {
         "src/features/extensions/base/types.ts": ["types"],
         "src/features/extensions/base/registry.ts": ["exports"],

@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import type { HTMLAttributes } from "vue";
-
-defineProps<HTMLAttributes>();
 
 const styles = css({
   fontFamily: "mono",
   fontVariantNumeric: "tabular-nums",
-  WebkitFontSmoothing: "auto",
-  MozOsxFontSmoothing: "auto",
+  fontSmoothing: "subpixel-antialiased",
+  mx: 1,
 });
 </script>
 
 <template>
-  <span :class="styles" v-bind="$attrs">
+  <span :class="styles">
     <slot />
   </span>
 </template>

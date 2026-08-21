@@ -67,7 +67,7 @@ function cancel() {
 </script>
 
 <template>
-  <div :class="css({ display: 'flex', flexDirection: 'column', gap: 4, height: 'full' })">
+  <div :class="css({ display: 'flex', flexDirection: 'column', gap: 4, h: 'full' })">
     <p :class="css({ color: 'fg.muted', fontSize: 'sm' })">
       {{ extension?.description ?? 'Extension configuration' }}
     </p>

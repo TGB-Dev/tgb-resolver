@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
+import { dataList } from "@styled-system/recipes";
 import { computed } from "vue";
 
 import { useControlIsLive } from "@/features/control/composables/use-show";
@@ -23,6 +24,7 @@ const templateColumns = computed(() =>
     ? timelineTableGridTemplateColumnsStatic
     : timelineTableGridTemplateColumns,
 );
+const dataListClasses = dataList();
 </script>
 
 <template>
@@ -38,12 +40,26 @@ const templateColumns = computed(() =>
 
     <Tooltip :openDelay="0">
       <template #content>
-        <div :class="css({ display: 'flex', flexDirection: 'column', gap: '1', fontSize: 'xs' })">
-          <div><span :class="css({ fontWeight: 'bold' })">RES</span>: Contestant Resolve</div>
-          <div><span :class="css({ fontWeight: 'bold' })">PRE</span>: Pre-Resolve (preview upcoming resolve)</div>
-          <div><span :class="css({ fontWeight: 'bold' })">UNK</span>: Unknown</div>
-          <div v-for="ext in extensionRegistry.extensionList" :key="ext.extId">
-            <span :class="css({ fontWeight: 'bold' })">{{ ext.shortName }}</span>: {{ ext.description }}
+        <div :class="dataListClasses.root">
+          <div :class="dataListClasses.item">
+            <div :class="dataListClasses.itemLabel">RES</div>
+            <div :class="dataListClasses.itemValue">Contestant Resolve</div>
+          </div>
+          <div :class="dataListClasses.item">
+            <div :class="dataListClasses.itemLabel">PRE</div>
+            <div :class="dataListClasses.itemValue">Pre-Resolve (preview upcoming resolve)</div>
+          </div>
+          <div :class="dataListClasses.item">
+            <div :class="dataListClasses.itemLabel">UNK</div>
+            <div :class="dataListClasses.itemValue">Unknown</div>
+          </div>
+          <div
+            v-for="ext in extensionRegistry.extensionList"
+            :key="ext.extId"
+            :class="dataListClasses.item"
+          >
+            <div :class="dataListClasses.itemLabel">{{ ext.shortName }}</div>
+            <div :class="dataListClasses.itemValue">{{ ext.description }}</div>
           </div>
         </div>
       </template>

@@ -7,22 +7,18 @@ defineProps<{ templateColumns: string }>();
 <template>
   <div
     v-bind="$attrs"
-    :class="css({
-      display: 'grid',
-      w: 'full',
-      gap: '2',
-      minH: '8',
-      alignItems: 'center',
-    })"
+    :class="
+      css({
+        display: 'grid',
+        w: 'full',
+        columnGap: '2',
+        minH: '8',
+        alignItems: 'center',
+        '& > *': { alignItems: 'center', position: 'relative', zIndex: 'base' },
+      })
+    "
     :style="{ gridTemplateColumns: templateColumns }"
   >
     <slot />
   </div>
 </template>
-
-<style scoped>
-div > :deep(*) {
-  position: relative;
-  z-index: 10;
-}
-</style>

@@ -5,6 +5,7 @@ import { computed, onUnmounted, watchEffect } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { ExtensionType, extensionRegistry, getExtensionPayload } from "@/features/extensions";
+import { MotionDiv } from "@/lib/motion-factories";
 import { useShowStore } from "@/stores/show-store";
 
 const playback = usePlaybackStore();
@@ -57,11 +58,11 @@ onUnmounted(() => {
 
 <template>
   <AnimatePresence mode="sync">
-    <component
+    <MotionDiv
       v-for="overlay in overlays"
       :key="overlay.id"
-      :is="overlay.component"
-      :payload="overlay.payload"
-    />
+    >
+      <component :is="overlay.component" :payload="overlay.payload" />
+    </MotionDiv>
   </AnimatePresence>
 </template>

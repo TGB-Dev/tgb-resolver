@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { Copy } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
-import { ref } from "vue";
+import { useClipboard } from "@vueuse/core";
+import { computed } from "vue";
+
+import Button from "@/features/shared/ui/button.vue";
 
 const props = defineProps<{ error: Error }>();
 
-const isCopied = ref(false);
+const errorJson = computed(() =>
+  JSON.stringify(
+    {
+      name: props.error.name,
+      message: props.error.message,
+      stack: props.error.stack,
+    },
+    null,
+    2,
+  ),
+);
 
-async function handleCopyError() {
-  const errorData = {
-    name: props.error.name,
-    message: props.error.message,
-    stack: props.error.stack,
-  };
-  await navigator.clipboard.writeText(JSON.stringify(errorData, null, 2));
-  isCopied.value = true;
-  setTimeout(() => (isCopied.value = false), 2000);
-}
+const { copy, copied } = useClipboard({ source: errorJson });
 
 const stackClass = css({
   margin: 0,
@@ -31,23 +35,6 @@ const stackClass = css({
   overflow: "auto",
   maxHeight: "24rem",
 });
-
-const copyClass = css({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 1,
-  width: "fit-content",
-  paddingInline: 2,
-  paddingBlock: 0.5,
-  borderWidth: 1,
-  borderRadius: "sm",
-  bg: "bg.subtle",
-  color: "fg",
-  fontSize: "xs",
-  cursor: "pointer",
-  transition: "background 0.15s ease",
-  _hover: { bg: "bg.muted" },
-});
 </script>
 
 <template>
@@ -56,7 +43,7 @@ const copyClass = css({
       css({
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        minH: '100vh',
         alignItems: 'center',
         justifyContent: 'center',
         bg: 'bg.subtle',
@@ -67,7 +54,7 @@ const copyClass = css({
     <div
       :class="
         css({
-          width: 'full',
+          w: 'full',
           maxWidth: '4xl',
           display: 'flex',
           flexDirection: 'column',
@@ -90,18 +77,26 @@ const copyClass = css({
       </div>
 
       <div :class="css({ display: 'flex', flexDirection: 'column', gap: 2 })">
-        <button type="button" :class="copyClass" @click="handleCopyError">
+        <Button
+          size="xs"
+          variant="surface"
+          color-palette="gray"
+          :class="css({ w: 'fit-content' })"
+          @click="copy()"
+        >
           <Copy :size="12" aria-hidden />
-          {{ isCopied ? "Copied" : "Copy Error" }}
-        </button>
+          {{ copied ? "Copied" : "Copy Error" }}
+        </Button>
 
         <p :class="css({ fontSize: 'sm', fontWeight: 'bold', color: 'fg' })">
           {{ error.name }}
         </p>
         <pre :class="stackClass">{{ error.message }}</pre>
-        <pre v-if="error.stack" :class="cx(css({ fontSize: 'xs', maxHeight: '16rem' }), stackClass)">{{
-          error.stack
-        }}</pre>
+        <pre
+          v-if="error.stack"
+          :class="cx(stackClass, css({ fontSize: 'xs', maxHeight: '16rem' }))"
+          >{{ error.stack }}</pre
+        >
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { css } from "@styled-system/css";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
 import { motion } from "motion-v";
 import { computed, onMounted, ref, watch } from "vue";
@@ -75,7 +76,7 @@ onMounted(checkAndScroll);
 <template>
   <MotionTr
     ref="rowRef"
-    :style="{ position: 'relative', zIndex: isCurrentResolved ? 5 : 0 }"
+    :class="css({ position: 'relative', zIndex: isCurrentResolved ? 'docked' : 'base' })"
     layout="position"
     :layout-scroll="true"
     :animate="{ backgroundColor: animateBg }"

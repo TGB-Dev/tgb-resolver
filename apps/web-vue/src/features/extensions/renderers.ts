@@ -1,7 +1,21 @@
 import { createVueRendererRegistry } from "@tgb-form/vue";
-import { h } from "vue";
+import { defineComponent, h } from "vue";
 
-const TextRenderer = (props: { value: unknown }) => h("span", String(props.value ?? ""));
+import AssetSelectorRenderer from "./components/asset-selector-renderer.vue";
+
+const TextRenderer = defineComponent({
+  name: "TextRenderer",
+  props: {
+    value: { type: null, required: false },
+  },
+  setup(props) {
+    return () => h("span", String(props.value ?? ""));
+  },
+});
+
 export const extensionRendererRegistry = createVueRendererRegistry({
-  byName: { "asset-selector": TextRenderer, "select-input": TextRenderer },
+  byName: {
+    "asset-selector": AssetSelectorRenderer,
+    "select-input": TextRenderer,
+  },
 });

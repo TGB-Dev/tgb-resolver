@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TabContent, TabList, TabsRoot, TabTrigger } from "@ark-ui/vue";
 import { Images, Info, Logs, ScanEye, Settings } from "@lucide/vue";
+import { css, cx } from "@styled-system/css";
 import { tabs } from "@styled-system/recipes";
 import { useHotkey } from "@tanstack/vue-hotkeys";
 import { ref } from "vue";
@@ -30,7 +31,22 @@ useHotkey("Mod+5", () => (activeTab.value = ControlEditMainPanelTabs.SETTINGS));
 </script>
 
 <template>
-  <TabsRoot v-model="activeTab" :class="tabClasses.root" defaultValue="preview">
+  <TabsRoot
+    v-model="activeTab"
+    :class="
+      cx(
+        tabClasses.root,
+        css({
+          h: 'full',
+          minH: 0,
+          overflow: 'hidden',
+          display: 'grid',
+          gridTemplateRows: 'auto 1fr',
+        }),
+      )
+    "
+    defaultValue="preview"
+  >
     <TabList :class="tabClasses.list">
       <TabTrigger value="preview" :class="tabClasses.trigger">
         <ScanEye :size="16" aria-hidden />
@@ -54,7 +70,7 @@ useHotkey("Mod+5", () => (activeTab.value = ControlEditMainPanelTabs.SETTINGS));
       </TabTrigger>
     </TabList>
 
-    <TabContent value="preview" :class="tabClasses.content">
+    <TabContent value="preview" :class="cx(tabClasses.content, css({ minH: 0 }))">
       <ControlMainPreviewTab />
     </TabContent>
     <TabContent value="assets" :class="tabClasses.content">

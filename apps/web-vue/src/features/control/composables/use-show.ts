@@ -29,7 +29,7 @@ import { Effect, Schedule } from "effect";
 import { type ComputedRef, computed } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
-import { mapShowStateSnapshotToShowFile } from "@/features/shared/show-mapper";
+import { mapShowStateSnapshotToShowFile } from "@/features/control/show-mapper";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useShowStore } from "@/stores/show-store";
 

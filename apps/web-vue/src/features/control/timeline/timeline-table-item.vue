@@ -94,7 +94,7 @@ function handleDoubleClick() {
       :duration-in-seconds="payload.durationSeconds"
     />
 
-    <GridTableRow :templateColumns="templateColumns" px="2">
+    <GridTableRow :templateColumns="templateColumns">
       <TimelineEventPosition
         :event-id="payload.id"
         :position="position"

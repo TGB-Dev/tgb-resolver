@@ -13,7 +13,7 @@ const overlay = css({
   alignItems: "center",
   justifyContent: "center",
   bg: "blackAlpha.700",
-  zIndex: "toast",
+  zIndex: "overlay",
 });
 const stack = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "center" });
 const label = css({ color: "fg.muted", fontSize: "sm" });

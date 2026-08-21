@@ -4,10 +4,13 @@ import { X } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { toast } from "@styled-system/recipes";
 
+import { createStyleContext } from "@/lib/style-context";
+
 import Spinner from "./spinner.vue";
 import { toaster } from "./toaster";
 
-const toastClasses = toast();
+const { useRecipe } = createStyleContext(toast);
+const toastClasses = useRecipe();
 
 const severity = (type?: string) =>
   css({
@@ -26,7 +29,7 @@ const severity = (type?: string) =>
         position: 'fixed',
         bottom: 0,
         right: 0,
-        zIndex: 60,
+        zIndex: 'toast',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,

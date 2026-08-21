@@ -12,6 +12,7 @@ import {
 import { connectRealtime } from "@/lib/realtime-client";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useShowStore } from "@/stores/show-store";
+import { preloadAssets } from "@/utils/preload-assets";
 
 export function useRealtimeConnection() {
   const queryClient = useQueryClient();
@@ -43,6 +44,10 @@ export function useRealtimeConnection() {
       playbackStore.syncFromSnapshot(data.showVersion ?? 0, data.playback);
     }
     realtimeStore.bigRefetching = false;
+    const assets = data.assets;
+    if (assets?.items && assets.items.length > 0) {
+      void preloadAssets(assets, import.meta.env.VITE_API_URL ?? "http://localhost:5001");
+    }
   });
 
   onScopeDispose(() => disconnect());

@@ -45,10 +45,10 @@ async function remove() {
   >
     <Menu.Positioner :class="menuClasses.positioner">
       <Menu.Content :class="menuClasses.content">
-        <Menu.Item :class="menuClasses.item" @select="edit">
+        <Menu.Item :class="menuClasses.item" value="edit" @select="edit">
           <Menu.ItemText :class="menuClasses.itemText">Edit</Menu.ItemText>
         </Menu.Item>
-        <Menu.Item :class="menuClasses.item" @select="remove">
+        <Menu.Item :class="menuClasses.item" value="remove" @select="remove">
           <Menu.ItemText :class="menuClasses.itemText">Delete</Menu.ItemText>
         </Menu.Item>
       </Menu.Content>

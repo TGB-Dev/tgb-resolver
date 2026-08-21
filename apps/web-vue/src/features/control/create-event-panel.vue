@@ -94,7 +94,7 @@ async function handleCreate() {
   }
 }
 
-const stack = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "stretch", height: "full" });
+const stack = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "stretch", h: "full" });
 const row = css({ display: "flex", justifyContent: "flex-end", gap: "2", marginTop: "4" });
 const errorText = css({ color: "fg.error", fontSize: "sm" });
 </script>
