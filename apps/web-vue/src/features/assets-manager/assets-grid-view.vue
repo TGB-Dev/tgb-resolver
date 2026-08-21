@@ -59,9 +59,10 @@ function handleDropError(error: unknown): void {
 </script>
 
 <template>
-  <!-- biome-ignore lint/a11y/noStaticElementInteractions: rubber-band selection + drag/drop surface (React reference used Box) -->
   <div
     ref="containerRef"
+    role="listbox"
+    aria-multiselectable="true"
     tabindex="-1"
     :class="css({ overflowY: 'auto', h: 'full', userSelect: 'none' })"
     @click="handleContainerClick"

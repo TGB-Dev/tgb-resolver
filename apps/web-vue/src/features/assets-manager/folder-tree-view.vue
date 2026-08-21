@@ -54,8 +54,8 @@ function handleContextMenu(
 </script>
 
 <template>
-  <!-- biome-ignore lint/a11y/noStaticElementInteractions: folder tree drag/drop + context-menu surface (React reference used Box) -->
   <div
+    role="tree"
     :class="css({ overflowY: 'auto', h: 'full', px: '2', pt: '2' })"
     @pointerdown="store.focusedPanel = 'tree'"
     @contextmenu="handleContextMenu($event, null)"

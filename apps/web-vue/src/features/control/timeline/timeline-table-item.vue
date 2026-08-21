@@ -77,11 +77,13 @@ function handleDoubleClick() {
 </script>
 
 <template>
-  <!-- biome-ignore lint/a11y/noStaticElementInteractions: timeline row with context-menu + dblclick (React reference used Box) -->
+  <!-- biome-ignore lint/a11y/useSemanticElements: grid-table row by convention (AGENTS.md "Grid over Table"); ARIA grid pattern uses role="row", not <tr> -->
   <div
+    role="row"
     :class="css({ w: 'full', minH: '8', position: 'relative', borderBottomWidth: 1, borderColor: 'border' })"
     :data-event-id="payload.id"
     :data-current="isLive || undefined"
+    tabindex="0"
     @pointerenter="isNear = true"
     @pointerleave="isNear = false"
     @contextmenu="emit('contextmenu', $event, payload)"

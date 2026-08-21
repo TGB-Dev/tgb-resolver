@@ -18,14 +18,14 @@ function receive(event: DragEvent) {
 </script>
 
 <template>
-  <!-- biome-ignore lint/a11y/noStaticElementInteractions: drop target surface (React reference used Box) -->
-  <div
-    :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', minH: '8rem', borderWidth: 2, borderStyle: 'dashed', borderColor: 'border', rounded: 'md', color: 'fg.muted', fontSize: 'sm' })"
+  <button
+    type="button"
+    :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', minH: '8rem', borderWidth: 2, borderStyle: 'dashed', borderColor: 'border', rounded: 'md', color: 'fg.muted', fontSize: 'sm', cursor: 'pointer' })"
     :data-dragging="dragging || undefined"
     @dragover.prevent="dragging = true"
     @dragleave="dragging = false"
     @drop.prevent="receive"
   >
     Drop assets here to upload
-  </div>
+  </button>
 </template>
