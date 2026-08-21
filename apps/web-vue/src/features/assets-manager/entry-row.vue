@@ -28,7 +28,7 @@ const rootClass = (() =>
     py: 1.5,
     fontSize: "sm",
     cursor: "pointer",
-    width: "100%",
+    w: "full",
     textAlign: "left",
     p: 0,
     appearance: "none",

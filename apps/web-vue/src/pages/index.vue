@@ -5,7 +5,7 @@ import Leaderboard from "@/features/leaderboard/leaderboard.vue";
 </script>
 
 <template>
-  <div :class="css({ position: 'relative', height: '100dvh', overflow: 'hidden' })">
+  <div :class="css({ position: 'relative', height: '100vh', overflow: 'hidden' })">
     <Leaderboard isBigScreen />
     <!-- Overlay to prevent manual interaction to the resolve leaderboard by absorbing all events -->
     <div

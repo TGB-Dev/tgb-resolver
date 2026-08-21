@@ -19,7 +19,7 @@ onMounted(() => {
 
 <template>
   <HotkeysProvider :defaultOptions="hotkeysDefaultOptions">
-    <div :class="css({ minH: 'dvh', w: 'full', px: 0 })">
+    <div :class="css({ minHeight: '100vh', w: 'full', px: 0 })">
       <RouterView />
       <Toaster />
       <AppDevtools />

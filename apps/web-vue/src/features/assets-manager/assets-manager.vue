@@ -144,7 +144,7 @@ function handleFileInputChange(e: Event) {
 </script>
 
 <template>
-  <div :class="css({ width: '100%', height: '100%', overflow: 'hidden' })">
+  <div :class="css({ boxSize: 'full', overflow: 'hidden' })">
     <SplitterRoot
       :class="splitterClasses.root"
       orientation="horizontal"
@@ -158,11 +158,11 @@ function handleFileInputChange(e: Event) {
       <SplitterResizeTrigger id="tree:content" :class="splitterClasses.resizeTrigger" />
 
       <SplitterPanel id="content" :minSize="40" :class="splitterClasses.panel">
-        <div :class="css({ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' })">
+        <div :class="css({ display: 'flex', flexDirection: 'column', overflow: 'hidden', h: 'full' })">
           <AssetsToolbar />
           <div :class="css({ flex: 1, overflow: 'hidden' })">
             <UploadZone>
-              <div :class="css({ height: '100%' })">
+              <div :class="css({ h: 'full' })">
                 <AssetsListView v-if="store.viewMode === 'list'" />
                 <AssetsGridView v-else />
               </div>

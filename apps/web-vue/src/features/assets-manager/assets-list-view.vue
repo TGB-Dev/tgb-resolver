@@ -105,7 +105,7 @@ function handleDropError(error: unknown): void {
   >
     <div
       v-if="store.entries.length === 0"
-      :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'fg.muted' })"
+      :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: 'full', color: 'fg.muted' })"
     >
       This folder is empty
     </div>

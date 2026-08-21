@@ -34,7 +34,7 @@ const rootClass = computed(() =>
     overflow: "hidden",
     cursor: "pointer",
     bg: "bg.panel",
-    width: "100%",
+    w: "full",
     display: "block",
     p: 0,
     textAlign: "left",
@@ -82,7 +82,7 @@ function formatSize(bytes: number): string {
         v-else-if="isImage && !imgError"
         :src="`${API_URL}/assets/${entry.id}`"
         :alt="entry.name"
-        style="width: 100%; height: 100%; object-fit: contain;"
+        :class="css({ boxSize: 'full', objectFit: 'contain' })"
         @error="imgError = true"
       />
       <File v-else :size="40" aria-hidden />

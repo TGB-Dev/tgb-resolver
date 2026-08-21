@@ -38,7 +38,7 @@ const severity = (type?: string) =>
       <Toast.Root :class="cx(toastClasses.root, severity(t.type))">
         <Spinner v-if="t.type === 'loading'" size="sm" label="" aria-hidden="true" />
         <div
-          :class="css({ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, maxWidth: '100%' })"
+          :class="css({ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, maxW: 'full' })"
         >
           <Toast.Title v-if="t.title" :class="toastClasses.title">{{ t.title }}</Toast.Title>
           <Toast.Description v-if="t.description" :class="toastClasses.description">{{

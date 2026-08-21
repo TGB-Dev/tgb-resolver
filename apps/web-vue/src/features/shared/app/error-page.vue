@@ -56,7 +56,7 @@ const copyClass = css({
       css({
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100dvh',
+        minHeight: '100vh',
         alignItems: 'center',
         justifyContent: 'center',
         bg: 'bg.subtle',

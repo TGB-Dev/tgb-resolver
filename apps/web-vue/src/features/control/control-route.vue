@@ -21,7 +21,15 @@ onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval);
 });
 
-const root = css({ display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden" });
+const root = css({
+  display: "flex",
+  flexDirection: "column",
+  height: "100vh",
+  maxHeight: "100vh",
+  width: "100vw",
+  maxWidth: "100vw",
+  overflow: "hidden",
+});
 const splitterRoot = cx(splitterClasses.root, css({ flex: 1, minHeight: 0 }));
 </script>
 

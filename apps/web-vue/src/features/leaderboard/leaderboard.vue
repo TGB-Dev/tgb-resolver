@@ -92,7 +92,7 @@ watch(
 </script>
 
 <template>
-  <div :class="css({ height: '100%', position: 'relative', display: 'flex', flexDirection: 'column' })">
+  <div :class="css({ h: 'full', position: 'relative', display: 'flex', flexDirection: 'column' })">
     <div
       :class="css({ flex: 1, minHeight: 0, overflowY: 'auto', overflowAnchor: 'none' })"
       data-audience-scroll
