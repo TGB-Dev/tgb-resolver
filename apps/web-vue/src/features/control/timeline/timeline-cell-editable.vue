@@ -42,6 +42,7 @@ watch(
 const editableClasses = editable();
 const cellClass = computed(() =>
   css({
+    w: "full",
     px: "1",
     py: "0.5",
     minH: "6",
@@ -69,17 +70,17 @@ function handleValueCommit(details: { value: string }) {
 </script>
 
 <template>
-  <EditableRoot
-    activation-mode="dblclick"
-    submit-mode="both"
-    :model-value="draft"
-    :placeholder="placeholder"
-    :class="editableClasses.root"
-    @dblclick.stop
-    @value-change="handleValueChange"
-    @value-commit="handleValueCommit"
-  >
-    <EditableArea :class="editableClasses.area">
+    <EditableRoot
+      activation-mode="dblclick"
+      submit-mode="both"
+      :model-value="draft"
+      :placeholder="placeholder"
+      :class="cx(editableClasses.root, css({ w: 'full' }))"
+      @dblclick.stop
+      @value-change="handleValueChange"
+      @value-commit="handleValueCommit"
+    >
+    <EditableArea :class="cx(editableClasses.area, cellClass)">
       <EditablePreview :class="cx(editableClasses.preview, cellClass)">
         {{ displayValue ?? value }}
       </EditablePreview>

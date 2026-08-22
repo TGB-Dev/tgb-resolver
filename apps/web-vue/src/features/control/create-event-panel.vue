@@ -11,7 +11,9 @@ import {
   ComboboxPositioner,
   ComboboxRoot,
   ComboboxTrigger,
-  createListCollection,
+  FieldRoot,
+  useFilter,
+  useListCollection,
 } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { combobox } from "@styled-system/recipes";
@@ -36,13 +38,20 @@ const createTimelineEvent = useCreateTimelineEventMutation();
 const assetsStore = useAssetsManagerStore();
 
 const extensions = extensionRegistry.extensionList.filter((extension: Extension) => Boolean(extension.configForm));
-const collection = createListCollection<Extension>({
-  items: extensions,
+const filterRef = useFilter({ sensitivity: "base" });
+const { collection, filter } = useListCollection<Extension>({
+  initialItems: extensions,
+  filter: (itemText: string, filterText: string) => filterRef.value.contains(itemText, filterText),
   itemToString: (extension: Extension) => `${extension.shortName} - ${extension.description}`,
   itemToValue: (extension: Extension) => extension.extId,
 });
 
 const selectedExtension = ref<Extension | null>(null);
+
+function setSelectedExtension(items: Extension[]) {
+  selectedExtension.value = items[0] ?? null;
+}
+
 const formInstance = ref(createTgbFormInstance({}));
 const error = ref<string | null>(null);
 const comboboxClasses = combobox();
@@ -101,36 +110,38 @@ const errorText = css({ color: "fg.error", fontSize: "sm" });
 
 <template>
   <div :class="stack">
-    <ComboboxRoot
-      :collection="collection"
-      :class="comboboxClasses.root"
-      @value-change="(details: { value: string[] }) => {
-        const item = collection.items.find((ext: Extension) => ext.extId === details.value[0]);
-        selectedExtension = item ?? null;
-      }"
-    >
-      <ComboboxLabel :class="comboboxClasses.label">Extension</ComboboxLabel>
-      <ComboboxControl :class="comboboxClasses.control">
-        <ComboboxInput :class="comboboxClasses.input" placeholder="Choose an extension" />
-        <ComboboxTrigger :class="comboboxClasses.trigger">▼</ComboboxTrigger>
-      </ComboboxControl>
-      <ComboboxPositioner :class="comboboxClasses.positioner">
-        <ComboboxContent :class="comboboxClasses.content">
-          <ComboboxEmpty :class="comboboxClasses.empty">No extensions found.</ComboboxEmpty>
-          <ComboboxItem
-            v-for="ext in collection.items"
-            :key="ext.extId"
-            :item="ext"
-            :class="comboboxClasses.item"
-          >
-            <ComboboxItemText :class="comboboxClasses.itemText">
-              {{ ext.shortName }} - {{ ext.description }}
-            </ComboboxItemText>
-            <ComboboxItemIndicator :class="comboboxClasses.itemIndicator">✓</ComboboxItemIndicator>
-          </ComboboxItem>
-        </ComboboxContent>
-      </ComboboxPositioner>
-    </ComboboxRoot>
+    <FieldRoot>
+      <ComboboxRoot
+        :collection="collection"
+        :open-on-click="true"
+        input-behavior="autohighlight"
+        :class="comboboxClasses.root"
+        @input-value-change="(details: { inputValue: string }) => filter(details.inputValue)"
+        @value-change="(details: { items: Extension[] }) => setSelectedExtension(details.items)"
+      >
+        <ComboboxLabel :class="comboboxClasses.label">Extension</ComboboxLabel>
+        <ComboboxControl :class="comboboxClasses.control">
+          <ComboboxInput :class="comboboxClasses.input" placeholder="Choose an extension" />
+          <ComboboxTrigger :class="comboboxClasses.trigger">▼</ComboboxTrigger>
+        </ComboboxControl>
+        <ComboboxPositioner position="fixed" :class="comboboxClasses.positioner">
+          <ComboboxContent :class="comboboxClasses.content">
+            <ComboboxEmpty :class="comboboxClasses.empty">No extensions found.</ComboboxEmpty>
+            <ComboboxItem
+              v-for="ext in collection.items"
+              :key="ext.extId"
+              :item="ext"
+              :class="comboboxClasses.item"
+            >
+              <ComboboxItemText :class="comboboxClasses.itemText">
+                {{ ext.shortName }} - {{ ext.description }}
+              </ComboboxItemText>
+              <ComboboxItemIndicator :class="comboboxClasses.itemIndicator">✓</ComboboxItemIndicator>
+            </ComboboxItem>
+          </ComboboxContent>
+        </ComboboxPositioner>
+      </ComboboxRoot>
+    </FieldRoot>
 
     <template v-if="selectedExtension?.configForm">
       <TgbForm

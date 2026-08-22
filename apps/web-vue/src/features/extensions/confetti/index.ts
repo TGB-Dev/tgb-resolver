@@ -1,5 +1,5 @@
 import { defineForm, FieldDataType } from "@tgb-form/core";
-import { h, onMounted } from "vue";
+import { h, onMounted, onUnmounted } from "vue";
 
 import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
 import { sharedValidatorRegistry } from "../init";
@@ -32,9 +32,15 @@ export const ConfettiExtension: WithVueComponentExtension<{ preset?: string }> =
   ),
   component: {
     name: "ConfettiExtension",
-    setup: () => {
+    props: { payload: { type: Object, required: true } },
+    setup: (props) => {
+      let cleanup: (() => void) | null = null;
       onMounted(() => {
-        fireConfetti();
+        const preset = (props.payload as { preset?: string })?.preset ?? "cannon";
+        cleanup = fireConfetti(preset);
+      });
+      onUnmounted(() => {
+        cleanup?.();
       });
       return () => h("span");
     },

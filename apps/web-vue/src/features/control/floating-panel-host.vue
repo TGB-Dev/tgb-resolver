@@ -17,10 +17,6 @@ import ImportShowPanel from "@/features/control/import-show-panel.vue";
 import InspectShowPanel from "@/features/control/inspect-show-panel.vue";
 import ExtensionConfigPanel from "@/features/extensions/config-panel.vue";
 
-defineSlots<{
-  icon(props: { panel: FloatingPanelHandle; type: FloatingPanelType }): unknown;
-}>();
-
 const store = useFloatingPanelStore();
 const classes = floatingPanel();
 const resizeAxes = FloatingPanel.resizeTriggerAxes;
@@ -73,9 +69,7 @@ useEventListener(window, "beforeunload", (event) => {
       strategy="fixed"
       @open-change="(details: { open: boolean }) => onOpenChange(entry.panel, details.open)"
     >
-      <FloatingPanel.Positioner
-        :class="cx(classes.positioner, css({ zIndex: 'modal' }))"
-      >
+      <FloatingPanel.Positioner :class="cx(classes.positioner)">
         <FloatingPanel.Content :class="classes.content">
           <FloatingPanel.Header :class="cx(classes.header, css({
             display: 'flex',
@@ -85,9 +79,7 @@ useEventListener(window, "beforeunload", (event) => {
             justifyContent: 'center',
           }))">
             <FloatingPanel.DragTrigger :class="classes.dragTrigger">
-              <slot name="icon" :panel="entry.panel" :type="entry.panel.type">
-                <Puzzle :size="16" aria-hidden />
-              </slot>
+              <component :is="entry.config.icon ?? Puzzle" :size="16" aria-hidden />
               <FloatingPanel.Title :class="classes.title">{{ entry.title }}</FloatingPanel.Title>
             </FloatingPanel.DragTrigger>
             <FloatingPanel.Control :class="cx(classes.control, css({

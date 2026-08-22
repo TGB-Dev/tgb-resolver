@@ -38,8 +38,8 @@ function run() {
   ];
 }
 
-watch(active, run);
-watch(() => props.durationInSeconds, run);
+watch(active, run, { flush: "post" });
+watch(() => props.durationInSeconds, run, { flush: "post" });
 onMounted(run);
 onUnmounted(stop);
 </script>
@@ -49,7 +49,7 @@ onUnmounted(stop);
     <div
       v-if="active"
       ref="bar"
-      :class="css({ position: 'absolute', inset: 0, transform: 'scaleX(0)', transformOrigin: 'left', bg: 'green.600' })"
+      :class="css({ position: 'absolute', inset: 0, transform: 'scaleX(0)', transformOrigin: 'left', bg: 'green.600', zIndex: 0 })"
     >
       <div
         ref="warning"
@@ -58,7 +58,7 @@ onUnmounted(stop);
     </div>
     <div
       v-if="active"
-      :class="css({ position: 'absolute', inset: 0, borderWidth: 2, borderColor: 'border.success', animation: 'pulse' })"
+      :class="css({ position: 'absolute', inset: 0, borderWidth: 2, borderColor: 'border.success', animation: 'pulse', zIndex: 1 })"
     />
   </div>
 </template>

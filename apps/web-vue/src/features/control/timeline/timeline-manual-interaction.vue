@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Check } from "@lucide/vue";
+import { css } from "@styled-system/css";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { usePatchTimelineEventMutation } from "@/features/control/composables/use-show";
 import IconButton from "@/features/shared/ui/icon-button.vue";
+import Tooltip from "@/features/shared/ui/tooltip.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -30,16 +32,23 @@ function toggle(event: MouseEvent) {
     :size="14"
     aria-hidden
   />
-  <IconButton
+  <Tooltip
     v-else-if="isNear"
-    size="2xs"
-    ariaLabel="Toggle manual interaction"
-    @dblclick="toggle"
+    content="Double-click to toggle manual interaction"
+    :open-delay="0"
   >
-    <Check
-      v-if="payload.requireManualInteraction"
-      :size="14"
-      aria-hidden
-    />
-  </IconButton>
+    <IconButton
+      size="2xs"
+      variant="ghost"
+      ariaLabel="Toggle manual interaction"
+      :class="css({ minW: 0, w: 'full', h: 6, m: 1, aspectRatio: 'auto' })"
+      @dblclick="toggle"
+    >
+      <Check
+        v-if="payload.requireManualInteraction"
+        :size="14"
+        aria-hidden
+      />
+    </IconButton>
+  </Tooltip>
 </template>

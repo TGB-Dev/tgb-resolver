@@ -21,6 +21,59 @@ pnpm --filter @tgb-resolver/web-vue test:e2e -- --project=chromium
 - Merge recipe and conditional/atomic styles with `cx(recipe(...), css(...))`.
 - Use Panda conditional selectors such as `_hover`, `_disabled`, and `_selected`; avoid scoped
   component CSS for component styling.
+- **Custom wrappers for components not present in the Panda/Ark baseline**: craft a thin Vue
+  component that maps 1:1 to its Chakra React counterpart (e.g. `IconButton` in
+  `src/features/shared/ui/icon-button.vue` is just the `button` recipe + `padding: 0`,
+  `borderRadius: l1`, and per-size child-`<svg>` sizing to mirror Chakra's `IconButton`). Keep the
+  mapping explicit so visuals stay in sync with the React reference.
+
+## Design tokens
+
+All design tokens are defined in `panda.config.ts` under `theme.extend` and consumed through
+generated CSS variables. **Never hardcode cubic-bezier curves, keyframes, durations, or raw colors**
+— add a token and reference it.
+
+- **Colors**: Chakra preset semantic tokens (`bg.*`, `fg.*`, `border.*`) plus full Tailwind color
+  scales (e.g. `green.600`, `red.500`).
+- **Easings** (`tokens.easings`): `swiftOut` (`cubic-bezier(0.2,0.8,0.2,1)`) and `inOutQuad`
+  (`cubic-bezier(0.45,0,0.55,1)`). Reference in `css()`:
+  - by the bare token name for the matching property — `transitionTimingFunction: "swiftOut"`
+    (Panda resolves it against the `easings` group to `var(--easings-swift-out)`), or write the
+    CSS variable directly as `transitionTimingFunction: "var(--easings-swift-out)"`.
+  - inside an `animations` token value with the `{easings.inOutQuad}` reference syntax.
+- **Keyframes** (`theme.extend.keyframes`): named `@keyframes`, e.g. `pulse`
+  (`{ "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } }`).
+- **Animations** (`tokens.animations`): compose a keyframe name + duration + easing token, e.g.
+  `pendingPulse: { value: "pulse 2s {easings.inOutQuad} infinite" }`. Use via `animation: "pendingPulse"`
+  in `css()` or slot recipes.
+- **JS animations (Motion)**: `src/features/shared/anim/easings.ts` exports `TgbResolverEasings`
+  with the same cubic-bezier values for `motion`'s `animate()` (which needs runtime JS, not CSS vars).
+  Keep it in sync with the Panda `easings` tokens.
+
+```ts
+// panda.config.ts
+theme: {
+  extend: {
+    tokens: {
+      easings: {
+        swiftOut: { value: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+        inOutQuad: { value: "cubic-bezier(0.45, 0, 0.55, 1)" },
+      },
+      animations: {
+        pendingPulse: { value: "pulse 2s {easings.inOutQuad} infinite" },
+      },
+    },
+    keyframes: {
+      pulse: { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } },
+    },
+  },
+}
+
+// usage in css() / slot recipe
+css({ transitionTimingFunction: "swiftOut" }) // resolves to var(--easings-swift-out)
+css({ animation: "pendingPulse" })
+```
+
 
 ## Feature layout
 

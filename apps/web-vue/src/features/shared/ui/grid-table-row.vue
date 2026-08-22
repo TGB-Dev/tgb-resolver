@@ -14,7 +14,7 @@ defineProps<{ templateColumns: string }>();
         columnGap: '2',
         minH: '8',
         alignItems: 'center',
-        '& > *': { alignItems: 'center', position: 'relative', zIndex: 'base' },
+        '& > *': { alignItems: 'center', position: 'relative', zIndex: 'docked' },
       })
     "
     :style="{ gridTemplateColumns: templateColumns }"

@@ -117,7 +117,7 @@ const rateIndex = computed(() => {
   return idx >= 0 ? idx : SPEED_RATES.length - 1;
 });
 const sliderValue = computed(() => (dragValue.value.length > 0 ? dragValue.value : [rateIndex.value]));
-const sliderClasses = slider({ variant: "outline" });
+const sliderClasses = slider();
 const switchClasses = swittch({ size: "sm" });
 const separatorClass = separator({ orientation: "vertical", size: "sm" });
 

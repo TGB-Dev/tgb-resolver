@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { dataList } from "@styled-system/recipes";
 import { computed } from "vue";
 
 import { useControlIsLive } from "@/features/control/composables/use-show";
 import { extensionRegistry } from "@/features/extensions/registry";
+import DataList from "@/features/shared/ui/data-list.vue";
 import GridTableRow from "@/features/shared/ui/grid-table-row.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 
@@ -24,7 +24,16 @@ const templateColumns = computed(() =>
     ? timelineTableGridTemplateColumnsStatic
     : timelineTableGridTemplateColumns,
 );
-const dataListClasses = dataList();
+
+const typeTooltipItems = computed(() => [
+  { label: "RES", value: "Contestant Resolve" },
+  { label: "PRE", value: "Pre-Resolve (preview upcoming resolve)" },
+  { label: "UNK", value: "Unknown" },
+  ...extensionRegistry.extensionList.map((ext) => ({
+    label: ext.shortName,
+    value: ext.description,
+  })),
+]);
 </script>
 
 <template>
@@ -40,28 +49,7 @@ const dataListClasses = dataList();
 
     <Tooltip :openDelay="0">
       <template #content>
-        <div :class="dataListClasses.root">
-          <div :class="dataListClasses.item">
-            <div :class="dataListClasses.itemLabel">RES</div>
-            <div :class="dataListClasses.itemValue">Contestant Resolve</div>
-          </div>
-          <div :class="dataListClasses.item">
-            <div :class="dataListClasses.itemLabel">PRE</div>
-            <div :class="dataListClasses.itemValue">Pre-Resolve (preview upcoming resolve)</div>
-          </div>
-          <div :class="dataListClasses.item">
-            <div :class="dataListClasses.itemLabel">UNK</div>
-            <div :class="dataListClasses.itemValue">Unknown</div>
-          </div>
-          <div
-            v-for="ext in extensionRegistry.extensionList"
-            :key="ext.extId"
-            :class="dataListClasses.item"
-          >
-            <div :class="dataListClasses.itemLabel">{{ ext.shortName }}</div>
-            <div :class="dataListClasses.itemValue">{{ ext.description }}</div>
-          </div>
-        </div>
+        <DataList :items="typeTooltipItems" />
       </template>
       <div>Type</div>
     </Tooltip>

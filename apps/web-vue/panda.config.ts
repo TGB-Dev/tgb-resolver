@@ -73,7 +73,7 @@ const problemCellSlotRecipe = defineSlotRecipe({
         root: {
           borderColor: "cyan.400",
           backgroundColor: "purple.700",
-          animation: "pulse 2s cubic-bezier(0.45, 0, 0.55, 1) infinite",
+          animation: "pendingPulse",
         },
         score: { color: "white" },
         verdict: { color: "white" },
@@ -154,10 +154,36 @@ export default defineConfig({
           heading: { value: ["Noto Sans Display Variable", "ui-sans-serif", "sans-serif"] },
         },
         colors: tailwindColorTokens,
+        easings: {
+          swiftOut: { value: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+          inOutQuad: { value: "cubic-bezier(0.45, 0, 0.55, 1)" },
+        },
+        // Animation tokens compose a `@keyframes` name with a duration,
+        // easing token, and iteration count. Referenced via `animation` in css/recipes.
+        animations: {
+          pendingPulse: { value: "pulse 2s {easings.inOutQuad} infinite" },
+        },
+      },
+      // `@keyframes` referenced by the `animations.pendingPulse` token above.
+      keyframes: {
+        pulse: {
+          "0%, 100%": { opacity: 1 },
+          "50%": { opacity: 0.5 },
+        },
       },
       slotRecipes: {
         problemCell: problemCellSlotRecipe,
       },
+    },
+  },
+
+  // The problem-cell verdict variant is chosen dynamically at runtime
+  // (problemCell({ verdict: VERDICT_VARIANT[...] })), so Panda's static
+  // extraction only emits the default `pending` variant and drops the rest.
+  // Force-emit every verdict variant so the colored borders/backgrounds apply.
+  staticCss: {
+    recipes: {
+      problemCell: ["*"],
     },
   },
 

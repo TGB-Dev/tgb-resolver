@@ -1,4 +1,5 @@
-import type { Ref } from "vue";
+import { CalendarPlus, FileInput, Puzzle, ScanSearch } from "@lucide/vue";
+import type { Component, Ref } from "vue";
 
 export enum FloatingPanelType {
   ImportShow = "import-show",
@@ -23,6 +24,7 @@ export interface FloatingPanelHandle {
 }
 
 export interface FloatingPanelConfig {
+  readonly icon: Component;
   size: { width: number; height: number };
   minSize?: { width: number; height: number };
   resizable?: boolean;
@@ -31,23 +33,27 @@ export interface FloatingPanelConfig {
 
 export const floatingPanelConfig: Record<FloatingPanelType, FloatingPanelConfig> = {
   [FloatingPanelType.ImportShow]: {
+    icon: FileInput,
     size: { width: 560, height: 360 },
     resizable: true,
     maximizable: false,
   },
   [FloatingPanelType.InspectShow]: {
+    icon: ScanSearch,
     size: { width: 720, height: 560 },
     minSize: { width: 420, height: 320 },
     resizable: true,
     maximizable: true,
   },
   [FloatingPanelType.ExtensionConfig]: {
+    icon: Puzzle,
     size: { width: 560, height: 480 },
     minSize: { width: 360, height: 320 },
     resizable: true,
     maximizable: true,
   },
   [FloatingPanelType.CreateEvent]: {
+    icon: CalendarPlus,
     size: { width: 640, height: 480 },
     minSize: { width: 420, height: 320 },
     resizable: true,

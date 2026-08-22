@@ -1,6 +1,12 @@
-export interface ScrollerExtensionPayload extends Record<string, unknown> {
+export type ScrollerExtensionPayload = Record<string, unknown> & {
   duration?: number;
-}
-export function computeScrollerExtensionDuration(payload: ScrollerExtensionPayload) {
-  return 1 + (typeof payload.duration === "number" ? payload.duration : 10);
+};
+
+/**
+ * Total wall-clock duration of the scroller animation: a fixed 1-second ease
+ * back to the top, followed by the operator-configured downward scroll.
+ */
+export function computeScrollerExtensionDuration(payload: ScrollerExtensionPayload): number {
+  const downwardSeconds = typeof payload.duration === "number" ? payload.duration : 10;
+  return 1 + downwardSeconds;
 }
