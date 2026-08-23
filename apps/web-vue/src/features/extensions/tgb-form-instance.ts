@@ -1,13 +1,8 @@
-export interface TgbFormInstance {
-  values: Record<string, unknown>;
-  setValue(name: string, value: unknown): void;
+interface TgbFormInstanceInput {
+  readonly Field: object;
+  readonly handleSubmit: () => void | Promise<void>;
 }
-export function createTgbFormInstance(initial: Record<string, unknown> = {}): TgbFormInstance {
-  const values = { ...initial };
-  return {
-    values,
-    setValue(name, value) {
-      values[name] = value;
-    },
-  };
+
+export function toTgbFormInstance(form: TgbFormInstanceInput): Record<string, unknown> {
+  return { Field: form.Field, handleSubmit: () => form.handleSubmit() };
 }

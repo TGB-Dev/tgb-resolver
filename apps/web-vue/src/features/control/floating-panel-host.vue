@@ -69,7 +69,10 @@ useEventListener(window, "beforeunload", (event) => {
       strategy="fixed"
       @open-change="(details: { open: boolean }) => onOpenChange(entry.panel, details.open)"
     >
-      <FloatingPanel.Positioner :class="cx(classes.positioner)">
+      <!-- Zag sets an inline `z-index: var(--z-index)` (= stackIndex + 1 ≈ 1) on
+           the positioner, which would override any recipe class value. Force the
+           popover layer with `!important` so panels always sit above app content. -->
+      <FloatingPanel.Positioner :class="cx(classes.positioner, css({ zIndex: 'popover!' }))">
         <FloatingPanel.Content :class="classes.content">
           <FloatingPanel.Header :class="cx(classes.header, css({
             display: 'flex',

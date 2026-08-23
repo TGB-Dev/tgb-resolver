@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ChevronsDownUp, ChevronsUpDown, Folder } from "@lucide/vue";
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
+import { button, iconButton } from "@styled-system/recipes";
 import { computed } from "vue";
-
-import IconButton from "@/features/shared/ui/icon-button.vue";
 
 import { useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
@@ -80,22 +79,22 @@ function handleContextMenu(
       </button>
 
       <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0' })">
-        <IconButton
-          ariaLabel="Expand all folders"
-          size="xs"
-          variant="ghost"
+        <button
+          type="button"
+          aria-label="Expand all folders"
+          :class="cx(button({ variant: 'ghost', size: 'xs' }), iconButton())"
           @click="store.expandAll"
         >
           <ChevronsUpDown :size="14" aria-hidden />
-        </IconButton>
-        <IconButton
-          ariaLabel="Collapse all folders"
-          size="xs"
-          variant="ghost"
+        </button>
+        <button
+          type="button"
+          aria-label="Collapse all folders"
+          :class="cx(button({ variant: 'ghost', size: 'xs' }), iconButton())"
           @click="store.collapseAll"
         >
           <ChevronsDownUp :size="14" aria-hidden />
-        </IconButton>
+        </button>
       </div>
     </div>
 

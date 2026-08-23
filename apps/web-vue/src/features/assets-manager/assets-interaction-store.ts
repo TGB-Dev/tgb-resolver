@@ -102,6 +102,13 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
     dropTargetId.value = null;
   }
 
+  function resolveDropUploadTarget(entryId: string | null): string | null {
+    if (!entryId) return assets.selectedEntryId ?? null;
+    const entry = assets.findEntry(entryId);
+    if (!entry) return assets.selectedEntryId ?? null;
+    return entry.isDirectory ? entry.id : (assets.selectedEntryId ?? null);
+  }
+
   return {
     clipboard,
     dragState,
@@ -118,5 +125,6 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
     beginDrag,
     setDropTarget,
     clearDrag,
+    resolveDropUploadTarget,
   };
 });

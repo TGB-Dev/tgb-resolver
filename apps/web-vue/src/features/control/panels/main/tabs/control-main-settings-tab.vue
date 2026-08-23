@@ -1,21 +1,5 @@
 <script setup lang="ts">
-import {
-  createListCollection,
-  SelectContent,
-  SelectItem,
-  SelectItemIndicator,
-  SelectItemText,
-  SelectLabel,
-  SelectPositioner,
-  SelectRoot,
-  SelectTrigger,
-  SelectValueText,
-  SwitchControl,
-  SwitchHiddenInput,
-  SwitchLabel,
-  SwitchRoot,
-  SwitchThumb,
-} from "@ark-ui/vue";
+import { createListCollection, Select, Switch } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { select, swittch } from "@styled-system/recipes";
 import { computed } from "vue";
@@ -63,25 +47,25 @@ const switchClasses = swittch({ size: "md" });
 <template>
   <div :class="css({ boxSize: 'full', p: '4' })">
     <div :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'stretch' })">
-      <SwitchRoot
+      <Switch.Root
         :checked="fullAutoEnabled"
         :disabled="!canMutate || updateAutomation.isPending.value"
         :class="switchClasses.root"
         @checked-change="(details) => updateAutomation.mutate({ fullAutoEnabled: details.checked })"
       >
-        <SwitchControl :class="switchClasses.control">
-          <SwitchThumb :class="switchClasses.thumb" />
-        </SwitchControl>
-        <SwitchHiddenInput />
-        <SwitchLabel :class="switchClasses.label">Full auto advance</SwitchLabel>
-      </SwitchRoot>
+        <Switch.Control :class="switchClasses.control">
+          <Switch.Thumb :class="switchClasses.thumb" />
+        </Switch.Control>
+        <Switch.HiddenInput />
+        <Switch.Label :class="switchClasses.label">Full auto advance</Switch.Label>
+      </Switch.Root>
 
       <div :class="css({ display: 'flex', flexDirection: 'column', gap: '1' })">
         <div :class="css({ fontSize: 'sm' })">
           Tick rate for server-side timers (crucial for FXs) (fps)
         </div>
 
-        <SelectRoot
+        <Select.Root
           :collection="collection"
           :model-value="activeValue"
           :disabled="!canMutate || updateSettings.isPending.value"
@@ -93,24 +77,24 @@ const switchClasses = swittch({ size: "md" });
             }
           }"
         >
-          <SelectLabel :class="selectClasses.label">Tick rate</SelectLabel>
-          <SelectTrigger :class="selectClasses.trigger">
-            <SelectValueText :class="selectClasses.valueText" placeholder="Select rate" />
-          </SelectTrigger>
-          <SelectPositioner :class="selectClasses.positioner">
-            <SelectContent :class="selectClasses.content">
-              <SelectItem
+          <Select.Label :class="selectClasses.label">Tick rate</Select.Label>
+          <Select.Trigger :class="selectClasses.trigger">
+            <Select.ValueText :class="selectClasses.valueText" placeholder="Select rate" />
+          </Select.Trigger>
+          <Select.Positioner :class="selectClasses.positioner">
+            <Select.Content :class="selectClasses.content">
+              <Select.Item
                 v-for="item in collection.items"
                 :key="item.value"
                 :item="item"
                 :class="selectClasses.item"
               >
-                <SelectItemText :class="selectClasses.itemText">{{ item.label }}</SelectItemText>
-                <SelectItemIndicator :class="selectClasses.itemIndicator">✓</SelectItemIndicator>
-              </SelectItem>
-            </SelectContent>
-          </SelectPositioner>
-        </SelectRoot>
+                <Select.ItemText :class="selectClasses.itemText">{{ item.label }}</Select.ItemText>
+                <Select.ItemIndicator :class="selectClasses.itemIndicator">✓</Select.ItemIndicator>
+              </Select.Item>
+            </Select.Content>
+          </Select.Positioner>
+        </Select.Root>
       </div>
     </div>
   </div>

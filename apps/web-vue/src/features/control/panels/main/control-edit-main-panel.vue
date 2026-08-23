@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TabContent, TabList, TabsRoot, TabTrigger } from "@ark-ui/vue";
+import { Tabs } from "@ark-ui/vue";
 import { Images, Info, Logs, ScanEye, Settings } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { tabs } from "@styled-system/recipes";
@@ -31,7 +31,7 @@ useHotkey("Mod+5", () => (activeTab.value = ControlEditMainPanelTabs.SETTINGS));
 </script>
 
 <template>
-  <TabsRoot
+  <Tabs.Root
     v-model="activeTab"
     :class="
       cx(
@@ -47,43 +47,43 @@ useHotkey("Mod+5", () => (activeTab.value = ControlEditMainPanelTabs.SETTINGS));
     "
     defaultValue="preview"
   >
-    <TabList :class="tabClasses.list">
-      <TabTrigger value="preview" :class="tabClasses.trigger">
+    <Tabs.List :class="tabClasses.list">
+      <Tabs.Trigger value="preview" :class="tabClasses.trigger">
         <ScanEye :size="16" aria-hidden />
         Preview
-      </TabTrigger>
-      <TabTrigger value="assets" :class="tabClasses.trigger">
+      </Tabs.Trigger>
+      <Tabs.Trigger value="assets" :class="tabClasses.trigger">
         <Images :size="16" aria-hidden />
         Assets
-      </TabTrigger>
-      <TabTrigger value="cue" :class="tabClasses.trigger">
+      </Tabs.Trigger>
+      <Tabs.Trigger value="cue" :class="tabClasses.trigger">
         <Logs :size="16" aria-hidden />
         Cue
-      </TabTrigger>
-      <TabTrigger value="info" :class="tabClasses.trigger">
+      </Tabs.Trigger>
+      <Tabs.Trigger value="info" :class="tabClasses.trigger">
         <Info :size="16" aria-hidden />
         Info
-      </TabTrigger>
-      <TabTrigger value="settings" :class="tabClasses.trigger">
+      </Tabs.Trigger>
+      <Tabs.Trigger value="settings" :class="tabClasses.trigger">
         <Settings :size="16" aria-hidden />
         Settings
-      </TabTrigger>
-    </TabList>
+      </Tabs.Trigger>
+    </Tabs.List>
 
-    <TabContent value="preview" :class="cx(tabClasses.content, css({ minH: 0 }))">
+    <Tabs.Content value="preview" :class="cx(tabClasses.content, css({ minH: 0 }))">
       <ControlMainPreviewTab />
-    </TabContent>
-    <TabContent value="assets" :class="tabClasses.content">
+    </Tabs.Content>
+    <Tabs.Content value="assets" :class="tabClasses.content">
       <ControlMainAssetsTab />
-    </TabContent>
-    <TabContent value="cue" :class="tabClasses.content">
+    </Tabs.Content>
+    <Tabs.Content value="cue" :class="tabClasses.content">
       <ControlMainCueTab />
-    </TabContent>
-    <TabContent value="info" :class="tabClasses.content">
+    </Tabs.Content>
+    <Tabs.Content value="info" :class="tabClasses.content">
       <ControlMainInfoTab />
-    </TabContent>
-    <TabContent value="settings" :class="tabClasses.content">
+    </Tabs.Content>
+    <Tabs.Content value="settings" :class="tabClasses.content">
       <ControlMainSettingsTab />
-    </TabContent>
-  </TabsRoot>
+    </Tabs.Content>
+  </Tabs.Root>
 </template>

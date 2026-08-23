@@ -58,7 +58,7 @@ onUnmounted(stop);
     </div>
     <div
       v-if="active"
-      :class="css({ position: 'absolute', inset: 0, borderWidth: 2, borderColor: 'border.success', animation: 'pulse', zIndex: 1 })"
+      :class="css({ position: 'absolute', inset: 0, borderWidth: 2, borderColor: 'border.success', animation: 'borderPulse', zIndex: 1 })"
     />
   </div>
 </template>

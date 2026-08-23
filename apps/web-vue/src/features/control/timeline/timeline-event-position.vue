@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
 
-defineProps<{
+import Tooltip from "@/features/shared/ui/tooltip.vue";
+
+const props = defineProps<{
   eventId: number;
   position: number;
 }>();
@@ -9,14 +11,25 @@ defineProps<{
 const emit = defineEmits<{
   seek: [id: number];
 }>();
+
+function handleClick() {
+  emit("seek", props.eventId);
+}
 </script>
 
 <template>
-  <button
-    type="button"
-    :class="css({ cursor: 'pointer', fontFamily: 'mono', textAlign: 'end', color: 'fg.muted', _hover: { color: 'fg' } })"
-    @dblclick.stop="emit('seek', eventId)"
+  <Tooltip
+    :content="`Seek to event #${position}`"
+    :open-delay="0"
+    :positioning="{ placement: 'left', flip: false }"
+    show-arrow
   >
-    {{ position }}
-  </button>
+    <button
+      type="button"
+      :class="css({ cursor: 'pointer', fontFamily: 'mono', textAlign: 'end' })"
+      @click="handleClick"
+    >
+      {{ position }}
+    </button>
+  </Tooltip>
 </template>

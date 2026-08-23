@@ -72,10 +72,9 @@ const small = css({ fontSize: "sm" });
 
   <div v-else :class="row">
     <ChevronDown :size="20" aria-hidden />
+    <!-- Keep `.` and hundredths on one line: Vue's whitespace condensing
+         otherwise inserts a ~1ch gap before the small span. -->
     <span>Next cue in </span>
-    <span :class="value">
-      {{ formatted.minutes }}:{{ formatted.seconds }}.
-      <span :class="small">{{ formatted.hundredMillis }}</span>
-    </span>
+    <span :class="value">{{ formatted.minutes }}:{{ formatted.seconds }}.<span :class="small">{{ formatted.hundredMillis }}</span></span>
   </div>
 </template>

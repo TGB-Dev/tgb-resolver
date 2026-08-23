@@ -10,6 +10,8 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
   const signals: Record<number, Ref<LeaderboardEntry | null>> = {};
   const currentBottomView = ref(0);
   const currentResolvedUserId = ref(0);
+  /** The (userId, problemId) pair of the most recent PRE/RES event, if any. */
+  const latestResolved = ref<{ userId: number; problemId: number } | null>(null);
   const isBigScreen = ref(false);
   let lastDeriveKey: { show: ShowFile; upToEventId?: number } | null = null;
   function getSignal(userId: number) {
@@ -32,5 +34,13 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
     if (ids.length !== userIds.value.length || ids.some((id, index) => id !== userIds.value[index]))
       userIds.value = ids;
   }
-  return { userIds, getSignal, sync, currentBottomView, currentResolvedUserId, isBigScreen };
+  return {
+    userIds,
+    getSignal,
+    sync,
+    currentBottomView,
+    currentResolvedUserId,
+    latestResolved,
+    isBigScreen,
+  };
 });

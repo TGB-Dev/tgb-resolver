@@ -1,21 +1,24 @@
 <script setup lang="ts">
 import { Plus } from "@lucide/vue";
-import { css, cx } from "@styled-system/css";
+import { cx } from "@styled-system/css";
+import { addBtnWrapper, button, iconButton } from "@styled-system/recipes";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
+import { inject, ref } from "vue";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import IconButton from "@/features/shared/ui/icon-button.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 import { useShowStore } from "@/stores/show-store";
 
+import { timelineRowHoverKey } from "./timeline-row-hover";
+
 const props = defineProps<{
   payload: TimelineTableItem;
-  isNear: boolean;
 }>();
 
 const floatingPanelStore = useFloatingPanelStore();
 const showStore = useShowStore();
+const isNear = inject(timelineRowHoverKey, ref(false));
 
 function getTimelinePosition(eventId: number, fallback: number) {
   const index = showStore.showOrderedIds.indexOf(eventId);
@@ -30,56 +33,30 @@ function handleCreate(before: boolean) {
     { relativeToEventId: props.payload.id, before },
   );
 }
-
-const beforeClass = css({
-  position: "absolute",
-  top: 0,
-  right: 0,
-  transform: "translateY(-100%)",
-  borderTopRadius: "md",
-  borderBottomRadius: 0,
-  bg: props.payload.id & 1 ? "bg.subtle" : "bg.muted",
-  zIndex: 20,
-  _hover: { bg: "bg.emphasized", color: "fg" },
-});
-
-const afterClass = css({
-  position: "absolute",
-  bottom: 0,
-  right: 0,
-  transform: "translateY(100%)",
-  borderTopRadius: 0,
-  borderBottomRadius: "md",
-  bg: props.payload.id & 1 ? "bg.subtle" : "bg.muted",
-  zIndex: 20,
-  _hover: { bg: "bg.emphasized", color: "fg" },
-});
 </script>
 
 <template>
   <template v-if="isNear">
     <Tooltip content="Add event before" :open-delay="0">
-      <IconButton
-        :class="cx('add-btn-wrapper', beforeClass)"
-        variant="subtle"
-        size="2xs"
-        ariaLabel="Add event before"
+      <button
+        type="button"
+        aria-label="Add event before"
+        :class="cx(button({ variant: 'subtle', size: '2xs' }), iconButton(), addBtnWrapper({ position: 'before' }))"
         @click.stop="handleCreate(true)"
       >
         <Plus :size="12" aria-hidden />
-      </IconButton>
+      </button>
     </Tooltip>
 
     <Tooltip content="Add event after" :open-delay="0">
-      <IconButton
-        :class="cx('add-btn-wrapper', afterClass)"
-        variant="subtle"
-        size="2xs"
-        ariaLabel="Add event after"
+      <button
+        type="button"
+        aria-label="Add event after"
+        :class="cx(button({ variant: 'subtle', size: '2xs' }), iconButton(), addBtnWrapper({ position: 'after' }))"
         @click.stop="handleCreate(false)"
       >
         <Plus :size="12" aria-hidden />
-      </IconButton>
+      </button>
     </Tooltip>
   </template>
 </template>

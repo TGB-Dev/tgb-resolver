@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
+import { dataList, gridTableRow } from "@styled-system/recipes";
 import { computed } from "vue";
 
 import { useControlIsLive } from "@/features/control/composables/use-show";
 import { extensionRegistry } from "@/features/extensions/registry";
-import DataList from "@/features/shared/ui/data-list.vue";
-import GridTableRow from "@/features/shared/ui/grid-table-row.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 
 import {
@@ -34,22 +33,25 @@ const typeTooltipItems = computed(() => [
     value: ext.description,
   })),
 ]);
+
+const rowClasses = cx(gridTableRow(), css({ bg: "bg.subtle", py: "2" }));
+const listClasses = dataList();
 </script>
 
 <template>
-  <GridTableRow
-    :templateColumns="templateColumns"
-    h="auto"
-    bg="bg.subtle"
-    py="2"
-  >
+  <div :class="rowClasses" :style="{ gridTemplateColumns: templateColumns }">
     <Tooltip content="Event ID" :openDelay="0">
       <div :class="css({ textAlign: 'end' })">No.</div>
     </Tooltip>
 
     <Tooltip :openDelay="0">
       <template #content>
-        <DataList :items="typeTooltipItems" />
+        <dl :class="listClasses.root">
+          <div v-for="(item, index) in typeTooltipItems" :key="index" :class="listClasses.item">
+            <dt :class="listClasses.itemLabel">{{ item.label }}</dt>
+            <dd :class="listClasses.itemValue">{{ item.value }}</dd>
+          </div>
+        </dl>
       </template>
       <div>Type</div>
     </Tooltip>
@@ -86,5 +88,5 @@ const typeTooltipItems = computed(() => [
     </Tooltip>
 
     <div v-if="!isLiveEffective" />
-  </GridTableRow>
+  </div>
 </template>

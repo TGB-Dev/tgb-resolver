@@ -1,3 +1,4 @@
+import { useEventListener } from "@vueuse/core";
 import { ref } from "vue";
 
 export interface ContextMenuTarget {
@@ -24,6 +25,10 @@ const closedState = (): ContextMenuState => ({
 
 export function useContextMenu() {
   const state = ref<ContextMenuState>(closedState());
+
+  function close() {
+    state.value = closedState();
+  }
 
   function open(
     e: {
@@ -52,9 +57,18 @@ export function useContextMenu() {
     };
   }
 
-  function close() {
-    state.value = closedState();
-  }
+  // Mirror the React reference: dismiss when pressing anywhere outside the
+  // open menu surface.
+  useEventListener(
+    document,
+    "pointerdown",
+    (e) => {
+      if (!state.value.isOpen) return;
+      if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
+      close();
+    },
+    { passive: true },
+  );
 
   return { state, open, close };
 }

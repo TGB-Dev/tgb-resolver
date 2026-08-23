@@ -9,6 +9,7 @@ import { computed, ref, watch } from "vue";
 import { useControlIsLive, useControlShowQuery, useMoveTimelineEventMutation, useSeekPlaybackMutation } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import Spinner from "@/features/shared/ui/spinner.vue";
 import { useShowStore } from "@/stores/show-store";
 
 import TimelineContextMenu from "./timeline-context-menu.vue";
@@ -106,7 +107,31 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
 </script>
 
 <template>
-  <div :class="css({ boxSize: 'full', display: 'flex', flexDirection: 'column', minH: 0, overflow: 'hidden' })">
+  <div
+    v-if="showQuery.isLoading.value"
+    :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', boxSize: 'full' })"
+  >
+    <Spinner size="lg" label="" aria-hidden="true" />
+  </div>
+
+  <div
+    v-else-if="showQuery.error.value"
+    :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', boxSize: 'full', px: 4 })"
+  >
+    <p>{{ showQuery.error.value.message }}</p>
+  </div>
+
+  <div
+    v-else-if="displayIds.length === 0"
+    :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', boxSize: 'full' })"
+  >
+    <p>No show loaded.</p>
+  </div>
+
+  <div
+    v-else
+    :class="css({ boxSize: 'full', display: 'flex', flexDirection: 'column', minH: 0, overflow: 'hidden' })"
+  >
     <TimelineTableHeader :is-live="isLive" />
 
     <div
@@ -127,27 +152,24 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
               :key="row.id"
               :payload="row"
               :index="index"
-              :is-live="playback.currentEventId === row.id"
+              :is-live="isLive"
               @seek="onSeek"
               @contextmenu="openContextMenu"
             />
           </DragDropProvider>
+          <!-- Live mode renders a static list: no dnd context, no sortable wiring -->
           <template v-else>
             <TimelineSortableRow
               v-for="(row, index) in displayRows"
               :key="row.id"
               :payload="row"
               :index="index"
-              :is-live="playback.currentEventId === row.id"
+              :is-live="isLive"
               @seek="onSeek"
               @contextmenu="openContextMenu"
             />
           </template>
         </template>
-
-        <div v-if="showQuery.isLoading.value || displayIds.length === 0" :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: '40', color: 'fg.muted', fontSize: 'sm' })">
-          {{ showQuery.isLoading.value ? "Loading timeline…" : "No timeline events" }}
-        </div>
       </div>
     </div>
 

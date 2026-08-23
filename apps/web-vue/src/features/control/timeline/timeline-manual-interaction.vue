@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { Check } from "@lucide/vue";
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
+import { button, iconButton } from "@styled-system/recipes";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
+import { inject, ref } from "vue";
 
 import { usePatchTimelineEventMutation } from "@/features/control/composables/use-show";
-import IconButton from "@/features/shared/ui/icon-button.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 
-const props = withDefaults(
-  defineProps<{
-    payload: TimelineTableItem;
-    isNear?: boolean;
-  }>(),
-  { isNear: false },
-);
+import { timelineRowHoverKey } from "./timeline-row-hover";
+
+const props = defineProps<{
+  payload: TimelineTableItem;
+}>();
 
 const patchEvent = usePatchTimelineEventMutation();
+const isNear = inject(timelineRowHoverKey, ref(false));
 
 function toggle(event: MouseEvent) {
   event.stopPropagation();
@@ -37,11 +37,16 @@ function toggle(event: MouseEvent) {
     content="Double-click to toggle manual interaction"
     :open-delay="0"
   >
-    <IconButton
-      size="2xs"
-      variant="ghost"
-      ariaLabel="Toggle manual interaction"
-      :class="css({ minW: 0, w: 'full', h: 6, m: 1, aspectRatio: 'auto' })"
+    <button
+      type="button"
+      aria-label="Toggle manual interaction"
+      :class="
+        cx(
+          button({ variant: 'ghost' }),
+          iconButton(),
+          css({ minW: 0, w: 'full', h: 6, m: 1, aspectRatio: 'auto' }),
+        )
+      "
       @dblclick="toggle"
     >
       <Check
@@ -49,6 +54,6 @@ function toggle(event: MouseEvent) {
         :size="14"
         aria-hidden
       />
-    </IconButton>
+    </button>
   </Tooltip>
 </template>

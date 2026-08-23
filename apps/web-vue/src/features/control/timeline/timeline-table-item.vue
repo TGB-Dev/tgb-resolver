@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { GripVertical } from "@lucide/vue";
-import { css } from "@styled-system/css";
+import { Check, GripVertical } from "@lucide/vue";
+import { css, cx } from "@styled-system/css";
+import { button, gridTableRow, iconButton } from "@styled-system/recipes";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
-import { computed, ref, watchEffect } from "vue";
+import { computed, provide, ref } from "vue";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import { usePlaybackStore } from "@/features/control/playback-store";
 import { extensionRegistry } from "@/features/extensions/registry";
-import { useColorMode } from "@/features/shared/ui/color-mode";
-import GridTableRow from "@/features/shared/ui/grid-table-row.vue";
-import IconButton from "@/features/shared/ui/icon-button.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 import { useShowStore } from "@/stores/show-store";
 
@@ -21,6 +18,7 @@ import TimelineCustomNameEditable from "./timeline-custom-name-editable.vue";
 import TimelineEventPosition from "./timeline-event-position.vue";
 import TimelineManualInteraction from "./timeline-manual-interaction.vue";
 import TimelineNumberEditable from "./timeline-number-editable.vue";
+import { timelineRowHoverKey } from "./timeline-row-hover";
 import {
   timelineTableGridTemplateColumns,
   timelineTableGridTemplateColumnsStatic,
@@ -38,28 +36,13 @@ const emit = defineEmits<{
 
 const showStore = useShowStore();
 const floatingPanelStore = useFloatingPanelStore();
-const playback = usePlaybackStore();
-const { colorMode } = useColorMode();
+// Hover state is provided for the hover-reactive leaves (add buttons, manual
+// interaction toggle). Reading it here would re-render the whole row on every
+// pointer enter/leave — a patch storm that also starves the WAAPI animations.
 const isNear = ref(false);
-const rowEl = ref<HTMLElement>();
+provide(timelineRowHoverKey, isNear);
 
 const isReorderable = computed(() => props.payload.type === TimelineEventType.CUS && !props.isLive);
-
-// Mirror the React reference: the currently-playing row gets an inverted text
-// color (only in light mode, to avoid clashing with the dark theme). Applied
-// imperatively to this leaf so only the row text color changes on playback.
-const isActive = computed(
-  () =>
-    playback.currentEventId === props.payload.id ||
-    playback.state.activeEventIds.includes(props.payload.id),
-);
-
-watchEffect(() => {
-  const el = rowEl.value;
-  if (!el) return;
-  const activeInLightMode = isActive.value && colorMode.value === "light";
-  el.style.color = activeInLightMode ? "var(--colors-fg-inverted)" : "";
-});
 
 const templateColumns = computed(() =>
   props.isLive ? timelineTableGridTemplateColumnsStatic : timelineTableGridTemplateColumns,
@@ -93,23 +76,21 @@ function handleDoubleClick() {
 </script>
 
 <template>
-  <tr
-    ref="rowEl"
+  <!-- biome-ignore lint/a11y/noStaticElementInteractions: row-level hover/context/double-click affordances; inner controls remain the interactive elements -->
+  <div
     :class="
       css({
         display: 'grid',
         w: 'full',
         minH: '8',
         position: 'relative',
-        borderBottomWidth: 1,
-        borderColor: 'border',
-      '& .add-btn-wrapper': {
-        opacity: 0,
-        transitionProperty: 'opacity',
-        transitionDuration: '0.15s',
-        transitionTimingFunction: 'swiftOut',
-        pointerEvents: 'none',
-      },
+        '& .add-btn-wrapper': {
+          opacity: 0,
+          transitionProperty: 'opacity',
+          transitionDuration: '0.15s',
+          transitionTimingFunction: 'swiftOut',
+          pointerEvents: 'none',
+        },
         '&:hover .add-btn-wrapper': {
           opacity: 1,
           pointerEvents: 'auto',
@@ -118,7 +99,6 @@ function handleDoubleClick() {
     "
     :data-event-id="payload.id"
     :data-current="isLive || undefined"
-    tabindex="0"
     @pointerenter="isNear = true"
     @pointerleave="isNear = false"
     @contextmenu="emit('contextmenu', $event, payload)"
@@ -126,7 +106,7 @@ function handleDoubleClick() {
   >
     <CurrentEventIndicator :event-id="payload.id" :duration-in-seconds="payload.durationSeconds" />
 
-    <GridTableRow :templateColumns="templateColumns">
+    <div :class="gridTableRow()" :style="{ gridTemplateColumns: templateColumns }">
       <TimelineEventPosition
         :event-id="payload.id"
         :position="position"
@@ -150,7 +130,6 @@ function handleDoubleClick() {
             fontFamily: 'mono',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
           })
         "
       >
@@ -183,9 +162,17 @@ function handleDoubleClick() {
       </div>
 
       <div
-        :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: '6' })"
+        :class="
+          css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: '6', m: 1 })
+        "
       >
-        <TimelineManualInteraction :payload="payload" :is-near="isNear" />
+        <!-- Live mode is fully static: just the check mark, no hover affordance -->
+        <Check
+          v-if="isLive && payload.requireManualInteraction"
+          :size="14"
+          aria-hidden
+        />
+        <TimelineManualInteraction v-else-if="!isLive" :payload="payload" />
       </div>
 
       <div
@@ -193,27 +180,31 @@ function handleDoubleClick() {
         :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: 'full' })"
       >
         <Tooltip content="Drag to reorder event" :open-delay="0">
-          <IconButton
-            ariaLabel="Drag to reorder event"
-            size="2xs"
-            variant="ghost"
+          <button
+            type="button"
+            aria-label="Drag to reorder event"
             :disabled="!isReorderable"
             :class="
-              css({
-                color: 'fg.muted',
-                p: 0,
-                cursor: 'grab',
-                _hover: { color: 'fg' },
-                _disabled: { cursor: 'not-allowed', color: 'fg.muted' },
-              })
+              cx(
+                button({ variant: 'ghost', size: '2xs' }),
+                iconButton(),
+                css({
+                  color: 'fg.muted',
+                  p: 0,
+                  cursor: isReorderable ? 'grab' : 'not-allowed',
+                  _active: { cursor: isReorderable ? 'grabbing' : 'not-allowed' },
+                  _hover: { color: 'fg' },
+                  _disabled: { cursor: 'not-allowed', color: 'fg.muted' },
+                }),
+              )
             "
           >
             <GripVertical :size="14" aria-hidden />
-          </IconButton>
+          </button>
         </Tooltip>
       </div>
-    </GridTableRow>
+    </div>
 
-    <TimelineAddButtons v-if="!isLive" :payload="payload" :is-near="isNear" />
-  </tr>
+    <TimelineAddButtons v-if="!isLive" :payload="payload" />
+  </div>
 </template>

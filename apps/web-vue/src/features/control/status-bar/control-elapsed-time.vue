@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
 import { computed } from "vue";
 
 import { useControlNowStore } from "@/features/control/control-now-store";
 import { usePlaybackStore } from "@/features/control/playback-store";
-import MonoText from "@/features/shared/ui/mono-text.vue";
+import { monoTextCss } from "@/features/shared/ui/mono-text";
 
 const controlNowStore = useControlNowStore();
 const playbackStore = usePlaybackStore();
@@ -26,7 +26,7 @@ const elapsedText = computed(() => {
 </script>
 
 <template>
-  <MonoText :class="css({ fontSize: '3xl', opacity: isStarted ? 1 : 0.5 })">
+  <span :class="cx(monoTextCss, css({ fontSize: '3xl', opacity: isStarted ? 1 : 0.5 }))">
     T+{{ elapsedText }}
-  </MonoText>
+  </span>
 </template>

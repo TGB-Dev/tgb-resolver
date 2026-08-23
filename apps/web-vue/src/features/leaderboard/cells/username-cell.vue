@@ -19,7 +19,6 @@ function usernameClass() {
   return css({
     fontFamily: "mono",
     fontStyle: "italic",
-    color: "fg.muted",
   });
 }
 </script>

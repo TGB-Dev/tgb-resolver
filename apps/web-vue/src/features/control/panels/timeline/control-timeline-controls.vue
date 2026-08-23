@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Crosshair, FileDown, FileUp, Trash2 } from "@lucide/vue";
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
+import { button } from "@styled-system/recipes";
 
 import { useClearShowMutation, useControlCanMutate, useControlIsLive, useExportShowAction } from "@/features/control/composables/use-show";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import Button from "@/features/shared/ui/button.vue";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
 const props = defineProps<{ onJumpToCurrent?: () => void }>();
@@ -38,26 +38,46 @@ async function handleClearShow() {
 
 <template>
   <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', h: '16', borderTopWidth: 1, gap: '2', p: '2' })">
-    <Button v-if="props.onJumpToCurrent !== undefined" variant="solid" @click="props.onJumpToCurrent">
+    <button
+      v-if="props.onJumpToCurrent !== undefined"
+      type="button"
+      :class="button({ variant: 'solid' })"
+      @click="props.onJumpToCurrent"
+    >
       <Crosshair :size="16" aria-hidden />
       <span>To Current</span>
-    </Button>
+    </button>
 
     <template v-if="!isLive">
-      <Button variant="solid" :disabled="!canMutate" @click="exportCurrentShow">
+      <button
+        type="button"
+        :class="button({ variant: 'solid' })"
+        :disabled="!canMutate"
+        @click="exportCurrentShow"
+      >
         <FileDown :size="16" aria-hidden />
         <span>Save</span>
-      </Button>
+      </button>
 
-      <Button variant="solid" :disabled="!canMutate" @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.ImportShow, 'Import show')">
+      <button
+        type="button"
+        :class="button({ variant: 'solid' })"
+        :disabled="!canMutate"
+        @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.ImportShow, 'Import show')"
+      >
         <FileUp :size="16" aria-hidden />
         <span>Load</span>
-      </Button>
+      </button>
 
-      <Button variant="outline" color-palette="red" :disabled="!canMutate" @click="handleClearShow">
+      <button
+        type="button"
+        :class="cx(button({ variant: 'outline' }), css({ colorPalette: 'red' }))"
+        :disabled="!canMutate"
+        @click="handleClearShow"
+      >
         <Trash2 :size="16" aria-hidden />
         <span>Clear</span>
-      </Button>
+      </button>
     </template>
   </div>
 </template>

@@ -1,13 +1,5 @@
 <script setup lang="ts">
-import {
-  TooltipArrow,
-  TooltipArrowTip,
-  TooltipContent,
-  type TooltipContentBaseProps,
-  TooltipPositioner,
-  TooltipRoot,
-  TooltipTrigger,
-} from "@ark-ui/vue";
+import { Tooltip, type TooltipContentBaseProps, type TooltipRootProps } from "@ark-ui/vue";
 import { tooltip } from "@styled-system/recipes";
 import { computed } from "vue";
 
@@ -17,9 +9,18 @@ const props = withDefaults(
     disabled?: boolean;
     content?: string;
     openDelay?: number;
+    /** Ark positioning options (placement, offset, …); forwarded to Tooltip.Root. */
+    positioning?: TooltipRootProps["positioning"];
     contentProps?: TooltipContentBaseProps;
   }>(),
-  { showArrow: false, disabled: false, content: "", openDelay: undefined, contentProps: undefined },
+  {
+    showArrow: false,
+    disabled: false,
+    content: "",
+    openDelay: undefined,
+    positioning: undefined,
+    contentProps: undefined,
+  },
 );
 
 const rootProps = computed(() => {
@@ -31,18 +32,22 @@ const classes = tooltip();
 </script>
 
 <template>
-  <TooltipRoot v-if="!disabled" v-bind="rootProps">
-    <TooltipTrigger asChild>
+  <Tooltip.Root v-if="!disabled" v-bind="rootProps">
+    <Tooltip.Trigger asChild>
       <slot />
-    </TooltipTrigger>
-    <TooltipPositioner :class="classes.positioner">
-      <TooltipContent :class="classes.content" v-bind="contentProps">
-        <TooltipArrow v-if="showArrow">
-          <TooltipArrowTip />
-        </TooltipArrow>
-        <slot name="content">{{ content }}</slot>
-      </TooltipContent>
-    </TooltipPositioner>
-  </TooltipRoot>
+    </Tooltip.Trigger>
+    <!-- Teleport escapes overflow-clipping ancestors (scroll containers), so
+         tooltips stay visible regardless of placement/flip settings. -->
+    <Teleport to="body">
+      <Tooltip.Positioner :class="classes.positioner">
+        <Tooltip.Content :class="classes.content" v-bind="contentProps">
+          <Tooltip.Arrow v-if="showArrow">
+            <Tooltip.ArrowTip />
+          </Tooltip.Arrow>
+          <slot name="content">{{ content }}</slot>
+        </Tooltip.Content>
+      </Tooltip.Positioner>
+    </Teleport>
+  </Tooltip.Root>
   <slot v-else />
 </template>

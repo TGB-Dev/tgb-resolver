@@ -3,7 +3,7 @@ import { css, cx } from "@styled-system/css";
 import { table } from "@styled-system/recipes";
 import type { ProblemDefinition } from "@tgb-resolver/realtime";
 import { storeToRefs } from "pinia";
-import { computed } from "vue";
+import { computed, TransitionGroup } from "vue";
 
 import { useLeaderboardStore } from "@/stores/leaderboard-store";
 
@@ -22,7 +22,7 @@ const classes = computed(() =>
       cx(
         classes.root,
         css({
-          borderCollapse: 'separate',
+          borderCollapse: 'collapse',
           borderSpacing: 0,
           fontSize: isBigScreen ? '2xl' : undefined,
           lineHeight: isBigScreen ? 'tall' : undefined,
@@ -30,7 +30,7 @@ const classes = computed(() =>
       )
     "
   >
-    <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 'sticky' }))">
+    <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 999 }))">
       <tr :class="classes.row">
         <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
           Rank
@@ -72,8 +72,9 @@ const classes = computed(() =>
         </th>
       </tr>
     </thead>
-    <tbody :class="classes.body">
+    <!-- TransitionGroup FLIP-animates rows when rank swaps reorder them. -->
+    <TransitionGroup tag="tbody" name="leaderboard-row" :class="classes.body">
       <slot />
-    </tbody>
+    </TransitionGroup>
   </table>
 </template>

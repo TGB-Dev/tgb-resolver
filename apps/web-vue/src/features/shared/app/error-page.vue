@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { Copy } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
+import { button, code } from "@styled-system/recipes";
 import { useClipboard } from "@vueuse/core";
 import { computed } from "vue";
-
-import Button from "@/features/shared/ui/button.vue";
 
 const props = defineProps<{ error: Error }>();
 
@@ -22,19 +21,10 @@ const errorJson = computed(() =>
 
 const { copy, copied } = useClipboard({ source: errorJson });
 
-const stackClass = css({
-  margin: 0,
-  padding: 3,
-  borderWidth: 1,
-  borderRadius: "sm",
-  bg: "bg.subtle",
-  fontFamily: "mono",
-  fontSize: "sm",
-  whiteSpace: "pre-wrap",
-  overflowWrap: "anywhere",
-  overflow: "auto",
-  maxHeight: "24rem",
-});
+const stackClass = cx(
+  code(),
+  css({ display: "block", whiteSpace: "pre-wrap", p: 3, maxHeight: "24rem", overflowY: "auto" }),
+);
 </script>
 
 <template>
@@ -77,16 +67,19 @@ const stackClass = css({
       </div>
 
       <div :class="css({ display: 'flex', flexDirection: 'column', gap: 2 })">
-        <Button
-          size="xs"
-          variant="surface"
-          color-palette="gray"
-          :class="css({ w: 'fit-content' })"
+        <button
+          type="button"
+          :class="
+            cx(
+              button({ size: 'xs', variant: 'surface' }),
+              css({ colorPalette: 'gray', w: 'fit-content' }),
+            )
+          "
           @click="copy()"
         >
           <Copy :size="12" aria-hidden />
           {{ copied ? "Copied" : "Copy Error" }}
-        </Button>
+        </button>
 
         <p :class="css({ fontSize: 'sm', fontWeight: 'bold', color: 'fg' })">
           {{ error.name }}
@@ -96,8 +89,7 @@ const stackClass = css({
           v-if="error.stack"
           :class="cx(stackClass, css({ fontSize: 'xs', maxHeight: '16rem' }))"
           >{{ error.stack }}</pre
-        >
-      </div>
+        >      </div>
     </div>
   </div>
 </template>

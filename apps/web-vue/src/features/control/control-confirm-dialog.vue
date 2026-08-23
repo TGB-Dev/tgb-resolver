@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import {
-  DialogBackdrop,
-  DialogContent,
-  DialogPositioner,
-  DialogRoot,
-  DialogTitle,
-} from "@ark-ui/vue";
-import { css } from "@styled-system/css";
-import { dialog, field, input } from "@styled-system/recipes";
+import { Dialog } from "@ark-ui/vue";
+import { css, cx } from "@styled-system/css";
+import { button, dialog, field, input } from "@styled-system/recipes";
 import { nextTick, ref, watch } from "vue";
 
-import Button from "@/features/shared/ui/button.vue";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
 const store = useConfirmActionStore();
@@ -38,17 +31,17 @@ watch(
 </script>
 
 <template>
-  <DialogRoot
+  <Dialog.Root
     :open="store.open"
     role="alertdialog"
     @escape-key-down="store.resolveConfirmAction(false)"
     @pointer-down-outside="store.resolveConfirmAction(false)"
   >
-    <DialogBackdrop :class="dialogClasses.backdrop" />
-    <DialogPositioner :class="dialogClasses.positioner">
-      <DialogContent :class="dialogClasses.content">
+    <Dialog.Backdrop :class="dialogClasses.backdrop" />
+    <Dialog.Positioner :class="dialogClasses.positioner">
+      <Dialog.Content :class="dialogClasses.content">
         <div :class="content">
-          <DialogTitle :class="dialogClasses.title">{{ store.title }}</DialogTitle>
+          <Dialog.Title :class="dialogClasses.title">{{ store.title }}</Dialog.Title>
 
           <div v-if="store.showInput" :class="fieldClasses.root">
             <label for="control-dialog-input" :class="fieldClasses.label">{{ store.inputLabel || store.message }}</label>
@@ -64,18 +57,28 @@ watch(
           <p v-else :class="message">{{ store.message }}</p>
 
           <div :class="actions">
-            <Button variant="outline" @click="store.resolveConfirmAction(false)">
+            <button
+              type="button"
+              :class="button({ variant: 'outline' })"
+              @click="store.resolveConfirmAction(false)"
+            >
               {{ store.cancelLabel }}
-            </Button>
-            <Button
-              :colorPalette="store.showInput ? 'blue' : 'red'"
+            </button>
+            <button
+              type="button"
+              :class="
+                cx(
+                  button(),
+                  css({ colorPalette: store.showInput ? 'blue' : 'red' }),
+                )
+              "
               @click="store.resolveConfirmAction(true)"
             >
               {{ store.confirmLabel }}
-            </Button>
+            </button>
           </div>
         </div>
-      </DialogContent>
-    </DialogPositioner>
-  </DialogRoot>
+      </Dialog.Content>
+    </Dialog.Positioner>
+  </Dialog.Root>
 </template>

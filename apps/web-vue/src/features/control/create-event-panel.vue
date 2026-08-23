@@ -1,34 +1,24 @@
 <script setup lang="ts">
 import {
-  ComboboxContent,
-  ComboboxControl,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxItemIndicator,
-  ComboboxItemText,
-  ComboboxLabel,
-  ComboboxPositioner,
-  ComboboxRoot,
-  ComboboxTrigger,
-  FieldRoot,
+  Combobox,
+  Field,
   useFilter,
   useListCollection,
 } from "@ark-ui/vue";
+import { Check, ChevronDown } from "@lucide/vue";
 import { css } from "@styled-system/css";
-import { combobox } from "@styled-system/recipes";
-import { TgbForm } from "@tgb-form/vue";
-import { computed, ref, watch } from "vue";
+import { button, combobox } from "@styled-system/recipes";
+import { computed, ref } from "vue";
 
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
 import { useCreateTimelineEventMutation } from "@/features/control/composables/use-show";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
 import type { Extension } from "@/features/extensions/base/types";
+import ExtensionConfigForm from "@/features/extensions/extension-config-form.vue";
 import { extensionRegistry } from "@/features/extensions/registry";
 import { extensionRendererRegistry } from "@/features/extensions/renderers";
 import { computeScrollerExtensionDuration } from "@/features/extensions/scroller/duration";
-import { createTgbFormInstance } from "@/features/extensions/tgb-form-instance";
-import Button from "@/features/shared/ui/button.vue";
+import Spinner from "@/features/shared/ui/spinner.vue";
 
 const props = defineProps<{
   panel: FloatingPanelHandle;
@@ -47,12 +37,7 @@ const { collection, filter } = useListCollection<Extension>({
 });
 
 const selectedExtension = ref<Extension | null>(null);
-
-function setSelectedExtension(items: Extension[]) {
-  selectedExtension.value = items[0] ?? null;
-}
-
-const formInstance = ref(createTgbFormInstance({}));
+const configFormRef = ref<InstanceType<typeof ExtensionConfigForm> | null>(null);
 const error = ref<string | null>(null);
 const comboboxClasses = combobox();
 
@@ -64,11 +49,9 @@ const createProps = computed(
     },
 );
 
-watch(selectedExtension, (ext) => {
-  if (ext?.configForm) {
-    formInstance.value = createTgbFormInstance({});
-  }
-});
+function setSelectedExtension(items: Extension[]) {
+  selectedExtension.value = items[0] ?? null;
+}
 
 async function handleCreate() {
   if (!selectedExtension.value) return;
@@ -77,7 +60,7 @@ async function handleCreate() {
   props.panel.setSaving(true);
 
   try {
-    const values = formInstance.value.values;
+    const values = configFormRef.value?.getValues() ?? {};
     let durationSeconds: number | undefined;
     if (ext.extId === "scroller") {
       durationSeconds = computeScrollerExtensionDuration(values);
@@ -110,8 +93,8 @@ const errorText = css({ color: "fg.error", fontSize: "sm" });
 
 <template>
   <div :class="stack">
-    <FieldRoot>
-      <ComboboxRoot
+    <Field.Root>
+      <Combobox.Root
         :collection="collection"
         :open-on-click="true"
         input-behavior="autohighlight"
@@ -119,46 +102,59 @@ const errorText = css({ color: "fg.error", fontSize: "sm" });
         @input-value-change="(details: { inputValue: string }) => filter(details.inputValue)"
         @value-change="(details: { items: Extension[] }) => setSelectedExtension(details.items)"
       >
-        <ComboboxLabel :class="comboboxClasses.label">Extension</ComboboxLabel>
-        <ComboboxControl :class="comboboxClasses.control">
-          <ComboboxInput :class="comboboxClasses.input" placeholder="Choose an extension" />
-          <ComboboxTrigger :class="comboboxClasses.trigger">▼</ComboboxTrigger>
-        </ComboboxControl>
-        <ComboboxPositioner position="fixed" :class="comboboxClasses.positioner">
-          <ComboboxContent :class="comboboxClasses.content">
-            <ComboboxEmpty :class="comboboxClasses.empty">No extensions found.</ComboboxEmpty>
-            <ComboboxItem
-              v-for="ext in collection.items"
-              :key="ext.extId"
-              :item="ext"
-              :class="comboboxClasses.item"
-            >
-              <ComboboxItemText :class="comboboxClasses.itemText">
-                {{ ext.shortName }} - {{ ext.description }}
-              </ComboboxItemText>
-              <ComboboxItemIndicator :class="comboboxClasses.itemIndicator">✓</ComboboxItemIndicator>
-            </ComboboxItem>
-          </ComboboxContent>
-        </ComboboxPositioner>
-      </ComboboxRoot>
-    </FieldRoot>
+        <Combobox.Label :class="comboboxClasses.label">Extension</Combobox.Label>
+        <Combobox.Control :class="comboboxClasses.control">
+          <Combobox.Input :class="comboboxClasses.input" placeholder="Choose an extension" />
+          <div :class="comboboxClasses.indicatorGroup">
+            <Combobox.Trigger :class="comboboxClasses.trigger">
+              <ChevronDown aria-hidden="true" />
+            </Combobox.Trigger>
+          </div>
+        </Combobox.Control>
+        <Combobox.Positioner position="fixed" :class="comboboxClasses.positioner">
+          <Combobox.Content :class="comboboxClasses.content">
+            <Combobox.List :class="comboboxClasses.list">
+              <Combobox.Item
+                v-for="ext in collection.items"
+                :key="ext.extId"
+                :item="ext"
+                :class="comboboxClasses.item"
+              >
+                <Combobox.ItemText :class="comboboxClasses.itemText">
+                  {{ ext.shortName }} - {{ ext.description }}
+                </Combobox.ItemText>
+                <Combobox.ItemIndicator :class="comboboxClasses.itemIndicator">
+                  <Check aria-hidden="true" />
+                </Combobox.ItemIndicator>
+              </Combobox.Item>
+            </Combobox.List>
+            <Combobox.Empty :class="comboboxClasses.empty">No extensions found.</Combobox.Empty>
+          </Combobox.Content>
+        </Combobox.Positioner>
+      </Combobox.Root>
+    </Field.Root>
 
     <template v-if="selectedExtension?.configForm">
-      <TgbForm
+      <ExtensionConfigForm
+        :key="selectedExtension.extId"
+        ref="configFormRef"
         :definition="selectedExtension.configForm"
-        :instance="formInstance.values"
+        :baseline="{}"
         :renderers="extensionRendererRegistry"
       />
       <div :class="row">
-        <Button variant="outline" @click="panel.requestClose()">
+        <button type="button" :class="button({ variant: 'outline' })" @click="panel.requestClose()">
           Cancel
-        </Button>
-        <Button
-          :loading="panel.isSaving.value"
+        </button>
+        <button
+          type="button"
+          :class="button()"
+          :disabled="panel.isSaving.value"
           @click="handleCreate"
         >
+          <Spinner v-if="panel.isSaving.value" size="inherit" label="" aria-hidden="true" />
           Create
-        </Button>
+        </button>
       </div>
       <p v-if="error" :class="errorText">
         {{ error }}

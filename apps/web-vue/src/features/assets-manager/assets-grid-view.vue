@@ -199,7 +199,6 @@ function handleDropError(error: unknown): void {
         borderWidth: 1,
         borderColor: 'colorPalette.solid',
         pointerEvents: 'none',
-        zIndex: 'popover',
       })"
     />
 

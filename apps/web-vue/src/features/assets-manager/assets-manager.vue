@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SplitterPanel, SplitterResizeTrigger, SplitterRoot } from "@ark-ui/vue";
+import { Splitter } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
 import { useHotkey, useHotkeySequence } from "@tanstack/vue-hotkeys";
@@ -145,19 +145,19 @@ function handleFileInputChange(e: Event) {
 
 <template>
   <div :class="css({ boxSize: 'full', overflow: 'hidden' })">
-    <SplitterRoot
+    <Splitter.Root
       :class="splitterClasses.root"
       orientation="horizontal"
       :defaultSize="[25, 75]"
       :panels="[{ id: 'tree', minSize: 15 }, { id: 'content', minSize: 40 }]"
     >
-      <SplitterPanel id="tree" :minSize="15" :class="splitterClasses.panel">
+      <Splitter.Panel id="tree" :minSize="15" :class="splitterClasses.panel">
         <FolderTreeView />
-      </SplitterPanel>
+      </Splitter.Panel>
 
-      <SplitterResizeTrigger id="tree:content" :class="splitterClasses.resizeTrigger" />
+      <Splitter.ResizeTrigger id="tree:content" :class="splitterClasses.resizeTrigger" />
 
-      <SplitterPanel id="content" :minSize="40" :class="splitterClasses.panel">
+      <Splitter.Panel id="content" :minSize="40" :class="splitterClasses.panel">
         <div :class="css({ display: 'flex', flexDirection: 'column', overflow: 'hidden', h: 'full' })">
           <AssetsToolbar />
           <div :class="css({ flex: 1, overflow: 'hidden' })">
@@ -169,8 +169,8 @@ function handleFileInputChange(e: Event) {
             </UploadZone>
           </div>
         </div>
-      </SplitterPanel>
-    </SplitterRoot>
+      </Splitter.Panel>
+    </Splitter.Root>
 
     <input
       ref="fileInputRef"

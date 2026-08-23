@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Menu } from "@ark-ui/vue";
-import { menu } from "@styled-system/recipes";
+import { css, cx } from "@styled-system/css";
+import { button } from "@styled-system/recipes";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
+import { useEventListener } from "@vueuse/core";
 
 import { useDeleteTimelineEventMutation } from "@/features/control/composables/use-show";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
@@ -15,7 +16,29 @@ const emit = defineEmits<{ close: [] }>();
 const floatingPanels = useFloatingPanelStore();
 const confirm = useConfirmActionStore();
 const deleteEvent = useDeleteTimelineEventMutation();
-const menuClasses = menu();
+
+const boxClass = css({
+  position: "fixed",
+  zIndex: "popover",
+  bg: "bg.panel",
+  borderWidth: 1,
+  borderColor: "border",
+  rounded: "md",
+  shadow: "lg",
+  py: "1",
+  minW: "160px",
+});
+const itemClass = cx(
+  button({ variant: "ghost", size: "sm" }),
+  css({
+    w: "full",
+    justifyContent: "flex-start",
+    fontWeight: "normal",
+    px: "3",
+    borderRadius: "none",
+  }),
+);
+const deleteItemClass = css({ color: "fg.error", _hover: { bg: "bg.error", color: "fg.error" } });
 
 function edit() {
   emit("close");
@@ -34,24 +57,29 @@ async function remove() {
   });
   if (accepted) await deleteEvent.mutateAsync(props.target.id);
 }
+
+// Mirror the React reference: dismiss when pressing anywhere outside the menu.
+useEventListener(
+  document,
+  "pointerdown",
+  (e) => {
+    if ((e.target as HTMLElement).closest("[data-timeline-context-menu]")) return;
+    emit("close");
+  },
+  { passive: true },
+);
 </script>
 
 <template>
-  <Menu.Root
-    v-if="target.type === TimelineEventType.CUS"
-    :open="true"
-    :anchor-point="{ x: props.x, y: props.y }"
-    @open-change="(details: { open: boolean }) => { if (!details.open) emit('close') }"
-  >
-    <Menu.Positioner :class="menuClasses.positioner">
-      <Menu.Content :class="menuClasses.content">
-        <Menu.Item :class="menuClasses.item" value="edit" @select="edit">
-          <Menu.ItemText :class="menuClasses.itemText">Edit</Menu.ItemText>
-        </Menu.Item>
-        <Menu.Item :class="menuClasses.item" value="remove" @select="remove">
-          <Menu.ItemText :class="menuClasses.itemText">Delete</Menu.ItemText>
-        </Menu.Item>
-      </Menu.Content>
-    </Menu.Positioner>
-  </Menu.Root>
+  <Teleport to="body">
+    <div
+      v-if="target.type === TimelineEventType.CUS"
+      data-timeline-context-menu
+      :class="boxClass"
+      :style="{ left: `${x}px`, top: `${y}px` }"
+    >
+      <button type="button" :class="itemClass" @click="edit">Edit</button>
+      <button type="button" :class="[itemClass, deleteItemClass]" @click="remove">Delete</button>
+    </div>
+  </Teleport>
 </template>

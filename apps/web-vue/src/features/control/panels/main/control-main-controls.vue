@@ -1,17 +1,5 @@
 <script setup lang="ts">
-import {
-  SliderControl,
-  SliderRange,
-  SliderRoot,
-  SliderThumb,
-  SliderTrack,
-  SliderValueText,
-  SwitchControl,
-  SwitchHiddenInput,
-  SwitchLabel,
-  SwitchRoot,
-  SwitchThumb,
-} from "@ark-ui/vue";
+import { Slider, Switch } from "@ark-ui/vue";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -26,7 +14,7 @@ import {
   WifiOff,
 } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
-import { separator, slider, swittch } from "@styled-system/recipes";
+import { button, iconButton, separator, slider, swittch } from "@styled-system/recipes";
 import { PlaybackStatus } from "@tgb-resolver/contracts";
 import { ShowConnectionStatus } from "@tgb-resolver/realtime";
 import { computed, ref } from "vue";
@@ -44,8 +32,6 @@ import {
   useUpdateAutomationMutation,
 } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
-import Button from "@/features/shared/ui/button.vue";
-import IconButton from "@/features/shared/ui/icon-button.vue";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 import { useAction } from "@/lib/actions";
 import { useRealtimeStore } from "@/stores/realtime-store";
@@ -155,45 +141,61 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 
 <template>
   <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', h: '16', borderTopWidth: 1, borderColor: 'border', gap: '2', p: '2' })" class="tgb-controls">
-    <IconButton
-      ariaLabel="Play or Pause"
+    <button
+      type="button"
+      aria-label="Play or Pause"
+      :class="cx(button(), iconButton())"
       :disabled="!canMutate || startPlayback.isPending.value"
       @click="startPlayback.mutate()"
     >
       <Pause v-if="playbackStatus === PlaybackStatus.RUNNING" :size="16" aria-hidden />
       <Play v-else :size="16" aria-hidden />
-    </IconButton>
-    <IconButton
-      ariaLabel="Reset playback"
+    </button>
+    <button
+      type="button"
+      aria-label="Reset playback"
+      :class="cx(button(), iconButton())"
       :disabled="!canMutate || resetPlayback.isPending.value"
       @click="resetPlayback.mutate()"
     >
       <TimerReset :size="16" aria-hidden />
-    </IconButton>
+    </button>
 
-    <IconButton v-bind="prevAction.buttonProps" ariaLabel="Previous event">
+    <button
+      type="button"
+      :aria-label="'Previous event'"
+      :class="cx(button(), iconButton())"
+      :disabled="!enablePrev"
+      @click="prevAction.execute()"
+    >
       <ChevronLeft :size="16" aria-hidden />
-    </IconButton>
-    <IconButton v-bind="nextAction.buttonProps" ariaLabel="Next event">
+    </button>
+    <button
+      type="button"
+      :aria-label="'Next event'"
+      :class="cx(button(), iconButton())"
+      :disabled="!enableNext"
+      @click="nextAction.execute()"
+    >
       <ChevronRight :size="16" aria-hidden />
-    </IconButton>
+    </button>
 
     <div :class="[separatorClass, css({ h: '6', mx: 1 })]" aria-hidden />
 
-    <SwitchRoot
+    <Switch.Root
       :checked="autoResolveEnabled"
       :disabled="!canMutate || updateAutomation.isPending.value"
       :class="switchClasses.root"
       @checked-change="(details) => updateAutomation.mutate({ autoResolveEnabled: details.checked })"
     >
-      <SwitchLabel :class="switchClasses.label">Autoplay</SwitchLabel>
-      <SwitchControl :class="switchClasses.control">
-        <SwitchThumb :class="switchClasses.thumb" />
-        <SwitchHiddenInput />
-      </SwitchControl>
-    </SwitchRoot>
+      <Switch.Label :class="switchClasses.label">Autoplay</Switch.Label>
+      <Switch.Control :class="switchClasses.control">
+        <Switch.Thumb :class="switchClasses.thumb" />
+        <Switch.HiddenInput />
+      </Switch.Control>
+    </Switch.Root>
 
-    <SliderRoot
+    <Slider.Root
       :model-value="sliderValue"
       :min="0"
       :max="4"
@@ -204,40 +206,44 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
       @value-change-end="handleSpeedChangeEnd"
     >
       <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4' })">
-        <SliderControl :class="sliderClasses.control">
-          <SliderTrack :class="sliderClasses.track">
-            <SliderRange :class="sliderClasses.range" />
-          </SliderTrack>
-          <SliderThumb :index="0" :class="sliderClasses.thumb" />
-        </SliderControl>
-        <SliderValueText :class="sliderClasses.valueText">{{ SPEED_RATES[rateIndex] }}x</SliderValueText>
+        <Slider.Control :class="sliderClasses.control">
+          <Slider.Track :class="sliderClasses.track">
+            <Slider.Range :class="sliderClasses.range" />
+          </Slider.Track>
+          <Slider.Thumb :index="0" :class="sliderClasses.thumb" />
+        </Slider.Control>
+        <Slider.ValueText :class="sliderClasses.valueText">{{ SPEED_RATES[rateIndex] }}x</Slider.ValueText>
       </div>
-    </SliderRoot>
+    </Slider.Root>
 
     <div :class="css({ flex: 1 })" />
 
     <Tooltip :content="connectionLabel">
-      <Button variant="ghost" disabled>
+      <button type="button" :class="button({ variant: 'ghost' })" disabled>
         <Wifi v-if="realtimeStore.connectionStatus === ShowConnectionStatus.Connected" :size="16" aria-hidden />
         <RefreshCw v-else-if="realtimeStore.connectionStatus === ShowConnectionStatus.Connecting || realtimeStore.connectionStatus === ShowConnectionStatus.Reconnecting" :size="16" aria-hidden />
         <AlertTriangle v-else-if="realtimeStore.connectionStatus === ShowConnectionStatus.Failed" :size="16" aria-hidden />
         <WifiOff v-else :size="16" aria-hidden />
         {{ connectionLabel }}
-      </Button>
+      </button>
     </Tooltip>
 
     <Tooltip :content="isLive ? 'Switch to Edit Mode' : 'Switch to Live Mode'">
-      <Button
-        :class="css({ w: '48' })"
-        :variant="isLive ? 'solid' : 'outline'"
-        :colorPalette="isLive ? 'red' : undefined"
+      <button
+        type="button"
+        :class="
+          cx(
+            button({ variant: isLive ? 'solid' : 'outline' }),
+            css({ w: '48', colorPalette: isLive ? 'red' : undefined }),
+          )
+        "
         :disabled="!canMutate || toggleLiveMode.isPending.value"
         @click="toggleLiveMode.mutate()"
       >
         <Radio v-if="isLive" :size="16" aria-hidden />
         <Pen v-else :size="16" aria-hidden />
         <span>Current Mode: {{ isLive ? 'Live' : 'Edit' }}</span>
-      </Button>
+      </button>
     </Tooltip>
   </div>
 </template>

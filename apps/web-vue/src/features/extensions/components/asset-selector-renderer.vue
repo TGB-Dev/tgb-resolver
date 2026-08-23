@@ -1,17 +1,22 @@
 <script setup lang="ts">
+import { Field } from "@ark-ui/vue";
 import { FileUp } from "@lucide/vue";
-import { css } from "@styled-system/css";
-import type { VueRendererProps } from "@tgb-form/vue";
+import { css, cx } from "@styled-system/css";
+import { field as fieldRecipe, input } from "@styled-system/recipes";
+import type { BaseVueRendererProps } from "@tgb-form/vue";
 import { computed, ref } from "vue";
 
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
 
+import { fieldErrorTextCss, validationErrorMessage } from "./field-error";
 import { getDroppedAssetId } from "./get-dropped-asset-id";
 
-const props = defineProps<VueRendererProps>();
+const props = defineProps<BaseVueRendererProps>();
 
 const assets = useAssetsManagerStore();
 const isDragOver = ref(false);
+
+const fieldClasses = fieldRecipe();
 
 const currentValue = computed(() =>
   typeof props.field.state.value === "string" ? props.field.state.value : "",
@@ -22,14 +27,6 @@ const placeholder = computed(() =>
     ? props.props.placeholder
     : "Drop asset here or enter Asset ID...",
 );
-
-function validationErrorMessage(error: unknown): string {
-  if (error && typeof error === "object" && "message" in error) {
-    const { message } = error as { message?: unknown };
-    if (typeof message === "string") return message;
-  }
-  return String(error);
-}
 
 function handleDrop(event: DragEvent) {
   event.preventDefault();
@@ -49,12 +46,10 @@ function handleDrop(event: DragEvent) {
 </script>
 
 <template>
-  <div :class="css({ w: 'full', display: 'flex', flexDirection: 'column', gap: 1 })">
-    <label v-if="label" :class="css({ fontSize: 'sm', fontWeight: 'medium' })" for="asset-selector">{{ label }}</label>
-    <button
-      id="asset-selector"
-      aria-label="Drop files to upload"
-      type="button"
+  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full' }))" :invalid="errors.length > 0">
+    <Field.Label v-if="label" :class="fieldClasses.label">{{ label }}</Field.Label>
+    <!-- biome-ignore lint/a11y/noStaticElementInteractions: pointer-only drop target; the inner input is the accessible path -->
+    <div
       :class="
         css({
           w: 'full',
@@ -71,34 +66,24 @@ function handleDrop(event: DragEvent) {
       @dragleave="isDragOver = false"
       @drop="handleDrop"
     >
-      <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 3 })">
+      <div :class="css({ display: 'flex', alignItems: 'center', gap: 3 })">
         <FileUp :size="20" aria-hidden />
-        <input
-          :class="
-            css({
-              flex: 1,
-              w: 'full',
-              fontSize: 'sm',
-              px: 2,
-              py: 1,
-              borderWidth: 1,
-              borderColor: 'border',
-              borderRadius: 'sm',
-              bg: 'bg',
-            })
-          "
-          :value="currentValue"
-          :placeholder="placeholder"
-          @input="field.handleChange(($event.target as HTMLInputElement).value)"
-        />
+        <div :class="css({ flex: 1 })">
+          <input
+            :class="cx(input({ size: 'sm' }), css({ w: 'full', bg: 'bg' }))"
+            :value="currentValue"
+            :placeholder="placeholder"
+            @input="field.handleChange(($event.target as HTMLInputElement).value)"
+          />
+        </div>
       </div>
       <p :class="css({ fontSize: 'xs', color: 'fg.muted', mt: 1 })">
-        Drag & drop an asset from Asset Manager into this box
+        Drag &amp; drop an asset from Asset Manager into this box
       </p>
-    </button>
-    <p v-if="description" :class="css({ fontSize: 'xs', color: 'fg.muted' })">{{ description }}</p>
-    <p v-if="errors.length > 0" :class="css({ color: 'fg.error', fontSize: 'sm' })">
-      {{ errors.map(validationErrorMessage).join(", ") }}
+    </div>
+    <p v-if="description" :class="fieldClasses.helperText">{{ description }}</p>
+    <p v-if="errors.length > 0" :class="cx(fieldClasses.errorText, fieldErrorTextCss)">
+      {{ errors.map(validationErrorMessage).join(', ') }}
     </p>
-  </div>
+  </Field.Root>
 </template>

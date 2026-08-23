@@ -25,7 +25,7 @@ useBackgroundMusic(() => true);
           h: 'full',
           overflow: 'hidden',
           pointerEvents: 'auto',
-          zIndex: 'overlay',
+          zIndex: 9999,
         })
       "
     />

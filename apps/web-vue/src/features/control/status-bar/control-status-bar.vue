@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
+import { button } from "@styled-system/recipes";
 
 import ControlCurrentTime from "@/features/control/status-bar/control-current-time.vue";
 import ControlElapsedTime from "@/features/control/status-bar/control-elapsed-time.vue";
 import ControlFullScreenButton from "@/features/control/status-bar/control-full-screen-button.vue";
-import Button from "@/features/shared/ui/button.vue";
 import ColorModeButton from "@/features/shared/ui/color-mode-button.vue";
 
 const bar = css({
@@ -29,9 +29,9 @@ const sideEnd = css({ display: "flex", alignItems: "center", justifyContent: "fl
     <ControlElapsedTime />
 
     <div :class="sideEnd">
-      <Button variant="outline">
+      <button type="button" :class="button({ variant: 'outline' })">
         <a href="/" target="_blank" rel="noopener noreferrer">Open audience view (new tab)</a>
-      </Button>
+      </button>
       <ColorModeButton />
     </div>
   </div>

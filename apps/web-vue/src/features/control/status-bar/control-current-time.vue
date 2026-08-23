@@ -2,7 +2,7 @@
 import { computed } from "vue";
 
 import { useControlNowStore } from "@/features/control/control-now-store";
-import MonoText from "@/features/shared/ui/mono-text.vue";
+import { monoTextCss } from "@/features/shared/ui/mono-text";
 
 const controlNowStore = useControlNowStore();
 
@@ -14,5 +14,5 @@ const formatted = computed(() => formatHms(new Date(controlNowStore.now)));
 </script>
 
 <template>
-  <MonoText>{{ formatted }}</MonoText>
+  <span :class="monoTextCss">{{ formatted }}</span>
 </template>

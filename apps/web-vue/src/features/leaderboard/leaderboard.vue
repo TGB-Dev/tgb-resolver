@@ -2,10 +2,12 @@
 import { css } from "@styled-system/css";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
-import { computed, watch } from "vue";
+import { computed, nextTick, useTemplateRef, watch } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
+import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { useLeaderboardStore } from "@/stores/leaderboard-store";
 
 import ActiveExtensionsOverlay from "./active-extensions-overlay.vue";
@@ -48,6 +50,7 @@ watch(
 
     if (currentEventId == null) {
       leaderboard.currentResolvedUserId = 0;
+      leaderboard.latestResolved = null;
       leaderboard.currentBottomView = 0;
 
       const saved = localStorage.getItem(SCROLL_POSITION_KEY);
@@ -67,6 +70,10 @@ watch(
       const userId = currentEvent.payload.userId;
       if (userId == null) return;
       leaderboard.currentResolvedUserId = userId;
+      leaderboard.latestResolved =
+        userId != null && currentEvent.payload.problemId != null
+          ? { userId, problemId: currentEvent.payload.problemId }
+          : null;
 
       const rank = leaderboard.userIds.indexOf(userId);
       if (rank >= 0) {
@@ -75,6 +82,7 @@ watch(
       }
     } else {
       leaderboard.currentResolvedUserId = 0;
+      leaderboard.latestResolved = null;
       leaderboard.currentBottomView = 0;
     }
   },
@@ -87,13 +95,34 @@ watch(
     if (targetId > 0) {
       localStorage.setItem(SCROLL_POSITION_KEY, String(targetId));
     }
+
+    // Follow the bottom-view target: scroll it to the container's end edge,
+    // mirroring the React reference. Runs after DOM flush + a frame so the
+    // row layout is final before measuring.
+    if (targetId <= 0 || !scroller.value) return;
+    void nextTick(() => {
+      requestAnimationFrame(() => {
+        const el = scroller.value?.querySelector<HTMLElement>(
+          `[data-user-id="${targetId}"]`,
+        );
+        if (!el || !scroller.value) return;
+        animateScrollIntoView(el, scroller.value, {
+          block: "end",
+          duration: 0.8,
+          ease: TgbResolverEasings.inOutQuad,
+        });
+      });
+    });
   },
 );
+
+const scroller = useTemplateRef<HTMLElement>("scroller");
 </script>
 
 <template>
   <div :class="css({ h: 'full', position: 'relative', display: 'flex', flexDirection: 'column' })">
     <div
+      ref="scroller"
       :class="css({ flex: 1, minHeight: 0, overflowY: 'auto', overflowAnchor: 'none' })"
       data-audience-scroll
     >

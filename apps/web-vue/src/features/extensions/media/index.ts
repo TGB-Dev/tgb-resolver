@@ -2,16 +2,15 @@ import { css } from "@styled-system/css";
 import { defineForm, FieldDataType } from "@tgb-form/core";
 import { h, onUnmounted, ref, watch } from "vue";
 
-import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { MotionDiv } from "@/lib/motion-factories";
 import { API_BASE_URL } from "@/lib/runtime-config";
 import { soundEngine } from "@/lib/sound-engine";
-import { useShowStore } from "@/stores/show-store";
 import { getPreloadedAsset } from "@/utils/preload-assets";
 
 import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
 import { sharedValidatorRegistry } from "../init";
+import { assetContentType } from "./duration";
 
 export interface MediaExtensionPayload extends Record<string, unknown> {
   assetId?: string;
@@ -19,16 +18,6 @@ export interface MediaExtensionPayload extends Record<string, unknown> {
   fit?: "cover" | "contain" | "fill";
   loop?: boolean;
   volume?: number;
-}
-
-function assetContentType(assetId: string): string | undefined {
-  const showFile = useShowStore().showFile;
-  if (showFile) {
-    const asset = showFile.assets?.items?.find((item) => item.id === assetId);
-    if (asset?.contentType) return asset.contentType;
-  }
-  const entry = useAssetsManagerStore().findEntry(assetId);
-  return entry && !entry.isDirectory ? entry.contentType : undefined;
 }
 
 function useAssetUrl(getAssetId: () => string) {

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Grid, LayoutList } from "@lucide/vue";
-import { css } from "@styled-system/css";
-import { dataList } from "@styled-system/recipes";
-
-import IconButton from "@/features/shared/ui/icon-button.vue";
+import { css, cx } from "@styled-system/css";
+import { button, dataList, iconButton } from "@styled-system/recipes";
 
 import { useAssetsManagerStore } from "./assets-manager-store";
 
@@ -35,22 +33,26 @@ const dataListClasses = dataList({ orientation: "horizontal", size: "sm" });
     </div>
 
     <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1' })">
-      <IconButton
-        ariaLabel="List view"
-        size="sm"
-        :variant="store.viewMode === 'list' ? 'solid' : 'ghost'"
+      <button
+        type="button"
+        aria-label="List view"
+        :class="
+          cx(button({ variant: store.viewMode === 'list' ? 'solid' : 'ghost', size: 'sm' }), iconButton())
+        "
         @click="store.setViewMode('list')"
       >
         <LayoutList :size="16" aria-hidden />
-      </IconButton>
-      <IconButton
-        ariaLabel="Grid view"
-        size="sm"
-        :variant="store.viewMode === 'grid' ? 'solid' : 'ghost'"
+      </button>
+      <button
+        type="button"
+        aria-label="Grid view"
+        :class="
+          cx(button({ variant: store.viewMode === 'grid' ? 'solid' : 'ghost', size: 'sm' }), iconButton())
+        "
         @click="store.setViewMode('grid')"
       >
         <Grid :size="16" aria-hidden />
-      </IconButton>
+      </button>
     </div>
   </div>
 </template>

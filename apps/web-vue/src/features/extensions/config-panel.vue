@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { TgbForm } from "@tgb-form/vue";
+import { button } from "@styled-system/recipes";
 import { computed, ref, watch } from "vue";
 
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
-import Button from "@/features/shared/ui/button.vue";
 
+import ExtensionConfigForm from "./extension-config-form.vue";
+import { computeMediaExtensionDuration } from "./media/duration";
 import { patchExtensionEvent } from "./patch";
 import { useExtensionRegistry } from "./registry";
 import { extensionRendererRegistry } from "./renderers";
 import { computeScrollerExtensionDuration } from "./scroller/duration";
-import { createTgbFormInstance } from "./tgb-form-instance";
 
 const props = defineProps<{ panel: FloatingPanelHandle }>();
 
@@ -26,21 +26,22 @@ const params = computed(
 );
 
 const extension = computed(() => registry.extensionWithExtId(params.value.extId ?? ""));
-const baseline = computed(() => params.value.payload ?? {});
-const instance = createTgbFormInstance(baseline.value);
+const baseline = computed(() => params.value.payload);
+const configFormRef = ref<InstanceType<typeof ExtensionConfigForm> | null>(null);
 const saving = ref(false);
 const error = ref<string | null>(null);
 
+const stackCss = css({ display: "flex", flexDirection: "column", gap: 4, h: "full" });
+const actionsCss = css({ display: "flex", justifyContent: "flex-end", gap: 2 });
+const errorCss = css({ color: "fg.error", fontSize: "sm" });
+
 watch(
-  () => JSON.stringify(instance.values),
-  (current, previous) => {
-    if (previous === undefined) return;
-    props.panel.setDirty(current !== JSON.stringify(baseline.value));
-  },
+  () => configFormRef.value?.isDirty() ?? false,
+  (isDirty) => props.panel.setDirty(isDirty),
   { immediate: true },
 );
 
-async function save() {
+async function handleSubmit(values: Record<string, unknown>) {
   const eventId = params.value.eventId;
   const extId = params.value.extId;
   if (eventId == null || !extId) {
@@ -50,9 +51,11 @@ async function save() {
   saving.value = true;
   error.value = null;
   try {
-    const duration =
-      extId === "scroller" ? computeScrollerExtensionDuration(instance.values) : undefined;
-    await patchExtensionEvent(eventId, extId, instance.values, duration);
+    const durationSeconds =
+      extId === "scroller" ? computeScrollerExtensionDuration(values)
+      : extId === "media" ? ((await computeMediaExtensionDuration(values)) ?? undefined)
+      : undefined;
+    await patchExtensionEvent(eventId, extId, values, durationSeconds);
     props.panel.close(true);
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : String(cause);
@@ -67,20 +70,28 @@ function cancel() {
 </script>
 
 <template>
-  <div :class="css({ display: 'flex', flexDirection: 'column', gap: 4, h: 'full' })">
-    <p :class="css({ color: 'fg.muted', fontSize: 'sm' })">
-      {{ extension?.description ?? 'Extension configuration' }}
-    </p>
-    <TgbForm
+  <div :class="stackCss">
+    <ExtensionConfigForm
       v-if="extension?.configForm"
+      ref="configFormRef"
       :definition="extension.configForm"
-      :instance="instance.values"
+      :baseline="baseline"
       :renderers="extensionRendererRegistry"
+      :on-submit="handleSubmit"
     />
-    <p v-if="error" :class="css({ color: 'fg.error', fontSize: 'sm' })">{{ error }}</p>
-    <div :class="css({ display: 'flex', justifyContent: 'flex-end', gap: 2 })">
-      <Button variant="outline" :disabled="saving" @click="cancel">Cancel</Button>
-      <Button :loading="saving" @click="save">Save</Button>
+    <div :class="actionsCss">
+      <button type="button" :class="button({ variant: 'outline' })" @click="cancel">
+        Cancel
+      </button>
+      <button
+        type="button"
+        :class="button()"
+        :disabled="!configFormRef?.canSubmit() || !configFormRef?.isDirty() || saving"
+        @click="configFormRef?.submit()"
+      >
+        Save
+      </button>
     </div>
+    <p v-if="error" :class="errorCss">{{ error }}</p>
   </div>
 </template>

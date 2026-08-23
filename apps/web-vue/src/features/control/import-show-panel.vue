@@ -1,19 +1,12 @@
 <script setup lang="ts">
-import {
-  FileUploadClearTrigger,
-  FileUploadHiddenInput,
-  FileUploadLabel,
-  FileUploadRoot,
-  FileUploadTrigger,
-} from "@ark-ui/vue";
+import { FileUpload } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
-import { fileUpload, input } from "@styled-system/recipes";
+import { button, fileUpload, input } from "@styled-system/recipes";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 import { ref } from "vue";
 
 import { useImportShowMutation } from "@/features/control/composables/use-show";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
-import Button from "@/features/shared/ui/button.vue";
 import { toaster } from "@/features/shared/ui/toaster";
 
 const props = defineProps<{
@@ -71,7 +64,7 @@ async function accept() {
 
 <template>
   <div :class="root">
-    <FileUploadRoot
+    <FileUpload.Root
       :accept="`.xml,${FILE_EXTENSION}`"
       :maxFiles="1"
       :class="fileUploadClasses.root"
@@ -81,21 +74,21 @@ async function accept() {
         panel.setDirty(Boolean(f) || excludedUsernames.length > 0);
       }"
     >
-      <FileUploadHiddenInput />
-      <FileUploadLabel :class="fileUploadClasses.label">Show file</FileUploadLabel>
+      <FileUpload.HiddenInput />
+      <FileUpload.Label :class="fileUploadClasses.label">Show file</FileUpload.Label>
       <div :class="triggerRow">
-        <FileUploadTrigger asChild>
-          <Button variant="outline" size="sm">
+        <FileUpload.Trigger asChild>
+          <button type="button" :class="button({ variant: 'outline', size: 'sm' })">
             {{ file ? file.name : "Choose file for upload" }}
-          </Button>
-        </FileUploadTrigger>
-        <FileUploadClearTrigger v-if="file" asChild>
-          <Button variant="ghost" size="sm">
+          </button>
+        </FileUpload.Trigger>
+        <FileUpload.ClearTrigger v-if="file" asChild>
+          <button type="button" :class="button({ variant: 'ghost', size: 'sm' })">
             Clear
-          </Button>
-        </FileUploadClearTrigger>
+          </button>
+        </FileUpload.ClearTrigger>
       </div>
-    </FileUploadRoot>
+    </FileUpload.Root>
 
     <div :class="field">
       <span :class="fieldLabel">Excluded usernames</span>
@@ -115,12 +108,17 @@ async function accept() {
     </p>
 
     <div :class="actions">
-      <Button variant="outline" @click="panel.close(false)">
+      <button type="button" :class="button({ variant: 'outline' })" @click="panel.close(false)">
         Cancel
-      </Button>
-      <Button :disabled="!file || importShow.isPending.value" @click="accept">
+      </button>
+      <button
+        type="button"
+        :class="button()"
+        :disabled="!file || importShow.isPending.value"
+        @click="accept"
+      >
         Import
-      </Button>
+      </button>
     </div>
   </div>
 </template>

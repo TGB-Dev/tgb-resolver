@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
+import { button, code, heading } from "@styled-system/recipes";
 import { ShowMode } from "@tgb-resolver/realtime";
 import { computed } from "vue";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
-import Button from "@/features/shared/ui/button.vue";
-import Heading from "@/features/shared/ui/heading.vue";
 import { useShowStore } from "@/stores/show-store";
 
 const showStore = useShowStore();
@@ -25,14 +24,16 @@ const eventsCount = computed(() => Object.keys(events.value).length);
     <div :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'stretch' })">
       <div>
         <div :class="css({ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', mb: '2' })">
-          <Heading size="md">Show Details</Heading>
-          <Button
-            size="sm"
-            variant="outline"
+          <h2 :class="cx(heading({ size: 'md' }), css({ color: 'colorPalette.fg', fontWeight: 700, lineHeight: 1.2, marginBlock: 0 }))">
+            Show Details
+          </h2>
+          <button
+            type="button"
+            :class="button({ size: 'sm', variant: 'outline' })"
             @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.InspectShow, 'Inspect show')"
           >
             Inspect
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -53,9 +54,9 @@ const eventsCount = computed(() => Object.keys(events.value).length);
 
         <div v-if="meta">
           <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">Metadata</div>
-          <pre :class="css({ fontFamily: 'mono', fontSize: 'xs', whiteSpace: 'pre-wrap', p: '2', bg: 'bg.muted', rounded: 'md' })">
+          <code :class="cx(code(), css({ display: 'block', whiteSpace: 'pre-wrap', p: 2 }))">
             {{ JSON.stringify(meta, null, 2) }}
-          </pre>
+          </code>
         </div>
 
         <div>
