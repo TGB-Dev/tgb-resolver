@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { DragEndEvent } from "@dnd-kit/vue";
-import { DragDropProvider } from "@dnd-kit/vue";
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider, type DragEndEvent, type DragOverEvent } from "@dnd-kit/vue";
 import { css } from "@styled-system/css";
 import { PlaybackStatus, TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem as TimelineRowPayload } from "@tgb-resolver/realtime";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 
 import { useControlIsLive, useControlShowQuery, useMoveTimelineEventMutation, useSeekPlaybackMutation } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
@@ -24,7 +24,7 @@ const isLive = useControlIsLive();
 const seekPlayback = useSeekPlaybackMutation();
 const moveEvent = useMoveTimelineEventMutation();
 
-const containerRef = ref<HTMLElement | null>(null);
+const containerRef = useTemplateRef<HTMLElement>("containerRef");
 const contextTarget = ref<{ payload: TimelineRowPayload; x: number; y: number } | null>(null);
 const reorderState = createTimelineReorderState();
 
@@ -56,6 +56,23 @@ defineExpose({
   scrollToCurrent,
 });
 
+// Scroll to the current event on mount. The rows may not exist yet while the
+// query is loading, so also fire once when the first row renders.
+let hasScrolledOnMount = false;
+function scrollToCurrentOnMount() {
+  if (hasScrolledOnMount || displayRows.value.length === 0) return;
+  hasScrolledOnMount = true;
+  void nextTick(() => requestAnimationFrame(scrollToCurrent));
+}
+
+onMounted(scrollToCurrentOnMount);
+watch(
+  () => displayRows.value.length > 0,
+  (hasRows) => {
+    if (hasRows) scrollToCurrentOnMount();
+  },
+);
+
 watch(
   () => playback.currentCueId,
   (target) => {
@@ -66,31 +83,74 @@ watch(
   },
 );
 
-function reorder(event: DragEndEvent) {
-  if (isLive.value) return;
-  const sourceId = event.operation.source?.id;
-  const targetId = event.operation.target?.id;
-  if (event.canceled || typeof sourceId !== "number" || typeof targetId !== "number") {
+// --- Reorder wiring, ported 1:1 from the React reference (timeline-table.tsx
+// :: TimelineReorderList + commitReorder). DragOver keeps a provisional order;
+// DragEnd commits it as a single move mutation with optimistic apply/revert.
+
+type ReorderSnapshot = ReturnType<typeof showStore.optimisticallyReorderTimeline>;
+
+function currentDisplay(): number[] {
+  return reorderState.rows.value ?? showStore.showOrderedIds;
+}
+
+const isMovePending = computed(() => moveEvent.isPending.value);
+
+let reorderSnapshot: ReorderSnapshot | null = null;
+
+function onDragOver(event: DragOverEvent) {
+  if (event.operation.canceled || isMovePending.value) return;
+  reorderState.set(move(currentDisplay(), event));
+}
+
+function onDragEnd(event: DragEndEvent) {
+  if (isMovePending.value) return;
+  if (event.operation.canceled || event.operation.target == null) {
+    // Esc / dropped outside any row: discard the provisional order.
     reorderState.take();
     return;
   }
-  const current = [...displayIds.value];
-  const sourceIndex = current.indexOf(sourceId);
-  const targetIndex = current.indexOf(targetId);
-  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
-  const moved = showStore.showEvents[sourceId];
-  if (!moved || moved.type !== TimelineEventType.CUS) return;
-  current.splice(sourceIndex, 1);
-  current.splice(targetIndex, 0, sourceId);
+  reorderState.set(move(currentDisplay(), event));
+  commitReorder();
+}
+
+function commitReorder() {
+  const nextRows = reorderState.take();
+  if (!nextRows || isMovePending.value) return;
+
+  // Find the row whose position changed; only CUS events are movable.
+  const initialOrderedIds = showStore.showOrderedIds;
+  let movedEventId: number | null = null;
+  let targetIndex = -1;
+  for (let i = 0; i < nextRows.length; i++) {
+    const id = nextRows[i];
+    if (id === undefined || id === initialOrderedIds[i]) continue;
+    const event = showStore.showEvents[id];
+    if (event?.type === TimelineEventType.CUS) {
+      movedEventId = id;
+      targetIndex = i;
+      break;
+    }
+  }
+  if (movedEventId == null || targetIndex < 0) return;
+
   const before = targetIndex === 0;
-  const relativeToEventId = before ? current[1] : current[targetIndex - 1];
+  const relativeToEventId = before ? nextRows[1] : nextRows[targetIndex - 1];
   if (relativeToEventId == null) return;
-  reorderState.set(current);
+
+  const snapshot = showStore.optimisticallyReorderTimeline(nextRows);
+  const expectedOrderedIds = showStore.showOrderedIds;
+  reorderSnapshot = snapshot;
   moveEvent.mutate(
-    { eventId: sourceId, relativeToEventId, before },
+    { eventId: movedEventId, relativeToEventId, before },
     {
-      onError: () => reorderState.take(),
-      onSettled: () => reorderState.take(),
+      onError: () => {
+        if (reorderSnapshot) {
+          showStore.restoreTimelineOrderIfCurrent(reorderSnapshot, expectedOrderedIds);
+        }
+      },
+      onSettled: () => {
+        reorderSnapshot = null;
+      },
     },
   );
 }
@@ -146,7 +206,7 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
     >
       <div :class="css({ w: 'full', display: 'flex', flexDirection: 'column', alignItems: 'stretch' })">
         <template v-if="displayIds.length > 0">
-          <DragDropProvider v-if="!isLive" @drag-end="reorder">
+          <DragDropProvider v-if="!isLive" @drag-over="onDragOver" @drag-end="onDragEnd">
             <TimelineSortableRow
               v-for="(row, index) in displayRows"
               :key="row.id"

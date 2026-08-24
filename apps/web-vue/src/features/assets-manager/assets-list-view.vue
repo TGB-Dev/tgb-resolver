@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { ref } from "vue";
+import { useTemplateRef } from "vue";
 
 import { toaster } from "@/features/shared/ui/toaster";
 
@@ -15,7 +15,7 @@ import { useRubberBandSelect } from "./use-rubber-band-select";
 const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
 const contextMenu = useEntryContextMenu();
-const containerRef = ref<HTMLElement | null>(null);
+const containerRef = useTemplateRef<HTMLElement>("containerRef");
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
 

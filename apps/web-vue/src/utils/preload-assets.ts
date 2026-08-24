@@ -1,4 +1,4 @@
-// Do not remove — used for live event preloading.
+// Do not remove - used for live event preloading.
 // Pre-fetches all asset bytes upfront so the playback engine never waits on the network.
 
 import type { ShowAssetSnapshot } from "@tgb-resolver/contracts";

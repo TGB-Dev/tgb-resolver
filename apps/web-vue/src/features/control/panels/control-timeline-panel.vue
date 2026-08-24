@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { ref } from "vue";
+import { useTemplateRef } from "vue";
 
 import ControlTimelineControls from "@/features/control/panels/timeline/control-timeline-controls.vue";
 import ControlTimelineTable from "@/features/control/timeline/timeline-table.vue";
 
-const timelineTableRef = ref<InstanceType<typeof ControlTimelineTable> | null>(null);
+const timelineTableRef = useTemplateRef<InstanceType<typeof ControlTimelineTable>>("timelineTableRef");
 </script>
 
 <template>

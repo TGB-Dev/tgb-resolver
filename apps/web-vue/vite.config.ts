@@ -12,9 +12,11 @@ import { fileURLToPath, URL } from "node:url";
 export default defineConfig({
   preview: {
     host: "127.0.0.1",
+    port: 3000,
   },
   server: {
     host: "127.0.0.1",
+    port: 3000,
     watch: {
       ignored: ["**/playwright-report/**", "**/test-results/**", "**/e2e/**"],
     },

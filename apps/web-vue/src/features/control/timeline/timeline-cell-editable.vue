@@ -25,18 +25,22 @@ const emit = defineEmits<{
   blankCommit: [];
 }>();
 
-const draft = ref(props.value);
+// Ark's Preview renders the editable's own model value and ignores slot
+// content, so the display value (e.g. signed trigger offset "+5") must BE
+// the model. Commits hand the raw string back up; numeric consumers parse
+// it with Number(), which accepts a leading "+".
+const draft = ref(props.displayValue != null ? String(props.displayValue) : props.value);
 
 watch(
-  () => props.value,
+  () => props.displayValue ?? props.value,
   (v) => {
-    draft.value = v;
+    draft.value = String(v);
   },
 );
 
 const editableClasses = editable();
 // Wrapper stretches to the column and carries alignment; padding lives ONLY
-// on the preview/input — nesting it twice would offset the text from the
+// on the preview/input - nesting it twice would offset the text from the
 // column edge (breaks end-alignment vs the header).
 // `minW: 0` lets the flex item shrink below its content width, otherwise a
 // long value overflows the column once the input mounts.
@@ -87,7 +91,6 @@ function handleValueCommit(details: { value: string }) {
     :model-value="draft"
     :placeholder="placeholder"
     :class="cx(editableClasses.root, css({ w: 'full', alignItems: 'flex-start' }))"
-    @dblclick.stop
     @value-change="handleValueChange"
     @value-commit="handleValueCommit"
   >

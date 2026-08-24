@@ -49,7 +49,7 @@ const VERDICT_VARIANT: Record<VerdictRunResult, ProblemCellVerdict> = {
   [VerdictRunResult.UNRESOLVED]: "unresolved",
 };
 
-/** Border tone per resolved verdict (drives which blink keyframes apply). */
+/** Border tone per resolved verdict (drives which blink variant applies). */
 type ResolvedBorderTone = "success" | "error" | "warning" | "muted";
 
 const RESOLVED_TONE: Partial<Record<VerdictRunResult, ResolvedBorderTone>> = {
@@ -66,29 +66,18 @@ const RESOLVED_TONE: Partial<Record<VerdictRunResult, ResolvedBorderTone>> = {
   [VerdictRunResult.SHORT_CIRCUITED]: "muted",
 };
 
-// Literal css() calls — Panda's extractor cannot emit utilities built from
-// dynamic values, so each tone's blink is precompiled here.
-const BLINK_CLASS: Record<ResolvedBorderTone, string> = {
-  success: css({ animation: "resolvedBlinkSuccess" }),
-  error: css({ animation: "resolvedBlinkError" }),
-  warning: css({ animation: "resolvedBlinkWarning" }),
-  muted: css({ animation: "resolvedBlinkMuted" }),
-};
-
-const classes = computed(() =>
-  problemCell({ verdict: VERDICT_VARIANT[props.problem.verdict] ?? "pending" }),
-);
+// Only the latest resolved cell blinks - and only when its verdict maps to a
+// border tone to blink against.
+const classes = computed(() => {
+  const tone = props.isLatestResolved ? RESOLVED_TONE[props.problem.verdict] : undefined;
+  return problemCell({
+    verdict: VERDICT_VARIANT[props.problem.verdict] ?? "pending",
+    blink: tone ?? "none",
+  });
+});
 
 const isUnknown = computed(() => props.problem.verdict === VerdictRunResult.UNKNOWN);
 const score = computed(() => (isUnknown.value ? " " : props.problem.score));
-
-// Only the latest resolved cell blinks — and only when its verdict maps to a
-// border tone to blink against.
-const blinkClass = computed(() => {
-  if (!props.isLatestResolved) return undefined;
-  const tone = RESOLVED_TONE[props.problem.verdict];
-  return tone ? BLINK_CLASS[tone] : undefined;
-});
 
 const verdictClass = computed(() =>
   cx(classes.value.verdict, isBigScreen.value ? css({ fontSize: "md" }) : undefined),
@@ -96,8 +85,8 @@ const verdictClass = computed(() =>
 </script>
 
 <template>
-  <td :class="css({ paddingInline: '0.25rem' })">
-    <div :class="cx(classes.root, blinkClass)">
+  <td :class="css({ paddingInline: '0.25rem', borderX: 1, borderColor: 'border' })">
+    <div :class="classes.root">
       <div :class="classes.score" :style="{ lineHeight: '1.3', whiteSpaceCollapse: 'preserve' }">
         {{ score }}
       </div>

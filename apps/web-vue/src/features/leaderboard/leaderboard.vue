@@ -2,7 +2,7 @@
 import { css } from "@styled-system/css";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
-import { computed, nextTick, useTemplateRef, watch } from "vue";
+import { computed, nextTick, onMounted, useTemplateRef, watch } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
@@ -23,7 +23,47 @@ const query = useControlShowQuery();
 const leaderboard = useLeaderboardStore();
 const playback = usePlaybackStore();
 
-const SCROLL_POSITION_KEY = "tgb-resolver:leaderboard-scroll-position";
+const scroller = useTemplateRef<HTMLElement>("scroller");
+
+// Scrolls the container's last row to its end edge. Runs after DOM flush plus
+// a frame so the row layout is final before measuring.
+function scrollToEnd(duration = 0.8) {
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      const scrollerEl = scroller.value;
+      if (!scrollerEl) return;
+      const last = scrollerEl.querySelector<HTMLElement>("[data-user-id]:last-of-type");
+      if (!last) return;
+      animateScrollIntoView(last, scrollerEl, {
+        block: "end",
+        duration,
+        ease: TgbResolverEasings.inOutQuad,
+      });
+    });
+  });
+}
+
+function scrollToUser(userId: number, duration = 0.8) {
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      const scrollerEl = scroller.value;
+      if (!scrollerEl) return;
+      const el = scrollerEl.querySelector<HTMLElement>(`[data-user-id="${userId}"]`);
+      if (!el) return;
+      animateScrollIntoView(el, scrollerEl, {
+        block: "end",
+        duration,
+        ease: TgbResolverEasings.inOutQuad,
+      });
+    });
+  });
+}
+
+const rows = computed(() =>
+  leaderboard.userIds
+    .map((userId) => ({ userId, data: leaderboard.getSignal(userId).value }))
+    .filter((row): row is { userId: number; data: LeaderboardEntry } => row.data !== null),
+);
 
 watch(
   () => props.isBigScreen,
@@ -33,11 +73,27 @@ watch(
   { immediate: true },
 );
 
-const rows = computed(() =>
-  leaderboard.userIds
-    .map((userId) => ({ userId, data: leaderboard.getSignal(userId).value }))
-    .filter((row): row is { userId: number; data: LeaderboardEntry } => row.data !== null),
-);
+const hasRows = computed(() => rows.value.length > 0);
+
+// Scroll to the current rank on mount (falls back to the end while idle).
+// Rows may not exist yet on the first paint, so also fire once when the
+// first row renders.
+let hasScrolledOnMount = false;
+function scrollToCurrentOnMount() {
+  if (hasScrolledOnMount || !hasRows.value) return;
+  hasScrolledOnMount = true;
+  const targetId = leaderboard.currentBottomView;
+  if (targetId > 0) {
+    scrollToUser(targetId);
+  } else {
+    scrollToEnd();
+  }
+}
+
+onMounted(scrollToCurrentOnMount);
+watch(hasRows, (value) => {
+  if (value) scrollToCurrentOnMount();
+});
 
 watch(
   () => [query.data.value, playback.currentEventId],
@@ -49,17 +105,11 @@ watch(
     leaderboard.sync(show, currentEventId ?? 0);
 
     if (currentEventId == null) {
+      // Idle (or before start): park the view at the end of the standings.
       leaderboard.currentResolvedUserId = 0;
       leaderboard.latestResolved = null;
       leaderboard.currentBottomView = 0;
-
-      const saved = localStorage.getItem(SCROLL_POSITION_KEY);
-      if (saved) {
-        const userId = Number(saved);
-        if (leaderboard.userIds.includes(userId)) {
-          leaderboard.currentBottomView = userId;
-        }
-      }
+      scrollToEnd();
       return;
     }
 
@@ -93,30 +143,12 @@ watch(
   () => leaderboard.currentBottomView,
   (targetId) => {
     if (targetId > 0) {
-      localStorage.setItem(SCROLL_POSITION_KEY, String(targetId));
+      // Follow the bottom-view target: scroll it to the container's end edge,
+      // mirroring the React reference.
+      scrollToUser(targetId);
     }
-
-    // Follow the bottom-view target: scroll it to the container's end edge,
-    // mirroring the React reference. Runs after DOM flush + a frame so the
-    // row layout is final before measuring.
-    if (targetId <= 0 || !scroller.value) return;
-    void nextTick(() => {
-      requestAnimationFrame(() => {
-        const el = scroller.value?.querySelector<HTMLElement>(
-          `[data-user-id="${targetId}"]`,
-        );
-        if (!el || !scroller.value) return;
-        animateScrollIntoView(el, scroller.value, {
-          block: "end",
-          duration: 0.8,
-          ease: TgbResolverEasings.inOutQuad,
-        });
-      });
-    });
   },
 );
-
-const scroller = useTemplateRef<HTMLElement>("scroller");
 </script>
 
 <template>

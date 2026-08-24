@@ -46,7 +46,7 @@ function handleDrop(event: DragEvent) {
 </script>
 
 <template>
-  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full' }))" :invalid="errors.length > 0">
+  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full', gap: '1.5' }))" :invalid="errors.length > 0">
     <Field.Label v-if="label" :class="fieldClasses.label">{{ label }}</Field.Label>
     <!-- biome-ignore lint/a11y/noStaticElementInteractions: pointer-only drop target; the inner input is the accessible path -->
     <div

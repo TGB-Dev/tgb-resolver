@@ -2,7 +2,7 @@
 import { Dialog } from "@ark-ui/vue";
 import { css, cx } from "@styled-system/css";
 import { button, dialog, field, input } from "@styled-system/recipes";
-import { nextTick, ref, watch } from "vue";
+import { nextTick, useTemplateRef, watch } from "vue";
 
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
@@ -15,7 +15,7 @@ const content = css({ display: "flex", flexDirection: "column", gap: "4", alignI
 const message = css({ color: "fg.muted", fontSize: "sm" });
 const actions = css({ display: "flex", justifyContent: "flex-end", gap: "3" });
 
-const inputRef = ref<HTMLInputElement | null>(null);
+const inputRef = useTemplateRef<HTMLInputElement>("inputRef");
 
 watch(
   () => [store.open, store.showInput],

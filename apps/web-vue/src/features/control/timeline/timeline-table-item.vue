@@ -4,7 +4,7 @@ import { css, cx } from "@styled-system/css";
 import { button, gridTableRow, iconButton } from "@styled-system/recipes";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
-import { computed, provide, ref } from "vue";
+import { computed } from "vue";
 
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import { FloatingPanelType } from "@/features/control/floating-panel-types";
@@ -18,7 +18,6 @@ import TimelineCustomNameEditable from "./timeline-custom-name-editable.vue";
 import TimelineEventPosition from "./timeline-event-position.vue";
 import TimelineManualInteraction from "./timeline-manual-interaction.vue";
 import TimelineNumberEditable from "./timeline-number-editable.vue";
-import { timelineRowHoverKey } from "./timeline-row-hover";
 import {
   timelineTableGridTemplateColumns,
   timelineTableGridTemplateColumnsStatic,
@@ -36,11 +35,18 @@ const emit = defineEmits<{
 
 const showStore = useShowStore();
 const floatingPanelStore = useFloatingPanelStore();
-// Hover state is provided for the hover-reactive leaves (add buttons, manual
-// interaction toggle). Reading it here would re-render the whole row on every
-// pointer enter/leave — a patch storm that also starves the WAAPI animations.
-const isNear = ref(false);
-provide(timelineRowHoverKey, isNear);
+
+// Hover affordances (add buttons, drag handle, manual-interaction toggle) are
+// always mounted; reveal/hide is pure CSS so pointer enter/leave never
+// triggers Vue re-renders and dnd drags survive leaving the row bounds.
+// Add buttons handle their own group-hover reveal in the recipe; this block
+// only switches the manual-interaction idle check vs hover toggle button.
+const hoverRevealCss = css({
+  "& .manual-active": { display: "none" },
+  "& .manual-idle": { display: "block" },
+  "&:hover .manual-active": { display: "flex" },
+  "&:hover .manual-idle": { display: "none" },
+});
 
 const isReorderable = computed(() => props.payload.type === TimelineEventType.CUS && !props.isLive);
 
@@ -79,28 +85,18 @@ function handleDoubleClick() {
   <!-- biome-ignore lint/a11y/noStaticElementInteractions: row-level hover/context/double-click affordances; inner controls remain the interactive elements -->
   <div
     :class="
-      css({
-        display: 'grid',
-        w: 'full',
-        minH: '8',
-        position: 'relative',
-        '& .add-btn-wrapper': {
-          opacity: 0,
-          transitionProperty: 'opacity',
-          transitionDuration: '0.15s',
-          transitionTimingFunction: 'swiftOut',
-          pointerEvents: 'none',
-        },
-        '&:hover .add-btn-wrapper': {
-          opacity: 1,
-          pointerEvents: 'auto',
-        },
-      })
+      cx(
+        css({
+          display: 'grid',
+          w: 'full',
+          minH: '8',
+          position: 'relative',
+        }),
+        hoverRevealCss,
+      )
     "
     :data-event-id="payload.id"
     :data-current="isLive || undefined"
-    @pointerenter="isNear = true"
-    @pointerleave="isNear = false"
     @contextmenu="emit('contextmenu', $event, payload)"
     @dblclick="handleDoubleClick"
   >
@@ -182,6 +178,7 @@ function handleDoubleClick() {
         <Tooltip content="Drag to reorder event" :open-delay="0">
           <button
             type="button"
+            data-drag-handle
             aria-label="Drag to reorder event"
             :disabled="!isReorderable"
             :class="

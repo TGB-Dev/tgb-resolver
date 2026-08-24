@@ -23,7 +23,7 @@ function handleInput(event: Event) {
 </script>
 
 <template>
-  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full' }))">
+  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full', gap: '1.5' }))">
     <Field.Label v-if="label" :class="fieldClasses.label">{{ label }}</Field.Label>
     <input
       :name="name"

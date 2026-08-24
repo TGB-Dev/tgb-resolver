@@ -14,7 +14,7 @@ function part<P = Record<string, unknown>>(component: unknown): DefineComponent<
 
 /**
  * Styled Select parts wired to the generated Chakra preset `select` slot
- * recipe via Panda's style context — the same composition Chakra UI's React
+ * recipe via Panda's style context - the same composition Chakra UI's React
  * `components/select` uses. Parts must be rendered inside `SelectRoot`.
  */
 const selectStyles = createStyleContext(select);

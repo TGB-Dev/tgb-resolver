@@ -14,12 +14,12 @@ const props = defineProps<{
 const patchEvent = usePatchTimelineEventMutation();
 const current = computed(() => props.payload[props.field]);
 
+// Only the trigger offset shows an explicit sign on preview; durations are
+// always non-negative and read as-is.
 const displayValue = computed(() => {
   const val = current.value;
-  if (props.field === "triggerOffsetSeconds" && val != null && val > 0) {
-    return `+${val}`;
-  }
-  return val ?? "";
+  if (val == null) return "";
+  return props.field === "triggerOffsetSeconds" && val > 0 ? `+${val}` : String(val);
 });
 
 function handleBlankCommit() {

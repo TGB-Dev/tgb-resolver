@@ -1,5 +1,5 @@
 import { useEventListener } from "@vueuse/core";
-import { type Ref, ref } from "vue";
+import { type MaybeRefOrGetter, ref, toValue } from "vue";
 
 export interface Rect {
   left: number;
@@ -21,7 +21,7 @@ interface HitEntry {
 }
 
 export function useRubberBandSelect(
-  containerRef: Ref<HTMLElement | null>,
+  containerRef: MaybeRefOrGetter<HTMLElement | null>,
   onSelect: (entryIds: string[], mod: boolean) => void,
 ) {
   const selectionRect = ref<Rect | null>(null);
@@ -32,7 +32,7 @@ export function useRubberBandSelect(
   const modKey = ref(false);
 
   function getEntryElements(): HitEntry[] {
-    const container = containerRef.value;
+    const container = toValue(containerRef);
     if (!container) return [];
     const entries: HitEntry[] = [];
     for (const el of container.querySelectorAll<HTMLElement>("[data-entry-id]")) {

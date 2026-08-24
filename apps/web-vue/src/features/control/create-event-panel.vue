@@ -8,7 +8,7 @@ import {
 import { Check, ChevronDown } from "@lucide/vue";
 import { css } from "@styled-system/css";
 import { button, combobox } from "@styled-system/recipes";
-import { computed, ref } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
 import { useCreateTimelineEventMutation } from "@/features/control/composables/use-show";
@@ -37,7 +37,7 @@ const { collection, filter } = useListCollection<Extension>({
 });
 
 const selectedExtension = ref<Extension | null>(null);
-const configFormRef = ref<InstanceType<typeof ExtensionConfigForm> | null>(null);
+const configFormRef = useTemplateRef<InstanceType<typeof ExtensionConfigForm>>("configFormRef");
 const error = ref<string | null>(null);
 const comboboxClasses = combobox();
 

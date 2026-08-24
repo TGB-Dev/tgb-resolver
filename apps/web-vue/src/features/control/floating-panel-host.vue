@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { FloatingPanel } from "@ark-ui/vue";
-import { Maximize2, Minimize2, Puzzle, X } from "@lucide/vue";
-import { css, cx } from "@styled-system/css";
-import { floatingPanel } from "@styled-system/recipes";
 import { useEventListener } from "@vueuse/core";
 import { type Component, computed } from "vue";
 
 import CreateEventPanel from "@/features/control/create-event-panel.vue";
+import FloatingPanelFrame from "@/features/control/floating-panel-frame.vue";
 import { useFloatingPanelStore } from "@/features/control/floating-panel-store";
 import {
   type FloatingPanelHandle,
@@ -18,8 +15,6 @@ import InspectShowPanel from "@/features/control/inspect-show-panel.vue";
 import ExtensionConfigPanel from "@/features/extensions/config-panel.vue";
 
 const store = useFloatingPanelStore();
-const classes = floatingPanel();
-const resizeAxes = FloatingPanel.resizeTriggerAxes;
 
 const PANEL_REGISTRY: Record<FloatingPanelType, Component> = {
   [FloatingPanelType.ExtensionConfig]: ExtensionConfigPanel,
@@ -33,6 +28,7 @@ const panelsView = computed(() =>
     panel,
     config: floatingPanelConfig[panel.type],
     title: panel.title.value,
+    body: PANEL_REGISTRY[panel.type],
   })),
 );
 
@@ -56,10 +52,13 @@ useEventListener(window, "beforeunload", (event) => {
 
 <template>
   <Teleport to="body">
-    <FloatingPanel.Root
+    <FloatingPanelFrame
       v-for="entry in panelsView"
       :key="entry.panel.id"
       :open="true"
+      :title="entry.title"
+      :icon="entry.config.icon"
+      :maximizable="entry.config.maximizable ?? false"
       :default-size="entry.config.size"
       :min-size="entry.config.minSize"
       :default-position="getDefaultPosition(entry.config.size)"
@@ -68,69 +67,9 @@ useEventListener(window, "beforeunload", (event) => {
       :close-on-escape="true"
       strategy="fixed"
       @open-change="(details: { open: boolean }) => onOpenChange(entry.panel, details.open)"
+      @close="store.requestFloatingPanelClose(entry.panel)"
     >
-      <!-- Zag sets an inline `z-index: var(--z-index)` (= stackIndex + 1 ≈ 1) on
-           the positioner, which would override any recipe class value. Force the
-           popover layer with `!important` so panels always sit above app content. -->
-      <FloatingPanel.Positioner :class="cx(classes.positioner, css({ zIndex: 'popover!' }))">
-        <FloatingPanel.Content :class="classes.content">
-          <FloatingPanel.Header :class="cx(classes.header, css({
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }))">
-            <FloatingPanel.DragTrigger :class="classes.dragTrigger">
-              <component :is="entry.config.icon ?? Puzzle" :size="16" aria-hidden />
-              <FloatingPanel.Title :class="classes.title">{{ entry.title }}</FloatingPanel.Title>
-            </FloatingPanel.DragTrigger>
-            <FloatingPanel.Control :class="cx(classes.control, css({
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }))">
-              <FloatingPanel.StageTrigger
-                v-if="entry.config.maximizable"
-                stage="maximized"
-                :class="classes.stageTrigger"
-                aria-label="Maximize panel"
-              >
-                <!-- This is a bit smaller, as the X icon has some paddings around that (?) -->
-                <Maximize2 :size="10" aria-hidden />
-              </FloatingPanel.StageTrigger>
-              <FloatingPanel.StageTrigger
-                v-if="entry.config.maximizable"
-                stage="default"
-                :class="classes.stageTrigger"
-                aria-label="Restore panel"
-              >
-                <Minimize2 :size="12" aria-hidden />
-              </FloatingPanel.StageTrigger>
-              <FloatingPanel.CloseTrigger
-                :class="classes.closeTrigger"
-                aria-label="Close panel"
-                @click="store.requestFloatingPanelClose(entry.panel)"
-              >
-                <X :size="14" aria-hidden />
-              </FloatingPanel.CloseTrigger>
-            </FloatingPanel.Control>
-          </FloatingPanel.Header>
-          <FloatingPanel.Body :class="cx(classes.body, css({ padding: 4 }))">
-            <component :is="PANEL_REGISTRY[entry.panel.type]" :panel="entry.panel" />
-          </FloatingPanel.Body>
-          <template v-if="entry.config.resizable ?? true">
-            <FloatingPanel.ResizeTrigger
-              v-for="axis in resizeAxes"
-              :key="axis"
-              :axis="axis"
-              :class="classes.resizeTrigger"
-            />
-          </template>
-        </FloatingPanel.Content>
-      </FloatingPanel.Positioner>
-    </FloatingPanel.Root>
+      <component :is="entry.body" :panel="entry.panel" />
+    </FloatingPanelFrame>
   </Teleport>
 </template>

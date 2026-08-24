@@ -3,7 +3,7 @@ import { Splitter } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
 import { useHotkey, useHotkeySequence } from "@tanstack/vue-hotkeys";
-import { ref, watchEffect } from "vue";
+import { useTemplateRef, watchEffect } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
 import { toaster } from "@/features/shared/ui/toaster";
@@ -22,7 +22,7 @@ const interactionStore = useAssetsInteractionStore();
 const confirmStore = useConfirmActionStore();
 const showQuery = useControlShowQuery();
 const splitterClasses = splitter();
-const fileInputRef = ref<HTMLInputElement | null>(null);
+const fileInputRef = useTemplateRef<HTMLInputElement>("fileInputRef");
 
 watchEffect(() => {
   if (showQuery.data.value) {

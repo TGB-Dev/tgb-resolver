@@ -179,7 +179,7 @@ export function useSeekPlaybackMutation() {
         return data as ShowStateSnapshot;
       });
     },
-    // Playback-only response — do NOT setQueryData. Writing the response here
+    // Playback-only response - do NOT setQueryData. Writing the response here
     // re-runs the query select (mapShowStateSnapshotToShowFile maps the whole
     // timeline) and re-emits to every consumer, re-rendering ~111 timeline
     // rows + the cue tab on every seek. Playback state arrives via the SignalR

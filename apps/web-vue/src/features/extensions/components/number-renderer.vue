@@ -20,25 +20,24 @@ const min = computed(() => (typeof props.props?.min === "number" ? props.props.m
 const max = computed(() => (typeof props.props?.max === "number" ? props.props.max : undefined));
 const step = computed(() => (typeof props.props?.step === "number" ? props.props.step : 1));
 
-function handleValueChange(details: { value: string }) {
-  const parsed = Number(details.value);
-  if (Number.isFinite(parsed)) props.field.handleChange(parsed);
+function handleValueChange(details: { value: string; valueAsNumber: number }) {
+  if (Number.isFinite(details.valueAsNumber)) props.field.handleChange(details.valueAsNumber);
 }
 </script>
 
 <template>
-  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full' }))">
+  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full', gap: '1.5' }))">
     <Field.Label v-if="label" :class="fieldClasses.label">{{ label }}</Field.Label>
     <NumberInput.Root
       :class="cx(numberInputClasses.root, css({ w: 'full' }))"
-      :value="currentValue"
+      :model-value="currentValue"
       :min="min"
       :max="max"
       :step="step"
       @value-change="handleValueChange"
     >
       <NumberInput.Input :class="numberInputClasses.input" />
-      <NumberInput.Control>
+      <NumberInput.Control :class="numberInputClasses.control">
         <NumberInput.IncrementTrigger :class="numberInputClasses.incrementTrigger">
           <ChevronUp :size="16" aria-hidden="true" />
         </NumberInput.IncrementTrigger>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
 import { useForm, useSelector } from "@tanstack/vue-form";
-import { getDefaultValues, type RuntimeFormDefinition, toTanStackOptions } from "@tgb-form/core";
+import { getDefaultValues, type RuntimeFormDefinition, toValibotSchema } from "@tgb-form/core";
 import { TgbForm, type VueRendererRegistry } from "@tgb-form/vue";
 
 import { toTgbFormInstance } from "./tgb-form-instance";
@@ -34,14 +34,19 @@ function restoredPayload(payload: Record<string, unknown> | undefined): Record<s
   );
 }
 
+// Seeds once at setup - the Vue equivalent of React's useMemo([configForm,
+// event]) baseline. The parent mounts this component only when the event and
+// its payload are available, so the values are final at this point.
 const initialValues: Record<string, unknown> = {
   ...getDefaultValues(props.definition),
   ...restoredPayload(props.baseline),
 };
 
 const form = useForm({
-  ...toTanStackOptions(props.definition),
   defaultValues: initialValues,
+  validators: {
+    onSubmit: toValibotSchema(props.definition) as never,
+  },
   onSubmit: async ({ value }: { value: Record<string, unknown> }) => {
     await props.onSubmit?.(value);
   },

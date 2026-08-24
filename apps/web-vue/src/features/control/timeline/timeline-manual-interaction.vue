@@ -3,19 +3,15 @@ import { Check } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { button, iconButton } from "@styled-system/recipes";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
-import { inject, ref } from "vue";
 
 import { usePatchTimelineEventMutation } from "@/features/control/composables/use-show";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
-
-import { timelineRowHoverKey } from "./timeline-row-hover";
 
 const props = defineProps<{
   payload: TimelineTableItem;
 }>();
 
 const patchEvent = usePatchTimelineEventMutation();
-const isNear = inject(timelineRowHoverKey, ref(false));
 
 function toggle(event: MouseEvent) {
   event.stopPropagation();
@@ -27,16 +23,16 @@ function toggle(event: MouseEvent) {
 </script>
 
 <template>
+  <!-- Idle state: plain check for rows requiring manual interaction.
+       Hover state: interactive toggle button. Visibility switches via the
+       row's hover CSS (see timeline-table-item.vue). -->
   <Check
-    v-if="!isNear && payload.requireManualInteraction"
+    v-if="payload.requireManualInteraction"
+    class="manual-idle"
     :size="14"
     aria-hidden
   />
-  <Tooltip
-    v-else-if="isNear"
-    content="Double-click to toggle manual interaction"
-    :open-delay="0"
-  >
+  <Tooltip content="Double-click to toggle manual interaction" :open-delay="0">
     <button
       type="button"
       aria-label="Toggle manual interaction"
@@ -45,15 +41,12 @@ function toggle(event: MouseEvent) {
           button({ variant: 'ghost' }),
           iconButton(),
           css({ minW: 0, w: 'full', h: 6, m: 1, aspectRatio: 'auto' }),
+          'manual-active',
         )
       "
       @dblclick="toggle"
     >
-      <Check
-        v-if="payload.requireManualInteraction"
-        :size="14"
-        aria-hidden
-      />
+      <Check v-if="payload.requireManualInteraction" :size="14" aria-hidden />
     </button>
   </Tooltip>
 </template>

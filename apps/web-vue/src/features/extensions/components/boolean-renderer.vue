@@ -17,7 +17,7 @@ function handleCheckedChange(details: { checked: boolean | "indeterminate" }) {
 </script>
 
 <template>
-  <FieldRoot :class="cx(fieldClasses.root, css({ w: 'full' }))">
+  <FieldRoot :class="cx(fieldClasses.root, css({ w: 'full', gap: '1.5' }))">
     <Checkbox.Root
       :class="checkboxClasses.root"
       :checked="Boolean(field.state.value)"

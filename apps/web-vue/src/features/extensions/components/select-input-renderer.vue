@@ -58,9 +58,13 @@ function handleValueChange(details: { value: string[] }) {
 </script>
 
 <template>
-  <Field.Root :class="css({ w: 'full' })">
+  <Field.Root :class="cx(fieldClasses.root, css({ w: 'full', gap: '1.5' }))">
     <Field.Label v-if="label" :class="fieldClasses.label">{{ label }}</Field.Label>
-    <SelectRoot :collection="collection" :value="selectedValues" @value-change="handleValueChange">
+    <SelectRoot
+      :collection="collection"
+      :model-value="selectedValues"
+      @value-change="handleValueChange"
+    >
       <SelectHiddenSelect />
       <SelectControl>
         <SelectTrigger>

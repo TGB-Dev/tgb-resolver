@@ -1,38 +1,45 @@
 <script setup lang="ts">
-import { Tooltip, type TooltipContentBaseProps, type TooltipRootProps } from "@ark-ui/vue";
-import { tooltip } from "@styled-system/recipes";
-import { computed } from "vue";
+import { Tooltip, type TooltipContentProps, type TooltipRootProps } from "@ark-ui/vue";
+import { tooltip as tooltipRecipe } from "@styled-system/recipes";
+import { useAttrs } from "vue";
 
-const props = withDefaults(
-  defineProps<{
-    showArrow?: boolean;
-    disabled?: boolean;
-    content?: string;
-    openDelay?: number;
-    /** Ark positioning options (placement, offset, …); forwarded to Tooltip.Root. */
-    positioning?: TooltipRootProps["positioning"];
-    contentProps?: TooltipContentBaseProps;
-  }>(),
-  {
-    showArrow: false,
-    disabled: false,
-    content: "",
-    openDelay: undefined,
-    positioning: undefined,
-    contentProps: undefined,
-  },
-);
+// Deliberately NOT extending TooltipRootProps in defineProps: Vue casts every
+// declared boolean prop that is absent to an explicit `false`, and forwarding
+// them binds e.g. `open: false` onto Ark's Root - a controlled-closed machine
+// whose tooltips can never open. Wrapper-specific props are declared here;
+// anything else reaches Ark's Root through fallthrough $attrs untouched.
+interface TooltipProps {
+  showArrow?: boolean;
+  disabled?: boolean;
+  content?: string;
+  openDelay?: number;
+  /** Positioning options (placement, offset, ...); forwarded to Tooltip.Root. */
+  positioning?: TooltipRootProps["positioning"];
+  contentProps?: TooltipContentProps;
+}
 
-const rootProps = computed(() => {
-  const { showArrow: _showArrow, disabled: _disabled, content: _content, contentProps: _contentProps, ...rest } =
-    props;
-  return rest;
+const props = withDefaults(defineProps<TooltipProps>(), {
+  showArrow: false,
+  disabled: false,
+  content: "",
 });
-const classes = tooltip();
+
+const attrs = useAttrs();
+const classes = tooltipRecipe();
+
+// Plain function, evaluated per render: v-bind must receive a plain object -
+// spreading a ref would forward the ref's own internals instead.
+function rootProps(): Record<string, unknown> {
+  return {
+    ...attrs,
+    ...(props.openDelay !== undefined ? { openDelay: props.openDelay } : {}),
+    ...(props.positioning !== undefined ? { positioning: props.positioning } : {}),
+  };
+}
 </script>
 
 <template>
-  <Tooltip.Root v-if="!disabled" v-bind="rootProps">
+  <Tooltip.Root v-if="!disabled" v-bind="rootProps()">
     <Tooltip.Trigger asChild>
       <slot />
     </Tooltip.Trigger>
