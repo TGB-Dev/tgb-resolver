@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { createListCollection, Select, Switch } from "@ark-ui/vue";
-import { css } from "@styled-system/css";
+import { Check, ChevronDown, X } from "@lucide/vue";
+import { css, cx } from "@styled-system/css";
 import { select, swittch } from "@styled-system/recipes";
 import { computed } from "vue";
 
@@ -36,9 +37,7 @@ const tickRate = useControlTickRate();
 const updateAutomation = useUpdateAutomationMutation();
 const updateSettings = useUpdateSettingsMutation();
 
-const activeValue = computed(() => [
-  (tickRate.value ?? 60).toString(),
-]);
+const activeValue = computed(() => [(tickRate.value ?? 60).toString()]);
 
 const selectClasses = select();
 const switchClasses = swittch({ size: "md" });
@@ -46,7 +45,9 @@ const switchClasses = swittch({ size: "md" });
 
 <template>
   <div :class="css({ boxSize: 'full', p: '4' })">
-    <div :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'stretch' })">
+    <div
+      :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'stretch' })"
+    >
       <Switch.Root
         :checked="fullAutoEnabled"
         :disabled="!canMutate || updateAutomation.isPending.value"
@@ -69,18 +70,31 @@ const switchClasses = swittch({ size: "md" });
           :collection="collection"
           :model-value="activeValue"
           :disabled="!canMutate || updateSettings.isPending.value"
-          :class="selectClasses.root"
-          @value-change="(details) => {
-            const selected = details.value[0];
-            if (selected !== undefined) {
-              updateSettings.mutate(Number(selected));
+          :positioning="{ sameWidth: true }"
+          :class="cx(selectClasses.root, css({ w: 'full' }))"
+          @value-change="
+            (details) => {
+              const selected = details.value[0];
+              if (selected !== undefined) {
+                updateSettings.mutate(Number(selected));
+              }
             }
-          }"
+          "
         >
           <Select.Label :class="selectClasses.label">Tick rate</Select.Label>
-          <Select.Trigger :class="selectClasses.trigger">
-            <Select.ValueText :class="selectClasses.valueText" placeholder="Select rate" />
-          </Select.Trigger>
+          <Select.Control :class="selectClasses.control">
+            <Select.Trigger :class="selectClasses.trigger">
+              <Select.ValueText :class="selectClasses.valueText" placeholder="Select rate" />
+            </Select.Trigger>
+            <div :class="selectClasses.indicatorGroup">
+              <Select.ClearTrigger :class="selectClasses.clearTrigger">
+                <X :size="16" aria-hidden="true" />
+              </Select.ClearTrigger>
+              <Select.Indicator :class="selectClasses.indicator">
+                <ChevronDown aria-hidden="true" />
+              </Select.Indicator>
+            </div>
+          </Select.Control>
           <Select.Positioner :class="selectClasses.positioner">
             <Select.Content :class="selectClasses.content">
               <Select.Item
@@ -90,7 +104,9 @@ const switchClasses = swittch({ size: "md" });
                 :class="selectClasses.item"
               >
                 <Select.ItemText :class="selectClasses.itemText">{{ item.label }}</Select.ItemText>
-                <Select.ItemIndicator :class="selectClasses.itemIndicator">✓</Select.ItemIndicator>
+                <Select.ItemIndicator :class="selectClasses.itemIndicator">
+                  <Check />
+                </Select.ItemIndicator>
               </Select.Item>
             </Select.Content>
           </Select.Positioner>

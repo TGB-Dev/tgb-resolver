@@ -3,7 +3,7 @@ import { FileUpload } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { button, fileUpload, input } from "@styled-system/recipes";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import { useImportShowMutation } from "@/features/control/composables/use-show";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
@@ -16,6 +16,15 @@ const props = defineProps<{
 const file = ref<File | null>(null);
 const excludedUsernames = ref("");
 const importShow = useImportShowMutation();
+
+// vue-query's useMutation returns a plain object of refs (unlike useQuery's
+// reactive result), so nested state must be unwrapped before template use —
+// otherwise `importShow.error` is a truthy Ref object and the error paragraph
+// renders "Unknown error" as soon as the dialog opens.
+const importError = computed(() =>
+  importShow.error.value instanceof Error ? importShow.error.value.message : importShow.error.value,
+);
+const importPending = computed(() => importShow.isPending.value);
 
 const fileUploadClasses = fileUpload();
 const inputClasses = input({ size: "sm" });
@@ -32,9 +41,22 @@ function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   if (error && typeof error === "object") {
-    const body = error as { message?: unknown; errors?: Record<string, unknown> };
-    const general = body.errors?.generalErrors ?? body.errors?.General;
-    if (Array.isArray(general) && typeof general[0] === "string") return general[0];
+    const body = error as {
+      message?: unknown;
+      errors?: Record<string, unknown> | undefined;
+    };
+    const errors = body.errors;
+    if (errors) {
+      // FastEndpoints surfaces endpoint AddError() failures under "GeneralErrors".
+      for (const key of ["GeneralErrors", "generalErrors", "General"]) {
+        const general = errors[key];
+        if (Array.isArray(general) && typeof general[0] === "string" && general[0]) {
+          return general[0];
+        }
+      }
+      const first = Object.values(errors).find((v) => Array.isArray(v) && v.length > 0);
+      if (Array.isArray(first) && typeof first[0] === "string" && first[0]) return first[0];
+    }
     if (typeof body.message === "string" && body.message.length > 0) return body.message;
   }
   return "Unknown error";
@@ -103,9 +125,7 @@ async function accept() {
       </span>
     </div>
 
-    <p v-if="importShow.error" :class="errorText">
-      {{ errorMessage(importShow.error) }}
-    </p>
+    <p v-if="importError" :class="errorText">{{ importError }}</p>
 
     <div :class="actions">
       <button type="button" :class="button({ variant: 'outline' })" @click="panel.close(false)">
@@ -114,7 +134,7 @@ async function accept() {
       <button
         type="button"
         :class="button()"
-        :disabled="!file || importShow.isPending.value"
+        :disabled="!file || importPending"
         @click="accept"
       >
         Import

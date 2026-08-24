@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
 import { HotkeysProvider } from "@tanstack/vue-hotkeys";
-import { type ComponentPublicInstance, onErrorCaptured, onMounted, ref } from "vue";
+import { type ComponentPublicInstance, onErrorCaptured, ref } from "vue";
 
 import BigRefetchOverlay from "@/features/control/big-refetch-overlay.vue";
+import { useLiveWakeLock } from "@/features/control/composables/use-live-wake-lock";
 import { useRealtimeConnection } from "@/features/control/composables/use-realtime-connection";
 import AppDevtools from "@/features/shared/app/app-devtools.vue";
 import ErrorPage from "@/features/shared/app/error-page.vue";
@@ -20,9 +21,10 @@ onErrorCaptured((err: unknown, _instance: ComponentPublicInstance | null, _info:
   return false;
 });
 
-onMounted(() => {
-  useRealtimeConnection();
-});
+// Setup-scope composables (they register watch/onScopeDispose); calling them
+// inside onMounted would silently drop their scope-dispose bindings.
+useRealtimeConnection();
+useLiveWakeLock();
 </script>
 
 <template>

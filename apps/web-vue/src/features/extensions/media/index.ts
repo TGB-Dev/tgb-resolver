@@ -4,11 +4,10 @@ import { h, onUnmounted, ref, watch } from "vue";
 
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { MotionDiv } from "@/lib/motion-factories";
-import { API_BASE_URL } from "@/lib/runtime-config";
 import { soundEngine } from "@/lib/sound-engine";
-import { getPreloadedAsset } from "@/utils/preload-assets";
 
 import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
+import { useAssetUrl } from "../base/use-asset-url";
 import { sharedValidatorRegistry } from "../init";
 import { assetContentType } from "./duration";
 
@@ -18,40 +17,6 @@ export interface MediaExtensionPayload extends Record<string, unknown> {
   fit?: "cover" | "contain" | "fill";
   loop?: boolean;
   volume?: number;
-}
-
-function useAssetUrl(getAssetId: () => string) {
-  const url = ref<string | null>(null);
-  const hasError = ref(false);
-  let objectUrl: string | null = null;
-
-  watch(
-    () => [getAssetId(), hasError.value, url.value],
-    () => {
-      hasError.value = false;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        objectUrl = null;
-      }
-      url.value = null;
-      const assetId = getAssetId();
-      if (!assetId) return;
-      const buffer = getPreloadedAsset(assetId);
-      if (buffer) {
-        objectUrl = URL.createObjectURL(new Blob([buffer]));
-        url.value = objectUrl;
-        return;
-      }
-      url.value = `${API_BASE_URL}/assets/${assetId}`;
-    },
-    { immediate: true },
-  );
-
-  onUnmounted(() => {
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-  });
-
-  return { url, hasError };
 }
 
 const transition = { duration: 0.2, ease: TgbResolverEasings.swiftOut };
@@ -124,7 +89,6 @@ export const MediaExtension: WithVueComponentExtension<MediaExtensionPayload> = 
       const getAudioId = () => (props.payload as MediaExtensionPayload)?.audioAssetId ?? "";
       const visual = useAssetUrl(getVisualId);
       const audio = useAssetUrl(getAudioId);
-      const hasError = ref(false);
       const videoRef = ref<HTMLVideoElement | null>(null);
 
       watch(
@@ -173,7 +137,7 @@ export const MediaExtension: WithVueComponentExtension<MediaExtensionPayload> = 
         const contentType = visualAssetId ? assetContentType(visualAssetId) : undefined;
         const isVideo = contentType?.startsWith("video/") ?? false;
 
-        if (!visualAssetId || !visual.url.value || hasError.value) return null;
+        if (!visualAssetId || !visual.url.value || visual.hasError.value) return null;
 
         if (isVideo) {
           return h(
@@ -192,7 +156,7 @@ export const MediaExtension: WithVueComponentExtension<MediaExtensionPayload> = 
                 loop,
                 playsInline: true,
                 ref: videoRef,
-                onError: () => (hasError.value = true),
+                onError: () => visual.markError(),
                 class: css({ w: "full", h: "full", objectFit: fit }),
               }),
             ],
@@ -211,7 +175,7 @@ export const MediaExtension: WithVueComponentExtension<MediaExtensionPayload> = 
             h("img", {
               src: visual.url.value,
               alt: `asset ${visualAssetId}`,
-              onError: () => (hasError.value = true),
+              onError: () => visual.markError(),
               class: css({ w: "full", h: "full", objectFit: fit }),
             }),
           ],

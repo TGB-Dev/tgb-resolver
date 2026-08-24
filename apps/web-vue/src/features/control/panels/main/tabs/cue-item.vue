@@ -6,7 +6,7 @@ import { CUE_CONFIG, type Cue } from "./cue";const props = defineProps<{ cue: Cu
 
 <template>
   <div :class="css({ display: 'flex', flexDirection: 'column', gap: '4', alignItems: 'start' })">
-    <div :class="css({ fontSize: CUE_CONFIG[props.cue].headingSize, fontWeight: 'bold' })">
+    <div :class="css({ fontSize: CUE_CONFIG[props.cue].headingSize, fontWeight: 'bold', color: 'colorPalette.fg' })">
       {{ CUE_CONFIG[props.cue].label }}
     </div>
     <span

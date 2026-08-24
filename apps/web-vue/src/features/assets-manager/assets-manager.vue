@@ -3,7 +3,8 @@ import { Splitter } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
 import { useHotkey, useHotkeySequence } from "@tanstack/vue-hotkeys";
-import { useTemplateRef, watchEffect } from "vue";
+import { whenever } from "@vueuse/core";
+import { useTemplateRef } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
 import { toaster } from "@/features/shared/ui/toaster";
@@ -24,11 +25,9 @@ const showQuery = useControlShowQuery();
 const splitterClasses = splitter();
 const fileInputRef = useTemplateRef<HTMLInputElement>("fileInputRef");
 
-watchEffect(() => {
-  if (showQuery.data.value) {
-    store.applyShowState(showQuery.data.value);
-  }
-});
+// Data-sync, not side-effect-on-every-dep: run once with cached data
+// (immediate) and again on every query update.
+whenever(showQuery.data, (data) => store.applyShowState(data), { immediate: true });
 
 function handleError(e: unknown, label: string): void {
   const msg = e instanceof Error ? e.message : String(e);

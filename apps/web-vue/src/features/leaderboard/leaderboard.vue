@@ -61,7 +61,7 @@ function scrollToUser(userId: number, duration = 0.8) {
 
 const rows = computed(() =>
   leaderboard.userIds
-    .map((userId) => ({ userId, data: leaderboard.getSignal(userId).value }))
+    .map((userId) => ({ userId, data: leaderboard.entryFor(userId) }))
     .filter((row): row is { userId: number; data: LeaderboardEntry } => row.data !== null),
 );
 

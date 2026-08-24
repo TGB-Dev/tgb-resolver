@@ -1,13 +1,12 @@
 import { css } from "@styled-system/css";
 import { defineForm, FieldDataType, ValidationRuleKind } from "@tgb-form/core";
-import { h, onUnmounted, ref, watch } from "vue";
+import { h } from "vue";
 
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { MotionDiv } from "@/lib/motion-factories";
-import { API_BASE_URL } from "@/lib/runtime-config";
-import { getPreloadedAsset } from "@/utils/preload-assets";
 
 import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
+import { useAssetUrl } from "../base/use-asset-url";
 import { sharedValidatorRegistry } from "../init";
 
 export interface ImageExtensionPayload extends Record<string, unknown> {
@@ -20,40 +19,6 @@ const imageClasses: Record<NonNullable<ImageExtensionPayload["fit"]>, string> = 
   contain: css({ w: "full", h: "full", objectFit: "contain" }),
   fill: css({ w: "full", h: "full", objectFit: "fill" }),
 };
-
-function useAssetUrl(getAssetId: () => string) {
-  const url = ref<string | null>(null);
-  const hasError = ref(false);
-  let objectUrl: string | null = null;
-
-  watch(
-    () => [getAssetId(), hasError.value, url.value],
-    () => {
-      hasError.value = false;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        objectUrl = null;
-      }
-      url.value = null;
-      const assetId = getAssetId();
-      if (!assetId) return;
-      const buffer = getPreloadedAsset(assetId);
-      if (buffer) {
-        objectUrl = URL.createObjectURL(new Blob([buffer]));
-        url.value = objectUrl;
-        return;
-      }
-      url.value = `${API_BASE_URL}/assets/${assetId}`;
-    },
-    { immediate: true },
-  );
-
-  onUnmounted(() => {
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-  });
-
-  return { url, hasError };
-}
 
 const transition = { duration: 0.2, ease: TgbResolverEasings.swiftOut };
 
@@ -112,12 +77,12 @@ export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = 
     props: { payload: { type: Object, required: true } },
     setup: (props) => {
       const getAssetId = () => (props.payload as ImageExtensionPayload)?.assetId ?? "";
-      const { url, hasError } = useAssetUrl(getAssetId);
+      const urlState = useAssetUrl(getAssetId);
       return () => {
         const payload = props.payload as ImageExtensionPayload;
         const assetId = payload?.assetId ?? "";
         const fit = payload?.fit ?? "cover";
-        if (!assetId || hasError.value) {
+        if (!assetId || urlState.hasError.value) {
           return h(
             MotionDiv,
             {
@@ -136,7 +101,7 @@ export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = 
             ],
           );
         }
-        if (!url.value) return null;
+        if (!urlState.url.value) return null;
         return h(
           MotionDiv,
           {
@@ -148,9 +113,9 @@ export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = 
           },
           [
             h("img", {
-              src: url.value,
+              src: urlState.url.value,
               alt: `asset ${assetId}`,
-              onError: () => (hasError.value = true),
+              onError: () => urlState.markError(),
               class: imageClasses[fit],
             }),
           ],
