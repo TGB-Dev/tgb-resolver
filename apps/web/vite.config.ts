@@ -1,56 +1,40 @@
-import reactScan from "@react-scan/vite-plugin-react-scan";
-import babel from "@rolldown/plugin-babel";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import viteReact from "@vitejs/plugin-react";
+import { devtools } from "@tanstack/devtools-vite";
+import vue from "@vitejs/plugin-vue";
+import vueJsx from "@vitejs/plugin-vue-jsx";
 import { defineConfig } from "vite";
+import vueDevTools from "vite-plugin-vue-devtools";
+import vueRouter from "vue-router/vite";
 
 import { resolve } from "node:path";
+import { fileURLToPath, URL } from "node:url";
 
-const config = defineConfig({
+// https://vite.dev/config/
+export default defineConfig({
   preview: {
     host: "127.0.0.1",
     port: 3000,
   },
-  resolve: {
-    alias: {
-      "@": resolve(import.meta.dirname, "./src"),
-    },
-  },
   server: {
     host: "127.0.0.1",
     port: 3000,
+    watch: {
+      ignored: ["**/playwright-report/**", "**/test-results/**", "**/e2e/**"],
+    },
   },
   envDir: resolve(import.meta.dirname, "../.."),
-  plugins: [
-    tanstackRouter({ target: "react", autoCodeSplitting: true }),
-    viteReact(),
-    babel({
-      plugins: ["module:@preact/signals-react-transform"],
-    }),
-    reactScan(),
-  ],
+  plugins: [devtools(), vueRouter(), vue(), vueJsx(), vueDevTools()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@styled-system": fileURLToPath(new URL("./styled-system", import.meta.url)),
+    },
+  },
   build: {
-    cssMinify: "lightningcss",
     rolldownOptions: {
       output: {
         strictExecutionOrder: true,
         codeSplitting: {
           groups: [
-            {
-              name: "vendor-chakra",
-              test: /node_modules\/@chakra-ui/,
-              priority: 100,
-            },
-            {
-              name: "vendor-react-core",
-              test: /node_modules\/(react|react-dom|react-compiler-runtime)/,
-              priority: 90,
-            },
-            {
-              name: "vendor-tanstack",
-              test: /node_modules\/@tanstack\/(react-router|react-start|router-core)/,
-              priority: 80,
-            },
             {
               name: (id: string) => {
                 // Fix path separators for Windows compatibility
@@ -78,5 +62,3 @@ const config = defineConfig({
     },
   },
 });
-
-export default config;

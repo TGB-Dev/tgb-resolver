@@ -1,5 +1,5 @@
-import { useSignal } from "@preact/signals-react";
-import { useEffect, useRef } from "react";
+import { useEventListener } from "@vueuse/core";
+import { type MaybeRefOrGetter, ref, toValue } from "vue";
 
 export interface Rect {
   left: number;
@@ -9,10 +9,10 @@ export interface Rect {
 }
 
 interface ContainerHandlers {
-  onPointerDown: (e: React.PointerEvent) => void;
-  onPointerMove: (e: React.PointerEvent) => void;
-  onPointerUp: (e: React.PointerEvent) => void;
-  onClickCapture: (e: React.MouseEvent) => void;
+  onPointerDown: (e: PointerEvent) => void;
+  onPointerMove: (e: PointerEvent) => void;
+  onPointerUp: (e: PointerEvent) => void;
+  onClickCapture: (e: MouseEvent) => void;
 }
 
 interface HitEntry {
@@ -21,18 +21,18 @@ interface HitEntry {
 }
 
 export function useRubberBandSelect(
-  containerRef: React.RefObject<HTMLElement | null>,
+  containerRef: MaybeRefOrGetter<HTMLElement | null>,
   onSelect: (entryIds: string[], mod: boolean) => void,
 ) {
-  const selectionRect = useSignal<Rect | null>(null);
-  const isDragging = useRef(false);
-  const dragEndTime = useRef(0);
-  const startPoint = useRef({ x: 0, y: 0 });
-  const currentPoint = useRef({ x: 0, y: 0 });
-  const modKey = useRef(false);
+  const selectionRect = ref<Rect | null>(null);
+  const isDragging = ref(false);
+  const dragEndTime = ref(0);
+  const startPoint = ref({ x: 0, y: 0 });
+  const currentPoint = ref({ x: 0, y: 0 });
+  const modKey = ref(false);
 
   function getEntryElements(): HitEntry[] {
-    const container = containerRef.current;
+    const container = toValue(containerRef);
     if (!container) return [];
     const entries: HitEntry[] = [];
     for (const el of container.querySelectorAll<HTMLElement>("[data-entry-id]")) {
@@ -60,16 +60,16 @@ export function useRubberBandSelect(
     return { left: x, top: y, width: w, height: h };
   }
 
-  function handlePointerDown(e: React.PointerEvent) {
+  function handlePointerDown(e: PointerEvent) {
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
     if (target.closest("[data-entry-id]")) return;
     if (target.closest("[data-context-menu-backdrop]")) return;
 
-    isDragging.current = true;
-    modKey.current = e.metaKey || e.ctrlKey;
-    startPoint.current = { x: e.clientX, y: e.clientY };
-    currentPoint.current = { x: e.clientX, y: e.clientY };
+    isDragging.value = true;
+    modKey.value = e.metaKey || e.ctrlKey;
+    startPoint.value = { x: e.clientX, y: e.clientY };
+    currentPoint.value = { x: e.clientX, y: e.clientY };
     selectionRect.value = null;
 
     try {
@@ -79,25 +79,25 @@ export function useRubberBandSelect(
     }
   }
 
-  function handlePointerMove(e: React.PointerEvent) {
-    if (!isDragging.current) return;
-    currentPoint.current = { x: e.clientX, y: e.clientY };
-    const rect = computeRect(startPoint.current, currentPoint.current);
+  function handlePointerMove(e: PointerEvent) {
+    if (!isDragging.value) return;
+    currentPoint.value = { x: e.clientX, y: e.clientY };
+    const rect = computeRect(startPoint.value, currentPoint.value);
     selectionRect.value = rect;
 
     if (rect) {
       const entries = getEntryElements();
       const selected = entries.filter((entry) => hitTest(rect, entry.el)).map((entry) => entry.id);
-      onSelect(selected, modKey.current);
+      onSelect(selected, modKey.value);
     } else {
-      onSelect([], modKey.current);
+      onSelect([], modKey.value);
     }
   }
 
-  function handlePointerUp(e: React.PointerEvent) {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    dragEndTime.current = Date.now();
+  function handlePointerUp(e: PointerEvent) {
+    if (!isDragging.value) return;
+    isDragging.value = false;
+    dragEndTime.value = Date.now();
 
     try {
       if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
@@ -107,33 +107,27 @@ export function useRubberBandSelect(
       // ignore
     }
 
-    const rect = computeRect(startPoint.current, currentPoint.current);
+    const rect = computeRect(startPoint.value, currentPoint.value);
     selectionRect.value = null;
 
     if (rect) {
       const entries = getEntryElements();
       const selected = entries.filter((entry) => hitTest(rect, entry.el)).map((entry) => entry.id);
-      onSelect(selected, modKey.current);
+      onSelect(selected, modKey.value);
     }
   }
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && isDragging.current) {
-        isDragging.current = false;
-        selectionRect.value = null;
-      }
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape" && isDragging.value) {
+      isDragging.value = false;
+      selectionRect.value = null;
     }
+  }
 
-    container.addEventListener("keydown", onKeyDown);
-    return () => container.removeEventListener("keydown", onKeyDown);
-  }, [containerRef, selectionRect]);
+  useEventListener(window, "keydown", onKeyDown);
 
-  function handleClickCapture(e: React.MouseEvent) {
-    if (Date.now() - dragEndTime.current < 100) {
+  function handleClickCapture(e: MouseEvent) {
+    if (Date.now() - dragEndTime.value < 100) {
       e.stopPropagation();
       e.preventDefault();
     }

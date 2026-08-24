@@ -151,71 +151,6 @@ function fireStars(): ConfettiCleanup {
   };
 }
 
-function fireContinuous(): ConfettiCleanup {
-  const end = Date.now() + DURATION_MS;
-  const colors = ["#bb0000", "#ffffff"];
-  let frameId = 0;
-
-  const frame = () => {
-    confetti({
-      particleCount: 2,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0 },
-      colors,
-    });
-    confetti({
-      particleCount: 2,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1 },
-      colors,
-    });
-
-    if (Date.now() < end) {
-      frameId = requestAnimationFrame(frame);
-    }
-  };
-
-  frame();
-
-  return () => cancelAnimationFrame(frameId);
-}
-
-function fireEmoji(): ConfettiCleanup {
-  const scalar = 2;
-  const unicorn = confetti.shapeFromText({ text: "🦄", scalar });
-
-  const defaults = {
-    spread: 360,
-    ticks: 60,
-    gravity: 0,
-    decay: 0.96,
-    startVelocity: 20,
-    shapes: [unicorn] as confetti.Shape[],
-    scalar,
-  };
-
-  const shoot = () => {
-    confetti({ ...defaults, particleCount: 30 });
-    confetti({ ...defaults, particleCount: 5, flat: true });
-    confetti({
-      ...defaults,
-      particleCount: 15,
-      scalar: scalar / 2,
-      shapes: ["circle"],
-    });
-  };
-
-  const timeouts = [0, 100, 200].map((delay) => setTimeout(shoot, delay));
-
-  return () => {
-    timeouts.forEach((t) => {
-      clearTimeout(t);
-    });
-  };
-}
-
 export const confettiPresets: readonly ConfettiPreset[] = [
   {
     id: "cannon",
@@ -253,15 +188,14 @@ export const confettiPresets: readonly ConfettiPreset[] = [
     description: "Gentle, falling snowflakes across the screen.",
     fire: fireSnow,
   },
-  {
-    id: "continuous",
-    label: "Continuous Cannons",
-    description: "Two confetti cannons from both sides for 15s.",
-    fire: fireContinuous,
-  },
-  { id: "emoji", label: "Emoji", description: "A burst of unicorn emoji shapes.", fire: fireEmoji },
 ];
 
 export function presetById(id: string): ConfettiPreset | undefined {
   return confettiPresets.find((preset) => preset.id === id);
+}
+
+export function fireConfetti(presetId: string): ConfettiCleanup {
+  const preset = presetById(presetId) ?? presetById("cannon");
+  if (!preset) return () => undefined;
+  return preset.fire();
 }

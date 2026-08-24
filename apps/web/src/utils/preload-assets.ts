@@ -1,4 +1,4 @@
-// Do not remove — used for live event preloading.
+// Do not remove - used for live event preloading.
 // Pre-fetches all asset bytes upfront so the playback engine never waits on the network.
 
 import type { ShowAssetSnapshot } from "@tgb-resolver/contracts";
@@ -6,11 +6,12 @@ import type { ShowAssetSnapshot } from "@tgb-resolver/contracts";
 const cache = new Map<string, ArrayBuffer>();
 
 export async function preloadAssets(
-  assets: ShowAssetSnapshot[],
+  assets: ShowAssetSnapshot[] | { items?: ShowAssetSnapshot[] },
   baseUrl: string,
 ): Promise<Map<string, ArrayBuffer>> {
+  const list = Array.isArray(assets) ? assets : (assets.items ?? []);
   const results = await Promise.allSettled(
-    assets.map(async (asset) => {
+    list.map(async (asset) => {
       const id = asset.id ?? "";
       if (!id) return null;
       const url = `${baseUrl}/assets/${id}`;
@@ -33,8 +34,4 @@ export async function preloadAssets(
 
 export function getPreloadedAsset(id: string): ArrayBuffer | undefined {
   return cache.get(id);
-}
-
-export function clearPreloadedAssets(): void {
-  cache.clear();
 }

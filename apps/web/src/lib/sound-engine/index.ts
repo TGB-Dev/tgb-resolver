@@ -9,8 +9,8 @@ const STOP_FADE_MS = 500;
  */
 const SOUND_SEED = 0x5eed;
 
-export const BACKGROUND_MUSIC_FILES = ["BG_1.mp3", "BG_2.mp3", "BG_3.mp3", "BG_4.mp3"] as const;
-export const SFX_FILES = [
+const BACKGROUND_MUSIC_FILES = ["BG_1.mp3", "BG_2.mp3", "BG_3.mp3", "BG_4.mp3"] as const;
+const SFX_FILES = [
   "SFX_1.mp3",
   "SFX_2.mp3",
   "SFX_3.mp3",

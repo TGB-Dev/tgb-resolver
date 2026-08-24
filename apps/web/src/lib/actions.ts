@@ -1,44 +1,44 @@
-import type { RegisterableHotkey } from "@tanstack/react-hotkeys";
-import { useHotkeys } from "@tanstack/react-hotkeys";
-import { useCallback, useRef } from "react";
+import type { RegisterableHotkey } from "@tanstack/vue-hotkeys";
+import { useHotkey } from "@tanstack/vue-hotkeys";
+import { type ComputedRef, computed, type Ref, ref, toRef } from "vue";
 
 export interface UseActionOptions {
   handler: () => void;
-  enabled: boolean;
+  enabled: boolean | Ref<boolean> | (() => boolean);
   hotkeys?: RegisterableHotkey[];
 }
 
 export interface Action {
   readonly execute: () => void;
-  readonly enabled: boolean;
-  readonly buttonProps: {
+  readonly enabled: ComputedRef<boolean>;
+  readonly buttonProps: ComputedRef<{
     readonly onClick: () => void;
     readonly disabled: boolean;
-  };
+  }>;
 }
 
 export function useAction({ handler, enabled, hotkeys = [] }: UseActionOptions): Action {
-  const handlerRef = useRef(handler);
-  handlerRef.current = handler;
-  const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  const handlerRef = ref(handler);
+  handlerRef.value = handler;
+  const enabledRef = toRef(enabled);
 
-  const execute = useCallback(() => {
-    if (enabledRef.current) {
-      handlerRef.current();
+  const effectiveEnabled = computed(() => enabledRef.value);
+
+  const execute = () => {
+    if (effectiveEnabled.value) {
+      handlerRef.value();
     }
-  }, []);
+  };
 
-  useHotkeys(
-    hotkeys.map((key) => ({ hotkey: key, callback: execute })),
-    { enabled },
-  );
+  for (const hotkey of hotkeys) {
+    useHotkey(hotkey, execute, { enabled: effectiveEnabled });
+  }
+
+  const buttonProps = computed(() => ({ onClick: execute, disabled: !effectiveEnabled.value }));
 
   return {
     execute,
-    enabled,
-    get buttonProps() {
-      return { onClick: execute, disabled: !enabled };
-    },
+    enabled: effectiveEnabled,
+    buttonProps,
   };
 }

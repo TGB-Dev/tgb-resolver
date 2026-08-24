@@ -1,15 +1,13 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { createTimelineReorderState } from "./timeline-reorder-state";
 
-describe("createTimelineReorderState", () => {
-  test("keeps drag ordering local until it is consumed", () => {
+describe("timeline reorder state", () => {
+  it("stores one pending order and consumes it once", () => {
     const state = createTimelineReorderState();
-
-    state.set([2, 1]);
-
-    expect(state.rows.value).toEqual([2, 1]);
-    expect(state.take()).toEqual([2, 1]);
-    expect(state.rows.value).toBeNull();
+    expect(state.take()).toBeNull();
+    state.set([3, 1, 2]);
+    expect(state.take()?.join(",")).toBe("3,1,2");
+    expect(state.take()).toBeNull();
   });
 });

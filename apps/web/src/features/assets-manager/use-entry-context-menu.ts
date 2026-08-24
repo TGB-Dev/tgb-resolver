@@ -1,25 +1,35 @@
-import { assetsManagerModel } from "./assets-manager-model";
-import { useContextMenu } from "./use-context-menu";
+import { useAssetsManagerStore } from "./assets-manager-store";
+import { type ContextMenuState, type ContextMenuTarget, useContextMenu } from "./use-context-menu";
 
-interface EntryContextTarget {
-  id: string;
-  name: string;
-  isDirectory: boolean;
-}
+export type { ContextMenuState, ContextMenuTarget };
 
 export function useEntryContextMenu() {
   const contextMenu = useContextMenu();
+  const assetsStore = useAssetsManagerStore();
 
-  function openForEntry(e: React.MouseEvent, target: EntryContextTarget) {
-    if (!assetsManagerModel.selectedIds.value.has(target.id)) {
-      assetsManagerModel.selectedIds.value = new Set([target.id]);
+  function openForEntry(
+    e: {
+      preventDefault: () => void;
+      stopPropagation: () => void;
+      clientX: number;
+      clientY: number;
+    },
+    target: ContextMenuTarget,
+  ) {
+    if (!assetsStore.selectedIds.has(target.id)) {
+      assetsStore.selectedIds = new Set([target.id]);
     }
     contextMenu.open(e, target);
   }
 
-  function openForContainer(e: React.MouseEvent) {
-    const targetFolderId = assetsManagerModel.selectedEntryId.value;
-    assetsManagerModel.clearSelection();
+  function openForContainer(e: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+    clientX: number;
+    clientY: number;
+  }) {
+    const targetFolderId = assetsStore.selectedEntryId;
+    assetsStore.clearSelection();
     contextMenu.open(e, null, targetFolderId);
   }
 

@@ -1,4 +1,6 @@
-import type { ScrollerExtensionPayload } from "./index";
+export type ScrollerExtensionPayload = Record<string, unknown> & {
+  duration?: number;
+};
 
 /**
  * Total wall-clock duration of the scroller animation: a fixed 1-second ease
