@@ -85,7 +85,17 @@ const verdictClass = computed(() =>
 </script>
 
 <template>
-  <td :class="css({ paddingInline: '0.25rem', borderX: 1, borderColor: 'border' })">
+  <td
+    :class="
+      css({
+        paddingInline: 1,
+        // Matching the other td's borderBottom
+        borderBottomWidth: 1,
+        borderBottomStyle: 'solid',
+        borderBottomColor: 'border',
+      })
+    "
+  >
     <div :class="classes.root">
       <div :class="classes.score" :style="{ lineHeight: '1.3', whiteSpaceCollapse: 'preserve' }">
         {{ score }}
