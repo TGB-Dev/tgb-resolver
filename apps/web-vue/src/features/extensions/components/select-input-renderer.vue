@@ -1,26 +1,10 @@
 <script setup lang="ts">
-import { Field, useListCollection } from "@ark-ui/vue";
-import { Check, ChevronDown } from "@lucide/vue";
+import { createListCollection, Field, Select } from "@ark-ui/vue";
+import { Check, ChevronDown, X } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
-import { field as fieldRecipe } from "@styled-system/recipes";
+import { field as fieldRecipe, select as selectRecipe } from "@styled-system/recipes";
 import type { BaseVueRendererProps } from "@tgb-form/vue";
 import { computed } from "vue";
-
-import {
-  SelectContent,
-  SelectControl,
-  SelectHiddenSelect,
-  SelectIndicator,
-  SelectIndicatorGroup,
-  SelectItem,
-  SelectItemIndicator,
-  SelectItemText,
-  SelectList,
-  SelectPositioner,
-  SelectRoot,
-  SelectTrigger,
-  SelectValueText,
-} from "@/features/shared/ui/select";
 
 import { fieldErrorTextCss, validationErrorMessage } from "./field-error";
 
@@ -32,6 +16,7 @@ interface SelectOption {
 const props = defineProps<BaseVueRendererProps>();
 
 const fieldClasses = fieldRecipe();
+const selectClasses = selectRecipe();
 
 const options = computed<SelectOption[]>(() =>
   Array.isArray(props.props?.options)
@@ -45,12 +30,13 @@ const options = computed<SelectOption[]>(() =>
     : [],
 );
 
-const { collection } = useListCollection({ initialItems: options.value });
+// Rebuilt whenever options change so the machine always sees current items.
+const collection = computed(() => createListCollection({ items: options.value }));
 
-const value = computed(() =>
-  typeof props.field.state.value === "string" ? props.field.state.value : "",
-);
-const selectedValues = computed(() => (value.value ? [value.value] : []));
+const selectedValues = computed(() => {
+  const value = props.field.state.value;
+  return typeof value === "string" && value ? [value] : [];
+});
 
 function handleValueChange(details: { value: string[] }) {
   props.field.handleChange(details.value[0] ?? "");
@@ -60,42 +46,52 @@ function handleValueChange(details: { value: string[] }) {
 <template>
   <Field.Root :class="cx(fieldClasses.root, css({ w: 'full', gap: '1.5' }))">
     <Field.Label v-if="label" :class="fieldClasses.label">{{ label }}</Field.Label>
-    <SelectRoot
+    <Select.Root
       :collection="collection"
       :model-value="selectedValues"
+      :positioning="{ sameWidth: true }"
+      :class="cx(selectClasses.root, css({ w: 'full' }))"
       @value-change="handleValueChange"
     >
-      <SelectHiddenSelect />
-      <SelectControl>
-        <SelectTrigger>
-          <SelectValueText placeholder="Select an option" />
-        </SelectTrigger>
-        <SelectIndicatorGroup>
-          <SelectIndicator>
+      <Select.HiddenSelect />
+      <Select.Control :class="selectClasses.control">
+        <Select.Trigger :class="selectClasses.trigger">
+          <Select.ValueText placeholder="Select an option" :class="selectClasses.valueText" />
+        </Select.Trigger>
+        <div :class="selectClasses.indicatorGroup">
+          <Select.ClearTrigger :class="selectClasses.clearTrigger">
+            <X :size="16" aria-hidden="true" />
+          </Select.ClearTrigger>
+          <Select.Indicator :class="selectClasses.indicator">
             <ChevronDown aria-hidden="true" />
-          </SelectIndicator>
-        </SelectIndicatorGroup>
-      </SelectControl>
-      <SelectPositioner>
-        <SelectContent>
-          <SelectList>
-            <SelectItem
-              v-for="option in collection.items"
-              :key="option.value"
-              :item="option"
-            >
-              <SelectItemText>{{ option.label }}</SelectItemText>
-              <SelectItemIndicator>
-                <Check aria-hidden="true" />
-              </SelectItemIndicator>
-            </SelectItem>
-          </SelectList>
-        </SelectContent>
-      </SelectPositioner>
-    </SelectRoot>
+          </Select.Indicator>
+        </div>
+      </Select.Control>
+      <Teleport to="body">
+        <Select.Positioner :class="selectClasses.positioner">
+          <Select.Content :class="selectClasses.content">
+            <Select.List :class="selectClasses.list">
+              <Select.Item
+                v-for="option in collection.items"
+                :key="option.value"
+                :item="option"
+                :class="selectClasses.item"
+              >
+                <Select.ItemText :class="selectClasses.itemText">{{
+                  option.label
+                }}</Select.ItemText>
+                <Select.ItemIndicator :class="selectClasses.itemIndicator">
+                  <Check aria-hidden="true" />
+                </Select.ItemIndicator>
+              </Select.Item>
+            </Select.List>
+          </Select.Content>
+        </Select.Positioner>
+      </Teleport>
+    </Select.Root>
     <p v-if="description" :class="fieldClasses.helperText">{{ description }}</p>
     <p v-if="errors.length > 0" :class="cx(fieldClasses.errorText, fieldErrorTextCss)">
-      {{ errors.map(validationErrorMessage).join(', ') }}
+      {{ errors.map(validationErrorMessage).join(", ") }}
     </p>
   </Field.Root>
 </template>
