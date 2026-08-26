@@ -44,7 +44,7 @@ cp .env.example .env    # VITE_API_URL defaults to http://localhost:5001
 pnpm dev
 ```
 
-Runs the server (port 5001), canonical Vue frontend (port 5173), and legacy React frontend (port 3000) in parallel.
+Runs the server (port 5001) and the Vue frontend (port 3000) in parallel.
 
 | Route      | UI       |
 | ---------- | -------- |
@@ -52,7 +52,7 @@ Runs the server (port 5001), canonical Vue frontend (port 5173), and legacy Reac
 | `/control` | Control  |
 
 Server solution: `apps/server/TGB.Resolver.Server.slnx` (.slnx format).
-Canonical frontend: `apps/web-vue/`. Legacy React port source: `apps/web/`.
+Frontend: `apps/web/` — the Vue 3 SPA (package `@tgb-resolver/web`, dev port 3000).
 
 ## Build & Test
 
@@ -81,14 +81,13 @@ Pre-commit runs: `sync:check || sync` → `test` → `biome check --write --stag
 ```text
 apps/
   server/     .NET 10 solution (server + parser + tests)
-  web-vue/    Canonical Vue 3 SPA frontend (Pinia, Panda CSS, Ark UI)
+  web/        Canonical Vue 3 SPA frontend (Pinia, Panda CSS, Ark UI, vue-router)
+              package @tgb-resolver/web, dev port 3000
               src/features/   — vertical feature slices
-  web/        Legacy TanStack Router React reference frontend
-              src/features/   — 5 feature dirs retained for parity comparison
-                control/        — playback, timeline, transport, cue tab models
-                leaderboard/    — leaderboard grid/table models
-                assets-manager/ — folder/file asset browser model
-                shared/         — cross-feature models (show, realtime, confirm, fullscreen)
+                control/        — playback, timeline, transport, cue tab stores
+                leaderboard/    — leaderboard grid/table stores
+                assets-manager/ — folder/file asset browser store
+                shared/         — cross-feature stores (show, realtime, confirm, fullscreen)
                 extensions/     — extension registry, config UI, server patch API
 packages/
   contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas

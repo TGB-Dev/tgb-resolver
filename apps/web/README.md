@@ -1,7 +1,7 @@
-# web-vue — canonical frontend
+# web — canonical Vue frontend
 
-The canonical Vue 3 SPA for tgb-resolver. The legacy React app remains in `apps/web` as the
-porting reference until migration parity is complete.
+The Vue 3 SPA for tgb-resolver. This is the canonical (and only) frontend; there is no
+separate React app.
 
 Stack: Vue 3.5, Pinia, vue-router, TanStack Vue Query, Panda CSS with the Chakra preset, Ark UI,
 `motion-v`, and the vanilla `motion` core package.
@@ -64,4 +64,4 @@ pnpm test:e2e
 
 Feature code is vertically sliced under `src/features/`; shared state uses Pinia setup stores.
 Use generated styled-system JSX components and recipes for layout and component styling. See the
-root `AGENTS.md` for the complete React-to-Vue porting rules.
+root `AGENTS.md` for workspace-wide conventions.

@@ -28,22 +28,21 @@ a relative timeline with a main panel showing the current, next, and prior cues.
   - `TGB.Resolver.Server`: API + SignalR host
   - `TGB.Resolver.IcpcXmlParser`: server-side ICPC XML parser
   - `TGB.Resolver.Server.Tests`, `TGB.Resolver.IcpcXmlParser.Tests`
-- `apps/web-vue/`: canonical Vue 3 SPA — audience and control UIs
-- `apps/web/`: legacy React reference implementation retained during migration
+- `apps/web/`: canonical Vue 3 SPA (package `@tgb-resolver/web`) — audience and control UIs
 - `packages/contracts/`: OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
 - `packages/realtime/`: client-side clock sync, timeline, and domain helpers
 
 ### Client-side architecture
 
-The canonical frontend (`apps/web-vue/`) organizes state and UI into feature-sliced modules under `src/features/`:
+The canonical frontend (`apps/web/`) organizes state and UI into feature-sliced modules under `src/features/`:
 
-- **`control/`** — playback model, timeline cursor, multi-panel floating panel model + types (handle-based). All control-domain state.
-- **`leaderboard/`** — leaderboard state model.
-- **`assets-manager/`** — folder/file browser model (already feature-local).
-- **`shared/`** — cross-cutting models: show state, realtime connection, confirm dialogs, fullscreen toggle.
+- **`control/`** — playback store, timeline cursor, multi-panel floating panel store + types (handle-based). All control-domain state.
+- **`leaderboard/`** — leaderboard state store.
+- **`assets-manager/`** — folder/file browser store (already feature-local).
+- **`shared/`** — cross-cutting stores: show state, realtime connection, confirm dialogs, fullscreen toggle.
 - **`extensions/`** — extension base types, static registry (`extensionRegistry`), config UI, and the `patchExtensionPayload` server-patch API.
 
-Vue feature state uses Pinia setup stores and Vue's fine-grained `ref`/`computed` reactivity. The legacy React implementation uses `@preact/signals-react`; it remains a porting reference only. Shared Vue state is imported from Pinia stores (for example `@/features/control/playback-store` and `@/stores/show-store`).
+Vue feature state uses Pinia setup stores and Vue's fine-grained `ref`/`computed` reactivity. Shared Vue state is imported from Pinia stores (for example `@/features/control/playback-store` and `@/stores/show-store`).
 
 ## Engineering conventions
 
@@ -66,21 +65,19 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 
 ### Frontend rendering performance
 
-`playbackModel.state` is the single object signal holding playback state; `currentEventId`,
-`currentCueId`, and `status` are derived computed signals, and `currentCueId`
+`usePlaybackStore().state` is the single `ref` holding playback state; `currentEventId`,
+`currentCueId`, and `status` are derived `computed`s, and `currentCueId`
 (identical to `currentEventId` — the `currentResolveEventId` rule was removed to fix a
 double-highlight bug) is what the timeline highlight, scroll
-target, and cue tab all read. Any `state.value` read subscribes to the whole
+target, and cue tab all read. Reading `state.value` subscribes to the whole
 object, so it is the dominant re-render source. Conventions:
 
-- Render display-only signals directly in JSX (`<>{signal}</>`) to patch the DOM
-  without React reconciliation.
-- Drive hot-path animations with `effect()` + imperative `animate()` (WAAPI),
-  not declarative `motion/react` props bound to fast-changing signals.
-- Keep hot-signal reads in small leaf components so large subtrees (timeline
+- Keep hot-state reads in small leaf components so large subtrees (timeline
   rows, transport controls, cue tab) do not re-render on playback ticks.
-- `batch()` correlated writes; `peek()` for non-subscribing reads; wrap
-  non-urgent react-query invalidations in `startTransition`.
+- Drive hot-path animations with `motion-v`/vanilla `motion` + imperative WAAPI
+  `animate()`, not declarative props bound to fast-changing state.
+- Use Vue `computed` for derived values; batch correlated writes and keep
+  store mutations granular to limit re-render scope.
 
 ### Tooling
 
@@ -90,7 +87,7 @@ object, so it is the dominant re-render source. Conventions:
   time (`openapi-ts` → `tsdown`). The strongly-typed SignalR hub client in
   `packages/realtime/src/gen` is generated from the server's `IShowHubClient`
   interface via the `dotnet-tsrts` tool — the `connection.on(...)` handlers in
-  `realtime.worker.ts` are written by hand on top of it.
+  `apps/web/src/lib/realtime.worker.ts` are written by hand on top of it.
 - Biome (not ESLint/Prettier) for lint + format. syncpack for dependency consistency.
 - `dotnet-outdated` (local tool in `apps/server/dotnet-tools.json`) lints/upgrades NuGet packages (
   `nuget:outdated` / `nuget:update`). `knip` (config `knip.json`) lints the TS packages for unused

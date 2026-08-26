@@ -11,7 +11,7 @@ Before editing files for a substantial task:
 
 ## Design tokens (Panda CSS)
 
-Tokens live in `apps/web-vue/panda.config.ts` under `theme.extend` and are consumed through
+Tokens live in `apps/web/panda.config.ts` under `theme.extend` and are consumed through
 generated CSS variables. **Never hardcode cubic-bezier curves, keyframes, durations, or colors** —
 add a token and reference it.
 

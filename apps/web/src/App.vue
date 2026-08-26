@@ -10,6 +10,7 @@ import AppDevtools from "@/features/shared/app/app-devtools.vue";
 import ErrorPage from "@/features/shared/app/error-page.vue";
 import { hotkeysDefaultOptions } from "@/features/shared/app/providers";
 import Toaster from "@/features/shared/ui/toaster.vue";
+import ShortcutsRoot from "@/features/shortcuts/shortcuts-root.vue";
 import { useColorModeStore } from "@/stores/color-mode-store";
 
 useColorModeStore(); // applies initial theme class (FOUC-safe, matches index.html bootstrap)
@@ -35,6 +36,7 @@ useLiveWakeLock();
       <Toaster />
       <AppDevtools />
       <BigRefetchOverlay />
+      <ShortcutsRoot />
     </div>
   </HotkeysProvider>
 </template>
