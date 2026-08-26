@@ -19,14 +19,14 @@
     "typecheck": "pnpm run check-types"
   },
   "dependencies": {
-    "@tanstack/vue-query": "^5.102.0",
+    "@tanstack/vue-query": "^5.102.3",
     "ofetch": "^1.5.1",
     "valibot": "^1.4.2"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
     "@tgb-resolver/server": "workspace:*",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.3.0",
     "bumpp": "^12.2.1",
     "tsdown": "^0.22.14",
     "typescript": "6.0.3",
