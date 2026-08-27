@@ -1,20 +1,19 @@
 import {
-  type Hotkey,
   type HotkeySequence,
   useHotkeyRecorder,
   useHotkeySequenceRecorder,
 } from "@tanstack/vue-hotkeys";
 
 /**
- * Records a single-chord binding. `onCommit` fires with the captured hotkey
- * (or `onClear` when Backspace/Delete is pressed with no steps). While
- * recording, `ignoreInputs` is disabled so the capture works even if focus is
- * in a text field.
+ * Records a single-chord binding. The captured chord lives in `recordedHotkey`;
+ * the caller commits it (e.g. on stop) by reading that value. `ignoreInputs` is
+ * disabled so the capture works even when focus is in a text field. `onRecord`
+ * is required by the API but is a no-op here (the row handles the commit).
  */
-export function useSingleRecorder(onCommit: (hotkey: Hotkey) => void) {
+export function useSingleRecorder() {
   return useHotkeyRecorder({
     ignoreInputs: false,
-    onRecord: (hotkey) => onCommit(hotkey),
+    onRecord: () => {},
   });
 }
 

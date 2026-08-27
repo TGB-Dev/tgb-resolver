@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { Keyboard, RotateCcw } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
-import { button, kbd } from "@styled-system/recipes";
-import { computed } from "vue";
+import { button, iconButton } from "@styled-system/recipes";
+import type { RegisterableHotkey } from "@tanstack/vue-hotkeys";
+import { computed, watch } from "vue";
 
-import type { CommandId } from "./commands";
 import { commandsById } from "./commands";
-import { formatHotkeyDisplay } from "./display";
 import KbdFromHotkeys from "./kbd-from-hotkeys.vue";
 import { useShortcutsStore } from "./shortcuts-store";
 import { CommandBindingKind, type CommandDefinition } from "./types";
@@ -14,17 +13,15 @@ import { useSequenceRecorder, useSingleRecorder } from "./use-shortcut-recorder"
 
 const props = defineProps<{ command: CommandDefinition }>();
 
-const id = props.command.id as CommandId;
+const id = props.command.id;
 const store = useShortcutsStore();
 
-const isSequence = props.command.defaultBinding.kind === CommandBindingKind.Sequence;
+const isSequence = computed(() => props.command.defaultBinding.kind === CommandBindingKind.Sequence);
 
-const single = !isSequence
-  ? useSingleRecorder((hotkey) =>
-      store.setBinding(id, { kind: CommandBindingKind.Hotkey, hotkey }),
-    )
-  : null;
-const sequence = isSequence
+// The single recorder only updates `recordedHotkey` live and never fires
+// `onRecord` in this version — the caller commits it on stop (see toggleRecord).
+const single = !isSequence.value ? useSingleRecorder() : null;
+const sequence = isSequence.value
   ? useSequenceRecorder((seq) =>
       store.setBinding(id, { kind: CommandBindingKind.Sequence, sequence: seq }),
     )
@@ -34,15 +31,23 @@ const isRecording = computed(
   () => single?.isRecording.value ?? sequence?.isRecording.value ?? false,
 );
 
-const preview = computed(() => {
-  if (single?.recordedHotkey.value) return formatHotkeyDisplay(single.recordedHotkey.value);
-  return "";
-});
-
 const isCustomized = computed(() => store.isCustomized(id));
 const conflicts = computed(() =>
   store.conflictsFor(id).map((conflictId) => commandsById[conflictId].title),
 );
+
+// Keycaps to render: the live recording preview, or the saved binding.
+const keycaps = computed<RegisterableHotkey[]>(() => {
+  if (isRecording.value) {
+    if (single?.recordedHotkey.value) return [single.recordedHotkey.value];
+    if (sequence?.steps.value.length) return sequence.steps.value;
+    return [];
+  }
+  if (store.isBound(id)) {
+    return isSequence.value ? store.getSequence(id) : [store.getHotkey(id)];
+  }
+  return [];
+});
 
 const row = css({
   display: "grid",
@@ -55,58 +60,77 @@ const row = css({
   _hover: { bg: "bg.muted" },
 });
 
-const title = css({ fontWeight: "medium", fontSize: "sm" });
+const info = css({ display: "flex", alignItems: "center", gap: "2", minW: 0 });
+const group = css({ minW: 0 });
+const titleRow = css({ display: "flex", alignItems: "center", gap: "2" });
+const title = css({ fontWeight: "medium", fontSize: "sm", minW: 0 });
 const description = css({ color: "fg.muted", fontSize: "xs", marginTop: "0.5" });
+const warning = css({ color: "orange.300", fontSize: "xs", marginTop: "1" });
 const actions = css({ display: "flex", alignItems: "center", gap: "2" });
-const warning = css({
-  color: "orange.300",
-  fontSize: "xs",
-  marginTop: "1",
-});
-
-// The global reset forces <kbd> to the mono font, which breaks macOS glyphs
-// (e.g. ⌘). Render keycaps in the body font instead, mirroring the Chakra app.
-const kbdBody = css({ fontFamily: "body" });
-// Spaces the per-step keycap groups for sequence bindings.
 const keysWrap = css({ display: "inline-flex", alignItems: "center", gap: "1" });
+const muted = css({ color: "fg.muted", fontSize: "xs" });
 
 function toggleRecord() {
   if (isRecording.value) {
-    single?.stopRecording();
-    sequence?.stopRecording();
+    if (sequence) {
+      // `onRecord` does not fire on commit in this version, so read the captured
+      // chords directly and commit them ourselves, then reset the recorder.
+      const steps = sequence.steps.value;
+      if (steps.length) {
+        store.setBinding(id, { kind: CommandBindingKind.Sequence, sequence: steps });
+      }
+      sequence.cancelRecording();
+    } else {
+      single?.stopRecording();
+    }
   } else {
     single?.startRecording();
     sequence?.startRecording();
   }
 }
+
+// The single recorder captures a chord then auto-stops without firing `onRecord`,
+// leaving the value in `recordedHotkey`. Commit it as soon as it is captured.
+if (single) {
+  watch(
+    () => single.recordedHotkey.value,
+    (value) => {
+      if (!value) return;
+      store.setBinding(id, { kind: CommandBindingKind.Hotkey, hotkey: value });
+    },
+  );
+}
 </script>
 
 <template>
   <div :class="row">
-    <div :class="css({ minW: 0 })">
-      <div :class="title">{{ command.title }}</div>
-      <div v-if="command.description" :class="description">{{ command.description }}</div>
-      <div v-if="conflicts.length" :class="warning">
-        Conflicts with: {{ conflicts.join(", ") }}
+    <div :class="info">
+      <div :class="group">
+        <div :class="titleRow">
+          <span :class="title">{{ command.title }}</span>
+        </div>
+        <div v-if="command.description" :class="description">{{ command.description }}</div>
+        <div v-if="conflicts.length" :class="warning">
+          Conflicts with: {{ conflicts.join(", ") }}
+        </div>
       </div>
+      <button
+        v-if="isCustomized"
+        type="button"
+        :class="cx(button({ size: 'xs', variant: 'ghost' }), iconButton(), css({ colorPalette: 'red' }))"
+        :aria-label="`Reset ${command.title} to default`"
+        @click="store.resetBinding(id)"
+      >
+        <RotateCcw :size="12" aria-hidden />
+      </button>
     </div>
 
     <div :class="actions">
-
-      <div v-if="!isRecording && store.isBound(id)" :class="keysWrap">
-        <template v-if="isSequence">
-          <KbdFromHotkeys
-            v-for="(step, index) in store.getSequence(id)"
-            :key="index"
-            :hotkey="step"
-          />
-        </template>
-        <KbdFromHotkeys v-else :hotkey="store.getHotkey(id)" />
+      <div v-if="keycaps.length" :class="keysWrap">
+        <KbdFromHotkeys v-for="(hotkey, index) in keycaps" :key="index" :hotkey="hotkey" />
       </div>
-      <kbd v-else-if="isRecording" :class="cx(kbd({ variant: 'outline' }), kbdBody)">
-        {{ preview || "Press keys..." }}
-      </kbd>
-      <kbd v-else :class="cx(kbd({ variant: 'subtle' }), kbdBody)">Unassigned</kbd>
+      <span v-else-if="isRecording" :class="muted">Recording…</span>
+      <span v-else :class="muted">Unassigned</span>
 
       <button
         type="button"
@@ -116,16 +140,6 @@ function toggleRecord() {
       >
         <Keyboard :size="12" aria-hidden />
         {{ isRecording ? "Stop" : "Record new" }}
-      </button>
-
-      <button
-        v-if="isCustomized"
-        type="button"
-        :class="cx(button({ size: 'xs', variant: 'ghost' }), css({ colorPalette: 'red' }))"
-        :aria-label="`Reset ${command.title} to default`"
-        @click="store.resetBinding(id)"
-      >
-        <RotateCcw :size="12" aria-hidden />
       </button>
     </div>
   </div>

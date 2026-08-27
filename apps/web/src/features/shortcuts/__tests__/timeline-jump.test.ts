@@ -1,4 +1,4 @@
-import { HotkeysProvider, useHotkeySequence } from "@tanstack/vue-hotkeys";
+import { HotkeysProvider } from "@tanstack/vue-hotkeys";
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";

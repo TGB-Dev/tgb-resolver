@@ -167,7 +167,10 @@ export const commands: readonly CommandDefinition[] = [
     description: "Reset playback to the first cue",
     scope: CommandScope.Control,
     category: "Playback",
-    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+0" },
+    // This should've been Mod+0 or Mod+Home or something like that. But when being displayed in the shortcut viewer,
+    // which uses sans-serif font, the number 0 is non distinguisable from capitalized letter O.
+    // And Home isn't available on macOS by default.
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+Shift+A" },
     handler: resetPlaybackCommand,
   },
   {

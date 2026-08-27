@@ -19,7 +19,7 @@
     "typecheck": "pnpm run check-types"
   },
   "dependencies": {
-    "@tanstack/vue-query": "^5.102.3",
+    "@tanstack/vue-query": "^5.102.4",
     "ofetch": "^1.5.1",
     "valibot": "^1.4.2"
   },

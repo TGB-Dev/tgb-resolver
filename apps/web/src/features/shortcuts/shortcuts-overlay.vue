@@ -4,7 +4,7 @@ import { X } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { button, dialog, input, kbd } from "@styled-system/recipes";
 import { useEventListener } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 
 import { commands } from "./commands";
 import { detectCurrentPlatform, PLATFORM_LABELS } from "./display";
@@ -14,7 +14,7 @@ import type { CommandDefinition } from "./types";
 
 const store = useShortcutsStore();
 const query = ref("");
-const searchInput = ref<HTMLInputElement | null>(null);
+const searchInput = useTemplateRef("searchInput");
 
 const dialogClasses = dialog({ placement: "center", size: "lg" });
 const content = cx(
@@ -50,27 +50,6 @@ function onOpenEvent() {
 }
 
 useEventListener(window, "tgb:shortcuts:open", onOpenEvent);
-
-// Focus the search field when the overlay opens. Ark's `initialFocusEl` on
-// Dialog.Root handles the normal case; this rAF retry guarantees focus even if
-// the input isn't mounted yet when the dialog activates (no layout/race issues
-// with the close button stealing focus).
-// 
-// This is a weird fix, but it works (for now)
-// 
-// TODO: find a proper fix (maybe mounting speed is too slow?)
-watch(
-  () => store.overlayOpen,
-  (open) => {
-    if (!open) return;
-    const focusInput = (): void => {
-      const el = searchInput.value;
-      if (el) el.focus();
-      else requestAnimationFrame(focusInput);
-    };
-    requestAnimationFrame(focusInput);
-  },
-);
 
 const header = css({
   display: "flex",
