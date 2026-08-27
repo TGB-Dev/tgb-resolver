@@ -12,7 +12,7 @@ useBackgroundMusic(() => true);
 </script>
 
 <template>
-  <div :class="css({ position: 'relative', h: '100vh', overflow: 'hidden' })" data-audience-scroll>
+  <div :class="css({ position: 'relative', h: '100vh', overflow: 'hidden' })">
     <Leaderboard isBigScreen />
     <!-- Overlay to prevent manual interaction to the resolve leaderboard by absorbing all events -->
     <div
