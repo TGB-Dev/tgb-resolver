@@ -95,21 +95,25 @@ const switchClasses = swittch({ size: "md" });
               </Select.Indicator>
             </div>
           </Select.Control>
-          <Select.Positioner :class="selectClasses.positioner">
-            <Select.Content :class="selectClasses.content">
-              <Select.Item
-                v-for="item in collection.items"
-                :key="item.value"
-                :item="item"
-                :class="selectClasses.item"
-              >
-                <Select.ItemText :class="selectClasses.itemText">{{ item.label }}</Select.ItemText>
-                <Select.ItemIndicator :class="selectClasses.itemIndicator">
-                  <Check />
-                </Select.ItemIndicator>
-              </Select.Item>
-            </Select.Content>
-          </Select.Positioner>
+          <Teleport to="body">
+            <Select.Positioner :class="selectClasses.positioner">
+              <Select.Content :class="selectClasses.content">
+                <Select.Item
+                  v-for="item in collection.items"
+                  :key="item.value"
+                  :item="item"
+                  :class="selectClasses.item"
+                >
+                  <Select.ItemText :class="selectClasses.itemText">{{
+                    item.label
+                  }}</Select.ItemText>
+                  <Select.ItemIndicator :class="selectClasses.itemIndicator">
+                    <Check />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              </Select.Content>
+            </Select.Positioner>
+          </Teleport>
         </Select.Root>
       </div>
     </div>

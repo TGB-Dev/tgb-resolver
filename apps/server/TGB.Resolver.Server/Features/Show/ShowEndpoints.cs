@@ -1,5 +1,7 @@
 using System.Text.Json;
 using FastEndpoints;
+using TGB.Resolver.IcpcXmlParser;
+using IcpcParser = TGB.Resolver.IcpcXmlParser.IcpcXmlParser;
 using TGB.Resolver.Server.Features.Show.Dto;
 
 namespace TGB.Resolver.Server.Features.Show;
@@ -97,6 +99,36 @@ public sealed class ImportBundleEndpoint(ShowStateService showStateService)
     {
       // Bad base64, corrupt zip, missing/hash-mismatched entries, or an
       // unreadable show.json are all user input errors.
+      AddError(exception.Message);
+      ThrowIfAnyErrors();
+    }
+  }
+}
+
+public sealed class ImportXmlUsersEndpoint
+  : Endpoint<ImportXmlUsersRequest, IReadOnlyList<ImportXmlUser>>
+{
+  public override void Configure()
+  {
+    Post("/import/xml/users");
+    AllowAnonymous();
+  }
+
+  public override async Task HandleAsync(ImportXmlUsersRequest request, CancellationToken ct)
+  {
+    try
+    {
+      var contest = IcpcParser.Parse(request.Xml);
+      var users = contest.Team
+        .OrderBy(team => team.Id)
+        .Select(team => new ImportXmlUser(team.Id, team.Username, team.Name))
+        .ToList();
+      await Send.OkAsync(users, ct);
+    }
+    catch (InvalidOperationException exception)
+    {
+      // Malformed XML or missing elements from the ICPC parser surface as a
+      // user input error, mirroring ImportXmlEndpoint.
       AddError(exception.Message);
       ThrowIfAnyErrors();
     }

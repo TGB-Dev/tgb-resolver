@@ -54,7 +54,6 @@ const prevAction = useAction({
     }
   },
   enabled: enablePrev,
-  hotkeys: ["ArrowLeft"],
 });
 
 const nextAction = useAction({
@@ -65,7 +64,6 @@ const nextAction = useAction({
     }
   },
   enabled: enableNext,
-  hotkeys: ["ArrowRight", "Space"],
 });
 
 const iconButtonClass = cx(button(), iconButton());

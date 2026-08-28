@@ -304,6 +304,16 @@ export type ImportBundleRequest = {
     bytes: string;
 };
 
+export type ImportXmlUser = {
+    id?: number;
+    username?: string;
+    name?: string;
+};
+
+export type ImportXmlUsersRequest = {
+    xml?: string;
+};
+
 export type ResolveEventRenameRequest = {
     showVersion?: number;
     customName?: string;
@@ -620,6 +630,22 @@ export type TgbResolverServerFeaturesShowImportBundleEndpointResponses = {
 };
 
 export type TgbResolverServerFeaturesShowImportBundleEndpointResponse = TgbResolverServerFeaturesShowImportBundleEndpointResponses[keyof TgbResolverServerFeaturesShowImportBundleEndpointResponses];
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointData = {
+    body: ImportXmlUsersRequest;
+    path?: never;
+    query?: never;
+    url: '/import/xml/users';
+};
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses = {
+    /**
+     * Success
+     */
+    200: Array<ImportXmlUser>;
+};
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointResponse = TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses[keyof TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses];
 
 export type TgbResolverServerFeaturesShowExportBundleEndpointData = {
     body?: never;

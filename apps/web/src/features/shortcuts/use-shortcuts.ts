@@ -21,7 +21,8 @@ export function useShortcutsRegistration(): void {
     const isSequence = command.defaultBinding.kind === CommandBindingKind.Sequence;
 
     const options = () => ({
-      enabled: store.isBound(command.id) && !store.overlayOpen,
+      enabled:
+        store.isBound(command.id) && !store.overlayOpen && store.isScopeActive(command.scope),
       conflictBehavior: (command as CommandDefinition).conflictBehavior ?? "warn",
       preventDefault: true,
       stopPropagation: true,

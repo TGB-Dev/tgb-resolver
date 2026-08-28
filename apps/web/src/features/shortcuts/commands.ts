@@ -1,14 +1,25 @@
 import type { HotkeyCallback } from "@tanstack/vue-hotkeys";
 import {
   generatedClient,
+  PlaybackStatus,
   resetPlayback,
   seekPlayback,
   startPlayback,
 } from "@tgb-resolver/contracts";
 
+import { useAssetsInteractionStore } from "@/features/assets-manager/assets-interaction-store";
+import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
+import { useControlShowRows } from "@/features/control/composables/use-show";
+import {
+  ControlEditMainPanelTab,
+  useControlEditMainPanelStore,
+} from "@/features/control/control-edit-main-panel-store";
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import { toaster } from "@/features/shared/ui/toaster";
 import { useColorModeStore } from "@/stores/color-mode-store";
+import { useConfirmActionStore } from "@/stores/confirm-action-store";
+import { useRealtimeStore } from "@/stores/realtime-store";
 import { useShowStore } from "@/stores/show-store";
 
 import { CommandBindingKind, type CommandDefinition, type CommandId, CommandScope } from "./types";
@@ -50,6 +61,14 @@ const toggleFullscreen: HotkeyCallback = () => {
   }
 };
 
+function isSeekable(): boolean {
+  const playback = usePlaybackStore();
+  const connected = useRealtimeStore().connectionStatus === "connected";
+  const seekable =
+    playback.status === PlaybackStatus.RUNNING || playback.status === PlaybackStatus.PAUSED;
+  return connected && seekable;
+}
+
 function seekRelative(delta: 1 | -1): void {
   const showStore = useShowStore();
   const playback = usePlaybackStore();
@@ -59,6 +78,9 @@ function seekRelative(delta: 1 | -1): void {
   const idx = currentId != null ? rows.findIndex((row) => row.id === currentId) : -1;
   const target = rows[idx + delta];
   if (!target) return;
+  // Mirror the mouse transport buttons: only seek once the show is playing or
+  // paused, never on an idle show.
+  if (!isSeekable()) return;
   void seekPlayback({
     client: generatedClient,
     body: { showVersion: playback.state.showVersion, eventId: target.id },
@@ -100,6 +122,163 @@ function scrollTimelineTo(edge: "top" | "bottom"): void {
 const timelineJumpTop: HotkeyCallback = () => scrollTimelineTo("top");
 const timelineJumpBottom: HotkeyCallback = () => scrollTimelineTo("bottom");
 
+/* ------------------------------------------------------------------ */
+/* Control: main panel tab switching                                   */
+/* ------------------------------------------------------------------ */
+
+const controlEditMainPanelStore = () => useControlEditMainPanelStore();
+
+const controlTabPreview: HotkeyCallback = () =>
+  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Preview);
+const controlTabAssets: HotkeyCallback = () =>
+  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Assets);
+const controlTabCue: HotkeyCallback = () =>
+  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Cue);
+const controlTabInfo: HotkeyCallback = () =>
+  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Info);
+const controlTabSettings: HotkeyCallback = () =>
+  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Settings);
+
+/* ------------------------------------------------------------------ */
+/* Control: transport prev/next                                        */
+/* ------------------------------------------------------------------ */
+
+function transportSeek(delta: 1 | -1): void {
+  const rows = useControlShowRows().value;
+  if (rows.length === 0) return;
+  const playback = usePlaybackStore();
+  const currentId = playback.currentEventId;
+  const idx = currentId != null ? rows.findIndex((row) => row.id === currentId) : -1;
+  const target = rows[idx + delta];
+  if (!target) return;
+  // Mirror the mouse transport buttons: only seek once the show is playing or
+  // paused, never on an idle show.
+  if (!isSeekable()) return;
+  void seekPlayback({
+    client: generatedClient,
+    body: { showVersion: playback.state.showVersion, eventId: target.id },
+  });
+}
+
+const transportPrev: HotkeyCallback = () => transportSeek(-1);
+const transportNext: HotkeyCallback = () => transportSeek(1);
+
+/* ------------------------------------------------------------------ */
+/* Assets manager                                                      */
+/* ------------------------------------------------------------------ */
+
+const assetsManagerStore = () => useAssetsManagerStore();
+const assetsInteractionStore = () => useAssetsInteractionStore();
+const confirmActionStore = () => useConfirmActionStore();
+
+/** Selected entry ids for the currently focused panel. */
+function assetsSelectedIds(store: ReturnType<typeof useAssetsManagerStore>): Set<string> {
+  return store.focusedPanel === "tree"
+    ? store.selectedEntryId
+      ? new Set([store.selectedEntryId])
+      : new Set<string>()
+    : store.selectedIds;
+}
+
+function assetsHandleError(e: unknown, label: string): void {
+  const msg = e instanceof Error ? e.message : String(e);
+  console.error(`${label} error:`, e);
+  toaster.create({ title: label, description: msg, type: "error" });
+}
+
+const assetsDelete: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  const store = assetsManagerStore();
+  const ids = assetsSelectedIds(store);
+  if (ids.size === 0) return;
+  for (const id of ids) {
+    const entry = store.findEntry(id);
+    if (!entry) continue;
+    confirmActionStore()
+      .confirmAction({
+        title: entry.isDirectory ? "Delete Folder" : "Delete File",
+        message: entry.isDirectory
+          ? `Delete ${ids.size > 1 ? `${ids.size} folders` : "this folder"} and its contents?`
+          : `Delete ${ids.size > 1 ? `${ids.size} files` : `"${entry.name}"`}?`,
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+      })
+      .then((accepted) => {
+        if (accepted) {
+          store.deleteEntry(id, entry.isDirectory).catch((e) => assetsHandleError(e, "Delete"));
+        }
+      });
+  }
+};
+
+const assetsRename: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  const store = assetsManagerStore();
+  const ids = assetsSelectedIds(store);
+  if (ids.size !== 1) return;
+  const id = [...ids][0];
+  if (!id) return;
+  const entry = store.findEntry(id);
+  if (!entry) return;
+  confirmActionStore()
+    .promptAction({
+      title: entry.isDirectory ? "Rename Folder" : "Rename File",
+      label: "New name",
+      defaultValue: entry.name,
+      confirmLabel: "Rename",
+    })
+    .then((name) => {
+      if (name?.trim()) {
+        store
+          .renameEntry(id, entry.isDirectory, name.trim())
+          .catch((e) => assetsHandleError(e, "Rename"));
+      }
+    });
+};
+
+const assetsUpload: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  assetsManagerStore().openFilePicker();
+};
+
+const assetsCopy: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  assetsInteractionStore().copySelection();
+};
+
+const assetsCut: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  assetsInteractionStore().cutSelection();
+};
+
+const assetsPaste: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  const store = assetsManagerStore();
+  const targetFolderId = store.selectedEntryId;
+  assetsInteractionStore()
+    .pasteInto(targetFolderId ?? null)
+    .catch((e) => assetsHandleError(e, "Paste"));
+};
+
+const assetsCreateFolder: HotkeyCallback = () => {
+  if (isEditableTargetFocused()) return;
+  const store = assetsManagerStore();
+  const folderId = store.selectedEntryId;
+  confirmActionStore()
+    .promptAction({
+      title: folderId ? "Create Subfolder" : "Create Folder",
+      label: "Folder name",
+      confirmLabel: "Create",
+    })
+    .then((name) => {
+      if (name?.trim()) {
+        store
+          .createFolder(folderId ?? null, name.trim())
+          .catch((e) => assetsHandleError(e, "Create Folder"));
+      }
+    });
+};
+
 /**
  * The canonical command registry. Each command declares its *default* binding,
  * but the live binding is owned by the shortcuts store so users can rebind it.
@@ -140,7 +319,7 @@ export const commands: readonly CommandDefinition[] = [
     description: "Start or resume the show",
     scope: CommandScope.Control,
     category: "Playback",
-    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+K" },
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+Enter" },
     handler: playToggle,
   },
   {
@@ -190,6 +369,132 @@ export const commands: readonly CommandDefinition[] = [
     category: "Timeline",
     defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Shift+G" },
     handler: timelineJumpBottom,
+  },
+  {
+    id: "control-tab-preview",
+    title: "Tab: Preview",
+    description: "Switch the main panel to the Preview tab",
+    scope: CommandScope.Control,
+    category: "Tabs",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+1" },
+    handler: controlTabPreview,
+  },
+  {
+    id: "control-tab-assets",
+    title: "Tab: Assets",
+    description: "Switch the main panel to the Assets tab",
+    scope: CommandScope.Control,
+    category: "Tabs",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+2" },
+    handler: controlTabAssets,
+  },
+  {
+    id: "control-tab-cue",
+    title: "Tab: Cue",
+    description: "Switch the main panel to the Cue tab",
+    scope: CommandScope.Control,
+    category: "Tabs",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+3" },
+    handler: controlTabCue,
+  },
+  {
+    id: "control-tab-info",
+    title: "Tab: Info",
+    description: "Switch the main panel to the Info tab",
+    scope: CommandScope.Control,
+    category: "Tabs",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+4" },
+    handler: controlTabInfo,
+  },
+  {
+    id: "control-tab-settings",
+    title: "Tab: Settings",
+    description: "Switch the main panel to the Settings tab",
+    scope: CommandScope.Control,
+    category: "Tabs",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+5" },
+    handler: controlTabSettings,
+  },
+  {
+    id: "transport-prev",
+    title: "Previous event",
+    description: "Seek to the previous cue",
+    scope: CommandScope.Control,
+    category: "Playback",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "ArrowLeft" },
+    handler: transportPrev,
+  },
+  {
+    id: "transport-next",
+    title: "Next event",
+    description: "Seek to the next cue",
+    scope: CommandScope.Control,
+    category: "Playback",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "ArrowRight" },
+    handler: transportNext,
+  },
+  {
+    id: "assets-delete",
+    title: "Delete entry",
+    description: "Delete the selected file or folder",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Backspace" },
+    handler: assetsDelete,
+  },
+  {
+    id: "assets-rename",
+    title: "Rename entry",
+    description: "Rename the selected file or folder",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "F2" },
+    handler: assetsRename,
+  },
+  {
+    id: "assets-upload",
+    title: "Upload file",
+    description: "Open the file picker to upload into the selected folder",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+I" },
+    handler: assetsUpload,
+  },
+  {
+    id: "assets-copy",
+    title: "Copy selection",
+    description: "Copy the selected entries",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+C" },
+    handler: assetsCopy,
+  },
+  {
+    id: "assets-cut",
+    title: "Cut selection",
+    description: "Cut the selected entries",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+X" },
+    handler: assetsCut,
+  },
+  {
+    id: "assets-paste",
+    title: "Paste selection",
+    description: "Paste into the selected folder",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+V" },
+    handler: assetsPaste,
+  },
+  {
+    id: "assets-create-folder",
+    title: "Create folder",
+    description: "Create a folder (or subfolder of the selection)",
+    scope: CommandScope.Assets,
+    category: "Assets",
+    defaultBinding: { kind: CommandBindingKind.Sequence, sequence: ["Mod+K", "Mod+F"] },
+    handler: assetsCreateFolder,
   },
 ];
 

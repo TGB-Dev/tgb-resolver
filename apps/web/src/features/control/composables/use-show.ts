@@ -8,8 +8,10 @@ import {
   exportShowBundle,
   generatedClient,
   getShow,
+  type ImportXmlUser,
   importShowBundle,
   importShowXml,
+  importShowXmlUsers,
   moveTimelineEvent,
   patchNonResolveEvent,
   patchTimelineEvent,
@@ -418,6 +420,29 @@ export function useImportShowMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+  });
+}
+
+/**
+ * Fetches the list of users/teams contained in an ICPC XML file so the import
+ * panel can present them as a multi-select of exclusions. Only meaningful for
+ * `.xml` imports; bundle (`.tgbresolver`) imports have no user list.
+ */
+export function useImportXmlUsers(xml: () => string | null) {
+  return useQuery({
+    queryKey: computed(() => ["import-xml-users", xml()]),
+    queryFn: async ({ signal }) => {
+      const text = xml();
+      if (!text) return [];
+      const { data } = await importShowXmlUsers({
+        client: generatedClient,
+        body: { xml: text },
+        signal,
+        throwOnError: true,
+      });
+      return (data as ImportXmlUser[]) ?? [];
+    },
+    enabled: computed(() => xml() != null),
   });
 }
 

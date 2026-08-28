@@ -2,16 +2,12 @@
 import { Splitter } from "@ark-ui/vue";
 import { css } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
-import { useHotkey, useHotkeySequence } from "@tanstack/vue-hotkeys";
 import { whenever } from "@vueuse/core";
-import { useTemplateRef } from "vue";
+import { onMounted, useTemplateRef } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
-import { toaster } from "@/features/shared/ui/toaster";
-import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
 import AssetsGridView from "./assets-grid-view.vue";
-import { useAssetsInteractionStore } from "./assets-interaction-store";
 import AssetsListView from "./assets-list-view.vue";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import AssetsToolbar from "./assets-toolbar.vue";
@@ -19,115 +15,17 @@ import FolderTreeView from "./folder-tree-view.vue";
 import UploadZone from "./upload-zone.vue";
 
 const store = useAssetsManagerStore();
-const interactionStore = useAssetsInteractionStore();
-const confirmStore = useConfirmActionStore();
 const showQuery = useControlShowQuery();
 const splitterClasses = splitter();
 const fileInputRef = useTemplateRef<HTMLInputElement>("fileInputRef");
 
+onMounted(() => {
+  store.fileInputEl = fileInputRef.value;
+});
+
 // Data-sync, not side-effect-on-every-dep: run once with cached data
 // (immediate) and again on every query update.
 whenever(showQuery.data, (data) => store.applyShowState(data), { immediate: true });
-
-function handleError(e: unknown, label: string): void {
-  const msg = e instanceof Error ? e.message : String(e);
-  console.error(`${label} error:`, e);
-  toaster.create({ title: label, description: msg, type: "error" });
-}
-
-useHotkey("Backspace", () => {
-  const isTree = store.focusedPanel === "tree";
-  const ids = isTree
-    ? store.selectedEntryId
-      ? new Set([store.selectedEntryId])
-      : new Set<string>()
-    : store.selectedIds;
-
-  if (ids.size === 0) return;
-  for (const id of ids) {
-    const entry = store.findEntry(id);
-    if (!entry) continue;
-    confirmStore
-      .confirmAction({
-        title: entry.isDirectory ? "Delete Folder" : "Delete File",
-        message: entry.isDirectory
-          ? `Delete ${ids.size > 1 ? `${ids.size} folders` : "this folder"} and its contents?`
-          : `Delete ${ids.size > 1 ? `${ids.size} files` : `"${entry.name}"`}?`,
-        confirmLabel: "Delete",
-        cancelLabel: "Cancel",
-      })
-      .then((accepted) => {
-        if (accepted) {
-          store.deleteEntry(id, entry.isDirectory).catch((e) => handleError(e, "Delete"));
-        }
-      });
-  }
-});
-
-useHotkey("F2", () => {
-  const isTree = store.focusedPanel === "tree";
-  const ids = isTree
-    ? store.selectedEntryId
-      ? new Set([store.selectedEntryId])
-      : new Set<string>()
-    : store.selectedIds;
-
-  if (ids.size !== 1) return;
-  const id = [...ids][0];
-  if (!id) return;
-  const entry = store.findEntry(id);
-  if (!entry) return;
-  confirmStore
-    .promptAction({
-      title: entry.isDirectory ? "Rename Folder" : "Rename File",
-      label: "New name",
-      defaultValue: entry.name,
-      confirmLabel: "Rename",
-    })
-    .then((name) => {
-      if (name?.trim()) {
-        store.renameEntry(id, entry.isDirectory, name.trim()).catch((e) => handleError(e, "Rename"));
-      }
-    });
-});
-
-useHotkey("Mod+I", () => {
-  fileInputRef.value?.click();
-});
-
-useHotkey("Mod+C", () => {
-  interactionStore.copySelection();
-});
-
-useHotkey("Mod+X", () => {
-  interactionStore.cutSelection();
-});
-
-useHotkey("Mod+V", () => {
-  const targetFolderId = store.selectedEntryId;
-  interactionStore.pasteInto(targetFolderId ?? null).catch((e) => {
-    handleError(e, "Paste");
-  });
-});
-
-useHotkeySequence(["Mod+K", "Mod+I"], () => {
-  fileInputRef.value?.click();
-});
-
-useHotkeySequence(["Mod+K", "Mod+F"], () => {
-  const folderId = store.selectedEntryId;
-  confirmStore
-    .promptAction({
-      title: folderId ? "Create Subfolder" : "Create Folder",
-      label: "Folder name",
-      confirmLabel: "Create",
-    })
-    .then((name) => {
-      if (name?.trim()) {
-        store.createFolder(folderId ?? null, name.trim()).catch((e) => handleError(e, "Create Folder"));
-      }
-    });
-});
 
 function handleFileInputChange(e: Event) {
   const target = e.target as HTMLInputElement;

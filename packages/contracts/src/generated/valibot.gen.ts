@@ -210,6 +210,16 @@ export const vImportBundleRequest = v.strictObject({
     bytes: v.pipe(v.string(), v.minLength(1))
 });
 
+export const vImportXmlUser = v.strictObject({
+    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    username: v.optional(v.string()),
+    name: v.optional(v.string())
+});
+
+export const vImportXmlUsersRequest = v.strictObject({
+    xml: v.optional(v.string())
+});
+
 export const vResolveEventRenameRequest = v.strictObject({
     showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
     customName: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(100)))
@@ -360,6 +370,13 @@ export const vTgbResolverServerFeaturesShowImportBundleEndpointBody = vImportBun
  * Success
  */
 export const vTgbResolverServerFeaturesShowImportBundleEndpointResponse = vShowStateSnapshot;
+
+export const vTgbResolverServerFeaturesShowImportXmlUsersEndpointBody = vImportXmlUsersRequest;
+
+/**
+ * Success
+ */
+export const vTgbResolverServerFeaturesShowImportXmlUsersEndpointResponse = v.array(vImportXmlUser);
 
 /**
  * No Content

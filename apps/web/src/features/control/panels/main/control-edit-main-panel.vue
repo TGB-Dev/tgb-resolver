@@ -3,36 +3,21 @@ import { Tabs } from "@ark-ui/vue";
 import { Images, Info, Logs, ScanEye, Settings } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { tabs } from "@styled-system/recipes";
-import { useHotkey } from "@tanstack/vue-hotkeys";
-import { ref } from "vue";
 
+import { useControlEditMainPanelStore } from "@/features/control/control-edit-main-panel-store";
 import ControlMainAssetsTab from "@/features/control/panels/main/tabs/control-main-assets-tab.vue";
 import ControlMainCueTab from "@/features/control/panels/main/tabs/control-main-cue-tab.vue";
 import ControlMainInfoTab from "@/features/control/panels/main/tabs/control-main-info-tab.vue";
 import ControlMainPreviewTab from "@/features/control/panels/main/tabs/control-main-preview-tab.vue";
 import ControlMainSettingsTab from "@/features/control/panels/main/tabs/control-main-settings-tab.vue";
 
-enum ControlEditMainPanelTabs {
-  PREVIEW = "preview",
-  ASSETS = "assets",
-  CUE = "cue",
-  INFO = "info",
-  SETTINGS = "settings",
-}
-
-const activeTab = ref<ControlEditMainPanelTabs>(ControlEditMainPanelTabs.PREVIEW);
+const panelStore = useControlEditMainPanelStore();
 const tabClasses = tabs({ variant: "line", size: "sm" });
-
-useHotkey("Mod+1", () => (activeTab.value = ControlEditMainPanelTabs.PREVIEW));
-useHotkey("Mod+2", () => (activeTab.value = ControlEditMainPanelTabs.ASSETS));
-useHotkey("Mod+3", () => (activeTab.value = ControlEditMainPanelTabs.CUE));
-useHotkey("Mod+4", () => (activeTab.value = ControlEditMainPanelTabs.INFO));
-useHotkey("Mod+5", () => (activeTab.value = ControlEditMainPanelTabs.SETTINGS));
 </script>
 
 <template>
   <Tabs.Root
-    v-model="activeTab"
+    v-model="panelStore.activeTab"
     :class="
       cx(
         tabClasses.root,

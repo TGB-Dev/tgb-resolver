@@ -21,6 +21,9 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
   const expandedFolderIds = ref(new Set<string>());
   const focusedPanel = ref<"tree" | "content">("content");
   const showVersion = ref(0);
+  // Hidden file input used by the upload hotkey/command; the component binds
+  // its <input type="file"> element here so the command can open the picker.
+  const fileInputEl = ref<HTMLInputElement | null>(null);
   const entries = computed(() => {
     const folders = selectedEntryId.value
       ? (findEntry(selectedEntryId.value)?.children ?? [])
@@ -160,6 +163,9 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     });
     applyShowState(response.data as ShowStateSnapshot);
   }
+  function openFilePicker(): void {
+    fileInputEl.value?.click();
+  }
   async function renameEntry(id: string, isDirectory: boolean, newName: string) {
     const response = await renameEntryEndpoint({
       path: { id },
@@ -207,6 +213,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     viewMode,
     expandedFolderIds,
     focusedPanel,
+    fileInputEl,
     entries,
     findEntry,
     findEntryName,
@@ -221,6 +228,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     showVersion,
     createFolder,
     uploadAsset,
+    openFilePicker,
     renameEntry,
     deleteEntry,
     transferEntry,

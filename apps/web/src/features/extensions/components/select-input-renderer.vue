@@ -56,21 +56,23 @@ function handleValueChange(details: { value: string[] }) {
       <Select.Trigger :class="selectClasses.trigger">
         <Select.ValueText placeholder="Select an option" :class="selectClasses.valueText" />
       </Select.Trigger>
-      <Select.Positioner :class="selectClasses.positioner">
-        <Select.Content :class="selectClasses.content">
-          <Select.Item
-            v-for="option in collection.items"
-            :key="option.value"
-            :item="option"
-            :class="selectClasses.item"
-          >
-            <Select.ItemText :class="selectClasses.itemText">{{ option.label }}</Select.ItemText>
-            <Select.ItemIndicator :class="selectClasses.itemIndicator">
-              <Check />
-            </Select.ItemIndicator>
-          </Select.Item>
-        </Select.Content>
-      </Select.Positioner>
+      <Teleport to="body">
+        <Select.Positioner :class="selectClasses.positioner">
+          <Select.Content :class="selectClasses.content">
+            <Select.Item
+              v-for="option in collection.items"
+              :key="option.value"
+              :item="option"
+              :class="selectClasses.item"
+            >
+              <Select.ItemText :class="selectClasses.itemText">{{ option.label }}</Select.ItemText>
+              <Select.ItemIndicator :class="selectClasses.itemIndicator">
+                <Check />
+              </Select.ItemIndicator>
+            </Select.Item>
+          </Select.Content>
+        </Select.Positioner>
+      </Teleport>
     </Select.Root>
     <p v-if="description" :class="fieldClasses.helperText">{{ description }}</p>
     <p v-if="errors.length > 0" :class="cx(fieldClasses.errorText, fieldErrorTextCss)">

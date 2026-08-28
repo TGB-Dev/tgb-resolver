@@ -11,6 +11,7 @@ export { default as KbdFromHotkeys } from "./kbd-from-hotkeys.vue";
 export { useShortcutsStore } from "./shortcuts-store";
 export type { CommandBinding, CommandDefinition } from "./types";
 export { CommandBindingKind, CommandScope } from "./types";
+export { useRouteScopes } from "./use-route-scopes";
 export {
   useHeldKeys,
   useKeyHold,

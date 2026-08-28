@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { useHotkey } from "@tanstack/vue-hotkeys";
-import { useFullscreen } from "@vueuse/core";
 
 import Leaderboard from "@/features/leaderboard/leaderboard.vue";
 import { useBackgroundMusic } from "@/lib/sound-engine/use-background-music";
 
-const { toggle: toggleFullscreen } = useFullscreen(document.documentElement);
-useHotkey("F", () => void toggleFullscreen());
 useBackgroundMusic(() => true);
 </script>
 

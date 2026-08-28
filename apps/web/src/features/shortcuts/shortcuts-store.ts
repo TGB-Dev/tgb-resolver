@@ -7,7 +7,7 @@ import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 
 import { type CommandId, commands, commandsById } from "./commands";
-import { type CommandBinding, CommandBindingKind } from "./types";
+import { type CommandBinding, CommandBindingKind, CommandScope } from "./types";
 
 const STORAGE_KEY = "tgb-shortcuts-bindings";
 
@@ -53,6 +53,16 @@ function bindingSignature(binding: CommandBinding): string | null {
 export const useShortcutsStore = defineStore("shortcuts", () => {
   const bindings = ref<Record<CommandId, CommandBinding>>(loadBindings());
   const overlayOpen = ref(false);
+  // Scopes currently active based on the route. `Global` is always implied;
+  // a command only fires when its scope is present here (or is Global).
+  const activeScopes = ref<Set<CommandScope>>(new Set([CommandScope.Global]));
+
+  const isScopeActive = (scope: CommandScope): boolean =>
+    scope === CommandScope.Global || activeScopes.value.has(scope);
+
+  function setActiveScopes(scopes: Iterable<CommandScope>): void {
+    activeScopes.value = new Set([CommandScope.Global, ...scopes]);
+  }
 
   const isBound = (id: CommandId): boolean => bindings.value[id].kind !== CommandBindingKind.None;
 
@@ -134,6 +144,9 @@ export const useShortcutsStore = defineStore("shortcuts", () => {
   return {
     bindings,
     overlayOpen,
+    activeScopes,
+    isScopeActive,
+    setActiveScopes,
     isBound,
     isCustomized,
     getBinding,

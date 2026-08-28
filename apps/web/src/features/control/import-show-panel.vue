@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { FileUpload } from "@ark-ui/vue";
-import { css } from "@styled-system/css";
-import { button, fileUpload, input } from "@styled-system/recipes";
+import { createListCollection, FileUpload, Select } from "@ark-ui/vue";
+import { Check, ChevronDown, X } from "@lucide/vue";
+import { css, cx } from "@styled-system/css";
+import { button, fileUpload, select as selectRecipe } from "@styled-system/recipes";
+import type { ImportXmlUser } from "@tgb-resolver/contracts";
 import { FILE_EXTENSION } from "@tgb-resolver/realtime";
 import { computed, ref } from "vue";
 
-import { useImportShowMutation } from "@/features/control/composables/use-show";
+import { useImportShowMutation, useImportXmlUsers } from "@/features/control/composables/use-show";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
 import { toaster } from "@/features/shared/ui/toaster";
 
@@ -14,7 +16,8 @@ const props = defineProps<{
 }>();
 
 const file = ref<File | null>(null);
-const excludedUsernames = ref("");
+const xmlText = ref<string | null>(null);
+const excludedUsernames = ref<string[]>([]);
 const importShow = useImportShowMutation();
 
 // vue-query's useMutation returns a plain object of refs (unlike useQuery's
@@ -26,16 +29,28 @@ const importError = computed(() =>
 );
 const importPending = computed(() => importShow.isPending.value);
 
+const isXml = computed(() => file.value?.name.toLowerCase().endsWith(".xml") ?? false);
+const usersQuery = useImportXmlUsers(() => (isXml.value ? xmlText.value : null));
+const allUsers = computed<ImportXmlUser[]>(() => usersQuery.data.value ?? []);
+
+const userItems = computed(() =>
+  allUsers.value
+    .map((user) => ({ value: user.username ?? "", label: user.username ?? "" }))
+    .filter((item) => item.value.length > 0),
+);
+const collection = computed(() => createListCollection({ items: userItems.value }));
+
 const fileUploadClasses = fileUpload();
-const inputClasses = input({ size: "sm" });
+const selectClasses = selectRecipe();
 
 const root = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "stretch" });
 const triggerRow = css({ display: "flex", gap: "2", marginTop: "2" });
 const field = css({ display: "flex", flexDirection: "column", gap: "1" });
-const fieldLabel = css({ fontSize: "sm", fontWeight: "medium" });
 const helper = css({ fontSize: "xs", color: "fg.muted" });
 const errorText = css({ color: "fg.error", fontSize: "sm" });
 const actions = css({ display: "flex", justifyContent: "flex-end", gap: "2", marginTop: "4" });
+
+const userStatus = css({ fontSize: "xs", color: "fg.muted", paddingY: "2" });
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -62,16 +77,24 @@ function errorMessage(error: unknown): string {
   return "Unknown error";
 }
 
+async function onFileChange(acceptedFiles: File[]): Promise<void> {
+  const f = acceptedFiles[0] ?? null;
+  file.value = f;
+  excludedUsernames.value = [];
+  xmlText.value = null;
+  if (f?.name.toLowerCase().endsWith(".xml")) {
+    xmlText.value = await f.text();
+  }
+  props.panel.setDirty(Boolean(f));
+}
+
 async function accept() {
   if (!file.value) return;
 
   try {
     await importShow.mutateAsync({
       file: file.value,
-      excludedUsernames: excludedUsernames.value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      excludedUsernames: excludedUsernames.value,
     });
     props.panel.close(true);
   } catch (error) {
@@ -90,11 +113,7 @@ async function accept() {
       :accept="`.xml,${FILE_EXTENSION}`"
       :maxFiles="1"
       :class="fileUploadClasses.root"
-      @file-change="(details: { acceptedFiles: File[] }) => {
-        const f = details.acceptedFiles[0] ?? null;
-        file = f;
-        panel.setDirty(Boolean(f) || excludedUsernames.length > 0);
-      }"
+      @file-change="(details: { acceptedFiles: File[] }) => onFileChange(details.acceptedFiles)"
     >
       <FileUpload.HiddenInput />
       <FileUpload.Label :class="fileUploadClasses.label">Show file</FileUpload.Label>
@@ -105,23 +124,74 @@ async function accept() {
           </button>
         </FileUpload.Trigger>
         <FileUpload.ClearTrigger v-if="file" asChild>
-          <button type="button" :class="button({ variant: 'ghost', size: 'sm' })">
+          <button
+            type="button"
+            :class="button({ variant: 'ghost', size: 'sm' })"
+            @click="props.panel.setDirty(false)"
+          >
             Clear
           </button>
         </FileUpload.ClearTrigger>
       </div>
     </FileUpload.Root>
 
-    <div :class="field">
-      <span :class="fieldLabel">Excluded usernames</span>
-      <input
-        v-model="excludedUsernames"
-        :class="inputClasses"
-        placeholder="team_a, team_b"
-        @input="panel.setDirty(Boolean(file) || excludedUsernames.length > 0)"
-      />
+    <div v-if="isXml" :class="field">
+      <!-- <span :class="fieldLabel">Excluded users</span> -->
+      <div v-if="usersQuery.isLoading.value" :class="userStatus">Loading users from file…</div>
+      <div v-else-if="usersQuery.isError.value" :class="userStatus">
+        Could not read users: {{ errorMessage(usersQuery.error.value) }}
+      </div>
+      <div v-else-if="allUsers.length === 0" :class="userStatus">
+        No users found in this XML file.
+      </div>
+      <Select.Root
+        v-else
+        :collection="collection"
+        :model-value="excludedUsernames"
+        :positioning="{ sameWidth: true }" 
+        :class="cx(selectClasses.root, css({ w: 'full' }))"
+        @value-change="
+          (details) => {
+            excludedUsernames = details.value;
+          }
+        "
+        multiple
+      >
+        <Select.Label :class="selectClasses.label">Excluded users</Select.Label>
+        <Select.Control :class="selectClasses.control">
+          <Select.Trigger :class="selectClasses.trigger">
+            <Select.ValueText :class="selectClasses.valueText" placeholder="Select excluded users" />
+          </Select.Trigger>
+          <div :class="selectClasses.indicatorGroup">
+            <Select.ClearTrigger :class="selectClasses.clearTrigger">
+              <X :size="16" aria-hidden="true" />
+            </Select.ClearTrigger>
+            <Select.Indicator :class="selectClasses.indicator">
+              <ChevronDown aria-hidden="true" />
+            </Select.Indicator>
+          </div>
+        </Select.Control>
+        <Teleport to="body">
+          <Select.Positioner :class="selectClasses.positioner">
+            <Select.Content :class="selectClasses.content">
+              <Select.Item
+                v-for="item in collection.items"
+                :key="item.value"
+                :item="item"
+                :class="selectClasses.item"
+              >
+                <Select.ItemText :class="selectClasses.itemText">{{ item.label }}</Select.ItemText>
+                <Select.ItemIndicator :class="selectClasses.itemIndicator">
+                  <Check />
+                </Select.ItemIndicator>
+              </Select.Item>
+            </Select.Content>
+          </Select.Positioner>
+        </Teleport>
+      </Select.Root>
       <span :class="helper">
-        Comma-separated. Applies to XML imports only.
+        Select the users to exclude from the show (multiple selections allowed). Applies to XML
+        imports only.
       </span>
     </div>
 
@@ -131,12 +201,7 @@ async function accept() {
       <button type="button" :class="button({ variant: 'outline' })" @click="panel.close(false)">
         Cancel
       </button>
-      <button
-        type="button"
-        :class="button()"
-        :disabled="!file || importPending"
-        @click="accept"
-      >
+      <button type="button" :class="button()" :disabled="!file || importPending" @click="accept">
         Import
       </button>
     </div>

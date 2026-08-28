@@ -57,7 +57,21 @@ export type CommandId =
   | "cue-prev"
   | "reset-playback"
   | "timeline-jump-top"
-  | "timeline-jump-bottom";
+  | "timeline-jump-bottom"
+  | "control-tab-preview"
+  | "control-tab-assets"
+  | "control-tab-cue"
+  | "control-tab-info"
+  | "control-tab-settings"
+  | "transport-prev"
+  | "transport-next"
+  | "assets-delete"
+  | "assets-rename"
+  | "assets-upload"
+  | "assets-copy"
+  | "assets-cut"
+  | "assets-paste"
+  | "assets-create-folder";
 
 export interface CommandDefinition {
   /** Stable identifier. Never changes; this is what bindings are keyed by. */

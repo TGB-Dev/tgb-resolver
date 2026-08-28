@@ -6,6 +6,8 @@ import { defineComponent, h } from "vue";
 
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 
+import { useShortcutsStore } from "../shortcuts-store";
+import { CommandScope } from "../types";
 import { useShortcutsRegistration } from "../use-shortcuts";
 
 vi.mock("@/features/leaderboard/utils/scroll", () => ({
@@ -33,6 +35,9 @@ const Wrapper = defineComponent({
 describe("timeline jump sequences", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    // Activate the Control scope so Control-scoped commands (e.g. timeline
+    // jumps) are live, mirroring how the router scope sync behaves in-app.
+    useShortcutsStore().setActiveScopes([CommandScope.Control]);
     localStorage.clear();
     document.body.innerHTML =
       '<div style="overflow:auto"><div><div data-timeline-row id="r1"></div><div data-timeline-row id="r2"></div></div></div>';
@@ -40,7 +45,10 @@ describe("timeline jump sequences", () => {
   });
 
   it("gg jumps to the top row", () => {
-    mount(Wrapper, { global: { plugins: [createPinia()] } });
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    useShortcutsStore().setActiveScopes([CommandScope.Control]);
+    mount(Wrapper, { global: { plugins: [pinia] } });
     pressKey("g");
     pressKey("g");
     expect(animateScrollIntoView).toHaveBeenCalledWith(
@@ -51,7 +59,10 @@ describe("timeline jump sequences", () => {
   });
 
   it("Shift+G jumps to the bottom row", () => {
-    mount(Wrapper, { global: { plugins: [createPinia()] } });
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    useShortcutsStore().setActiveScopes([CommandScope.Control]);
+    mount(Wrapper, { global: { plugins: [pinia] } });
     pressKey("g", { shiftKey: true });
     expect(animateScrollIntoView).toHaveBeenCalledWith(
       expect.any(HTMLElement),
