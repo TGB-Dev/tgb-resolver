@@ -49,7 +49,18 @@ func (t TimelineEventType) Schema(r huma.Registry) *huma.Schema {
 type VerdictRunResult string
 
 const (
-	VerdictAccepted VerdictRunResult = "Accepted"
-	VerdictRejected VerdictRunResult = "Rejected"
-	VerdictPending  VerdictRunResult = "Pending"
+	VerdictUnknown             VerdictRunResult = "Unknown"
+	VerdictAccepted            VerdictRunResult = "Accepted"
+	VerdictWrongAnswer         VerdictRunResult = "WrongAnswer"
+	VerdictTimeLimitExceeded   VerdictRunResult = "TimeLimitExceeded"
+	VerdictMemoryLimitExceeded VerdictRunResult = "MemoryLimitExceeded"
+	VerdictOutputLimitExceeded VerdictRunResult = "OutputLimitExceeded"
+	VerdictInvalidReturn       VerdictRunResult = "InvalidReturn"
+	VerdictRuntimeError        VerdictRunResult = "RuntimeError"
+	VerdictCompileError        VerdictRunResult = "CompileError"
+	VerdictInternalError       VerdictRunResult = "InternalError"
+	VerdictShortCircuited      VerdictRunResult = "ShortCircuited"
+	VerdictAborted             VerdictRunResult = "Aborted"
+	VerdictUnresolved          VerdictRunResult = "Unresolved"
+	VerdictPending             VerdictRunResult = "Pending"
 )
