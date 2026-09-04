@@ -35,9 +35,16 @@ export function updateDrift(
     const serverElapsed = serverNowMs - drift.lastServerNowMs;
     const monotonicElapsed = monotonicMs - drift.lastMonotonicMs;
     if (monotonicElapsed > 0 && serverElapsed > 0) {
+      if (monotonicElapsed < 1000) {
+        return { rate: drift.rate, lastServerNowMs: serverNowMs, lastMonotonicMs: monotonicMs };
+      }
       const observed = serverElapsed / monotonicElapsed;
+      if (observed < 0.95 || observed > 1.05) {
+        return { rate: drift.rate, lastServerNowMs: serverNowMs, lastMonotonicMs: monotonicMs };
+      }
       const rate = drift.rate + 0.15 * (observed - drift.rate);
-      return { rate, lastServerNowMs: serverNowMs, lastMonotonicMs: monotonicMs };
+      const clampedRate = Math.min(1.02, Math.max(0.98, rate));
+      return { rate: clampedRate, lastServerNowMs: serverNowMs, lastMonotonicMs: monotonicMs };
     }
   }
   return { rate: drift.rate, lastServerNowMs: serverNowMs, lastMonotonicMs: monotonicMs };

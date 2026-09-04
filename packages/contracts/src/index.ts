@@ -1,4 +1,4 @@
-export * from "./generated/@tanstack/react-query.gen";
+export * from "./generated/@tanstack/vue-query.gen";
 export { client as generatedClient } from "./generated/client.gen";
 export type { Options } from "./generated/sdk.gen";
 export {
@@ -17,6 +17,7 @@ export {
   tgbResolverServerFeaturesShowGetShowEndpoint as getShow,
   tgbResolverServerFeaturesShowImportBundleEndpoint as importShowBundle,
   tgbResolverServerFeaturesShowImportXmlEndpoint as importShowXml,
+  tgbResolverServerFeaturesShowImportXmlUsersEndpoint as importShowXmlUsers,
   tgbResolverServerFeaturesShowMoveTimelineEventEndpoint as moveTimelineEvent,
   tgbResolverServerFeaturesShowOptimizeShowEndpoint as optimizeShow,
   tgbResolverServerFeaturesShowPatchNonResolveEventEndpoint as patchNonResolveEvent,
@@ -39,6 +40,8 @@ export type {
   FreezeSnapshotEntrySnapshot,
   ImportBundleRequest,
   ImportXmlRequest,
+  ImportXmlUser,
+  ImportXmlUsersRequest,
   MoveTimelineEventRequest,
   NonResolveEventPatchRequest,
   PatchTimelineEventRequest,

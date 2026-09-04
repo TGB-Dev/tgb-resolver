@@ -18,7 +18,7 @@ driving audience and control UIs from a single source of truth.
 | Layer       | Tech                                                                                     |
 | ----------- | ---------------------------------------------------------------------------------------- |
 | Workspace   | Turborepo, pnpm workspaces                                                               |
-| Frontend    | React 19, TanStack Router (file-based routing, SPA), Vite 8, Chakra UI 3, Preact Signals |
+| Frontend    | Vue 3.5, Pinia, vue-router, Vite 8, Panda CSS + Chakra preset, Ark UI, motion-v           |
 | Server      | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly           |
 | Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot                                 |
 | Parsers     | .NET `TGB.Resolver.IcpcXmlParser` (server-side)                                          |
@@ -44,7 +44,7 @@ cp .env.example .env    # VITE_API_URL defaults to http://localhost:5001
 pnpm dev
 ```
 
-Runs the server (port 5001) and frontend (port 3000) in parallel.
+Runs the server (port 5001) and the Vue frontend (port 3000) in parallel.
 
 | Route      | UI       |
 | ---------- | -------- |
@@ -52,7 +52,7 @@ Runs the server (port 5001) and frontend (port 3000) in parallel.
 | `/control` | Control  |
 
 Server solution: `apps/server/TGB.Resolver.Server.slnx` (.slnx format).
-Frontend app: `apps/web/` (TanStack Router SPA).
+Frontend: `apps/web/` — the Vue 3 SPA (package `@tgb-resolver/web`, dev port 3000).
 
 ## Build & Test
 
@@ -81,12 +81,13 @@ Pre-commit runs: `sync:check || sync` → `test` → `biome check --write --stag
 ```text
 apps/
   server/     .NET 10 solution (server + parser + tests)
-  web/        TanStack Router SPA frontend
-              src/features/   — 5 feature dirs each owning their own models
-                control/        — playback, timeline, transport, cue tab models
-                leaderboard/    — leaderboard grid/table models
-                assets-manager/ — folder/file asset browser model
-                shared/         — cross-feature models (show, realtime, confirm, fullscreen)
+  web/        Canonical Vue 3 SPA frontend (Pinia, Panda CSS, Ark UI, vue-router)
+              package @tgb-resolver/web, dev port 3000
+              src/features/   — vertical feature slices
+                control/        — playback, timeline, transport, cue tab stores
+                leaderboard/    — leaderboard grid/table stores
+                assets-manager/ — folder/file asset browser store
+                shared/         — cross-feature stores (show, realtime, confirm, fullscreen)
                 extensions/     — extension registry, config UI, server patch API
 packages/
   contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas

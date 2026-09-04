@@ -1,25 +1,15 @@
-import babel from "@rolldown/plugin-babel";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig, mergeConfig } from "vitest/config";
 
-import { resolve } from "node:path";
+import viteConfig from "./vite.config";
+import { fileURLToPath } from "node:url";
 
-export default defineConfig(async () => ({
-  plugins: [
-    react(),
-    await babel({
-      plugins: ["module:@preact/signals-react-transform"],
-    }),
-  ],
-  resolve: {
-    alias: {
-      "@": resolve(import.meta.dirname, "./src"),
+export default mergeConfig(
+  viteConfig,
+  defineConfig({
+    test: {
+      environment: "jsdom",
+      exclude: [...configDefaults.exclude, "e2e/**"],
+      root: fileURLToPath(new URL("./", import.meta.url)),
     },
-  },
-  test: {
-    environment: "jsdom",
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    setupFiles: ["./src/test-setup.ts"],
-    passWithNoTests: true,
-  },
-}));
+  }),
+);

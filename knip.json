@@ -33,6 +33,7 @@
       "ignoreIssues": {
         "src/features/extensions/base/types.ts": ["types"],
         "src/features/extensions/base/registry.ts": ["exports"],
+        "src/features/extensions/confetti/presets.ts": ["types"],
         "src/lib/sound-engine/index.ts": ["exports"],
         "src/utils/preload-assets.ts": ["exports"]
       },
@@ -40,12 +41,50 @@
         "@fontsource-variable/inter",
         "@fontsource-variable/jetbrains-mono",
         "@fontsource-variable/noto-sans-display",
-        "@testing-library/dom"
+        "@testing-library/dom",
+        "@number-flow/react",
+        "@number-flow/vue",
+        "i"
+      ]
+    },
+    "apps/web-vue": {
+      "entry": ["src/main.ts", "src/App.vue", "index.html"],
+      "ignore": ["public", "styled-system", "e2e", "src/components/placeholder-route.vue"],
+      "ignoreIssues": {
+        "src/features/extensions/base/types.ts": ["types"],
+        "src/features/extensions/base/registry.ts": ["exports"],
+        "src/features/control/composables/use-show.ts": ["exports"],
+        "src/features/control/floating-panel-types.ts": ["exports", "types"],
+        "src/features/control/timeline/timeline-table-column-config.ts": ["exports"],
+        "src/features/extensions/confetti/presets.ts": ["exports", "types"],
+        "src/features/extensions/registry.ts": ["exports", "types"],
+        "src/features/extensions/scroller/duration.ts": ["exports"],
+        "src/features/extensions/scroller/index.ts": ["exports"],
+        "src/features/leaderboard/animations-store.ts": ["exports"],
+        "src/lib/api.ts": ["exports"],
+        "src/lib/leaderboard-comparators.ts": ["exports"],
+        "src/lib/realtime-client.ts": ["exports", "types"],
+        "src/features/shared/ui/color-mode.ts": ["types"],
+        "src/features/extensions/index.ts": ["types"]
+      },
+      "ignoreDependencies": [
+        "@fontsource-variable/jetbrains-mono",
+        "@fontsource-variable/lora",
+        "@fontsource-variable/noto-sans-display",
+        "@pandacss/plugin-lightningcss",
+        "@pandacss/studio",
+        "@tanstack/vue-form",
+        "@tgb-form/vue",
+        "@vue/test-utils",
+        "browserslist",
+        "lightningcss",
+        "mediabunny",
+        "motion-v"
       ]
     },
     "packages/contracts": {
       "entry": ["src/index.ts", "openapi-ts.config.ts"],
-      "ignoreDependencies": ["@tgb-resolver/server"]
+      "ignoreDependencies": ["@tgb-resolver/server", "@tanstack/vue-query"]
     },
     "packages/realtime": {
       "entry": ["src/index.ts", "src/signalr.ts"],

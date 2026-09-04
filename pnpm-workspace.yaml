@@ -9,9 +9,14 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
   xxhash-addon: true
-  nx: set this to true or false
+  sharp: true
+  vue-demi: true
 
 blockExoticSubdeps: false
+
+minimumReleaseAgeExclude:
+  - '@tgb-form/core@0.0.5'
+  - '@tgb-form/vue@0.0.5'
 
 onlyBuiltDependencies:
   - esbuild

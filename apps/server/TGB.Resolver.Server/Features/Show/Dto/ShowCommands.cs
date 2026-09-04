@@ -6,6 +6,11 @@ namespace TGB.Resolver.Server.Features.Show.Dto;
 
 public sealed record ImportXmlRequest(string Xml, IReadOnlyList<string>? ExcludedUsernames);
 
+public sealed record ImportXmlUsersRequest(string Xml);
+
+// ReSharper disable once NotAccessedPositionalProperty.Global
+public sealed record ImportXmlUser(int Id, string Username, string Name);
+
 public sealed record ImportBundleRequest(string Bytes);
 
 public sealed record ResolveEventRenameRequest(int ShowVersion, string CustomName);

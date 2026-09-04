@@ -90,19 +90,20 @@ public sealed class IcpcResolverEngineTests
     new(7, 3, 226.25, 16, VerdictRunResult.TimeLimitExceeded),
     new(7, 6, 226.25, 16, VerdictRunResult.WrongAnswer),
     new(31, 0, 226.25, 15, VerdictRunResult.Unknown),
-    new(22, 0, 227.5, 14, VerdictRunResult.Unknown),
-    new(52, 0, 235, 13, VerdictRunResult.Unknown),
+    new(22, 3, 227.5, 14, VerdictRunResult.WrongAnswer),
+    new(52, 4, 235, 13, VerdictRunResult.TimeLimitExceeded),
     new(34, 6, 235, 12, VerdictRunResult.WrongAnswer),
-    new(54, 0, 268.75, 10, VerdictRunResult.Unknown),
-    new(25, 0, 278.75, 9, VerdictRunResult.Unknown),
-    new(49, 0, 313.75, 8, VerdictRunResult.Unknown),
-    new(43, 0, 321.25, 7, VerdictRunResult.Unknown),
+    new(54, 2, 268.75, 10, VerdictRunResult.WrongAnswer),
+    new(25, 2, 278.75, 9, VerdictRunResult.TimeLimitExceeded),
+    new(49, 2, 313.75, 8, VerdictRunResult.TimeLimitExceeded),
+    new(43, 2, 321.25, 7, VerdictRunResult.WrongAnswer),
+    new(43, 4, 321.25, 7, VerdictRunResult.WrongAnswer),
     new(44, 4, 350, 6, VerdictRunResult.WrongAnswer),
     new(44, 6, 350, 6, VerdictRunResult.WrongAnswer),
     new(27, 4, 437.5, 3, VerdictRunResult.TimeLimitExceeded),
     new(4, 4, 427.5, 5, VerdictRunResult.RuntimeError),
     new(35, 4, 506.25, 2, VerdictRunResult.Accepted),
-    new(15, 0, 437.5, 3, VerdictRunResult.Unknown),
+    new(15, 4, 437.5, 3, VerdictRunResult.WrongAnswer),
     new(5, 0, 550, 1, VerdictRunResult.Unknown)
   ];
 
@@ -248,6 +249,103 @@ public sealed class IcpcResolverEngineTests
     await Assert.That(result.Users).Count().IsEqualTo(52);
     await Assert.That(result.PreFreezeSnapshot.Any(entry => entry.UserId is 1 or 5)).IsFalse();
     await Assert.That(result.ResolveEvents.Any(entry => entry.UserId is 1 or 5)).IsFalse();
+  }
+
+  [Test]
+  public async Task Convert_NonImprovingPostFreezeAttempt_IsStillPending()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("team").Where(team => (int)team.Element("id")! != 5).Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => (int)run.Element("id")! != 3717).Remove();
+    var lastRun = doc.Descendants("run").Last();
+    lastRun.AddAfterSelf(new XElement("run",
+      new XElement("id", 9999), new XElement("problem", 1), new XElement("team", 5),
+      new XElement("time", 10500.0), new XElement("solved", "false"),
+      new XElement("penalty", "true"), new XElement("score", 0),
+      new XElement("result", "WA")));
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:15:00";
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+    var resolve = result.ResolveEvents.Single(e => e is { UserId: 5, IsFinalize: false });
+    await Assert.That(resolve.ProblemId).IsEqualTo(1);
+    await Assert.That(resolve.Verdict).IsEqualTo(VerdictRunResult.WrongAnswer);
+    await Assert.That(resolve.NewTotalScore).IsEqualTo(100);
+    var frozen = result.PreFreezeSnapshot.Single(e => e.UserId == 5);
+    await Assert.That(frozen.TotalScore).IsEqualTo(100);
+    var problem = frozen.Problems.Single(p => p.ProblemId == 1);
+    await Assert.That(problem.Verdict).IsEqualTo(VerdictRunResult.Unresolved);
+    await Assert.That(problem.PreFreezeSubmissionCount).IsEqualTo(1);
+    await Assert.That(problem.PostFreezeSubmissionCount).IsEqualTo(1);
+  }
+
+  [Test]
+  public async Task Convert_LowerPartialPostFreeze_KeepsScore()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("team").Where(team => (int)team.Element("id")! != 5).Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => (int)run.Element("id")! != 3717).Remove();
+    var pre = doc.Descendants("run").Single();
+    pre.Element("score")!.Value = "75";
+    pre.Element("solved")!.Value = "false";
+    pre.Element("result")!.Value = "WA";
+    pre.AddAfterSelf(new XElement("run",
+      new XElement("id", 9999), new XElement("problem", 1), new XElement("team", 5),
+      new XElement("time", 10500.0), new XElement("solved", "false"),
+      new XElement("penalty", "true"), new XElement("score", 25),
+      new XElement("result", "WA")));
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:15:00";
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+    var resolve = result.ResolveEvents.Single(e => e is { UserId: 5, IsFinalize: false });
+    await Assert.That(resolve.NewTotalScore).IsEqualTo(75);
+    await Assert.That(resolve.NewProblemScore).IsEqualTo(75);
+  }
+
+  [Test]
+  public async Task Convert_FullySolvedResubmit_IsStillPendingWithUnchangedPenalty()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("team").Where(team => (int)team.Element("id")! != 5).Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => (int)run.Element("id")! != 3717).Remove();
+    var lastRun = doc.Descendants("run").Last();
+    lastRun.AddAfterSelf(new XElement("run",
+      new XElement("id", 9999), new XElement("problem", 1), new XElement("team", 5),
+      new XElement("time", 10500.0), new XElement("solved", "true"),
+      new XElement("penalty", "false"), new XElement("score", 100),
+      new XElement("result", "AC")));
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:15:00";
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+    var resolve = result.ResolveEvents.Single(e => e is { UserId: 5, IsFinalize: false });
+    await Assert.That(resolve.NewTotalScore).IsEqualTo(100);
+    var frozen = result.PreFreezeSnapshot.Single(e => e.UserId == 5);
+    await Assert.That(resolve.NewTotalPenalty).IsEqualTo(frozen.TotalPenalty);
+  }
+
+  [Test]
+  public async Task Convert_RunAtFreezeBoundary_IsPending()
+  {
+    var doc = await LoadSampleAsync();
+    doc.Root!.Elements("team").Where(team => (int)team.Element("id")! != 5).Remove();
+    doc.Root!.Elements("problem").Where(problem => (int)problem.Element("id")! != 1).Remove();
+    doc.Root!.Elements("run")
+      .Where(run => (int)run.Element("id")! != 3717).Remove();
+    var lastRun = doc.Descendants("run").Last();
+    lastRun.AddAfterSelf(new XElement("run",
+      new XElement("id", 9999), new XElement("problem", 1), new XElement("team", 5),
+      new XElement("time", 10200.0), new XElement("solved", "false"),
+      new XElement("penalty", "true"), new XElement("score", 0),
+      new XElement("result", "WA")));
+    doc.Descendants("scoreboard-freeze-length").Single().Value = "0:15:00";
+    var result = IcpcResolverEngine.Convert(doc.ToString());
+    await Assert.That(result.ResolveEvents.Any(e =>
+      e is { UserId: 5, ProblemId: 1, IsFinalize: false })).IsTrue();
+    var frozen = result.PreFreezeSnapshot.Single(e => e.UserId == 5);
+    await Assert.That(frozen.Problems.Single(p => p.ProblemId == 1).PostFreezeSubmissionCount)
+      .IsEqualTo(1);
   }
 
   [Test]

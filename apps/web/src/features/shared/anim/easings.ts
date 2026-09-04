@@ -1,12 +1,8 @@
-import type { Easing } from "motion/react";
-
-// Grabbed from https://www.easing.dev/
-export const TgbResolverEasings: Record<string, Easing> = {
-  swiftOut: [0.175, 0.885, 0.32, 1.1],
-  inOutQuad: [0.455, 0.03, 0.515, 0.955],
+// Runtime (Motion) mirror of the Panda CSS `easings` tokens defined in
+// `apps/web-vue/panda.config.ts` (`easings.inOutQuad`, `easings.swiftOut`).
+// `motion`'s `animate()` needs JS easing values (not CSS vars), so keep these
+// two sources in sync when an easing changes.
+export const TgbResolverEasings = {
+  inOutQuad: [0.45, 0, 0.55, 1] as const,
+  swiftOut: [0.2, 0.8, 0.2, 1] as const,
 };
-
-export const TgbResolverCssEasings = {
-  swiftOut: "cubic-bezier(0.175, 0.885, 0.32, 1.1)",
-  inOutQuad: "cubic-bezier(0.455, 0.03, 0.515, 0.955)",
-} as const;

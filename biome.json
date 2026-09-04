@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
   "root": true,
   "linter": {
     "enabled": true,
@@ -7,6 +7,25 @@
       "preset": "recommended",
       "complexity": {
         "noUselessFragments": "off"
+      },
+      "style": {
+        "useVueHyphenatedAttributes": "off",
+        "useVueMultiWordComponentNames": {
+          "level": "on",
+          "options": {
+            "ignores": [
+              "Tooltip",
+              "Toaster",
+              "Leaderboard",
+              "Button",
+              "Heading",
+              "Spinner",
+              "Control",
+              "Index",
+              "[...path]"
+            ]
+          }
+        }
       }
     }
   },
@@ -48,7 +67,13 @@
       "!!**/*.gen.ts",
       "!!**/TestResults",
       "!!**/gen",
+      "!!**/styled-system",
+      "!!**/playwright-report",
+      "!!**/typed-router.d.ts",
       "vite.config.ts"
     ]
+  },
+  "html": {
+    "experimentalFullSupportEnabled": true
   }
 }

@@ -1,81 +1,64 @@
-import reactScan from "@react-scan/vite-plugin-react-scan";
-import babel from "@rolldown/plugin-babel";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import viteReact from "@vitejs/plugin-react";
+import { devtools } from "@tanstack/devtools-vite";
+import vue from "@vitejs/plugin-vue";
+import vueJsx from "@vitejs/plugin-vue-jsx";
 import { defineConfig } from "vite";
+import vueDevTools from "vite-plugin-vue-devtools";
+import vueRouter from "vue-router/vite";
 
 import { resolve } from "node:path";
+import { fileURLToPath, URL } from "node:url";
 
-const config = defineConfig(async () => {
-  return {
-    preview: {
-      host: "127.0.0.1",
+// https://vite.dev/config/
+export default defineConfig({
+  preview: {
+    host: "127.0.0.1",
+    port: 3000,
+  },
+  server: {
+    host: "127.0.0.1",
+    port: 3000,
+    watch: {
+      ignored: ["**/playwright-report/**", "**/test-results/**", "**/e2e/**"],
     },
-    resolve: {
-      alias: {
-        "@": resolve(import.meta.dirname, "./src"),
-      },
+  },
+  envDir: resolve(import.meta.dirname, "../.."),
+  plugins: [devtools(), vueRouter(), vue(), vueJsx(), vueDevTools()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@styled-system": fileURLToPath(new URL("./styled-system", import.meta.url)),
     },
-    server: {
-      host: "127.0.0.1",
-    },
-    envDir: resolve(import.meta.dirname, "../.."),
-    plugins: [
-      tanstackRouter({ target: "react", autoCodeSplitting: true }),
-      viteReact(),
-      await babel({
-        plugins: ["module:@preact/signals-react-transform"],
-      }),
-      reactScan(),
-    ],
-    build: {
-      rolldownOptions: {
-        output: {
-          strictExecutionOrder: true,
-          codeSplitting: {
-            groups: [
-              {
-                name: "vendor-chakra",
-                test: /node_modules\/@chakra-ui/,
-                priority: 100,
-              },
-              {
-                name: "vendor-react-core",
-                test: /node_modules\/(react|react-dom|react-compiler-runtime)/,
-                priority: 90,
-              },
-              {
-                name: "vendor-tanstack",
-                test: /node_modules\/@tanstack\/(react-router|react-start|router-core)/,
-                priority: 80,
-              },
-              {
-                name: (id: string) => {
-                  // Fix path separators for Windows compatibility
-                  const normalizedId = id.replace(/\\/g, "/");
+  },
+  build: {
+    rolldownOptions: {
+      output: {
+        strictExecutionOrder: true,
+        codeSplitting: {
+          groups: [
+            {
+              name: (id: string) => {
+                // Fix path separators for Windows compatibility
+                const normalizedId = id.replace(/\\/g, "/");
 
-                  if (normalizedId.includes("node_modules")) {
-                    // PNPM and Yarn Plug'n'Play can have nested node_modules, so we take the last occurrence to get the actual package
-                    const pkg = normalizedId.match(
-                      /node_modules\/((?:@[^/]+\/[^/]+)|[^/]+)(?!.*node_modules)/,
-                    );
-                    if (pkg) {
-                      // Clean up scoped package characters (@ and /) for clean filenames
-                      const pkgName = pkg?.[1]?.replace("@", "").replace("/", "-");
-                      return `vendor-${pkgName}`;
-                    }
+                if (normalizedId.includes("node_modules")) {
+                  // PNPM and Yarn Plug'n'Play can have nested node_modules, so we take the last occurrence to get the actual package
+                  const pkg = normalizedId.match(
+                    /node_modules\/((?:@[^/]+\/[^/]+)|[^/]+)(?!.*node_modules)/,
+                  );
+                  if (pkg) {
+                    // Clean up scoped package characters (@ and /) for clean filenames
+                    const pkgName = pkg?.[1]?.replace("@", "").replace("/", "-");
+                    return `vendor-${pkgName}`;
                   }
-                  return null;
-                },
-                entriesAware: true,
-                minModuleSize: 5000, // 5 kB seems good for us, Linear uses 3 kB
+                }
+                return null;
               },
-            ],
-          },
+              entriesAware: true,
+              minModuleSize: 5000, // 5 kB seems good for us, Linear uses 3 kB
+            },
+          ],
         },
       },
     },
-  };
+  },
 });
-
-export default config;

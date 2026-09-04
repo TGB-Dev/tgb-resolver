@@ -26,9 +26,6 @@ public static class IcpcResolverEngine
         new ProblemDefinition(problem.Id, problem.Label, problem.Name, problem.Score))
       .ToArray();
     var problemsById = problemDefs.ToDictionary(problem => problem.Id);
-    var problemOrder = contest.Problem
-      .Select((problem, index) => (problem.Id, index))
-      .ToDictionary(x => x.Id, x => x.index);
     var users = teams
       .Select(team => new UserDefinition(team.Id, team.Username, team.Name))
       .ToArray();
@@ -45,7 +42,8 @@ public static class IcpcResolverEngine
     var final = frozen.CreateEmptyClone();
     foreach (var run in runs) final.Apply(run);
 
-    var pending = CreatePendingProblems(frozen, final, teams, problemDefs);
+    var pending = CreatePendingProblems(frozen, final, teams, problemDefs, runs, freezeAtSeconds);
+    var pendingKeys = pending.Keys.ToHashSet();
     var resolving = frozen.Clone();
     var remaining = teams.Select(team => team.Id).ToHashSet();
     // Every team needs a finalization cue. Teams with pending problems get one
@@ -55,14 +53,15 @@ public static class IcpcResolverEngine
 
     // ICPC's resolver walks the current standings from the bottom. VNOI's
     // scorer supplies the point/penalty state; each pending problem resolves
-    // to its final score-altering run. Teams with nothing left to resolve are
-    // still visited, in rank order, to finalize their placement.
+    // to its final score-altering run, or to the last post-freeze attempt when
+    // the score never moved (a no-op reveal). Teams with nothing left to
+    // resolve are still visited, in rank order, to finalize their placement.
     while (remaining.Count > 0)
     {
       var team = resolving.Snapshot().Last(snapshot => remaining.Contains(snapshot.TeamId));
       var teamPending = pending.Keys
         .Where(key => key.TeamId == team.TeamId)
-        .OrderBy(key => problemOrder[key.ProblemId])
+        .OrderBy(key => key.ProblemId)
         .ToArray();
 
       if (teamPending.Length > 0)
@@ -120,7 +119,7 @@ public static class IcpcResolverEngine
         // freeze time — it must read as not-resolved (not its last pre-freeze
         // verdict) so the audience sees Unresolved -> PENDING (PRE-RES) -> final,
         // rather than a misleading WA flipping into pending.
-        if (pending.ContainsKey(new PendingProblem(team.Id, problemDef.Id)))
+        if (pendingKeys.Contains(new PendingProblem(team.Id, problemDef.Id)))
           verdict = VerdictRunResult.Unresolved;
         else if (result.LastAlteringRunId is { } runId && frozen.RunById(runId) is { } run)
           verdict = run.Verdict;
@@ -161,21 +160,33 @@ public static class IcpcResolverEngine
     Scoreboard frozen,
     Scoreboard final,
     IEnumerable<IcpcXmlTeam> teams,
-    IEnumerable<ProblemDefinition> problems)
+    IEnumerable<ProblemDefinition> problems,
+    IReadOnlyList<IcpcXmlRun> runs,
+    double freezeAtSeconds)
   {
+    var runsByTeamProblem = runs
+      .GroupBy(run => new PendingProblem(run.Team, run.Problem))
+      .ToDictionary(group => group.Key, group => group.OrderBy(run => run.Id).ToArray());
     var pending = new Dictionary<PendingProblem, IcpcXmlRun>();
     var teamList = teams.ToArray();
     var problemList = problems.ToArray();
     foreach (var team in teamList)
     foreach (var problem in problemList)
     {
-      var frozenResult = frozen.ResultFor(team.Id, problem.Id);
-      var finalResult = final.ResultFor(team.Id, problem.Id);
-      if (finalResult.LastAlteringRunId is not { } finalRunId
-          || frozenResult.LastAlteringRunId == finalRunId)
+      var key = new PendingProblem(team.Id, problem.Id);
+      if (!runsByTeamProblem.TryGetValue(key, out var list))
+        continue;
+      var postFreeze = list.Where(run => run.Time >= freezeAtSeconds).ToArray();
+      if (postFreeze.Length == 0)
         continue;
 
-      pending.Add(new PendingProblem(team.Id, problem.Id), final.RunById(finalRunId));
+      var frozenResult = frozen.ResultFor(team.Id, problem.Id);
+      var finalResult = final.ResultFor(team.Id, problem.Id);
+      if (finalResult.LastAlteringRunId is { } finalRunId
+          && frozenResult.LastAlteringRunId != finalRunId)
+        pending.Add(key, final.RunById(finalRunId));
+      else
+        pending.Add(key, postFreeze[^1]);
     }
 
     return pending;

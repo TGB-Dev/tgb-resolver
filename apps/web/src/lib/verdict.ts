@@ -1,12 +1,7 @@
-import type { BoxProps } from "@chakra-ui/react";
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 
 import { useColorMode } from "@/features/shared/ui/color-mode";
 
-// Derived from https://www.chakra-ui.com/docs/theming/colors
-
-// Haven't found a cleaner solution, but it works
-export type ChakraColor = BoxProps["color"];
 type SemanticToken =
   | ""
   | "subtle"
@@ -20,9 +15,9 @@ type SemanticToken =
   | "info";
 
 interface VerdictExplicitColorDef {
-  fg: { light: ChakraColor; dark: ChakraColor };
-  border: { light: ChakraColor; dark: ChakraColor };
-  bg: { light: ChakraColor; dark: ChakraColor };
+  fg: { light: string; dark: string };
+  border: { light: string; dark: string };
+  bg: { light: string; dark: string };
 }
 
 interface VerdictSemanticColorDef {
@@ -30,7 +25,7 @@ interface VerdictSemanticColorDef {
 }
 
 interface SingleColorDef {
-  color: ChakraColor;
+  color: string;
 }
 
 type VerdictColorDef = VerdictExplicitColorDef | VerdictSemanticColorDef | SingleColorDef;
@@ -86,9 +81,9 @@ export function verdictShortCode(verdict?: VerdictRunResult): string {
 }
 
 interface UseVerdictColorReturn {
-  fg: ChakraColor;
-  border: ChakraColor;
-  bg: ChakraColor;
+  fg: string;
+  border: string;
+  bg: string;
 }
 
 export function useVerdictColor(
@@ -113,7 +108,7 @@ export function useVerdictColor(
     };
   }
 
-  if (colorMode === "dark") {
+  if (colorMode.value === "dark") {
     return {
       fg: colorDef.fg.dark,
       border: colorDef.border.dark,

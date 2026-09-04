@@ -1,7 +1,7 @@
-import { createModel, signal, useSignalEffect } from "@preact/signals-react";
-import { useRef } from "react";
+import { useEventListener } from "@vueuse/core";
+import { ref } from "vue";
 
-interface ContextMenuTarget {
+export interface ContextMenuTarget {
   id: string;
   name: string;
   isDirectory: boolean;
@@ -23,13 +23,20 @@ const closedState = (): ContextMenuState => ({
   y: 0,
 });
 
-type ContextMenuModelState = ReturnType<typeof createContextMenuModel>;
+export function useContextMenu() {
+  const state = ref<ContextMenuState>(closedState());
 
-function createContextMenuModel() {
-  const state = signal<ContextMenuState>(closedState());
+  function close() {
+    state.value = closedState();
+  }
 
   function open(
-    e: Pick<React.MouseEvent, "preventDefault" | "stopPropagation" | "clientX" | "clientY">,
+    e: {
+      preventDefault: () => void;
+      stopPropagation: () => void;
+      clientX: number;
+      clientY: number;
+    },
     target: ContextMenuTarget | null,
     targetFolderId: string | null = null,
   ) {
@@ -41,34 +48,27 @@ function createContextMenuModel() {
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
 
-    state.value = { isOpen: true, target, targetFolderId, x: Math.max(8, x), y: Math.max(8, y) };
+    state.value = {
+      isOpen: true,
+      target,
+      targetFolderId,
+      x: Math.max(8, x),
+      y: Math.max(8, y),
+    };
   }
 
-  function close() {
-    state.value = closedState();
-  }
+  // Mirror the React reference: dismiss when pressing anywhere outside the
+  // open menu surface.
+  useEventListener(
+    document,
+    "pointerdown",
+    (e) => {
+      if (!state.value.isOpen) return;
+      if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
+      close();
+    },
+    { passive: true },
+  );
 
   return { state, open, close };
-}
-
-const ContextMenuModel = createModel<ContextMenuModelState>(() => createContextMenuModel());
-
-export function useContextMenu() {
-  const modelRef = useRef<InstanceType<typeof ContextMenuModel>>(null);
-  if (!modelRef.current) modelRef.current = new ContextMenuModel();
-  const model = modelRef.current;
-
-  useSignalEffect(() => {
-    if (!model.state.value.isOpen) return;
-
-    function handleGlobalPointerDown(e: PointerEvent) {
-      if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
-      model.close();
-    }
-
-    document.addEventListener("pointerdown", handleGlobalPointerDown);
-    return () => document.removeEventListener("pointerdown", handleGlobalPointerDown);
-  });
-
-  return { ...model, state: model.state.value };
 }

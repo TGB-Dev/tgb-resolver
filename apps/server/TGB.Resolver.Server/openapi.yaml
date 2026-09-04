@@ -253,6 +253,29 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /import/xml/users:
+    post:
+      tags:
+      - Import
+      operationId: TGBResolverServerFeaturesShowImportXmlUsersEndpoint
+      requestBody:
+        x-name: ImportXmlUsersRequest
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportXmlUsersRequest'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportXmlUser'
   /export/bundle:
     get:
       tags:
@@ -1172,6 +1195,23 @@ components:
           type: string
           minLength: 1
           nullable: false
+    ImportXmlUser:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int32
+        username:
+          type: string
+        name:
+          type: string
+    ImportXmlUsersRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        xml:
+          type: string
     ResolveEventRenameRequest:
       type: object
       additionalProperties: false

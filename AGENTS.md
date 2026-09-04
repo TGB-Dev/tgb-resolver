@@ -1,5 +1,12 @@
 # tgb-resolver
 
+## Frontend status
+
+`apps/web/` is the canonical (and only) frontend — a Vue 3 SPA (Pinia, Panda CSS + Chakra
+preset, Ark UI, vue-router, motion-v). There is no `apps/web-vue` directory and no React/legacy
+app. Vue components must use generated styled-system JSX factories and recipes for styling; do
+not recreate Chakra component styles with bespoke CSS when a Panda recipe exists.
+
 ## Commands
 
 - `pnpm dev` — run all apps in parallel (server + web)
@@ -27,12 +34,12 @@ Pre-commit hook runs: `sync:check || sync` → `test` → `biome check --write -
 | Path                  | Role                                                                                                               |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------|
 | `apps/server/`        | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format               |
-| `apps/web/`           | TanStack Router SPA (React 19, Vite, Chakra UI 3, Preact Signals). Dev port 3000                                    |
-| `apps/web/src/features/` | 5 feature-sliced UI modules, each owning their own models |
-| `apps/web/src/features/control/` | Models: playback, control-now, floating-panel (+types). UI: timeline, transport, cue tab |
-| `apps/web/src/features/leaderboard/` | Models: leaderboard. UI: grid/table views |
-| `apps/web/src/features/assets-manager/` | Models: assets-manager. UI: folder/file browser with tree view |
-| `apps/web/src/features/shared/` | Models: show, realtime, confirm-action, fullscreen. UI: shared components |
+| `apps/web/`           | Canonical Vue 3 SPA (Pinia, TanStack Vue Query, Panda CSS + Chakra preset, Ark UI, vue-router). Dev port 3000      |
+| `apps/web/src/features/` | 5 feature-sliced UI modules, each owning their own Pinia stores |
+| `apps/web/src/features/control/` | Stores: playback, control-now, floating-panel (+types). UI: timeline, transport, cue tab |
+| `apps/web/src/features/leaderboard/` | Stores: leaderboard. UI: grid/table views |
+| `apps/web/src/features/assets-manager/` | Store: assets-manager. UI: folder/file browser with tree view |
+| `apps/web/src/features/shared/` | Stores: show, realtime, confirm-action, fullscreen. UI: shared components |
 | `apps/web/src/features/extensions/` | Registry: base types + `extensionRegistry`. UI: extension config panel |
 | `packages/contracts/` | OpenAPI-generated TS HTTP client + TanStack Query + Valibot schemas. Generated from `apps/server/.../openapi.yaml` |
 | `packages/realtime/`  | Client-side clock sync, timeline and domain helpers. Re-exports contracts enums; must not redeclare them           |
@@ -42,15 +49,26 @@ Workspace packages: `@tgb-resolver/*`.
 ## Conventions
 
 - **`verbatimModuleSyntax`** enabled root-wide — always use `import type` for type-only imports
+- **Prefer direct type annotations over `satisfies`** for `const` declarations that need a
+  specific type. Write `const foo: readonly T[] = [...]` (or `const foo: T = {...}`), not
+  `const foo = [...] satisfies T`. A direct annotation gives the variable that exact type
+  (so callers and downstream `Record<K, V>` index access see the intended shape), whereas
+  `satisfies` only checks and leaves the variable with its (often wider) inferred type. Use
+  `satisfies` only when you need to preserve a narrower inferred type while still type-checking
+  against a target.
 - **String-valued enums** for domain vocabularies (not string unions). Contracts owns wire enums;
-  realtime re-exports them
+  realtime re-exports them. The frontend keyboard-shortcut command system in
+  `apps/web/src/features/shortcuts/` defines `CommandScope` and `CommandBindingKind` enums in
+  `types.ts`; command `scope` and binding `kind` MUST use these enum members (never raw string
+  literals). Adding a new scope or binding kind requires adding a member to the enum AND updating
+  the `satisfies` checks / discriminated unions in `types.ts`.
 - **Contracts build**: `pnpm run generate` (openapi-ts) → `tsdown`. Depends on current
   `openapi.yaml`
 - **OpenAPI regeneration**: emitted by the server `build` (
   `dotnet build -p:GenerateOpenApiDocument=true`);
   `pnpm turbo run build --filter=@tgb-resolver/server` regenerates `openapi.yaml`. No separate
   `openapi` task.
-- **Biome** (v2.5.5): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan
+- **Biome** (v2.5.10): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan
   blank package blank alias blank path. Ignores `*.gen.ts`
 - **syncpack**: checks dependency consistency across the workspace (no explicit config file;
   runs with defaults)
@@ -61,9 +79,9 @@ Workspace packages: `@tgb-resolver/*`.
   and is 5-10× faster for creation and look-ups.
 - **Grid over Table** for tabular layouts — render a list of CSS Grid rows instead of an
   HTML `<table>`. This scopes reflows to individual rows and avoids the costly style
-  propagation across many cells. Use the shared `GridTableRow` component and
-  `gridTableTemplate()` helper from `apps/web/src/components/ui/grid-table.tsx`. Reference
-  implementation: `apps/web/src/components/control/timeline/timeline-table.tsx` (generalize
+  propagation across many cells. Use the shared `gridTableTemplate()` helper from
+  `apps/web/src/features/shared/ui/grid-table.ts`. Reference
+  implementation: `apps/web/src/features/control/timeline/timeline-table.vue` (generalize
   for any future table including the leaderboard).
 
 ### Unity FsEntry pattern (Assets Manager)
@@ -75,9 +93,9 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
   `{ showVersion, isDirectory }` in the body — single endpoint for both folders and files.
 - **Contracts**: `deleteEntryEndpoint`, `renameEntryEndpoint` replacing separate
   folder/asset endpoints.
-- **Client model** (`assets-manager-model.ts`): `selectedEntryId` (navigation cursor),
-  `selectedIds: Signal<Set<string>>` (multi-select), `entries` (computed — merges child
-  folders + belonging files). `FsEntry` defined in `apps/web/src/features/assets-manager/types.ts`.
+- **Client store** (`assets-manager-store.ts`): `selectedEntryId` (navigation cursor),
+  multi-select state, and an `entries` getter (merges child folders + belonging files).
+  `FsEntry` defined in `apps/web/src/features/assets-manager/types.ts`.
 - **Views**: single `EntryCard`/`EntryRow` (grid/list), single `EntryMenu` (context menu).
   No bifurcated folder vs asset components.
 - **Tree view**: `Folder`/`FolderOpen` icons (no chevron), click toggles expand. `useComputed`
@@ -85,40 +103,36 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
 - **Selection semantics**: single-click → select/highlight, double-click → navigate/open.
   Modifier + click for multi-select; click outside deselects all.
 
-### Frontend state (Preact Signals)
+### Frontend state (Vue canonical frontend)
 
-- Import signals **only** from `@preact/signals-react` (never `@preact/signals`).
-- **BANNED for shared state:** React `useState`, `useReducer`, `createContext`,
-  `useContext` for any state that crosses a component boundary or outlives a render.
-  Use a `createModel` store instead. (Local-only ephemeral UI such as a disclosure
-  open/close may still use `useState`; prefer a signal for consistency.)
-- **Allowed React hooks:** `useQuery`/`useMutation` (TanStack Query — async cache),
-  `useRef` (imperative refs), `useEffect` (lifecycle wiring), `useSignal` (component-
-  local signal), `useComputed`/`useSignalEffect`/`effect`, `startTransition`.
-- **`useComputed(callback)`** — creates a `ReadonlySignal` that lazily re-evaluates
-  `callback` whenever any signal read inside it changes. The callback is updated via
-  ref on every render (no stale closures). Never pass a dependency array; signals are
-  tracked automatically. Import from `@preact/signals-react`.
-- **`useLiveSignal(value)`** — creates a `Signal` that stays synchronized with a
-  non-signal React value (e.g. React Query `data`). Uses `useLayoutEffect` internally
-  to sync. Import from `@preact/signals-react/utils`.
-- **`<For each={signalOrArray}>{(item, index) => ...}</For>`** — renders a list with
-  automatic vnode caching by item identity. Prevents re-creation of unchanged items
-  when the list updates. Accepts a signal, plain array, or function. `fallback` prop
-  shown when empty. Import from `@preact/signals-react/utils`. Use instead of
-  `array.map(...)` for reactive/cached list rendering.
-- Declare a store with `createModel<T>(() => ({ field: signal(...), action() {} }))`
-  then `export const xModel = new XModel();`. Read with `xModel.field.value` or render
-  display-only signals directly in JSX: `<>{xModel.field}</>`.
-- On hot paths (clock, playback), drive animations with `effect()` +
-  imperative `animate()` from `motion/react` (WAAPI). Avoid declarative
-  `motion/react` `animate` props bound to fast-changing signals — they commit
-  React on every change and starve frames.
-- Isolate a hot signal read into a tiny leaf component so only that leaf
-  re-renders, not a large ancestor subtree.
-- `batch()` correlated multi-signal writes; `peek()` for signal reads that must
-  not subscribe a component (reads used only inside callbacks/effects).
-- Wrap non-urgent `@tanstack/react-query` invalidations in `startTransition`.
+- Shared and feature state uses Pinia setup stores with `ref` and `computed`; do not introduce
+  React state patterns into `apps/web`.
+- **Follow Vue's lifecycle and rendering model, not React's.** Use Vue's own reactivity
+  (`ref`/`computed`/`watch`/`watchEffect`) and template-driven rendering. Do **not** port React/Preact
+  philosophy: no `createModel`/signal-as-source-of-truth, no `effect()`-driven DOM patching, no
+  `batch()`/`peek()` from Preact. Render reactive values in the template and let Vue's compiler handle
+  updates; drive hot-path animation imperatively via `motion-v`/vanilla `motion` WAAPI in leaf components.
+- **Vue 3.5+ primitives.** We target Vue 3.5+, so prefer the built-in primitives over hand-rolled
+  helpers: `useTemplateRef` (the modern replacement for `templateRef`) for template refs, `defineModel`
+  for v-model-compatible props, `useId` for stable unique ids, and `watchPostEffect`/`watchSyncEffect`
+  where needed. Avoid deprecated callback-ref / `templateRef` workarounds.
+- **Check VueUse first.** `@vueuse/core` is already a dependency. Before hand-writing utilities
+  (debounce/throttle, storage, clipboard, element visibility/resize, on-click-outside, etc.), prefer the
+  matching VueUse composable.
+- Use `@tanstack/vue-query` for server cache and async mutations.
+- Use generated `@styled-system/jsx` components for layout and generated Chakra Panda recipes
+  for component anatomy. Ark UI primitives must receive the corresponding generated slot recipe
+  classes; Ark primitives do not accept styled-system layout props.
+- Merge recipe and atomic overrides with Panda `cx(recipe(...), css(...))`, not string concatenation
+  or bespoke scoped CSS. Use Panda conditional styles (`_hover`, `_disabled`, `_selected`, etc.)
+  for state styling.
+- **Read the styling docs before styling work.** Fetch and read the official docs for our styling stack:
+  - **Panda CSS** — https://panda-css.com/docs (full-text dump: https://panda-css.com/llms-full.txt)
+  - **Ark UI (Vue)** — https://ark-ui.com/ (Vue docs under `/vue/docs`; source repo `chakra-ui/ark`)
+  - **Chakra UI panda preset** — `@chakra-ui/panda-preset`, whose source lives in the Chakra GitHub
+    repo at `chakra-ui/chakra-ui` (`packages/panda-preset`); it provides the Chakra-aligned tokens,
+    recipes, and slot recipes we consume via `presets: ["@chakra-ui/panda-preset"]`.
+- Use `motion-v`/vanilla `motion` for animation and keep hot-path animation imperative.
 
 ## Testing
 
@@ -197,7 +211,7 @@ method on that interface.
 
 Adding a new realtime message requires touching exactly five places, in order:
 
-1. **Server — `IShowHubClient`** (`Features/Realtime/RealtimeContracts.cs`)
+1. **Server — `IShowHubClient`** (`apps/server/TGB.Resolver.Server/Features/Realtime/RealtimeContracts.cs`)
    Add the method signature, e.g.:
    ```csharp
    Task MyNewMessage(MyNewMessageMessage message);
@@ -207,7 +221,7 @@ Adding a new realtime message requires touching exactly five places, in order:
    public sealed record MyNewMessageMessage(int ShowVersion, string SomeData);
    ```
 
-2. **Server — `ShowService.cs`** (or wherever you broadcast)
+2. **Server — `ShowService.cs`** (`apps/server/TGB.Resolver.Server/Features/Show/ShowService.cs`, or wherever you broadcast)
    Call the method:
    ```csharp
    await hubContext.Clients.All.MyNewMessage(new MyNewMessageMessage(...));
@@ -215,8 +229,8 @@ Adding a new realtime message requires touching exactly five places, in order:
 
 3. **Client — `realtime.worker.ts` + `lib/show-message-mapper.ts`** (register the
    SignalR handler). Add a `connection.on("MyNewMessage", ...)` block in
-   `realtime.worker.ts` that calls `mapMyNewMessage(...)` from
-   `lib/show-message-mapper.ts` and posts the `ShowWebSocketMessage` variant.
+   `apps/web/src/lib/realtime.worker.ts` that calls `mapMyNewMessage(...)` from
+   `apps/web/src/lib/show-message-mapper.ts` and posts the `ShowWebSocketMessage` variant.
    `callbacks.onMessage(...)`.
 
 4. **Client — `types.ts` (`packages/realtime/src/types.ts`)**
@@ -225,7 +239,7 @@ Adding a new realtime message requires touching exactly five places, in order:
    | { type: "my-new-message"; showVersion: number; someData: string }
    ```
 
-5. **Client — `realtime-handler.ts`**
+5. **Client — `realtime-handler.ts`** (`apps/web/src/features/control/realtime-handler.ts`)
    Handle the new message type in the `if` chain inside `applyControlRealtimeMessage`.
 
 ### Message type naming

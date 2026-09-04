@@ -1,0 +1,42 @@
+@import "@fontsource-variable/noto-sans-display/wdth.css";
+@import "@fontsource-variable/noto-sans-display/wdth-italic.css";
+@import "@fontsource-variable/lora/wght.css";
+@import "@fontsource-variable/lora/wght-italic.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght-italic.css";
+
+@layer reset, base, tokens, recipes, utilities;
+
+*,
+:not(input),
+:not(textarea) {
+  user-select: none;
+}
+
+* {
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  font-variation-settings:
+    "wght" 500,
+    "wdth" 87.5;
+}
+
+code,
+pre,
+kbd,
+samp {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  font-variation-settings: "normal";
+}
+
+/* Splash screen shown inside #app until Vue mounts and replaces it */
+#splash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--colors-bg);
+}

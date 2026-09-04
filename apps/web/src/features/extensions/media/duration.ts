@@ -1,35 +1,34 @@
 import { ALL_FORMATS, BufferSource, Input } from "mediabunny";
 
-import { assetsManagerModel } from "@/features/assets-manager/assets-manager-model";
-import { showModel } from "@/features/shared/show-model";
+import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
+import { API_BASE_URL } from "@/lib/runtime-config";
+import { useShowStore } from "@/stores/show-store";
 import { getPreloadedAsset } from "@/utils/preload-assets";
 
 import type { MediaExtensionPayload } from "./index";
 
-const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
-
 export function assetContentType(assetId: string): string | undefined {
-  const showFile = showModel.showFile.value;
+  const showFile = useShowStore().showFile;
   if (showFile) {
     const asset = showFile.assets?.items?.find((item) => item.id === assetId);
     if (asset?.contentType) return asset.contentType;
   }
-  const entry = assetsManagerModel.findEntry(assetId);
+  const entry = useAssetsManagerStore().findEntry(assetId);
   return entry && !entry.isDirectory ? entry.contentType : undefined;
 }
 
-export function isPlayableAsset(assetId: string): boolean {
+function isPlayableAsset(assetId: string): boolean {
   const contentType = assetContentType(assetId);
   if (!contentType) return false;
   return contentType.startsWith("video/") || contentType.startsWith("audio/");
 }
 
-export async function computeAssetDuration(assetId: string): Promise<number | null> {
+async function computeAssetDuration(assetId: string): Promise<number | null> {
   if (!assetId || !isPlayableAsset(assetId)) return null;
 
   let buffer = getPreloadedAsset(assetId);
   if (!buffer) {
-    const response = await fetch(`${baseUrl}/assets/${assetId}`);
+    const response = await fetch(`${API_BASE_URL}/assets/${assetId}`);
     if (!response.ok) throw new Error(`Failed to fetch asset ${assetId}: ${response.status}`);
     buffer = await response.arrayBuffer();
   }

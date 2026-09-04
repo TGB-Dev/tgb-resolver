@@ -1,20 +1,20 @@
-import { useEffect } from "react";
+import { watchEffect } from "vue";
 
-import { audioModel } from "./audio.model";
+import { useAudioStore } from "./audio-store";
 import { soundEngine } from "./index";
 
-export function useBackgroundMusic(shouldPlay: boolean): void {
-  const isPlaying = audioModel.isPlaying.value;
+/** Play/stop background music while `shouldPlay` and the audio store agree. */
+export function useBackgroundMusic(shouldPlay: () => boolean): void {
+  const audio = useAudioStore();
 
-  useEffect(() => {
-    if (shouldPlay && isPlaying) {
+  watchEffect((onCleanup) => {
+    if (shouldPlay() && audio.isPlaying) {
       soundEngine.playBackgroundMusic();
     } else {
       soundEngine.stopBackgroundMusic();
     }
-
-    return () => {
+    onCleanup(() => {
       soundEngine.stopBackgroundMusic();
-    };
-  }, [shouldPlay, isPlaying]);
+    });
+  });
 }

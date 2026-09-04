@@ -1,14 +1,14 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/vue-query";
 import {
   generatedClient,
   tgbResolverServerFeaturesShowGetShowEndpointQueryKey,
 } from "@tgb-resolver/contracts";
 import { ShowMessageType, type ShowWebSocketMessage } from "@tgb-resolver/realtime";
 
-import { playbackModel } from "@/features/control/playback-model";
-import { animationsModel } from "@/features/leaderboard/animations-model";
-import { realtimeModel } from "@/features/shared/realtime-model";
-import { showModel } from "@/features/shared/show-model";
+import { usePlaybackStore } from "@/features/control/playback-store";
+import { useAnimationsStore } from "@/features/leaderboard/animations-store";
+import { useRealtimeStore } from "@/stores/realtime-store";
+import { useShowStore } from "@/stores/show-store";
 
 export function controlShowQueryKey() {
   return tgbResolverServerFeaturesShowGetShowEndpointQueryKey({ client: generatedClient });
@@ -18,27 +18,32 @@ export function applyControlRealtimeMessage(
   queryClient: QueryClient,
   message: ShowWebSocketMessage,
 ) {
+  const playbackStore = usePlaybackStore();
+  const showStore = useShowStore();
+  const realtimeStore = useRealtimeStore();
+  const animationsStore = useAnimationsStore();
+
   switch (message.type) {
     case ShowMessageType.PlaybackStateChanged:
       // Playback carries the (unchanged) DATA showVersion; never refetch, never drift the data version.
-      animationsModel.previousEventId.value = playbackModel.state.value.currentEventId;
-      playbackModel.syncFromSnapshot(message.showVersion, message.playback);
+      animationsStore.previousEventId = playbackStore.state.currentEventId;
+      playbackStore.syncFromSnapshot(message.showVersion, message.playback);
       return;
 
     case ShowMessageType.LiveModeChanged:
-      if (!showModel.tryAdvanceShowVersion(message.showVersion)) {
-        realtimeModel.bigRefetching.value = true;
+      if (!showStore.tryAdvanceShowVersion(message.showVersion)) {
+        realtimeStore.bigRefetching = true;
         void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
         return;
       }
-      showModel.showMode.value = message.mode;
-      playbackModel.syncVersion(message.showVersion);
+      showStore.showMode = message.mode;
+      playbackStore.syncVersion(message.showVersion);
       return;
 
     case ShowMessageType.ShowReplaced:
       // Wholesale replace (import/clear): refetch the whole show. Rare + user-initiated,
       // so a full refetch is correct and avoids mapping the large snapshot.
-      realtimeModel.bigRefetching.value = true;
+      realtimeStore.bigRefetching = true;
       void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
       return;
 
@@ -46,11 +51,11 @@ export function applyControlRealtimeMessage(
     case ShowMessageType.TimelineEventUpdated:
     case ShowMessageType.TimelineEventRemoved:
     case ShowMessageType.TimelineReordered:
-      if (showModel.tryApplyShowMessage(message)) {
-        playbackModel.syncVersion(message.showVersion);
+      if (showStore.tryApplyShowMessage(message)) {
+        playbackStore.syncVersion(message.showVersion);
       } else {
         // Version gap (missed message / late join) -> repair via whole-show refetch (original desync design).
-        realtimeModel.bigRefetching.value = true;
+        realtimeStore.bigRefetching = true;
         void queryClient.invalidateQueries({ queryKey: controlShowQueryKey() });
       }
       return;

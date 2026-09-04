@@ -104,10 +104,56 @@ describe("drift tracking", () => {
   test("second update smooths observed drift", () => {
     const d = createDriftState();
     const afterFirst = updateDrift(d, 1_000_000, 50_000);
-    // 10 s wall-clock elapsed, 11 s monotonic elapsed → drift = 10/11 ≈ 0.909
-    const afterSecond = updateDrift(afterFirst, 1_010_000, 61_000);
-    // observed = 10000/11000 ≈ 0.909 → smoothed = 1 + 0.15*(0.909 - 1) ≈ 0.986
-    expect(afterSecond.rate).toBeCloseTo(0.986, 2);
+    // 10.2 s wall-clock elapsed, 10 s monotonic elapsed → observed = 1.02
+    const afterSecond = updateDrift(afterFirst, 1_010_200, 60_000);
+    // observed = 1.02 → smoothed = 1 + 0.15*(1.02 - 1) = 1.003
+    expect(afterSecond.rate).toBeCloseTo(1.003, 3);
+  });
+});
+
+describe("updateDrift guardrails", () => {
+  test("short-interval sample does not change the rate", () => {
+    const d = { rate: 1.0, lastServerNowMs: 1_000_000, lastMonotonicMs: 50_000 };
+    const result = updateDrift(d, d.lastServerNowMs + 5, d.lastMonotonicMs + 50);
+    expect(result.rate).toBe(1.0);
+    expect(result.lastServerNowMs).toBe(1_000_005);
+    expect(result.lastMonotonicMs).toBe(50_050);
+  });
+
+  test("absurd observed ratio is rejected", () => {
+    const d = { rate: 1.0, lastServerNowMs: 1_000_000, lastMonotonicMs: 50_000 };
+    const result = updateDrift(d, d.lastServerNowMs + 100_000, d.lastMonotonicMs + 1_000);
+    expect(result.rate).toBe(1.0);
+  });
+
+  test("observed 1.0 keeps rate at 1.0", () => {
+    const d = { rate: 1.0, lastServerNowMs: 1_000_000, lastMonotonicMs: 50_000 };
+    const result = updateDrift(d, d.lastServerNowMs + 2_000, d.lastMonotonicMs + 2_000);
+    expect(result.rate).toBe(1.0);
+  });
+
+  test("observed just over 1.05 is rejected", () => {
+    const d = { rate: 1.0, lastServerNowMs: 1_000_000, lastMonotonicMs: 50_000 };
+    const result = updateDrift(d, d.lastServerNowMs + 1_100, d.lastMonotonicMs + 1_000);
+    expect(result.rate).toBe(1.0);
+  });
+
+  test("valid observed 1.01 moves rate slightly toward 1.01", () => {
+    const d = { rate: 1.0, lastServerNowMs: 1_000_000, lastMonotonicMs: 50_000 };
+    const result = updateDrift(d, d.lastServerNowMs + 1_010, d.lastMonotonicMs + 1_000);
+    expect(Math.abs(result.rate - 1.0)).toBeLessThan(0.05);
+    expect(result.rate).toBeGreaterThanOrEqual(0.98);
+    expect(result.rate).toBeLessThanOrEqual(1.02);
+  });
+
+  test("clamp keeps rate within band over repeated valid samples", () => {
+    let d = { rate: 1.0, lastServerNowMs: 1_000_000, lastMonotonicMs: 50_000 };
+    for (let i = 0; i < 20; i++) {
+      d = updateDrift(d, d.lastServerNowMs + 2_000, d.lastMonotonicMs + 2_000);
+      expect(d.rate).toBeGreaterThanOrEqual(0.98);
+      expect(d.rate).toBeLessThanOrEqual(1.02);
+    }
+    expect(d.rate).toBe(1.0);
   });
 });
 

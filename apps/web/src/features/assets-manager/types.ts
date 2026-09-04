@@ -1,5 +1,4 @@
 export type ViewMode = "list" | "grid";
-
 export interface FsEntry {
   id: string;
   name: string;
