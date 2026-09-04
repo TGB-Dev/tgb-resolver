@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package show.v1;
+
+option go_package = "tgb-resolver/server-go/proto/gen/show/v1;showv1";
+
+message TimelineEventSnapshot {
+  int32 id = 1;
+  int32 position = 2;
+  string type = 3;
+}
+
+message PlaybackSnapshot {
+  string status = 1;
+  int32 current_event_id = 2;
+  bool has_current_event_id = 3;
+}
+
+message TimelineEventAdded {
+  int32 show_version = 1;
+  TimelineEventSnapshot event = 2;
+}
+
+message TimelineEventUpdated {
+  int32 show_version = 1;
+  TimelineEventSnapshot event = 2;
+}
+
+message TimelineEventRemoved {
+  int32 show_version = 1;
+  int32 event_id = 2;
+}
+
+message TimelineReordered {
+  int32 show_version = 1;
+  repeated int32 ordered_event_ids = 2;
+}
+
+message ShowReplaced {
+  int32 show_version = 1;
+}
+
+message PlaybackStateChanged {
+  int32 show_version = 1;
+  PlaybackSnapshot playback = 2;
+  int64 server_time_unix_ms = 3;
+}
+
+message LiveModeChanged {
+  int32 show_version = 1;
+  string mode = 2;
+}
+
+message ClockSyncRequest {
+  int64 client_time_unix_ms = 1;
+}
+
+message ClockSyncResponse {
+  int64 client_time_unix_ms = 1;
+  int64 received_at_unix_ms = 2;
+  int64 transmitted_at_unix_ms = 3;
+}
+
+message Envelope {
+  string type = 1;
+  oneof payload {
+    TimelineEventAdded timeline_event_added = 10;
+    TimelineEventUpdated timeline_event_updated = 11;
+    TimelineEventRemoved timeline_event_removed = 12;
+    TimelineReordered timeline_reordered = 13;
+    ShowReplaced show_replaced = 14;
+    PlaybackStateChanged playback_state_changed = 15;
+    LiveModeChanged live_mode_changed = 16;
+    ClockSyncResponse clock_sync_response = 17;
+  }
+}
