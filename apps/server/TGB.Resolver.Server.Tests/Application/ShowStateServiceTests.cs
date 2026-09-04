@@ -746,8 +746,9 @@ public sealed class ShowStateServiceTests
     await Assert.That(snapshot.Contest.Users).Count().IsEqualTo(54);
     // Every team now yields timeline events: resolving teams get a Pre + Res
     // pair, the rest a single finalization Res, so the count exceeds the old
-    // resolve-only tally.
-    await Assert.That(snapshot.Timeline).Count().IsEqualTo(100);
+    // resolve-only tally. VNOI parity adds no-op reveals for non-improving
+    // post-freeze attempts.
+    await Assert.That(snapshot.Timeline).Count().IsEqualTo(109);
   }
 
   [Test]

@@ -8,6 +8,7 @@ public sealed record ImportXmlRequest(string Xml, IReadOnlyList<string>? Exclude
 
 public sealed record ImportXmlUsersRequest(string Xml);
 
+// ReSharper disable once NotAccessedPositionalProperty.Global
 public sealed record ImportXmlUser(int Id, string Username, string Name);
 
 public sealed record ImportBundleRequest(string Bytes);

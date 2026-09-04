@@ -1,8 +1,7 @@
 using System.Text.Json;
 using FastEndpoints;
-using TGB.Resolver.IcpcXmlParser;
-using IcpcParser = TGB.Resolver.IcpcXmlParser.IcpcXmlParser;
 using TGB.Resolver.Server.Features.Show.Dto;
+using IcpcParser = TGB.Resolver.IcpcXmlParser.IcpcXmlParser;
 
 namespace TGB.Resolver.Server.Features.Show;
 
