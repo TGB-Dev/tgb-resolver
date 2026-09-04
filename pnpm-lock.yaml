@@ -35,6 +35,8 @@ importers:
 
   apps/server: {}
 
+  apps/server-go: {}
+
   apps/web:
     dependencies:
       '@ark-ui/vue':
