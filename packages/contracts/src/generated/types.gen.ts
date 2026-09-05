@@ -5,7 +5,7 @@ export type ClientOptions = {
 };
 
 export type AssetCollection = {
-    folders?: Array<FolderNode> | null;
+    folders: Array<FolderNode> | null;
     items: Array<ShowAsset> | null;
 };
 

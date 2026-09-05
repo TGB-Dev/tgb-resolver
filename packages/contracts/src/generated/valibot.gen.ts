@@ -350,7 +350,7 @@ export const vShowAsset = v.strictObject({
 });
 
 export const vAssetCollection = v.strictObject({
-    folders: v.nullish(v.array(vFolderNode)),
+    folders: v.nullable(v.array(vFolderNode)),
     items: v.nullable(v.array(vShowAsset))
 });
 
