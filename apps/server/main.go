@@ -33,11 +33,6 @@ func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service
 	return &App{Config: cfg, DB: db, Store: store, Service: svc, Hub: hub, Clock: clock, Blobs: blobs}
 }
 
-const scalarHTML = `<!doctype html>
-<html><head><title>TGB Resolver API</title><meta charset="utf-8"/></head>
-<body><script id="api-reference" data-url="/openapi.json"></script>
-<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script></body></html>`
-
 func main() {
 	dumpPath := flag.String("dump-openapi", "", "dump openapi.yaml to path and exit")
 	flag.Parse()
@@ -60,6 +55,8 @@ func main() {
 	router.Use(corsMiddleware(cfg.AllowedOrigins))
 	humaConfig := huma.DefaultConfig("TGB Resolver Server", "v1")
 	humaConfig.OpenAPIPath = "/openapi"
+	humaConfig.DocsPath = "/scalar"
+	humaConfig.DocsRenderer = huma.DocsRendererScalar
 	api := humagin.New(router, humaConfig)
 	show.RegisterShowRoutes(api, app.Service)
 	assets.RegisterAssetRoutes(api, app.Service, app.Blobs)
@@ -81,9 +78,6 @@ func main() {
 			}
 		}
 		c.Data(http.StatusOK, contentType, data)
-	})
-	router.GET("/scalar", func(c *gin.Context) {
-		c.Data(200, "text/html; charset=utf-8", []byte(scalarHTML))
 	})
 
 	if *dumpPath != "" {
