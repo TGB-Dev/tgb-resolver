@@ -6,7 +6,6 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
-    "./signalr": "./dist/signalr.mjs",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -19,9 +18,11 @@
     "typecheck": "pnpm run check-types"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "^2.14.1",
     "@tgb-resolver/contracts": "workspace:*"
   },
   "devDependencies": {
+    "@bufbuild/protoc-gen-es": "^2.14.1",
     "@microsoft/signalr": "^10.0.11",
     "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.4.1",

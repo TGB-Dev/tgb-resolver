@@ -6,6 +6,7 @@ import {
   transferEntryEndpoint,
   uploadAssetEndpoint,
 } from "@tgb-resolver/contracts";
+import type { ShowFile } from "@tgb-resolver/realtime";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
@@ -102,7 +103,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
   function collapseAll() {
     expandedFolderIds.value = new Set();
   }
-  function applyShowState(data: ShowStateSnapshot) {
+  function applyShowState(data: ShowStateSnapshot | ShowFile) {
     showVersion.value = data.showVersion ?? 0;
     const folders = (data.assets?.folders ?? []) as Array<{
       id: string;

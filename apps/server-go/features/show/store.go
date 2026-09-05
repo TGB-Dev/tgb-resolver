@@ -192,8 +192,12 @@ func CreateEmptyShow(showVersion int, source domain.ShowSource) domain.ShowState
 	return domain.ShowState{
 		SchemaVersion: currentSchemaVersion, ShowVersion: showVersion,
 		Mode: domain.ShowModeEditing, TimelineMode: domain.TimelineRw,
-		Meta:       domain.ShowMeta{Title: "Untitled show", Source: source},
-		Contest:    domain.ContestState{},
+		Meta: domain.ShowMeta{Title: "Untitled show", Source: source},
+		Contest: domain.ContestState{
+			Problems:          []domain.ProblemDefinition{},
+			Users:             []domain.UserDefinition{},
+			PreFreezeSnapshot: []domain.FreezeSnapshotEntry{},
+		},
 		Automation: domain.AutomationState{AutoResolveSpeedMs: 3000},
 		Playback:   domain.PlaybackState{Status: domain.PlaybackIdle, ActiveEventIDs: []int{}},
 		Assets:     domain.AssetCollection{Items: []domain.ShowAsset{}},

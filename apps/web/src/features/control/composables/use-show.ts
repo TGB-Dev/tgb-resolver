@@ -342,14 +342,18 @@ export function useCreateTimelineEventMutation() {
       relativeToEventId: number;
       before: boolean;
       customName?: string;
-      durationSeconds?: number | null;
+      durationSeconds?: number | null | undefined;
       custom: { extId: string; extPayload: Record<string, unknown> };
     }) => {
       requireShow(showQuery.data.value);
       return await withRetry(queryClient, async () => {
         const { data } = await createTimelineEvent({
           client: generatedClient,
-          body: { showVersion: usePlaybackStore().state.showVersion, ...payload },
+          body: {
+            showVersion: usePlaybackStore().state.showVersion,
+            ...payload,
+            durationSeconds: payload.durationSeconds ?? undefined,
+          },
         });
         return data as ShowStateSnapshot;
       });
@@ -503,14 +507,14 @@ export function useUpdateSettingsMutation() {
   const showQuery = useControlShowQuery();
 
   return useMutation({
-    mutationFn: async (tickRate: number | null) => {
+    mutationFn: async (tickRate: number | null | undefined) => {
       requireShow(showQuery.data.value);
       return await withRetry(queryClient, async () => {
         const { data } = await setSettings({
           client: generatedClient,
           body: {
             showVersion: usePlaybackStore().state.showVersion,
-            tickRate,
+            tickRate: tickRate ?? undefined,
           },
         });
         return data as ShowStateSnapshot;

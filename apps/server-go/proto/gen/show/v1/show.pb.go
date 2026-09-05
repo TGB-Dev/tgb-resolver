@@ -21,18 +21,177 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ResolvePayload struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	UserId          int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ProblemId       int32                  `protobuf:"varint,2,opt,name=problem_id,json=problemId,proto3" json:"problem_id,omitempty"`
+	NewTotalScore   float64                `protobuf:"fixed64,3,opt,name=new_total_score,json=newTotalScore,proto3" json:"new_total_score,omitempty"`
+	NewTotalPenalty float64                `protobuf:"fixed64,4,opt,name=new_total_penalty,json=newTotalPenalty,proto3" json:"new_total_penalty,omitempty"`
+	NewRank         int32                  `protobuf:"varint,5,opt,name=new_rank,json=newRank,proto3" json:"new_rank,omitempty"`
+	NewProblemScore float64                `protobuf:"fixed64,6,opt,name=new_problem_score,json=newProblemScore,proto3" json:"new_problem_score,omitempty"`
+	Verdict         string                 `protobuf:"bytes,7,opt,name=verdict,proto3" json:"verdict,omitempty"`
+	TimeSinceStart  float64                `protobuf:"fixed64,8,opt,name=time_since_start,json=timeSinceStart,proto3" json:"time_since_start,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ResolvePayload) Reset() {
+	*x = ResolvePayload{}
+	mi := &file_proto_show_v1_show_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolvePayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolvePayload) ProtoMessage() {}
+
+func (x *ResolvePayload) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_show_v1_show_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolvePayload.ProtoReflect.Descriptor instead.
+func (*ResolvePayload) Descriptor() ([]byte, []int) {
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ResolvePayload) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *ResolvePayload) GetProblemId() int32 {
+	if x != nil {
+		return x.ProblemId
+	}
+	return 0
+}
+
+func (x *ResolvePayload) GetNewTotalScore() float64 {
+	if x != nil {
+		return x.NewTotalScore
+	}
+	return 0
+}
+
+func (x *ResolvePayload) GetNewTotalPenalty() float64 {
+	if x != nil {
+		return x.NewTotalPenalty
+	}
+	return 0
+}
+
+func (x *ResolvePayload) GetNewRank() int32 {
+	if x != nil {
+		return x.NewRank
+	}
+	return 0
+}
+
+func (x *ResolvePayload) GetNewProblemScore() float64 {
+	if x != nil {
+		return x.NewProblemScore
+	}
+	return 0
+}
+
+func (x *ResolvePayload) GetVerdict() string {
+	if x != nil {
+		return x.Verdict
+	}
+	return ""
+}
+
+func (x *ResolvePayload) GetTimeSinceStart() float64 {
+	if x != nil {
+		return x.TimeSinceStart
+	}
+	return 0
+}
+
+type CustomPayload struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ExtId          string                 `protobuf:"bytes,1,opt,name=ext_id,json=extId,proto3" json:"ext_id,omitempty"`
+	ExtPayloadJson []byte                 `protobuf:"bytes,2,opt,name=ext_payload_json,json=extPayloadJson,proto3" json:"ext_payload_json,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *CustomPayload) Reset() {
+	*x = CustomPayload{}
+	mi := &file_proto_show_v1_show_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CustomPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CustomPayload) ProtoMessage() {}
+
+func (x *CustomPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_show_v1_show_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CustomPayload.ProtoReflect.Descriptor instead.
+func (*CustomPayload) Descriptor() ([]byte, []int) {
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CustomPayload) GetExtId() string {
+	if x != nil {
+		return x.ExtId
+	}
+	return ""
+}
+
+func (x *CustomPayload) GetExtPayloadJson() []byte {
+	if x != nil {
+		return x.ExtPayloadJson
+	}
+	return nil
+}
+
 type TimelineEventSnapshot struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
-	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Position                 int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
+	Type                     string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	DurationSeconds          *float64               `protobuf:"fixed64,4,opt,name=duration_seconds,json=durationSeconds,proto3,oneof" json:"duration_seconds,omitempty"`
+	TriggerOffsetSeconds     *float64               `protobuf:"fixed64,5,opt,name=trigger_offset_seconds,json=triggerOffsetSeconds,proto3,oneof" json:"trigger_offset_seconds,omitempty"`
+	RequireManualInteraction *bool                  `protobuf:"varint,6,opt,name=require_manual_interaction,json=requireManualInteraction,proto3,oneof" json:"require_manual_interaction,omitempty"`
+	CustomName               *string                `protobuf:"bytes,7,opt,name=custom_name,json=customName,proto3,oneof" json:"custom_name,omitempty"`
+	Resolve                  *ResolvePayload        `protobuf:"bytes,8,opt,name=resolve,proto3" json:"resolve,omitempty"`
+	Pre                      *ResolvePayload        `protobuf:"bytes,9,opt,name=pre,proto3" json:"pre,omitempty"`
+	Custom                   *CustomPayload         `protobuf:"bytes,10,opt,name=custom,proto3" json:"custom,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *TimelineEventSnapshot) Reset() {
 	*x = TimelineEventSnapshot{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[0]
+	mi := &file_proto_show_v1_show_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +203,7 @@ func (x *TimelineEventSnapshot) String() string {
 func (*TimelineEventSnapshot) ProtoMessage() {}
 
 func (x *TimelineEventSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[0]
+	mi := &file_proto_show_v1_show_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +216,7 @@ func (x *TimelineEventSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineEventSnapshot.ProtoReflect.Descriptor instead.
 func (*TimelineEventSnapshot) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{0}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TimelineEventSnapshot) GetId() int32 {
@@ -81,18 +240,68 @@ func (x *TimelineEventSnapshot) GetType() string {
 	return ""
 }
 
+func (x *TimelineEventSnapshot) GetDurationSeconds() float64 {
+	if x != nil && x.DurationSeconds != nil {
+		return *x.DurationSeconds
+	}
+	return 0
+}
+
+func (x *TimelineEventSnapshot) GetTriggerOffsetSeconds() float64 {
+	if x != nil && x.TriggerOffsetSeconds != nil {
+		return *x.TriggerOffsetSeconds
+	}
+	return 0
+}
+
+func (x *TimelineEventSnapshot) GetRequireManualInteraction() bool {
+	if x != nil && x.RequireManualInteraction != nil {
+		return *x.RequireManualInteraction
+	}
+	return false
+}
+
+func (x *TimelineEventSnapshot) GetCustomName() string {
+	if x != nil && x.CustomName != nil {
+		return *x.CustomName
+	}
+	return ""
+}
+
+func (x *TimelineEventSnapshot) GetResolve() *ResolvePayload {
+	if x != nil {
+		return x.Resolve
+	}
+	return nil
+}
+
+func (x *TimelineEventSnapshot) GetPre() *ResolvePayload {
+	if x != nil {
+		return x.Pre
+	}
+	return nil
+}
+
+func (x *TimelineEventSnapshot) GetCustom() *CustomPayload {
+	if x != nil {
+		return x.Custom
+	}
+	return nil
+}
+
 type PlaybackSnapshot struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Status            string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	CurrentEventId    int32                  `protobuf:"varint,2,opt,name=current_event_id,json=currentEventId,proto3" json:"current_event_id,omitempty"`
-	HasCurrentEventId bool                   `protobuf:"varint,3,opt,name=has_current_event_id,json=hasCurrentEventId,proto3" json:"has_current_event_id,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Status          string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	CurrentEventId  *int32                 `protobuf:"varint,2,opt,name=current_event_id,json=currentEventId,proto3,oneof" json:"current_event_id,omitempty"`
+	ActiveEventIds  []int32                `protobuf:"varint,3,rep,packed,name=active_event_ids,json=activeEventIds,proto3" json:"active_event_ids,omitempty"`
+	StartedAtUnixMs *int64                 `protobuf:"varint,4,opt,name=started_at_unix_ms,json=startedAtUnixMs,proto3,oneof" json:"started_at_unix_ms,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PlaybackSnapshot) Reset() {
 	*x = PlaybackSnapshot{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[1]
+	mi := &file_proto_show_v1_show_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -104,7 +313,7 @@ func (x *PlaybackSnapshot) String() string {
 func (*PlaybackSnapshot) ProtoMessage() {}
 
 func (x *PlaybackSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[1]
+	mi := &file_proto_show_v1_show_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,7 +326,7 @@ func (x *PlaybackSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlaybackSnapshot.ProtoReflect.Descriptor instead.
 func (*PlaybackSnapshot) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{1}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PlaybackSnapshot) GetStatus() string {
@@ -128,17 +337,24 @@ func (x *PlaybackSnapshot) GetStatus() string {
 }
 
 func (x *PlaybackSnapshot) GetCurrentEventId() int32 {
-	if x != nil {
-		return x.CurrentEventId
+	if x != nil && x.CurrentEventId != nil {
+		return *x.CurrentEventId
 	}
 	return 0
 }
 
-func (x *PlaybackSnapshot) GetHasCurrentEventId() bool {
+func (x *PlaybackSnapshot) GetActiveEventIds() []int32 {
 	if x != nil {
-		return x.HasCurrentEventId
+		return x.ActiveEventIds
 	}
-	return false
+	return nil
+}
+
+func (x *PlaybackSnapshot) GetStartedAtUnixMs() int64 {
+	if x != nil && x.StartedAtUnixMs != nil {
+		return *x.StartedAtUnixMs
+	}
+	return 0
 }
 
 type TimelineEventAdded struct {
@@ -151,7 +367,7 @@ type TimelineEventAdded struct {
 
 func (x *TimelineEventAdded) Reset() {
 	*x = TimelineEventAdded{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[2]
+	mi := &file_proto_show_v1_show_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -163,7 +379,7 @@ func (x *TimelineEventAdded) String() string {
 func (*TimelineEventAdded) ProtoMessage() {}
 
 func (x *TimelineEventAdded) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[2]
+	mi := &file_proto_show_v1_show_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,7 +392,7 @@ func (x *TimelineEventAdded) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineEventAdded.ProtoReflect.Descriptor instead.
 func (*TimelineEventAdded) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{2}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *TimelineEventAdded) GetShowVersion() int32 {
@@ -203,7 +419,7 @@ type TimelineEventUpdated struct {
 
 func (x *TimelineEventUpdated) Reset() {
 	*x = TimelineEventUpdated{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[3]
+	mi := &file_proto_show_v1_show_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +431,7 @@ func (x *TimelineEventUpdated) String() string {
 func (*TimelineEventUpdated) ProtoMessage() {}
 
 func (x *TimelineEventUpdated) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[3]
+	mi := &file_proto_show_v1_show_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +444,7 @@ func (x *TimelineEventUpdated) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineEventUpdated.ProtoReflect.Descriptor instead.
 func (*TimelineEventUpdated) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{3}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *TimelineEventUpdated) GetShowVersion() int32 {
@@ -255,7 +471,7 @@ type TimelineEventRemoved struct {
 
 func (x *TimelineEventRemoved) Reset() {
 	*x = TimelineEventRemoved{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[4]
+	mi := &file_proto_show_v1_show_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -267,7 +483,7 @@ func (x *TimelineEventRemoved) String() string {
 func (*TimelineEventRemoved) ProtoMessage() {}
 
 func (x *TimelineEventRemoved) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[4]
+	mi := &file_proto_show_v1_show_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -280,7 +496,7 @@ func (x *TimelineEventRemoved) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineEventRemoved.ProtoReflect.Descriptor instead.
 func (*TimelineEventRemoved) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{4}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *TimelineEventRemoved) GetShowVersion() int32 {
@@ -307,7 +523,7 @@ type TimelineReordered struct {
 
 func (x *TimelineReordered) Reset() {
 	*x = TimelineReordered{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[5]
+	mi := &file_proto_show_v1_show_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -319,7 +535,7 @@ func (x *TimelineReordered) String() string {
 func (*TimelineReordered) ProtoMessage() {}
 
 func (x *TimelineReordered) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[5]
+	mi := &file_proto_show_v1_show_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -332,7 +548,7 @@ func (x *TimelineReordered) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineReordered.ProtoReflect.Descriptor instead.
 func (*TimelineReordered) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{5}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TimelineReordered) GetShowVersion() int32 {
@@ -358,7 +574,7 @@ type ShowReplaced struct {
 
 func (x *ShowReplaced) Reset() {
 	*x = ShowReplaced{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[6]
+	mi := &file_proto_show_v1_show_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -370,7 +586,7 @@ func (x *ShowReplaced) String() string {
 func (*ShowReplaced) ProtoMessage() {}
 
 func (x *ShowReplaced) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[6]
+	mi := &file_proto_show_v1_show_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -383,7 +599,7 @@ func (x *ShowReplaced) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShowReplaced.ProtoReflect.Descriptor instead.
 func (*ShowReplaced) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{6}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ShowReplaced) GetShowVersion() int32 {
@@ -404,7 +620,7 @@ type PlaybackStateChanged struct {
 
 func (x *PlaybackStateChanged) Reset() {
 	*x = PlaybackStateChanged{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[7]
+	mi := &file_proto_show_v1_show_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -416,7 +632,7 @@ func (x *PlaybackStateChanged) String() string {
 func (*PlaybackStateChanged) ProtoMessage() {}
 
 func (x *PlaybackStateChanged) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[7]
+	mi := &file_proto_show_v1_show_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -429,7 +645,7 @@ func (x *PlaybackStateChanged) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlaybackStateChanged.ProtoReflect.Descriptor instead.
 func (*PlaybackStateChanged) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{7}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PlaybackStateChanged) GetShowVersion() int32 {
@@ -463,7 +679,7 @@ type LiveModeChanged struct {
 
 func (x *LiveModeChanged) Reset() {
 	*x = LiveModeChanged{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[8]
+	mi := &file_proto_show_v1_show_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -475,7 +691,7 @@ func (x *LiveModeChanged) String() string {
 func (*LiveModeChanged) ProtoMessage() {}
 
 func (x *LiveModeChanged) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[8]
+	mi := &file_proto_show_v1_show_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -488,7 +704,7 @@ func (x *LiveModeChanged) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveModeChanged.ProtoReflect.Descriptor instead.
 func (*LiveModeChanged) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{8}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *LiveModeChanged) GetShowVersion() int32 {
@@ -514,7 +730,7 @@ type ClockSyncRequest struct {
 
 func (x *ClockSyncRequest) Reset() {
 	*x = ClockSyncRequest{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[9]
+	mi := &file_proto_show_v1_show_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -526,7 +742,7 @@ func (x *ClockSyncRequest) String() string {
 func (*ClockSyncRequest) ProtoMessage() {}
 
 func (x *ClockSyncRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[9]
+	mi := &file_proto_show_v1_show_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -539,7 +755,7 @@ func (x *ClockSyncRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClockSyncRequest.ProtoReflect.Descriptor instead.
 func (*ClockSyncRequest) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{9}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ClockSyncRequest) GetClientTimeUnixMs() int64 {
@@ -560,7 +776,7 @@ type ClockSyncResponse struct {
 
 func (x *ClockSyncResponse) Reset() {
 	*x = ClockSyncResponse{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[10]
+	mi := &file_proto_show_v1_show_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -572,7 +788,7 @@ func (x *ClockSyncResponse) String() string {
 func (*ClockSyncResponse) ProtoMessage() {}
 
 func (x *ClockSyncResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[10]
+	mi := &file_proto_show_v1_show_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -585,7 +801,7 @@ func (x *ClockSyncResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClockSyncResponse.ProtoReflect.Descriptor instead.
 func (*ClockSyncResponse) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{10}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ClockSyncResponse) GetClientTimeUnixMs() int64 {
@@ -629,7 +845,7 @@ type Envelope struct {
 
 func (x *Envelope) Reset() {
 	*x = Envelope{}
-	mi := &file_proto_show_v1_show_proto_msgTypes[11]
+	mi := &file_proto_show_v1_show_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -641,7 +857,7 @@ func (x *Envelope) String() string {
 func (*Envelope) ProtoMessage() {}
 
 func (x *Envelope) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_show_v1_show_proto_msgTypes[11]
+	mi := &file_proto_show_v1_show_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -654,7 +870,7 @@ func (x *Envelope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Envelope.ProtoReflect.Descriptor instead.
 func (*Envelope) Descriptor() ([]byte, []int) {
-	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{11}
+	return file_proto_show_v1_show_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Envelope) GetType() string {
@@ -799,15 +1015,44 @@ var File_proto_show_v1_show_proto protoreflect.FileDescriptor
 
 const file_proto_show_v1_show_proto_rawDesc = "" +
 	"\n" +
-	"\x18proto/show/v1/show.proto\x12\ashow.v1\"W\n" +
+	"\x18proto/show/v1/show.proto\x12\ashow.v1\"\xa7\x02\n" +
+	"\x0eResolvePayload\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12\x1d\n" +
+	"\n" +
+	"problem_id\x18\x02 \x01(\x05R\tproblemId\x12&\n" +
+	"\x0fnew_total_score\x18\x03 \x01(\x01R\rnewTotalScore\x12*\n" +
+	"\x11new_total_penalty\x18\x04 \x01(\x01R\x0fnewTotalPenalty\x12\x19\n" +
+	"\bnew_rank\x18\x05 \x01(\x05R\anewRank\x12*\n" +
+	"\x11new_problem_score\x18\x06 \x01(\x01R\x0fnewProblemScore\x12\x18\n" +
+	"\averdict\x18\a \x01(\tR\averdict\x12(\n" +
+	"\x10time_since_start\x18\b \x01(\x01R\x0etimeSinceStart\"P\n" +
+	"\rCustomPayload\x12\x15\n" +
+	"\x06ext_id\x18\x01 \x01(\tR\x05extId\x12(\n" +
+	"\x10ext_payload_json\x18\x02 \x01(\fR\x0eextPayloadJson\"\x98\x04\n" +
 	"\x15TimelineEventSnapshot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1a\n" +
 	"\bposition\x18\x02 \x01(\x05R\bposition\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\"\x85\x01\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12.\n" +
+	"\x10duration_seconds\x18\x04 \x01(\x01H\x00R\x0fdurationSeconds\x88\x01\x01\x129\n" +
+	"\x16trigger_offset_seconds\x18\x05 \x01(\x01H\x01R\x14triggerOffsetSeconds\x88\x01\x01\x12A\n" +
+	"\x1arequire_manual_interaction\x18\x06 \x01(\bH\x02R\x18requireManualInteraction\x88\x01\x01\x12$\n" +
+	"\vcustom_name\x18\a \x01(\tH\x03R\n" +
+	"customName\x88\x01\x01\x121\n" +
+	"\aresolve\x18\b \x01(\v2\x17.show.v1.ResolvePayloadR\aresolve\x12)\n" +
+	"\x03pre\x18\t \x01(\v2\x17.show.v1.ResolvePayloadR\x03pre\x12.\n" +
+	"\x06custom\x18\n" +
+	" \x01(\v2\x16.show.v1.CustomPayloadR\x06customB\x13\n" +
+	"\x11_duration_secondsB\x19\n" +
+	"\x17_trigger_offset_secondsB\x1d\n" +
+	"\x1b_require_manual_interactionB\x0e\n" +
+	"\f_custom_name\"\xe1\x01\n" +
 	"\x10PlaybackSnapshot\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12(\n" +
-	"\x10current_event_id\x18\x02 \x01(\x05R\x0ecurrentEventId\x12/\n" +
-	"\x14has_current_event_id\x18\x03 \x01(\bR\x11hasCurrentEventId\"m\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12-\n" +
+	"\x10current_event_id\x18\x02 \x01(\x05H\x00R\x0ecurrentEventId\x88\x01\x01\x12(\n" +
+	"\x10active_event_ids\x18\x03 \x03(\x05R\x0eactiveEventIds\x120\n" +
+	"\x12started_at_unix_ms\x18\x04 \x01(\x03H\x01R\x0fstartedAtUnixMs\x88\x01\x01B\x13\n" +
+	"\x11_current_event_idB\x15\n" +
+	"\x13_started_at_unix_ms\"m\n" +
 	"\x12TimelineEventAdded\x12!\n" +
 	"\fshow_version\x18\x01 \x01(\x05R\vshowVersion\x124\n" +
 	"\x05event\x18\x02 \x01(\v2\x1e.show.v1.TimelineEventSnapshotR\x05event\"o\n" +
@@ -860,38 +1105,43 @@ func file_proto_show_v1_show_proto_rawDescGZIP() []byte {
 	return file_proto_show_v1_show_proto_rawDescData
 }
 
-var file_proto_show_v1_show_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_proto_show_v1_show_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_proto_show_v1_show_proto_goTypes = []any{
-	(*TimelineEventSnapshot)(nil), // 0: show.v1.TimelineEventSnapshot
-	(*PlaybackSnapshot)(nil),      // 1: show.v1.PlaybackSnapshot
-	(*TimelineEventAdded)(nil),    // 2: show.v1.TimelineEventAdded
-	(*TimelineEventUpdated)(nil),  // 3: show.v1.TimelineEventUpdated
-	(*TimelineEventRemoved)(nil),  // 4: show.v1.TimelineEventRemoved
-	(*TimelineReordered)(nil),     // 5: show.v1.TimelineReordered
-	(*ShowReplaced)(nil),          // 6: show.v1.ShowReplaced
-	(*PlaybackStateChanged)(nil),  // 7: show.v1.PlaybackStateChanged
-	(*LiveModeChanged)(nil),       // 8: show.v1.LiveModeChanged
-	(*ClockSyncRequest)(nil),      // 9: show.v1.ClockSyncRequest
-	(*ClockSyncResponse)(nil),     // 10: show.v1.ClockSyncResponse
-	(*Envelope)(nil),              // 11: show.v1.Envelope
+	(*ResolvePayload)(nil),        // 0: show.v1.ResolvePayload
+	(*CustomPayload)(nil),         // 1: show.v1.CustomPayload
+	(*TimelineEventSnapshot)(nil), // 2: show.v1.TimelineEventSnapshot
+	(*PlaybackSnapshot)(nil),      // 3: show.v1.PlaybackSnapshot
+	(*TimelineEventAdded)(nil),    // 4: show.v1.TimelineEventAdded
+	(*TimelineEventUpdated)(nil),  // 5: show.v1.TimelineEventUpdated
+	(*TimelineEventRemoved)(nil),  // 6: show.v1.TimelineEventRemoved
+	(*TimelineReordered)(nil),     // 7: show.v1.TimelineReordered
+	(*ShowReplaced)(nil),          // 8: show.v1.ShowReplaced
+	(*PlaybackStateChanged)(nil),  // 9: show.v1.PlaybackStateChanged
+	(*LiveModeChanged)(nil),       // 10: show.v1.LiveModeChanged
+	(*ClockSyncRequest)(nil),      // 11: show.v1.ClockSyncRequest
+	(*ClockSyncResponse)(nil),     // 12: show.v1.ClockSyncResponse
+	(*Envelope)(nil),              // 13: show.v1.Envelope
 }
 var file_proto_show_v1_show_proto_depIdxs = []int32{
-	0,  // 0: show.v1.TimelineEventAdded.event:type_name -> show.v1.TimelineEventSnapshot
-	0,  // 1: show.v1.TimelineEventUpdated.event:type_name -> show.v1.TimelineEventSnapshot
-	1,  // 2: show.v1.PlaybackStateChanged.playback:type_name -> show.v1.PlaybackSnapshot
-	2,  // 3: show.v1.Envelope.timeline_event_added:type_name -> show.v1.TimelineEventAdded
-	3,  // 4: show.v1.Envelope.timeline_event_updated:type_name -> show.v1.TimelineEventUpdated
-	4,  // 5: show.v1.Envelope.timeline_event_removed:type_name -> show.v1.TimelineEventRemoved
-	5,  // 6: show.v1.Envelope.timeline_reordered:type_name -> show.v1.TimelineReordered
-	6,  // 7: show.v1.Envelope.show_replaced:type_name -> show.v1.ShowReplaced
-	7,  // 8: show.v1.Envelope.playback_state_changed:type_name -> show.v1.PlaybackStateChanged
-	8,  // 9: show.v1.Envelope.live_mode_changed:type_name -> show.v1.LiveModeChanged
-	10, // 10: show.v1.Envelope.clock_sync_response:type_name -> show.v1.ClockSyncResponse
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	0,  // 0: show.v1.TimelineEventSnapshot.resolve:type_name -> show.v1.ResolvePayload
+	0,  // 1: show.v1.TimelineEventSnapshot.pre:type_name -> show.v1.ResolvePayload
+	1,  // 2: show.v1.TimelineEventSnapshot.custom:type_name -> show.v1.CustomPayload
+	2,  // 3: show.v1.TimelineEventAdded.event:type_name -> show.v1.TimelineEventSnapshot
+	2,  // 4: show.v1.TimelineEventUpdated.event:type_name -> show.v1.TimelineEventSnapshot
+	3,  // 5: show.v1.PlaybackStateChanged.playback:type_name -> show.v1.PlaybackSnapshot
+	4,  // 6: show.v1.Envelope.timeline_event_added:type_name -> show.v1.TimelineEventAdded
+	5,  // 7: show.v1.Envelope.timeline_event_updated:type_name -> show.v1.TimelineEventUpdated
+	6,  // 8: show.v1.Envelope.timeline_event_removed:type_name -> show.v1.TimelineEventRemoved
+	7,  // 9: show.v1.Envelope.timeline_reordered:type_name -> show.v1.TimelineReordered
+	8,  // 10: show.v1.Envelope.show_replaced:type_name -> show.v1.ShowReplaced
+	9,  // 11: show.v1.Envelope.playback_state_changed:type_name -> show.v1.PlaybackStateChanged
+	10, // 12: show.v1.Envelope.live_mode_changed:type_name -> show.v1.LiveModeChanged
+	12, // 13: show.v1.Envelope.clock_sync_response:type_name -> show.v1.ClockSyncResponse
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_proto_show_v1_show_proto_init() }
@@ -899,7 +1149,9 @@ func file_proto_show_v1_show_proto_init() {
 	if File_proto_show_v1_show_proto != nil {
 		return
 	}
-	file_proto_show_v1_show_proto_msgTypes[11].OneofWrappers = []any{
+	file_proto_show_v1_show_proto_msgTypes[2].OneofWrappers = []any{}
+	file_proto_show_v1_show_proto_msgTypes[3].OneofWrappers = []any{}
+	file_proto_show_v1_show_proto_msgTypes[13].OneofWrappers = []any{
 		(*Envelope_TimelineEventAdded)(nil),
 		(*Envelope_TimelineEventUpdated)(nil),
 		(*Envelope_TimelineEventRemoved)(nil),
@@ -915,7 +1167,7 @@ func file_proto_show_v1_show_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_show_v1_show_proto_rawDesc), len(file_proto_show_v1_show_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

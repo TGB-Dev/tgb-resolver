@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
+import type { VerdictRunResult } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { verdictShortCode } from "@/lib/verdict";
@@ -28,7 +29,7 @@ const rankImprovement =
   <span v-else :class="css({ fontFamily: 'mono' })">
     {{ resolvedName }} |
     <span :class="css({ color: fg })">
-      {{ verdictShortCode(cue.verdict) }}
+      {{ verdictShortCode(cue.verdict as VerdictRunResult | undefined) }}
     </span>
     <span> | </span>
     <span :class="css({ color: 'fg.success' })">
