@@ -1,0 +1,13 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  - local: ./tools/bin/protoc-gen-go
+    out: proto/gen
+    opt: paths=source_relative
+  - local:
+      - node
+      - ./node_modules/@bufbuild/protoc-gen-es/bin/protoc-gen-es
+    out: ../../packages/realtime/src/proto/gen
+    opt: target=ts
+    strategy: directory
