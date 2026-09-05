@@ -133,7 +133,7 @@ export const useShowStore = defineStore("show", () => {
         fullAutoEnabled: false,
       },
       playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
-      assets: { items: [] },
+      assets: { items: [], folders: [] },
       timeline: events as TimelineEvent[],
     });
     return built;

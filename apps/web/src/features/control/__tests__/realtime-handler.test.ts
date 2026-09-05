@@ -33,7 +33,7 @@ const baseShow: ShowFile = {
   },
   automation: { autoResolveEnabled: false, autoResolveSpeedMs: 3000, fullAutoEnabled: false },
   playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
-  assets: { items: [] },
+  assets: { items: [], folders: [] },
   timeline: [
     {
       id: 1,

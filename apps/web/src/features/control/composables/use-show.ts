@@ -25,9 +25,11 @@ import {
   setSettings,
   startPlayback,
   TimelineEventType,
+  vImportXmlRequestWritable,
 } from "@tgb-resolver/contracts";
 import { FILE_EXTENSION, type ShowFile, type TimelineTableItem } from "@tgb-resolver/realtime";
 import { Effect, Schedule } from "effect";
+import * as v from "valibot";
 import { type ComputedRef, computed } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
@@ -400,9 +402,16 @@ export function useImportShowMutation() {
       const fileName = file.name.toLowerCase();
 
       if (fileName.endsWith(".xml")) {
+        const body = { xml: await file.text(), excludedUsernames };
+        const parsed = v.safeParse(vImportXmlRequestWritable, body);
+        if (!parsed.success) {
+          throw new Error(
+            `Invalid XML import: ${parsed.issues.map((issue) => issue.message).join(", ")}`,
+          );
+        }
         const { data } = await importShowXml({
           client: generatedClient,
-          body: { xml: await file.text(), excludedUsernames },
+          body: parsed.output,
           throwOnError: true,
         });
         return data as ShowStateSnapshot;
