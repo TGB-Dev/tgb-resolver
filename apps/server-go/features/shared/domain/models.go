@@ -78,7 +78,7 @@ type PlaybackState struct {
 
 type AssetCollection struct {
 	Items   []ShowAsset  `json:"items"`
-	Folders []FolderNode `json:"folders,omitempty"`
+	Folders []FolderNode `json:"folders"`
 }
 
 type ShowAsset struct {

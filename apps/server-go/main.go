@@ -55,17 +55,6 @@ func main() {
 	}
 	defer cleanup()
 
-	if err := app.Store.EnsureSeeded(nilContext()); err != nil {
-		log.Fatal().Err(err).Msg("seed store")
-	}
-	snapshot, err := app.Service.Snapshot(nilContext())
-	if err != nil {
-		log.Fatal().Err(err).Msg("load snapshot")
-	}
-	if err := app.Service.SetTickRate(snapshot.TickRate); err != nil {
-		log.Fatal().Err(err).Msg("apply tick rate")
-	}
-
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(corsMiddleware(cfg.AllowedOrigins))
@@ -102,6 +91,17 @@ func main() {
 			log.Fatal().Err(err).Msg("dump openapi")
 		}
 		return
+	}
+
+	if err := app.Store.EnsureSeeded(nilContext()); err != nil {
+		log.Fatal().Err(err).Msg("seed store")
+	}
+	snapshot, err := app.Service.Snapshot(nilContext())
+	if err != nil {
+		log.Fatal().Err(err).Msg("load snapshot")
+	}
+	if err := app.Service.SetTickRate(snapshot.TickRate); err != nil {
+		log.Fatal().Err(err).Msg("apply tick rate")
 	}
 
 	app.Clock.Start()

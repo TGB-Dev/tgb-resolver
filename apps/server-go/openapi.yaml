@@ -17,6 +17,7 @@ components:
           - "null"
       required:
       - items
+      - folders
       type: object
     AutomationState:
       additionalProperties: false

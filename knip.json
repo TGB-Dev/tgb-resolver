@@ -84,11 +84,8 @@
     },
     "packages/contracts": {
       "entry": ["src/index.ts", "openapi-ts.config.ts"],
-      "ignoreDependencies": ["@tgb-resolver/server", "@tanstack/vue-query"]
+      "ignoreDependencies": ["@tanstack/vue-query"]
     },
-    "packages/realtime": {
-      "entry": ["src/index.ts", "src/signalr.ts"],
-      "ignoreDependencies": ["@tgb-resolver/server"]
-    }
+    "packages/realtime": {}
   }
 }

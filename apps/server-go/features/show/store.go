@@ -200,7 +200,7 @@ func CreateEmptyShow(showVersion int, source domain.ShowSource) domain.ShowState
 		},
 		Automation: domain.AutomationState{AutoResolveSpeedMs: 3000},
 		Playback:   domain.PlaybackState{Status: domain.PlaybackIdle, ActiveEventIDs: []int{}},
-		Assets:     domain.AssetCollection{Items: []domain.ShowAsset{}},
+		Assets:     domain.AssetCollection{Items: []domain.ShowAsset{}, Folders: []domain.FolderNode{}},
 		Timeline:   []domain.TimelineEvent{},
 	}
 }

@@ -1,0 +1,154 @@
+{
+  "assets": { "folders": [], "items": [] },
+  "automation": {
+    "autoResolveEnabled": false,
+    "autoResolveSpeedMs": 3000,
+    "fullAutoEnabled": false
+  },
+  "contest": {
+    "durationSeconds": 300,
+    "freezeDurationSeconds": 60,
+    "preFreezeSnapshot": [
+      {
+        "lastRunId": 1,
+        "lastSubmittedSeconds": 10,
+        "problems": [
+          {
+            "postFreezeSubmissionCount": 0,
+            "preFreezeSubmissionCount": 1,
+            "problemId": 1,
+            "score": 100,
+            "verdict": "Accepted"
+          },
+          {
+            "postFreezeSubmissionCount": 0,
+            "preFreezeSubmissionCount": 0,
+            "problemId": 2,
+            "score": 0,
+            "verdict": "Unknown"
+          }
+        ],
+        "rank": 1,
+        "totalPenalty": 10,
+        "totalScore": 100,
+        "userId": 1
+      },
+      {
+        "problems": [
+          {
+            "postFreezeSubmissionCount": 1,
+            "preFreezeSubmissionCount": 0,
+            "problemId": 1,
+            "score": 0,
+            "verdict": "Unresolved"
+          },
+          {
+            "postFreezeSubmissionCount": 1,
+            "preFreezeSubmissionCount": 0,
+            "problemId": 2,
+            "score": 0,
+            "verdict": "Unresolved"
+          }
+        ],
+        "rank": 2,
+        "totalPenalty": 0,
+        "totalScore": 0,
+        "userId": 2
+      }
+    ],
+    "problems": [
+      { "id": 1, "label": "A", "name": "A", "score": 100 },
+      { "id": 2, "label": "B", "name": "B", "score": 100 }
+    ],
+    "users": [
+      { "id": 1, "realName": "Alice", "username": "alice" },
+      { "id": 2, "realName": "Bob", "username": "bob" }
+    ]
+  },
+  "mode": "Editing",
+  "playback": { "activeEventIds": [], "status": "Idle" },
+  "schemaVersion": 1,
+  "timeline": [
+    {
+      "id": 1,
+      "position": 1,
+      "pre": {
+        "newProblemScore": 100,
+        "newRank": 2,
+        "newTotalPenalty": 250,
+        "newTotalScore": 100,
+        "problemId": 1,
+        "timeSinceStart": 250,
+        "userId": 2,
+        "verdict": "Accepted"
+      },
+      "requireManualInteraction": false,
+      "type": "Pre"
+    },
+    {
+      "id": 2,
+      "position": 2,
+      "requireManualInteraction": false,
+      "resolve": {
+        "newProblemScore": 100,
+        "newRank": 2,
+        "newTotalPenalty": 250,
+        "newTotalScore": 100,
+        "problemId": 1,
+        "timeSinceStart": 250,
+        "userId": 2,
+        "verdict": "Accepted"
+      },
+      "type": "Res"
+    },
+    {
+      "id": 3,
+      "position": 3,
+      "pre": {
+        "newProblemScore": 0,
+        "newRank": 2,
+        "newTotalPenalty": 250,
+        "newTotalScore": 100,
+        "problemId": 2,
+        "timeSinceStart": 260,
+        "userId": 2,
+        "verdict": "WrongAnswer"
+      },
+      "requireManualInteraction": false,
+      "type": "Pre"
+    },
+    {
+      "id": 4,
+      "position": 4,
+      "requireManualInteraction": false,
+      "resolve": {
+        "newProblemScore": 0,
+        "newRank": 2,
+        "newTotalPenalty": 250,
+        "newTotalScore": 100,
+        "problemId": 2,
+        "timeSinceStart": 260,
+        "userId": 2,
+        "verdict": "WrongAnswer"
+      },
+      "type": "Res"
+    },
+    {
+      "id": 5,
+      "position": 5,
+      "requireManualInteraction": false,
+      "resolve": {
+        "newProblemScore": 0,
+        "newRank": 1,
+        "newTotalPenalty": 10,
+        "newTotalScore": 100,
+        "problemId": 0,
+        "timeSinceStart": 240,
+        "userId": 1,
+        "verdict": "Unknown"
+      },
+      "type": "Res"
+    }
+  ],
+  "timelineMode": "Rw"
+}
