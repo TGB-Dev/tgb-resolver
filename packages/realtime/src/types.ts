@@ -47,7 +47,9 @@ export type ShowContestData = Required<
   preFreezeSnapshot: FreezeSnapshotEntry[];
 };
 
-export type ResolvePayload = Required<ResolveEventPayloadSnapshot>;
+export type ResolvePayload = Omit<Required<ResolveEventPayloadSnapshot>, "verdict"> & {
+  verdict: VerdictRunResult;
+};
 
 export interface ClockSyncRequest {
   sessionId: string;

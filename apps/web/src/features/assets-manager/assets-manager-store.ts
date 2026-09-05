@@ -105,11 +105,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
   }
   function applyShowState(data: ShowStateSnapshot | ShowFile) {
     showVersion.value = data.showVersion ?? 0;
-    const folders = (data.assets?.folders ?? []) as Array<{
-      id: string;
-      name: string;
-      children: Array<{ id: string; name: string; children: unknown[] }>;
-    }>;
+    const folders = data.assets?.folders ?? [];
     const build = (nodes: typeof folders, ancestorIds = new Set<string>()): FsEntry[] =>
       nodes.flatMap((node) => {
         if (ancestorIds.has(node.id)) return [];
@@ -121,7 +117,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
             id: node.id,
             name: node.name,
             isDirectory: true,
-            children: build(node.children as typeof folders, nextAncestorIds),
+            children: build(node.children ?? [], nextAncestorIds),
           },
         ];
       });
@@ -132,7 +128,7 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
       isDirectory: false,
       contentType: item.contentType ?? "",
       sizeBytes: item.sizeBytes ?? 0,
-      parentId: (item as { folderId?: string }).folderId ?? undefined,
+      parentId: item.folderId ?? undefined,
     }));
     if (folders.length) expandAll();
   }

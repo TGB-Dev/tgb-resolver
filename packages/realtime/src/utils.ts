@@ -356,7 +356,7 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
     if (event.payload.problemId !== 0)
       state.problems.set(event.payload.problemId, {
         score: event.payload.newProblemScore,
-        verdict: event.payload.verdict as VerdictRunResult,
+        verdict: event.payload.verdict,
         timeSinceStart: event.payload.timeSinceStart,
       });
   }

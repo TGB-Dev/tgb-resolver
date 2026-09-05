@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
-import { TimelineEventType, type VerdictRunResult } from "@tgb-resolver/contracts";
+import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
 import { useExtensionRegistry } from "@/features/extensions/registry";
@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 
 const extensionRegistry = useExtensionRegistry();
-const { fg } = useVerdictColor(props.cue?.verdict as VerdictRunResult | undefined);
+const { fg } = useVerdictColor(props.cue?.verdict);
 
 function teamName(cue: TimelineTableItem): string {
   return cue.realName ?? cue.username ?? cue.name;
