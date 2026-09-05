@@ -3,13 +3,27 @@ package realtime
 import (
 	"container/heap"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 )
 
-var AllowedTickRates = []float64{1, 10, 20, 30, 60}
+var AllowedTickRates = []float64{
+	120, 120 / 1.001, 100, 60, 60 / 1.001, 50, 30, 30 / 1.001, 25, 24, 24 / 1.001,
+}
 
-const defaultTickRate = 30.0
+const defaultTickRate = 60.0
+
+const tickRateEpsilon = 1e-6
+
+func isAllowedTickRate(rate float64) bool {
+	for _, candidate := range AllowedTickRates {
+		if math.Abs(rate-candidate) < tickRateEpsilon {
+			return true
+		}
+	}
+	return false
+}
 
 func DefaultTickRateValue() float64 { return defaultTickRate }
 
@@ -80,14 +94,7 @@ func (c *Clock) Cancel(ticket int64) {
 }
 
 func (c *Clock) SetTickRate(rate float64) error {
-	allowed := false
-	for _, r := range AllowedTickRates {
-		if r == rate {
-			allowed = true
-			break
-		}
-	}
-	if !allowed {
+	if !isAllowedTickRate(rate) {
 		return fmt.Errorf("tick rate %v not in allowed set", rate)
 	}
 	c.mu.Lock()

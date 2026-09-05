@@ -20,37 +20,39 @@ type rawContest struct {
 }
 
 type rawInfo struct {
-	ContestID              string `xml:"contest-id"`
-	Title                  string `xml:"title"`
-	StartTime              string `xml:"starttime"`
-	Length                 string `xml:"length"`
-	Penalty                string `xml:"penalty"`
-	ScoreboardFreezeLength string `xml:"scoreboard-freeze-length"`
+	ContestID              *string `xml:"contest-id"`
+	Title                  *string `xml:"title"`
+	StartTime              *string `xml:"starttime"`
+	Length                 *string `xml:"length"`
+	Penalty                *string `xml:"penalty"`
+	ScoreboardFreezeLength *string `xml:"scoreboard-freeze-length"`
 }
 
 type rawProblem struct {
-	ID    string `xml:"id"`
-	Label string `xml:"label"`
-	Name  string `xml:"name"`
-	Score string `xml:"score"`
+	ID    *string `xml:"id"`
+	Label *string `xml:"label"`
+	Name  *string `xml:"name"`
+	Score *string `xml:"score"`
 }
 
 type rawTeam struct {
-	ID       string `xml:"id"`
-	Name     string `xml:"name"`
-	Username string `xml:"username"`
+	ID       *string `xml:"id"`
+	Name     *string `xml:"name"`
+	Username *string `xml:"username"`
 }
 
 type rawRun struct {
-	ID      string `xml:"id"`
-	Problem string `xml:"problem"`
-	Team    string `xml:"team"`
-	Time    string `xml:"time"`
-	Solved  string `xml:"solved"`
-	Penalty string `xml:"penalty"`
-	Score   string `xml:"score"`
-	Result  string `xml:"result"`
+	ID      *string `xml:"id"`
+	Problem *string `xml:"problem"`
+	Team    *string `xml:"team"`
+	Time    *string `xml:"time"`
+	Solved  *string `xml:"solved"`
+	Penalty *string `xml:"penalty"`
+	Score   *string `xml:"score"`
+	Result  string  `xml:"result"`
 }
+
+func strPtr(s string) *string { return &s }
 
 type Info struct {
 	ContestID              string
@@ -106,10 +108,10 @@ func Parse(data []byte) (*Contest, error) {
 	dec := xml.NewDecoder(strings.NewReader(string(data)))
 	dec.Strict = true
 	if err := dec.Decode(&raw); err != nil {
-		return nil, fmt.Errorf("failed to parse XML: %w", err)
+		return nil, fmt.Errorf("Failed to parse XML: %w", err)
 	}
 	if raw.XMLName.Local != "contest" {
-		return nil, fmt.Errorf("failed to parse XML: missing or invalid <contest> root element")
+		return nil, fmt.Errorf("Failed to parse XML: missing or invalid <contest> root element")
 	}
 
 	info, err := parseInfo(raw.Info)
@@ -157,14 +159,14 @@ func validateRunIDsMonotonic(runs []Run) error {
 		k := key{run.Team, run.Problem}
 		prev, ok := latest[k]
 		if !ok {
-			latest[k] = val{run.SubmissionSecondsSinceStart, run.ID}
+			latest[k] = val{run.Time, run.ID}
 			continue
 		}
-		if run.SubmissionSecondsSinceStart >= prev.time && run.ID < prev.runID {
+		if run.Time >= prev.time && run.ID < prev.runID {
 			return fmt.Errorf("run #%d for team %d, problem %d is later in time than run #%d but has a smaller id. Penalty calculation assumes run ids are monotonic in time", run.ID, run.Team, run.Problem, prev.runID)
 		}
-		if run.SubmissionSecondsSinceStart >= prev.time {
-			latest[k] = val{run.SubmissionSecondsSinceStart, run.ID}
+		if run.Time >= prev.time {
+			latest[k] = val{run.Time, run.ID}
 		}
 	}
 	return nil
@@ -179,13 +181,29 @@ func parseInfo(raw rawInfo) (Info, error) {
 	if err != nil {
 		return Info{}, err
 	}
+	contestID, err := getString(raw.ContestID, "contest-id")
+	if err != nil {
+		return Info{}, err
+	}
+	title, err := getString(raw.Title, "title")
+	if err != nil {
+		return Info{}, err
+	}
+	length, err := getString(raw.Length, "length")
+	if err != nil {
+		return Info{}, err
+	}
+	freezeLength, err := getString(raw.ScoreboardFreezeLength, "scoreboard-freeze-length")
+	if err != nil {
+		return Info{}, err
+	}
 	return Info{
-		ContestID:              strings.TrimSpace(raw.ContestID),
-		Title:                  strings.TrimSpace(raw.Title),
+		ContestID:              contestID,
+		Title:                  title,
 		StartTime:              int(math.Trunc(startTime)),
-		Length:                 strings.TrimSpace(raw.Length),
+		Length:                 length,
 		Penalty:                int(math.Trunc(penalty)),
-		ScoreboardFreezeLength: strings.TrimSpace(raw.ScoreboardFreezeLength),
+		ScoreboardFreezeLength: freezeLength,
 	}, nil
 }
 
@@ -198,7 +216,15 @@ func parseProblem(raw rawProblem) (Problem, error) {
 	if err != nil {
 		return Problem{}, err
 	}
-	return Problem{ID: int(math.Trunc(id)), Label: strings.TrimSpace(raw.Label), Name: strings.TrimSpace(raw.Name), Score: score}, nil
+	label, err := getString(raw.Label, "label")
+	if err != nil {
+		return Problem{}, err
+	}
+	name := ""
+	if raw.Name != nil {
+		name = strings.TrimSpace(*raw.Name)
+	}
+	return Problem{ID: int(math.Trunc(id)), Label: label, Name: name, Score: score}, nil
 }
 
 func parseTeam(raw rawTeam) (Team, error) {
@@ -206,7 +232,15 @@ func parseTeam(raw rawTeam) (Team, error) {
 	if err != nil {
 		return Team{}, err
 	}
-	return Team{ID: int(math.Trunc(id)), Name: strings.TrimSpace(raw.Name), Username: strings.TrimSpace(raw.Username)}, nil
+	name, err := getString(raw.Name, "name")
+	if err != nil {
+		return Team{}, err
+	}
+	username, err := getString(raw.Username, "username")
+	if err != nil {
+		return Team{}, err
+	}
+	return Team{ID: int(math.Trunc(id)), Name: name, Username: username}, nil
 }
 
 func parseRun(raw rawRun) (Run, error) {
@@ -230,13 +264,21 @@ func parseRun(raw rawRun) (Run, error) {
 	if err != nil {
 		return Run{}, err
 	}
+	solved, err := getString(raw.Solved, "solved")
+	if err != nil {
+		return Run{}, err
+	}
+	penalty, err := getString(raw.Penalty, "penalty")
+	if err != nil {
+		return Run{}, err
+	}
 	return Run{
 		ID:                          int(math.Trunc(id)),
 		Problem:                     int(math.Trunc(problem)),
 		Team:                        int(math.Trunc(team)),
 		Time:                        math.Floor(time),
-		Solved:                      strings.TrimSpace(raw.Solved),
-		Penalized:                   strings.EqualFold(strings.TrimSpace(raw.Penalty), "true"),
+		Solved:                      solved,
+		Penalized:                   strings.EqualFold(penalty, "true"),
 		Score:                       score,
 		Verdict:                     parseVerdict(raw.Result),
 		SubmissionSecondsSinceStart: time,
@@ -272,19 +314,94 @@ func parseVerdict(result string) domain.VerdictRunResult {
 	}
 }
 
-func getFloat(value, name string, def *float64) (float64, error) {
-	trimmed := strings.TrimSpace(value)
+func getFloat(value *string, name string, def *float64) (float64, error) {
+	if value == nil {
+		if def != nil {
+			return *def, nil
+		}
+		return 0, fmt.Errorf("Missing <%s> element", name)
+	}
+	trimmed := strings.TrimSpace(*value)
 	if trimmed == "" {
 		if def != nil {
 			return *def, nil
 		}
-		return 0, fmt.Errorf("missing <%s> element", name)
+		return 0, fmt.Errorf("Missing <%s> element", name)
 	}
 	parsed, err := strconv.ParseFloat(trimmed, 64)
 	if err != nil {
-		return 0, fmt.Errorf("invalid numeric value for <%s>: %s", name, trimmed)
+		return 0, fmt.Errorf("Invalid numeric value for <%s>: %s", name, trimmed)
 	}
 	return parsed, nil
 }
 
 func ptr(v float64) *float64 { return &v }
+
+var verdictToAcronym = map[domain.VerdictRunResult]string{
+	domain.VerdictAccepted:            "AC",
+	domain.VerdictWrongAnswer:         "WA",
+	domain.VerdictTimeLimitExceeded:   "TLE",
+	domain.VerdictMemoryLimitExceeded: "MLE",
+	domain.VerdictOutputLimitExceeded: "OLE",
+	domain.VerdictInvalidReturn:       "IR",
+	domain.VerdictRuntimeError:        "RTE",
+	domain.VerdictCompileError:        "CE",
+	domain.VerdictInternalError:       "IE",
+	domain.VerdictShortCircuited:      "SC",
+	domain.VerdictAborted:             "AB",
+	domain.VerdictUnknown:             "??",
+	domain.VerdictUnresolved:          "??",
+	domain.VerdictPending:             "??",
+}
+
+func formatNum(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
+}
+
+func (c *Contest) Marshal() ([]byte, error) {
+	raw := rawContest{}
+	raw.Info = rawInfo{
+		ContestID: strPtr(c.Info.ContestID), Title: strPtr(c.Info.Title),
+		StartTime: strPtr(formatNum(float64(c.Info.StartTime))), Length: strPtr(c.Info.Length),
+		Penalty:                strPtr(formatNum(float64(c.Info.Penalty))),
+		ScoreboardFreezeLength: strPtr(c.Info.ScoreboardFreezeLength),
+	}
+	for _, p := range c.Problems {
+		raw.Problems = append(raw.Problems, rawProblem{
+			ID: strPtr(formatNum(float64(p.ID))), Label: strPtr(p.Label), Name: strPtr(p.Name), Score: strPtr(formatNum(p.Score)),
+		})
+	}
+	for _, tm := range c.Teams {
+		raw.Teams = append(raw.Teams, rawTeam{
+			ID: strPtr(formatNum(float64(tm.ID))), Name: strPtr(tm.Name), Username: strPtr(tm.Username),
+		})
+	}
+	for _, r := range c.Runs {
+		result := verdictToAcronym[r.Verdict]
+		raw.Runs = append(raw.Runs, rawRun{
+			ID: strPtr(formatNum(float64(r.ID))), Problem: strPtr(formatNum(float64(r.Problem))),
+			Team: strPtr(formatNum(float64(r.Team))), Time: strPtr(formatNum(r.SubmissionSecondsSinceStart)),
+			Solved: strPtr(r.Solved), Penalty: strPtr(formatNumBool(r.Penalized)),
+			Score: strPtr(formatNum(r.Score)), Result: result,
+		})
+	}
+	out, err := xml.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(xml.Header + string(out)), nil
+}
+
+func formatNumBool(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
+func getString(value *string, name string) (string, error) {
+	if value == nil {
+		return "", fmt.Errorf("Missing <%s> element", name)
+	}
+	return strings.TrimSpace(*value), nil
+}

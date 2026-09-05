@@ -3,6 +3,8 @@ package show
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"sync/atomic"
 	"testing"
 
 	"github.com/uptrace/bun"
@@ -12,9 +14,15 @@ import (
 	"tgb-resolver/server-go/features/shared/domain"
 )
 
+var testStoreSeq atomic.Int64
+
+func testStoreDSN() string {
+	return fmt.Sprintf("file:memdb%d?mode=memory&cache=shared", testStoreSeq.Add(1))
+}
+
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
-	sqldb, err := sql.Open("sqlite", "file::memory:?cache=shared")
+	sqldb, err := sql.Open("sqlite", testStoreDSN())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -83,7 +83,7 @@ func (s *Store) GetState(ctx context.Context) (domain.ShowState, error) {
 	if err := json.Unmarshal([]byte(entity.PayloadJSON), &state); err != nil {
 		return domain.ShowState{}, fmt.Errorf("stored show payload corrupt: %w", err)
 	}
-	return state, nil
+	return normalizeShowState(state), nil
 }
 
 func (s *Store) MutateShow(ctx context.Context, expectedShowVersion int, fn func(domain.ShowState) domain.ShowState) (domain.ShowState, error) {
@@ -183,6 +183,31 @@ func (s *Store) transact(ctx context.Context, fn func(*StoredShowState, domain.S
 }
 
 func strPtr(s string) *string { return &s }
+
+func normalizeShowState(state domain.ShowState) domain.ShowState {
+	if state.Contest.Problems == nil {
+		state.Contest.Problems = []domain.ProblemDefinition{}
+	}
+	if state.Contest.Users == nil {
+		state.Contest.Users = []domain.UserDefinition{}
+	}
+	if state.Contest.PreFreezeSnapshot == nil {
+		state.Contest.PreFreezeSnapshot = []domain.FreezeSnapshotEntry{}
+	}
+	if state.Timeline == nil {
+		state.Timeline = []domain.TimelineEvent{}
+	}
+	if state.Assets.Items == nil {
+		state.Assets.Items = []domain.ShowAsset{}
+	}
+	if state.Assets.Folders == nil {
+		state.Assets.Folders = []domain.FolderNode{}
+	}
+	if state.Playback.ActiveEventIDs == nil {
+		state.Playback.ActiveEventIDs = []int{}
+	}
+	return state
+}
 
 func intPtr(i int) *int { return &i }
 

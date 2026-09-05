@@ -70,7 +70,7 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 	}
 	runs := make([]Run, 0, len(contest.Runs))
 	for _, r := range contest.Runs {
-		if teamIDs[r.Team] && problemsByID[r.Problem] && r.SubmissionSecondsSinceStart <= float64(durationSeconds) {
+		if teamIDs[r.Team] && problemsByID[r.Problem] && r.Time <= float64(durationSeconds) {
 			runs = append(runs, r)
 		}
 	}
@@ -79,7 +79,7 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 	wrongAttemptPenaltySeconds := float64(contest.Info.Penalty * 60)
 	frozen := newScoreboard(teams, problemDefs, runs, wrongAttemptPenaltySeconds)
 	for _, r := range runs {
-		if r.SubmissionSecondsSinceStart < freezeAtSeconds {
+		if r.Time < freezeAtSeconds {
 			frozen.apply(r)
 		}
 	}
@@ -129,7 +129,7 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 				UserID: run.Team, ProblemID: run.Problem,
 				NewTotalScore: after.score, NewTotalPenalty: after.penalty, NewRank: after.rank,
 				NewProblemScore: problemScore, Verdict: run.Verdict,
-				TimeSinceStart: run.SubmissionSecondsSinceStart,
+				TimeSinceStart: run.Time,
 			})
 
 			stillPending := false
@@ -162,7 +162,7 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 			preCount, postCount := 0, 0
 			for _, r := range runs {
 				if r.Team == tm.ID && r.Problem == pd.ID {
-					if r.SubmissionSecondsSinceStart < freezeAtSeconds {
+					if r.Time < freezeAtSeconds {
 						preCount++
 					} else {
 						postCount++
@@ -185,9 +185,9 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 		var lastRun *Run
 		for i := range runs {
 			r := &runs[i]
-			if r.Team == tm.ID && r.SubmissionSecondsSinceStart < freezeAtSeconds {
-				if lastRun == nil || r.SubmissionSecondsSinceStart > lastRun.SubmissionSecondsSinceStart ||
-					(r.SubmissionSecondsSinceStart == lastRun.SubmissionSecondsSinceStart && r.ID > lastRun.ID) {
+			if r.Team == tm.ID && r.Time < freezeAtSeconds {
+				if lastRun == nil || r.Time > lastRun.Time ||
+					(r.Time == lastRun.Time && r.ID > lastRun.ID) {
 					lastRun = r
 				}
 			}
@@ -199,7 +199,7 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 		}
 		if lastRun != nil {
 			id := lastRun.ID
-			tm := lastRun.SubmissionSecondsSinceStart
+			tm := lastRun.Time
 			entry.LastRunID = &id
 			entry.LastSubmittedSeconds = &tm
 		}
@@ -234,7 +234,7 @@ func createPendingProblems(frozen, final *scoreboard, teams []Team, problems []d
 			}
 			var postFreeze []Run
 			for _, r := range list {
-				if r.SubmissionSecondsSinceStart >= freezeAtSeconds {
+				if r.Time >= freezeAtSeconds {
 					postFreeze = append(postFreeze, r)
 				}
 			}
@@ -448,8 +448,8 @@ func (s *scoreboard) calculatePenalty(teamID int) float64 {
 				wrongAttempts++
 			}
 		}
-		if finish == nil || last.SubmissionSecondsSinceStart > finish.SubmissionSecondsSinceStart ||
-			(math.Abs(last.SubmissionSecondsSinceStart-finish.SubmissionSecondsSinceStart) <= 1e-9 && last.ID > finish.ID) {
+		if finish == nil || last.Time > finish.Time ||
+			(math.Abs(last.Time-finish.Time) <= 1e-9 && last.ID > finish.ID) {
 			c := last
 			finish = &c
 		}
@@ -457,5 +457,5 @@ func (s *scoreboard) calculatePenalty(teamID int) float64 {
 	if finish == nil {
 		return 0
 	}
-	return finish.SubmissionSecondsSinceStart + s.wrongAttemptPenaltySeconds*float64(wrongAttempts)
+	return finish.Time + s.wrongAttemptPenaltySeconds*float64(wrongAttempts)
 }
