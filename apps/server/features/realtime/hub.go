@@ -23,8 +23,11 @@ func NewHub(clock *Clock) *Hub {
 }
 
 func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, nil)
+	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+		OriginPatterns: []string{"*"},
+	})
 	if err != nil {
+		log.Error().Err(err).Msg("websocket accept failed")
 		return
 	}
 	defer c.CloseNow()

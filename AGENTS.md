@@ -1,9 +1,11 @@
 # tgb-resolver
 
-## Frontend status
+## Architecture
 
-`apps/web/` is the canonical (and only) frontend — a Vue 3 SPA (Pinia, Panda CSS + Chakra
-preset, Ark UI, vue-router, motion-v). There is no `apps/web-vue` directory and no React/legacy
+**Server**: Go 1.26+ using Gin (HTTP), Huma v2 (REST/OpenAPI), coder/websocket (WebSocket), Bun (SQLite ORM), Wire (DI)
+**Frontend**: Vue 3 SPA (Pinia, Panda CSS + Chakra preset, Ark UI, vue-router, motion-v)
+
+`apps/web/` is the canonical (and only) frontend. There is no `apps/web-vue` directory and no React/legacy
 app. Vue components must use generated styled-system JSX factories and recipes for styling; do
 not recreate Chakra component styles with bespoke CSS when a Panda recipe exists.
 
@@ -11,29 +13,24 @@ not recreate Chakra component styles with bespoke CSS when a Panda recipe exists
 
 - `pnpm dev` — run all apps in parallel (server + web)
 - `pnpm build` — builds through Turborepo respecting dependency graph
-- `pnpm test` — runs all vitest projects + `dotnet test` for .NET
+- `pnpm test` — runs all vitest projects + Go tests
 - `pnpm check-types` — `tsc --noEmit` for all TS packages
-- `pnpm format` / `pnpm lint` / `pnpm check` — Biome (not ESLint/Prettier)
+- `pnpm format` — runs `go fmt` for Go + Biome format for TS/Vue (via Turbo)
+- `pnpm lint` / `pnpm check` — Biome (not ESLint/Prettier)
 - `pnpm serve` — run production previews
 - `pnpm sync` / `pnpm sync:check` — syncpack dependency consistency
 - `pnpm knip` — knip unused dependency/export/asset check across the workspace (config: `knip.json`)
-- `pnpm turbo run nuget:outdated --filter=@tgb-resolver/server` — list outdated NuGet packages
-- `pnpm turbo run nuget:update --filter=@tgb-resolver/server` — upgrade NuGet packages to latest
-  compatible
 - `pnpm hooks:install` — point git at `.githooks` path (Husky manages hooks via `.husky/`; only
   needed if you opt out of Husky)
-- `pnpm turbo run quality --filter=@tgb-resolver/server` — ReSharper `cleanupcode` + `inspectcode`
-  SARIF report (slow, .NET-only quality pass)
-- OpenAPI `openapi.yaml` is generated automatically by the server `build` (runs
-  `dotnet build -p:GenerateOpenApiDocument=true`); no separate command needed.
+- OpenAPI `openapi.yaml` is generated automatically by the server `build` (runs `go run . --dump-openapi openapi.yaml`)
 
-Pre-commit hook runs: `sync:check || sync` → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
+Pre-commit hook runs: `sync:check || sync` → `turbo run format --filter=@tgb-resolver/server` → `turbo run test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
 
 ## Structure
 
 | Path                  | Role                                                                                                               |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------|
-| `apps/server/`        | .NET 10 solution (FastEndpoints, SignalR, EF Core Sqlite, NSwag, Mapperly). Solution: `.slnx` format               |
+| `apps/server/`        | Go 1.26+ HTTP/WebSocket server (Gin, Huma v2, coder/websocket, Bun ORM, modernc.org/sqlite). Default port 5001    |
 | `apps/web/`           | Canonical Vue 3 SPA (Pinia, TanStack Vue Query, Panda CSS + Chakra preset, Ark UI, vue-router). Dev port 3000      |
 | `apps/web/src/features/` | 5 feature-sliced UI modules, each owning their own Pinia stores |
 | `apps/web/src/features/control/` | Stores: playback, control-now, floating-panel (+types). UI: timeline, transport, cue tab |
@@ -64,15 +61,12 @@ Workspace packages: `@tgb-resolver/*`.
   the `satisfies` checks / discriminated unions in `types.ts`.
 - **Contracts build**: `pnpm run generate` (openapi-ts) → `tsdown`. Depends on current
   `openapi.yaml`
-- **OpenAPI regeneration**: emitted by the server `build` (
-  `dotnet build -p:GenerateOpenApiDocument=true`);
-  `pnpm turbo run build --filter=@tgb-resolver/server` regenerates `openapi.yaml`. No separate
-  `openapi` task.
+- **OpenAPI regeneration**: emitted by the server `build` (`go run . --dump-openapi openapi.yaml`);
+  `pnpm turbo run build --filter=@tgb-resolver/server` regenerates `openapi.yaml`.
 - **Biome** (v2.5.10): `recommended` preset, 100 col, 2-space. `organizeImports` grouped: react-scan
   blank package blank alias blank path. Ignores `*.gen.ts`
 - **syncpack**: checks dependency consistency across the workspace (no explicit config file;
   runs with defaults)
-- **Env**: `.env` → `VITE_API_URL` (default `http://localhost:5001`). Copy from `.env.example`
 - **`Record<K, V>` over `Map<K, V>`** for immutable look-up structures (returned values,
   lookup tables, index maps like `userById`, `problemById`). Only use `Map<K, V>` when the
   structure requires mutability after creation. `Record` reduces GC pressure, allocations,
@@ -136,26 +130,23 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
 
 ## Testing
 
-- **Vitest workspace** covers `packages/*` and `apps/*` (see `vitest.workspace.ts`). All TS packages
+- **Vitest workspace** covers `packages/*` and `apps/web` (see `vitest.workspace.ts`). All TS packages
   use `--passWithNoTests`.
-- **.NET tests** use TUnit (`[Test]`, not `[Fact]`). Tests are `sealed class` with
-  `await Assert.That(...)`. Run via `dotnet test`, not VSTest.
-  - Filter: `dotnet run --project <test.csproj> -- --treenode-filter "/*/*/Class/*"`
-  - Two test projects: `TGB.Resolver.Server.Tests` and `TGB.Resolver.IcpcXmlParser.Tests`
+- **Go tests** use standard `testing` package. Run via `go test ./...` or `pnpm --filter @tgb-resolver/server test`
 
-## .NET specifics
+## Go specifics
 
-- Target: `net10.0`, SDK 10.0
-- Solution format: `.slnx` (new XML-based format), not `.sln`
-- Turborepo: `@tgb-resolver/server` package at `apps/server/package.json` wraps the .NET toolchain;
-  `apps/server/turbo.json` declares .NET build outputs. Tasks: `build` (also emits `openapi.yaml`),
-  `test`, `dev`, `serve`, `check-types`, `quality`, `generate`
-- `dotnet-tools.json` at `apps/server/dotnet-tools.json` — ReSharper CLI (`dotnet tool run jb` →
-  `cleanupcode` + `inspectcode`) and `typedsignalr.client.typescript.generator` (
-  `dotnet tool run dotnet-tsrts`, the SignalR hub client generator)
-- SQLitePCLRaw pinned to 3.0.3 (temp workaround for efcore vulnerability)
-- `ExportSwaggerDocsAndExitAsync("v1")` in `Program.cs` generates `openapi.yaml` at startup
-- Scalar API reference at `/scalar`, Swagger JSON at `/openapi/{documentName}.json`
+- Go version: 1.26+
+- Turborepo: `@tgb-resolver/server` package at `apps/server/package.json` wraps the Go toolchain;
+  `apps/server/turbo.json` declares build outputs. Tasks: `build` (also emits `openapi.yaml`),
+  `test`, `dev`, `serve`, `generate`
+- **Dependency injection**: Google Wire (`wire.go`, `wire_gen.go`, `wire_providers.go`)
+- **Database**: Bun ORM with modernc.org/sqlite (pure-Go, no CGO)
+- **HTTP**: Gin router + Huma v2 (OpenAPI generation, validation)
+- **WebSocket**: `github.com/coder/websocket` for `/hubs/show` endpoint
+- **Protobuf**: `buf` generates Go + TypeScript from `proto/show/v1/*.proto`
+- Scalar API reference at `/scalar`, OpenAPI spec at `/openapi`
+- CORS: defaults to `*` (all origins), configurable via `ALLOWED_ORIGINS` env var
 
 ## Automated tooling
 
@@ -169,23 +160,18 @@ pre-commit flow. Do not hand-edit their generated output.
 - **`openapi-ts`** (`@hey-api/openapi-ts`) — generates the `packages/contracts` HTTP client,
   TanStack Query helpers, and Valibot schemas from `openapi.yaml`. Output is `*.gen.ts` (
   Biome-ignored). Run via `pnpm --filter @tgb-resolver/contracts generate`.
-- **`dotnet-tsrts`** (`typedsignalr.client.typescript.generator`) — generates the strongly-typed
-  SignalR hub client (`packages/realtime/src/gen`) from the server's `IShowHubClient` interface. Run
-  via `pnpm --filter @tgb-resolver/realtime generate`. This is the source of truth for the client
-  `HubConnectionBuilder` types; the `connection.on(...)` handlers in `realtime.worker.ts` are written by hand on
-  top of it.
+- **`buf`** — Protobuf compiler. Generates Go server types (`apps/server/proto/gen`) and TypeScript
+  client types (`packages/realtime/src/proto/gen`) from `.proto` files. Run via
+  `pnpm --filter @tgb-resolver/realtime generate` or `buf generate` in `apps/server/`.
 - **`tsdown`** — bundles `packages/contracts` and `packages/realtime` to `dist/`.
-- **`dotnet-outdated`** — NuGet dependency linter/upgrader, installed as a local tool in
-  `apps/server/dotnet-tools.json`. `nuget:outdated` lists upgradable packages; `nuget:update`
-  applies them (`-u`). Run via `pnpm turbo run nuget:outdated --filter=@tgb-resolver/server`.
 - **`knip`** — workspace-wide unused dependency/export/asset linter for the TS packages; config at
   `knip.json` (ignores generated `*.gen.ts`, `src/generated`, `src/gen`, and CSS-imported font
   packages). Run via `pnpm knip`. The root vitest error is suppressed via `vitest: { config: [] }`
   in the root workspace.
-- **ReSharper CLI** (`dotnet jb cleanupcode` + `inspectcode` → SARIF) — .NET-only quality pass via
-  `pnpm turbo run quality --filter=@tgb-resolver/server`.
-- **Pre-commit hook** (`.husky/pre-commit`) — `sync:check || sync` →
-  `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
+- **Wire** (`github.com/google/wire`) — Go dependency injection codegen. Generates `wire_gen.go`
+  from `wire.go` and `wire_providers.go`. Run automatically during `build`.
+- **Pre-commit hook** (`.husky/pre-commit`) — `sync:check || sync` → `go fmt` (server only) →
+  `test` (all packages) → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
 
 <!-- turbo configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
@@ -203,58 +189,67 @@ pre-commit flow. Do not hand-edit their generated output.
 
 ## Realtime Contracts
 
-The server `IShowHubClient` interface in `Features/Realtime/RealtimeContracts.cs` is the **single
-source of truth** for all hub messages. Every server-to-client SignalR message MUST be declared as a
-method on that interface.
+The server Protobuf definitions in `apps/server/proto/show/v1/show.proto` are the **single
+source of truth** for all WebSocket messages. The server broadcasts Protobuf-encoded `Envelope`
+messages over WebSocket at `/hubs/show`.
 
 ### Adding a new realtime message
 
-Adding a new realtime message requires touching exactly five places, in order:
+Adding a new realtime message requires touching exactly four places, in order:
 
-1. **Server — `IShowHubClient`** (`apps/server/TGB.Resolver.Server/Features/Realtime/RealtimeContracts.cs`)
-   Add the method signature, e.g.:
-   ```csharp
-   Task MyNewMessage(MyNewMessageMessage message);
+1. **Server — Protobuf** (`apps/server/proto/show/v1/show.proto`)
+   Add the message type to the `Envelope` oneof:
+   ```protobuf
+   message Envelope {
+     string type = 1;
+     oneof payload {
+       MyNewMessage my_new_message = 8;
+     }
+   }
+   message MyNewMessage {
+     int32 show_version = 1;
+     string some_data = 2;
+   }
    ```
-   Add the message record, e.g.:
-   ```csharp
-   public sealed record MyNewMessageMessage(int ShowVersion, string SomeData);
+   Run `buf generate` to regenerate Go + TypeScript types.
+
+2. **Server — Broadcast** (`apps/server/features/show/*.go` or `features/realtime/orchestrator.go`)
+   Create and broadcast the envelope:
+   ```go
+   h.Hub.Broadcast(&showv1.Envelope{
+     Type: "MyNewMessage",
+     Payload: &showv1.Envelope_MyNewMessage{
+       MyNewMessage: &showv1.MyNewMessage{
+         ShowVersion: version,
+         SomeData: "...",
+       },
+     },
+   })
    ```
 
-2. **Server — `ShowService.cs`** (`apps/server/TGB.Resolver.Server/Features/Show/ShowService.cs`, or wherever you broadcast)
-   Call the method:
-   ```csharp
-   await hubContext.Clients.All.MyNewMessage(new MyNewMessageMessage(...));
-   ```
-
-3. **Client — `realtime.worker.ts` + `lib/show-message-mapper.ts`** (register the
-   SignalR handler). Add a `connection.on("MyNewMessage", ...)` block in
-   `apps/web/src/lib/realtime.worker.ts` that calls `mapMyNewMessage(...)` from
-   `apps/web/src/lib/show-message-mapper.ts` and posts the `ShowWebSocketMessage` variant.
-   `callbacks.onMessage(...)`.
-
-4. **Client — `types.ts` (`packages/realtime/src/types.ts`)**
-   Add the variant to the `ShowWebSocketMessage` discriminated union:
+3. **Client — `realtime.worker.ts`** (`apps/web/src/lib/realtime.worker.ts`)
+   Add a case to the `handleEnvelope` switch to decode and post the message:
    ```typescript
-   | { type: "my-new-message"; showVersion: number; someData: string }
+   case ShowMessageType.MyNewMessage: {
+     if (payload.case !== "myNewMessage") return;
+     post({
+       type: RealtimeWorkerResponseType.Message,
+       message: {
+         type: ShowMessageType.MyNewMessage,
+         showVersion: payload.value.showVersion,
+         someData: payload.value.someData,
+       },
+     });
+     break;
+   }
    ```
+   Also add the wire-to-enum mapping in `ws-client.ts` `wireToMessageType`.
 
-5. **Client — `realtime-handler.ts`** (`apps/web/src/features/control/realtime-handler.ts`)
+4. **Client — `realtime-handler.ts`** (`apps/web/src/features/control/realtime-handler.ts`)
    Handle the new message type in the `if` chain inside `applyControlRealtimeMessage`.
-
-### Message type naming
-
-| Layer                   | Convention                | Example                       |
-|-------------------------|---------------------------|-------------------------------|
-| C# interface method     | PascalCase, verb-noun     | `PlaybackStateChanged`        |
-| C# message record       | `{Noun}Message` suffix    | `PlaybackStateChangedMessage` |
-| SignalR wire event name | Exact C# method name      | `"PlaybackStateChanged"`      |
-| TypeScript message type | kebab-case of the C# name | `"playback-state-changed"`    |
 
 ### Verification rules
 
-- Every `IShowHubClient` method MUST have a corresponding `connection.on(...)` in `realtime.worker.ts`.
-- Every `connection.on(...)` handler MUST produce a `ShowWebSocketMessage` variant.
+- Every `Envelope` payload variant MUST have a corresponding case in `realtime.worker.ts` `handleEnvelope`.
+- Every handled message MUST produce a `ShowWebSocketMessage` variant in `packages/realtime/src/types.ts`.
 - Every `ShowWebSocketMessage` variant MUST be handled in `applyControlRealtimeMessage`.
-- The `ShowWebSocketMessage` union type MUST NOT contain variants with no server counterpart.
-- The server `ShowRefetchReason` enum and client `reason` field MUST stay in sync.

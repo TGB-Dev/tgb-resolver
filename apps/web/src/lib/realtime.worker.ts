@@ -336,6 +336,8 @@ async function connectHub(url: string, isReconnect = false) {
     socket = null;
   }
 
+  console.log(`[realtime.worker] Connecting to: ${url}`);
+
   if (!isReconnect) {
     manualStopInProgress = false;
     reconnectAttempt = 0;
@@ -352,6 +354,7 @@ async function connectHub(url: string, isReconnect = false) {
   socket = connectShowHub(url, {
     onEnvelope: (_envelope: DecodedEnvelope) => undefined,
     onOpen: () => {
+      console.log("[realtime.worker] WebSocket opened");
       const attempt = reconnectAttempt;
       reconnectAttempt = 0;
       void syncClock().then(() => startClockSync());
@@ -361,7 +364,8 @@ async function connectHub(url: string, isReconnect = false) {
         attempt,
       });
     },
-    onClose: () => {
+    onClose: (event) => {
+      console.log(`[realtime.worker] WebSocket closed: code=${event.code} reason=${event.reason}`);
       stopClockSync();
       if (manualStopInProgress) {
         manualStopInProgress = false;
@@ -381,6 +385,7 @@ async function connectHub(url: string, isReconnect = false) {
       scheduleReconnect();
     },
     onError: () => {
+      console.error("[realtime.worker] WebSocket error");
       post({
         type: RealtimeWorkerResponseType.Error,
         error: "hub connection error",

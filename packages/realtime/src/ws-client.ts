@@ -74,11 +74,22 @@ export interface HubCallbacks {
 }
 
 export function connectShowHub(url: string, callbacks: HubCallbacks): WebSocket {
-  const ws = new WebSocket(hubUrl(url));
+  const wsUrl = hubUrl(url);
+  console.log(`[ws-client] Connecting to WebSocket: ${wsUrl}`);
+  const ws = new WebSocket(wsUrl);
   ws.binaryType = "arraybuffer";
-  ws.onopen = () => callbacks.onOpen();
-  ws.onclose = (event) => callbacks.onClose(event);
-  ws.onerror = () => callbacks.onError();
+  ws.onopen = () => {
+    console.log(`[ws-client] WebSocket connected to ${wsUrl}`);
+    callbacks.onOpen();
+  };
+  ws.onclose = (event) => {
+    console.log(`[ws-client] WebSocket closed: code=${event.code}, reason="${event.reason}"`);
+    callbacks.onClose(event);
+  };
+  ws.onerror = (event) => {
+    console.error(`[ws-client] WebSocket error:`, event);
+    callbacks.onError();
+  };
   ws.onmessage = (event: MessageEvent) => {
     if (!(event.data instanceof ArrayBuffer)) return;
     try {

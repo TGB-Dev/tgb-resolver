@@ -10,7 +10,7 @@ type Config struct {
 
 func Load() (*Config, error) {
 	viper.SetDefault("port", 5001)
-	viper.SetDefault("allowed_origins", []string{"http://127.0.0.1:3000", "http://localhost:3000"})
+	viper.SetDefault("allowed_origins", []string{"*"})
 	viper.SetDefault("data_dir", ".data")
 	viper.AutomaticEnv()
 	return &Config{

@@ -8,7 +8,7 @@
     "check": "biome check . --write",
     "check-types": "turbo run check-types",
     "dev": "turbo run dev",
-    "format": "biome format . --write",
+    "format": "turbo run format",
     "generate": "turbo run generate",
     "hooks:install": "git config core.hooksPath .githooks",
     "knip": "knip",

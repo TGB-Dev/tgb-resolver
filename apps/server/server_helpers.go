@@ -24,13 +24,25 @@ func mustOpenAPIYAML(api huma.API) []byte {
 }
 
 func corsMiddleware(allowedOrigins []string) gin.HandlerFunc {
+	allowAll := false
 	allowed := map[string]bool{}
 	for _, o := range allowedOrigins {
+		if o == "*" {
+			allowAll = true
+			break
+		}
 		allowed[o] = true
 	}
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		if allowed[origin] {
+		if allowAll {
+			if origin != "" {
+				c.Header("Access-Control-Allow-Origin", origin)
+			} else {
+				c.Header("Access-Control-Allow-Origin", "*")
+			}
+			c.Header("Access-Control-Allow-Credentials", "true")
+		} else if allowed[origin] {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
 			c.Header("Vary", "Origin")

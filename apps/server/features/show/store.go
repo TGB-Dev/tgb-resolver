@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -32,6 +34,11 @@ type Store struct {
 }
 
 func Open(path string) (*bun.DB, error) {
+	if dir := filepath.Dir(path); dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, err
+		}
+	}
 	sqldb, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
