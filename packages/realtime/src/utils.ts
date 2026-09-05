@@ -57,6 +57,7 @@ export function createEmptyShow(partial?: Partial<ShowFile>): ShowFile {
     },
     assets: {
       items: [],
+      folders: [],
     },
     timeline: [],
     tickRate: undefined,
