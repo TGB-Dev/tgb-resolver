@@ -5,8 +5,6 @@ import { ImageExtension } from "./image";
 import { MediaExtension } from "./media";
 import { ScrollerExtension } from "./scroller";
 
-export type { Extension } from "./base/types";
-
 export interface ExtensionLike {
   extensionList: Extension[];
   extensionWithExtId(extId: string): Extension | undefined;

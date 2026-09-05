@@ -59,7 +59,7 @@ function is409Error(error: unknown): boolean {
   );
 }
 
-export function withRetry<T>(queryClient: QueryClient, fn: () => Promise<T>): Promise<T> {
+function withRetry<T>(queryClient: QueryClient, fn: () => Promise<T>): Promise<T> {
   const runMutation = Effect.tryPromise({
     try: fn,
     catch: (error) => error,

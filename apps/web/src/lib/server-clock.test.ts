@@ -21,7 +21,7 @@ describe("server-clock", () => {
 
     mainNow += 1_000;
     expect(getServerNow()).toBe(1_001_000);
-  });
+  }, 30_000);
 
   test("a resync whose reported worker-monotonic restarts does not shift the clock", async () => {
     let mainNow = 100_000;

@@ -1,5 +1,6 @@
 import type { LeaderboardEntry, LeaderboardProblemResult } from "@tgb-resolver/realtime";
-export function problemCellEqual(a: LeaderboardProblemResult, b: LeaderboardProblemResult) {
+
+function problemCellEqual(a: LeaderboardProblemResult, b: LeaderboardProblemResult) {
   return a.score === b.score && a.verdict === b.verdict && a.timeSinceStart === b.timeSinceStart;
 }
 export function entryEqual(a: LeaderboardEntry, b: LeaderboardEntry) {
