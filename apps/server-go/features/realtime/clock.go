@@ -11,6 +11,8 @@ var AllowedTickRates = []float64{1, 10, 20, 30, 60}
 
 const defaultTickRate = 30.0
 
+func DefaultTickRateValue() float64 { return defaultTickRate }
+
 type scheduledOp struct {
 	id int64
 	at time.Time

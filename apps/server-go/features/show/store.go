@@ -105,6 +105,34 @@ func (s *Store) MutateShowUnchecked(ctx context.Context, fn func(domain.ShowStat
 	})
 }
 
+func (s *Store) MutateShowChecked(ctx context.Context, expectedShowVersion int, fn func(domain.ShowState) (domain.ShowState, error)) (domain.ShowState, error) {
+	return s.transact(ctx, func(entity *StoredShowState, current domain.ShowState) (domain.ShowState, error) {
+		if current.ShowVersion != expectedShowVersion {
+			return domain.ShowState{}, fmt.Errorf("%w: want %d got %d", domain.ErrVersionDrift, expectedShowVersion, current.ShowVersion)
+		}
+		updated, err := fn(current)
+		if err != nil {
+			return domain.ShowState{}, err
+		}
+		updated.ShowVersion = current.ShowVersion + 1
+		return updated, nil
+	})
+}
+
+func (s *Store) MutatePlaybackChecked(ctx context.Context, expectedShowVersion int, fn func(domain.ShowState) (domain.ShowState, error)) (domain.ShowState, error) {
+	return s.transact(ctx, func(entity *StoredShowState, current domain.ShowState) (domain.ShowState, error) {
+		if current.ShowVersion != expectedShowVersion {
+			return domain.ShowState{}, fmt.Errorf("%w: want %d got %d", domain.ErrVersionDrift, expectedShowVersion, current.ShowVersion)
+		}
+		updated, err := fn(current)
+		if err != nil {
+			return domain.ShowState{}, err
+		}
+		updated.ShowVersion = current.ShowVersion
+		return updated, nil
+	})
+}
+
 func (s *Store) MutatePlayback(ctx context.Context, fn func(domain.ShowState) domain.ShowState) (domain.ShowState, error) {
 	return s.transact(ctx, func(entity *StoredShowState, current domain.ShowState) (domain.ShowState, error) {
 		updated := fn(current)

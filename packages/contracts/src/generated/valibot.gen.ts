@@ -2,533 +2,944 @@
 
 import * as v from 'valibot';
 
-export const vShowMode = v.picklist(['Editing', 'Live']);
-
-export const vTimelineMode = v.picklist(['Rw', 'Ro']);
-
-export const vShowSource = v.picklist([
-    'Xml',
-    'Bundle',
-    'Manual'
-]);
-
-export const vShowMetaSnapshot = v.strictObject({
-    title: v.optional(v.string()),
-    contestId: v.nullish(v.string()),
-    source: v.optional(vShowSource)
+export const vAutomationState = v.strictObject({
+    autoResolveEnabled: v.boolean(),
+    autoResolveSpeedMs: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    fullAutoEnabled: v.boolean()
 });
 
-export const vProblemDefinitionSnapshot = v.strictObject({
-    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    label: v.optional(v.string()),
-    name: v.optional(v.string()),
-    score: v.optional(v.number())
-});
-
-export const vUserDefinitionSnapshot = v.strictObject({
-    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    username: v.optional(v.string()),
-    realName: v.optional(v.string())
-});
-
-export const vVerdictRunResult = v.picklist([
-    'Unknown',
-    'Accepted',
-    'WrongAnswer',
-    'TimeLimitExceeded',
-    'MemoryLimitExceeded',
-    'OutputLimitExceeded',
-    'InvalidReturn',
-    'RuntimeError',
-    'CompileError',
-    'InternalError',
-    'ShortCircuited',
-    'Aborted',
-    'Unresolved',
-    'Pending'
-]);
-
-export const vProblemFreezeResultSnapshot = v.strictObject({
-    problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    score: v.optional(v.number()),
-    verdict: v.optional(vVerdictRunResult),
-    preFreezeSubmissionCount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    postFreezeSubmissionCount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
-});
-
-export const vFreezeSnapshotEntrySnapshot = v.strictObject({
-    userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    totalScore: v.optional(v.number()),
-    totalPenalty: v.optional(v.number()),
-    rank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    problems: v.optional(v.array(vProblemFreezeResultSnapshot)),
-    lastRunId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    lastSubmittedSeconds: v.nullish(v.number())
-});
-
-export const vContestSnapshot = v.strictObject({
-    durationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    freezeDurationSeconds: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    problems: v.optional(v.array(vProblemDefinitionSnapshot)),
-    users: v.optional(v.array(vUserDefinitionSnapshot)),
-    preFreezeSnapshot: v.optional(v.array(vFreezeSnapshotEntrySnapshot))
-});
-
-export const vAutomationSnapshot = v.strictObject({
-    autoResolveEnabled: v.optional(v.boolean()),
-    autoResolveSpeedMs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    fullAutoEnabled: v.optional(v.boolean())
-});
-
-export const vPlaybackStatus = v.picklist([
-    'Idle',
-    'Running',
-    'Paused'
-]);
-
-export const vPlaybackStateSnapshot = v.strictObject({
-    status: v.optional(vPlaybackStatus),
-    currentEventId: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    activeEventIds: v.optional(v.array(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))),
-    startedAt: v.nullish(v.pipe(v.union([
+export const vCreateFolderRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    name: v.pipe(v.string(), v.maxLength(100)),
+    parentFolderId: v.optional(v.string()),
+    showVersion: v.optional(v.pipe(v.union([
         v.number(),
         v.string(),
         v.bigint()
     ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
 });
 
-export const vShowAssetSnapshot = v.strictObject({
-    id: v.optional(v.string()),
-    fileName: v.optional(v.string()),
-    originalName: v.optional(v.string()),
-    contentType: v.optional(v.string()),
-    sizeBytes: v.optional(v.pipe(v.union([
+export const vCustomEventPayload = v.strictObject({
+    extId: v.string(),
+    extPayload: v.optional(v.record(v.string(), v.unknown()))
+});
+
+export const vCreateTimelineEventRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    before: v.optional(v.boolean()),
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.pipe(v.string(), v.maxLength(100))),
+    durationSeconds: v.optional(v.number()),
+    relativeToEventId: v.optional(v.pipe(v.union([
         v.number(),
         v.string(),
         v.bigint()
     ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
-    xxh3: v.optional(v.string()),
-    folderId: v.nullish(v.string())
-});
-
-export const vFolderNodeSnapshot: v.GenericSchema = v.strictObject({
-    id: v.optional(v.string()),
-    name: v.optional(v.string()),
-    children: v.optional(v.array(v.lazy(() => vFolderNodeSnapshot)))
-});
-
-export const vAssetCollectionSnapshot = v.strictObject({
-    items: v.optional(v.array(vShowAssetSnapshot)),
-    folders: v.optional(v.array(vFolderNodeSnapshot))
-});
-
-export const vTimelineEventType = v.picklist([
-    'Res',
-    'Pre',
-    'Cus'
-]);
-
-export const vResolveEventPayloadSnapshot = v.strictObject({
-    userId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    problemId: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    newTotalScore: v.optional(v.number()),
-    newTotalPenalty: v.optional(v.number()),
-    newRank: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    newProblemScore: v.optional(v.number()),
-    verdict: v.optional(vVerdictRunResult),
-    timeSinceStart: v.optional(v.number())
-});
-
-export const vCustomEventPayloadSnapshot = v.strictObject({
-    extId: v.optional(v.string()),
-    extPayload: v.nullish(v.record(v.string(), v.unknown()))
-});
-
-export const vTimelineEventSnapshot = v.strictObject({
-    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    position: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    type: v.optional(vTimelineEventType),
-    durationSeconds: v.nullish(v.number()),
-    triggerOffsetSeconds: v.nullish(v.number()),
-    requireManualInteraction: v.nullish(v.boolean()),
-    customName: v.nullish(v.string()),
-    resolve: v.nullish(vResolveEventPayloadSnapshot),
-    pre: v.nullish(vResolveEventPayloadSnapshot),
-    custom: v.nullish(vCustomEventPayloadSnapshot)
-});
-
-export const vShowStateSnapshot = v.strictObject({
-    schemaVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    mode: v.optional(vShowMode),
-    timelineMode: v.optional(vTimelineMode),
-    meta: v.optional(vShowMetaSnapshot),
-    contest: v.optional(vContestSnapshot),
-    automation: v.optional(vAutomationSnapshot),
-    playback: v.optional(vPlaybackStateSnapshot),
-    assets: v.optional(vAssetCollectionSnapshot),
-    timeline: v.optional(v.array(vTimelineEventSnapshot)),
-    tickRate: v.nullish(v.number())
-});
-
-export const vSetAutomationRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    autoResolveEnabled: v.nullish(v.boolean()),
-    autoResolveSpeedMs: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    fullAutoEnabled: v.nullish(v.boolean())
-});
-
-export const vVersionedCommandRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
-});
-
-/**
- * the dto used to send an error response to the client
- */
-export const vErrorResponse = v.strictObject({
-    statusCode: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')), 400),
-    message: v.optional(v.string(), 'One or more errors occurred!'),
-    errors: v.optional(v.record(v.string(), v.array(v.string())))
-});
-
-export const vSeekPlaybackRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    eventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')))
-});
-
-export const vSetSettingsRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    tickRate: v.nullish(v.number())
-});
-
-export const vImportXmlRequest = v.strictObject({
-    xml: v.pipe(v.string(), v.minLength(1), v.maxLength(10485760)),
-    excludedUsernames: v.nullish(v.array(v.string()))
-});
-
-export const vImportBundleRequest = v.strictObject({
-    bytes: v.pipe(v.string(), v.minLength(1))
-});
-
-export const vImportXmlUser = v.strictObject({
-    id: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    username: v.optional(v.string()),
-    name: v.optional(v.string())
-});
-
-export const vImportXmlUsersRequest = v.strictObject({
-    xml: v.optional(v.string())
-});
-
-export const vResolveEventRenameRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    customName: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(100)))
-});
-
-export const vNonResolveEventPatchRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    triggerOffsetSeconds: v.nullish(v.number()),
-    requireManualInteraction: v.nullish(v.boolean()),
-    customName: v.nullish(v.string()),
-    custom: v.nullish(vCustomEventPayloadSnapshot)
-});
-
-export const vCreateTimelineEventRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    before: v.optional(v.boolean()),
-    durationSeconds: v.nullish(v.number()),
-    triggerOffsetSeconds: v.nullish(v.number()),
-    requireManualInteraction: v.nullish(v.boolean()),
-    customName: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(100))),
-    custom: v.nullish(vCustomEventPayloadSnapshot)
-});
-
-export const vMoveTimelineEventRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    relativeToEventId: v.optional(v.pipe(v.number(), v.integer(), v.gtValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    before: v.optional(v.boolean())
-});
-
-export const vPatchTimelineEventRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    durationSeconds: v.nullish(v.number()),
-    useDefaultDuration: v.optional(v.boolean()),
-    customName: v.nullish(v.string()),
-    triggerOffsetSeconds: v.nullish(v.number()),
-    clearTriggerOffset: v.optional(v.boolean()),
-    requireManualInteraction: v.nullish(v.boolean()),
-    custom: v.nullish(vCustomEventPayloadSnapshot)
-});
-
-export const vSetTimelineModeRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    timelineMode: v.optional(vTimelineMode)
-});
-
-export const vUpsertAssetRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-    contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
-    bytes: v.pipe(v.string(), v.minLength(1)),
-    folderId: v.nullish(v.string())
-});
-
-export const vCreateFolderRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    parentFolderId: v.optional(v.string()),
-    name: v.pipe(v.string(), v.minLength(0), v.maxLength(100))
+    requireManualInteraction: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    triggerOffsetSeconds: v.optional(v.number())
 });
 
 export const vDeleteEntryRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    isDirectory: v.optional(v.boolean())
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    isDirectory: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
 });
 
-export const vRenameEntryRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    isDirectory: v.optional(v.boolean()),
-    newName: v.pipe(v.string(), v.minLength(0), v.maxLength(100))
+export const vErrorDetail = v.strictObject({
+    location: v.optional(v.string()),
+    message: v.optional(v.string()),
+    value: v.optional(v.unknown())
+});
+
+export const vErrorModel = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    detail: v.optional(v.string()),
+    errors: v.nullish(v.array(vErrorDetail)),
+    instance: v.optional(v.pipe(v.string(), v.url())),
+    status: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    title: v.optional(v.string()),
+    type: v.optional(v.pipe(v.string(), v.url()), 'about:blank')
+});
+
+export const vFolderNode: v.GenericSchema = v.strictObject({
+    children: v.nullable(v.array(v.lazy(() => vFolderNode))),
+    id: v.string(),
+    name: v.string()
+});
+
+export const vImportBundleRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    bytes: v.pipe(v.string(), v.minLength(1))
+});
+
+export const vImportXmlRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    excludedUsernames: v.nullish(v.array(v.string())),
+    xml: v.pipe(v.string(), v.minLength(1), v.maxLength(10485760))
+});
+
+export const vImportXmlUser = v.strictObject({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    name: v.string(),
+    username: v.string()
+});
+
+export const vImportXmlUsersRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    xml: v.optional(v.string())
 });
 
 export const vMoveAssetRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
-    targetFolderId: v.pipe(v.string(), v.minLength(1))
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    assetId: v.optional(v.string()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    targetFolderId: v.string()
+});
+
+export const vMoveTimelineEventRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    before: v.optional(v.boolean()),
+    relativeToEventId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vNonResolveEventPatchRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.string()),
+    requireManualInteraction: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    triggerOffsetSeconds: v.optional(v.number())
+});
+
+export const vPatchTimelineEventRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    clearTriggerOffset: v.optional(v.boolean()),
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
+    requireManualInteraction: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    triggerOffsetSeconds: v.optional(v.number()),
+    useDefaultDuration: v.optional(v.boolean())
+});
+
+export const vPlaybackState = v.strictObject({
+    activeEventIds: v.nullable(v.array(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))),
+    currentEventId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    startedAt: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    status: v.picklist([
+        'Idle',
+        'Running',
+        'Paused'
+    ])
+});
+
+export const vProblemDefinition = v.strictObject({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    label: v.string(),
+    name: v.string(),
+    score: v.number()
+});
+
+export const vProblemFreezeResult = v.strictObject({
+    postFreezeSubmissionCount: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    preFreezeSubmissionCount: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    problemId: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    score: v.number(),
+    verdict: v.string()
+});
+
+export const vFreezeSnapshotEntry = v.strictObject({
+    lastRunId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    lastSubmittedSeconds: v.optional(v.number()),
+    problems: v.nullable(v.array(vProblemFreezeResult)),
+    rank: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    totalPenalty: v.number(),
+    totalScore: v.number(),
+    userId: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))
+});
+
+export const vRenameEntryRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    isDirectory: v.optional(v.boolean()),
+    newName: v.pipe(v.string(), v.maxLength(100)),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vResolveEventPayload = v.strictObject({
+    newProblemScore: v.number(),
+    newRank: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    newTotalPenalty: v.number(),
+    newTotalScore: v.number(),
+    problemId: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    timeSinceStart: v.number(),
+    userId: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    verdict: v.string()
+});
+
+export const vResolveEventRenameRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    customName: v.optional(v.pipe(v.string(), v.maxLength(100))),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vSeekPlaybackRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    eventId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vSetAutomationRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    autoResolveEnabled: v.optional(v.boolean()),
+    autoResolveSpeedMs: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    fullAutoEnabled: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vSetSettingsRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    tickRate: v.optional(v.number())
+});
+
+export const vSetTimelineModeRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    timelineMode: v.optional(v.picklist(['Rw', 'Ro']))
+});
+
+export const vShowAsset = v.strictObject({
+    contentType: v.string(),
+    fileName: v.string(),
+    folderId: v.optional(v.string()),
+    id: v.string(),
+    originalName: v.string(),
+    sizeBytes: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    xxh3: v.string()
+});
+
+export const vAssetCollection = v.strictObject({
+    folders: v.nullish(v.array(vFolderNode)),
+    items: v.nullable(v.array(vShowAsset))
+});
+
+export const vShowMeta = v.strictObject({
+    contestId: v.optional(v.string()),
+    source: v.string(),
+    title: v.string()
+});
+
+export const vTimelineEvent = v.strictObject({
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    position: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    pre: v.optional(vResolveEventPayload),
+    requireManualInteraction: v.optional(v.boolean()),
+    resolve: v.optional(vResolveEventPayload),
+    triggerOffsetSeconds: v.optional(v.number()),
+    type: v.picklist([
+        'Res',
+        'Pre',
+        'Img',
+        'Sfx',
+        'Cus'
+    ])
 });
 
 export const vTransferEntryRequest = v.strictObject({
-    showVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))),
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    copy: v.optional(v.boolean()),
     isDirectory: v.optional(v.boolean()),
-    targetFolderId: v.nullish(v.string()),
-    copy: v.optional(v.boolean())
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    targetFolderId: v.optional(v.string())
 });
 
-export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowSetAutomationEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowStartPlaybackEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowStartPlaybackEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowResetPlaybackEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowResetPlaybackEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointBody = vSeekPlaybackRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowSetSettingsEndpointBody = vSetSettingsRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowSetSettingsEndpointResponse = vShowStateSnapshot;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowGetShowEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowOptimizeShowEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowOptimizeShowEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowClearShowEndpointBody = vVersionedCommandRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowClearShowEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowImportXmlEndpointBody = vImportXmlRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowImportXmlEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowImportBundleEndpointBody = vImportBundleRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowImportBundleEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowImportXmlUsersEndpointBody = vImportXmlUsersRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowImportXmlUsersEndpointResponse = v.array(vImportXmlUser);
-
-/**
- * No Content
- */
-export const vTgbResolverServerFeaturesShowExportBundleEndpointResponse = v.void();
-
-export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointBody = vResolveEventRenameRequest;
-
-export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointPath = v.object({
-    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+export const vUpsertAssetRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    bytes: v.pipe(v.string(), v.minLength(1)),
+    contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+    fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+    folderId: v.optional(v.string()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
 });
 
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointResponse = vShowStateSnapshot;
+export const vUserDefinition = v.strictObject({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    realName: v.string(),
+    username: v.string()
+});
 
-export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointBody = vNonResolveEventPatchRequest;
+export const vContestState = v.strictObject({
+    durationSeconds: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    freezeDurationSeconds: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    preFreezeSnapshot: v.nullable(v.array(vFreezeSnapshotEntry)),
+    problems: v.nullable(v.array(vProblemDefinition)),
+    users: v.nullable(v.array(vUserDefinition))
+});
+
+export const vShowState = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    assets: vAssetCollection,
+    automation: vAutomationState,
+    contest: vContestState,
+    meta: vShowMeta,
+    mode: v.picklist(['Editing', 'Live']),
+    playback: vPlaybackState,
+    schemaVersion: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    showVersion: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    tickRate: v.optional(v.number()),
+    timeline: v.nullable(v.array(vTimelineEvent)),
+    timelineMode: v.string()
+});
+
+export const vVersionedCommandRequest = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vCreateFolderRequestWritable = v.strictObject({
+    name: v.pipe(v.string(), v.maxLength(100)),
+    parentFolderId: v.optional(v.string()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vCreateTimelineEventRequestWritable = v.strictObject({
+    before: v.optional(v.boolean()),
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.pipe(v.string(), v.maxLength(100))),
+    durationSeconds: v.optional(v.number()),
+    relativeToEventId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    requireManualInteraction: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    triggerOffsetSeconds: v.optional(v.number())
+});
+
+export const vDeleteEntryRequestWritable = v.strictObject({
+    isDirectory: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vErrorModelWritable = v.strictObject({
+    detail: v.optional(v.string()),
+    errors: v.nullish(v.array(vErrorDetail)),
+    instance: v.optional(v.pipe(v.string(), v.url())),
+    status: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    title: v.optional(v.string()),
+    type: v.optional(v.pipe(v.string(), v.url()), 'about:blank')
+});
+
+export const vImportBundleRequestWritable = v.strictObject({
+    bytes: v.pipe(v.string(), v.minLength(1))
+});
+
+export const vImportXmlRequestWritable = v.strictObject({
+    excludedUsernames: v.nullish(v.array(v.string())),
+    xml: v.pipe(v.string(), v.minLength(1), v.maxLength(10485760))
+});
+
+export const vImportXmlUsersRequestWritable = v.strictObject({
+    xml: v.optional(v.string())
+});
+
+export const vMoveAssetRequestWritable = v.strictObject({
+    assetId: v.optional(v.string()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    targetFolderId: v.string()
+});
+
+export const vMoveTimelineEventRequestWritable = v.strictObject({
+    before: v.optional(v.boolean()),
+    relativeToEventId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vNonResolveEventPatchRequestWritable = v.strictObject({
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.string()),
+    requireManualInteraction: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    triggerOffsetSeconds: v.optional(v.number())
+});
+
+export const vPatchTimelineEventRequestWritable = v.strictObject({
+    clearTriggerOffset: v.optional(v.boolean()),
+    custom: v.optional(vCustomEventPayload),
+    customName: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
+    requireManualInteraction: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    triggerOffsetSeconds: v.optional(v.number()),
+    useDefaultDuration: v.optional(v.boolean())
+});
+
+export const vRenameEntryRequestWritable = v.strictObject({
+    isDirectory: v.optional(v.boolean()),
+    newName: v.pipe(v.string(), v.maxLength(100)),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vResolveEventRenameRequestWritable = v.strictObject({
+    customName: v.optional(v.pipe(v.string(), v.maxLength(100))),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vSeekPlaybackRequestWritable = v.strictObject({
+    eventId: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vSetAutomationRequestWritable = v.strictObject({
+    autoResolveEnabled: v.optional(v.boolean()),
+    autoResolveSpeedMs: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    fullAutoEnabled: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vSetSettingsRequestWritable = v.strictObject({
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    tickRate: v.optional(v.number())
+});
+
+export const vSetTimelineModeRequestWritable = v.strictObject({
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    timelineMode: v.optional(v.picklist(['Rw', 'Ro']))
+});
+
+export const vShowStateWritable = v.strictObject({
+    assets: vAssetCollection,
+    automation: vAutomationState,
+    contest: vContestState,
+    meta: vShowMeta,
+    mode: v.picklist(['Editing', 'Live']),
+    playback: vPlaybackState,
+    schemaVersion: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    showVersion: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')),
+    tickRate: v.optional(v.number()),
+    timeline: v.nullable(v.array(vTimelineEvent)),
+    timelineMode: v.string()
+});
+
+export const vTransferEntryRequestWritable = v.strictObject({
+    copy: v.optional(v.boolean()),
+    isDirectory: v.optional(v.boolean()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))),
+    targetFolderId: v.optional(v.string())
+});
+
+export const vUpsertAssetRequestWritable = v.strictObject({
+    bytes: v.pipe(v.string(), v.minLength(1)),
+    contentType: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+    fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+    folderId: v.optional(v.string()),
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vVersionedCommandRequestWritable = v.strictObject({
+    showVersion: v.optional(v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
+});
+
+export const vTgbResolverServerFeaturesShowResetPlaybackEndpointBody = vVersionedCommandRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowResetPlaybackEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowStartPlaybackEndpointBody = vVersionedCommandRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowStartPlaybackEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowSetAutomationEndpointBody = vSetAutomationRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowSetAutomationEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowClearShowEndpointBody = vVersionedCommandRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowClearShowEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointBody = vNonResolveEventPatchRequestWritable;
 
 export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointPath = v.object({
-    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))
 });
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse = vShowState;
 
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowDisableLiveModeEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointBody = vResolveEventRenameRequestWritable;
 
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowEnableLiveModeEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointBody = vCreateTimelineEventRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointBody = vMoveTimelineEventRequest;
-
-export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointPath = v.object({
-    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
+export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointPath = v.object({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))
 });
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointBody = vVersionedCommandRequest;
-
-export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointPath = v.object({
-    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
-});
+export const vTgbResolverServerFeaturesShowRenameResolveEventEndpointResponse = vShowState;
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointBody = vPatchTimelineEventRequest;
-
-export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointPath = v.object({
-    id: v.pipe(v.number(), v.integer(), v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'), v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'))
-});
+export const vTgbResolverServerFeaturesShowDisableLiveModeEndpointResponse = vShowState;
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowEnableLiveModeEndpointResponse = vShowState;
 
-export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointBody = vSetTimelineModeRequest;
+export const vTgbResolverServerFeaturesShowOptimizeShowEndpointBody = vVersionedCommandRequestWritable;
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesShowOptimizeShowEndpointResponse = vShowState;
 
-export const vTgbResolverServerFeaturesAssetsGetAssetEndpointPath = v.object({
-    id: v.string()
-});
+export const vTgbResolverServerFeaturesShowSetSettingsEndpointBody = vSetSettingsRequestWritable;
 
 /**
- * No Content
+ * OK
  */
-export const vTgbResolverServerFeaturesAssetsGetAssetEndpointResponse = v.void();
+export const vTgbResolverServerFeaturesShowSetSettingsEndpointResponse = vShowState;
 
-export const vTgbResolverServerFeaturesAssetsPutAssetEndpointBody = vUpsertAssetRequest;
-
-export const vTgbResolverServerFeaturesAssetsPutAssetEndpointPath = v.object({
-    id: v.string()
-});
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesAssetsPutAssetEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointBody = vCreateFolderRequest;
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointBody = vDeleteEntryRequest;
-
-export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointPath = v.object({
-    id: v.string()
-});
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointBody = vRenameEntryRequest;
-
-export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointPath = v.object({
-    id: v.string()
-});
-
-/**
- * Success
- */
-export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointResponse = vShowStateSnapshot;
-
-export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointBody = vMoveAssetRequest;
+export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointBody = vMoveAssetRequestWritable;
 
 export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointPath = v.object({
     assetId: v.string()
 });
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = vShowState;
 
-export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointBody = vTransferEntryRequest;
+export const vTgbResolverServerFeaturesAssetsPutAssetEndpointBody = vUpsertAssetRequestWritable;
+
+export const vTgbResolverServerFeaturesAssetsPutAssetEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAssetsPutAssetEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointBody = vDeleteEntryRequestWritable;
+
+export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointBody = vRenameEntryRequestWritable;
+
+export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAssetsRenameEntryEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointBody = vTransferEntryRequestWritable;
 
 export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointPath = v.object({
     id: v.string()
 });
 
 /**
- * Success
+ * OK
  */
-export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = vShowStateSnapshot;
+export const vTgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointBody = vCreateFolderRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = vShowState;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowExportBundleEndpointResponse = v.string();
+
+export const vTgbResolverServerFeaturesShowImportBundleEndpointBody = vImportBundleRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowImportBundleEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowImportXmlEndpointBody = vImportXmlRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowImportXmlEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowImportXmlUsersEndpointBody = vImportXmlUsersRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowImportXmlUsersEndpointResponse = v.nullable(v.array(vImportXmlUser));
+
+export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointBody = vSeekPlaybackRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = vShowState;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowGetShowEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointBody = vCreateTimelineEventRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointBody = vVersionedCommandRequestWritable;
+
+export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointPath = v.object({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))
+});
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointBody = vPatchTimelineEventRequestWritable;
+
+export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointPath = v.object({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))
+});
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointBody = vMoveTimelineEventRequestWritable;
+
+export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointPath = v.object({
+    id: v.pipe(v.union([
+        v.number(),
+        v.string(),
+        v.bigint()
+    ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807'))
+});
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointBody = vSetTimelineModeRequestWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = vShowState;

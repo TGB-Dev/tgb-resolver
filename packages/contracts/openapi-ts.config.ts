@@ -1,7 +1,7 @@
 import { defineConfig } from "@hey-api/openapi-ts";
 
 export default defineConfig({
-  input: "../../apps/server/TGB.Resolver.Server/openapi.yaml",
+  input: "../../apps/server-go/openapi.yaml",
   output: "src/generated",
   plugins: [
     "@hey-api/client-ofetch",
