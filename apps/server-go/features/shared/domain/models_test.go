@@ -10,7 +10,7 @@ func TestEnumsSerializeAsStrings(t *testing.T) {
 	b, _ := json.Marshal(struct {
 		Mode ShowMode `json:"mode"`
 	}{Mode: s.Mode})
-	if string(b) != `{"mode":"Preview"}` {
+	if string(b) != `{"mode":"Editing"}` {
 		t.Fatalf("enum must be JSON string, got %s", b)
 	}
 	if s.ShowVersion != 0 || len(s.Timeline) != 0 {

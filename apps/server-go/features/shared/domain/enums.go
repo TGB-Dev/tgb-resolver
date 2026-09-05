@@ -5,31 +5,39 @@ import "github.com/danielgtaylor/huma/v2"
 type ShowMode string
 
 const (
+	ShowModeEditing ShowMode = "Editing"
 	ShowModeLive    ShowMode = "Live"
-	ShowModePreview ShowMode = "Preview"
 )
 
 func (m ShowMode) Schema(r huma.Registry) *huma.Schema {
-	return &huma.Schema{Type: huma.TypeString, Enum: []any{"Live", "Preview"}}
+	return &huma.Schema{Type: huma.TypeString, Enum: []any{"Editing", "Live"}}
 }
+
+type TimelineMode string
+
+const (
+	TimelineRw TimelineMode = "Rw"
+	TimelineRo TimelineMode = "Ro"
+)
 
 type ShowSource string
 
 const (
+	ShowSourceXml    ShowSource = "Xml"
+	ShowSourceBundle ShowSource = "Bundle"
 	ShowSourceManual ShowSource = "Manual"
-	ShowSourceImport ShowSource = "Import"
 )
 
 type PlaybackStatus string
 
 const (
 	PlaybackIdle    PlaybackStatus = "Idle"
-	PlaybackPlaying PlaybackStatus = "Playing"
+	PlaybackRunning PlaybackStatus = "Running"
 	PlaybackPaused  PlaybackStatus = "Paused"
 )
 
 func (s PlaybackStatus) Schema(r huma.Registry) *huma.Schema {
-	return &huma.Schema{Type: huma.TypeString, Enum: []any{"Idle", "Playing", "Paused"}}
+	return &huma.Schema{Type: huma.TypeString, Enum: []any{"Idle", "Running", "Paused"}}
 }
 
 type TimelineEventType string
