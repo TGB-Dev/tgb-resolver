@@ -12,7 +12,7 @@
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch --no-clean",
-    "generate": "protoc --plugin=protoc-gen-es=./node_modules/.bin/protoc-gen-es --es_out=src/proto/gen --es_opt=target=ts -I../../apps/server-go/proto ../../apps/server-go/proto/show/v1/show.proto",
+    "generate": "protoc --plugin=protoc-gen-es=./node_modules/.bin/protoc-gen-es --es_out=src/proto/gen --es_opt=target=ts -I../../apps/server/proto ../../apps/server/proto/show/v1/show.proto",
     "prepublishOnly": "pnpm run build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "pnpm run check-types"
