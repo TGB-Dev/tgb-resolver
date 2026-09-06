@@ -4,12 +4,20 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gin-gonic/gin"
 
 	"tgb-resolver/server/features/shared/domain"
 )
+
+// maxUploadBytes caps fully zipped show bundles (assets embedded) at 1 GB.
+// Huma defaults every operation body to 1 MB without this.
+const maxUploadBytes = 1 << 30
+
+// uploadReadTimeout allows slow 1 GB uploads to finish (Huma defaults to 5s).
+const uploadReadTimeout = 10 * time.Minute
 
 type showBody struct {
 	Body domain.ShowState
@@ -153,7 +161,7 @@ func RegisterShowRoutes(api huma.API, svc *Service) {
 			return ok(st), nil
 		})
 
-	huma.Register(api, huma.Operation{OperationID: opImportBundle, Method: http.MethodPost, Path: "/import/bundle"},
+	huma.Register(api, huma.Operation{OperationID: opImportBundle, Method: http.MethodPost, Path: "/import/bundle", MaxBodyBytes: maxUploadBytes, BodyReadTimeout: uploadReadTimeout},
 		func(ctx context.Context, input *struct {
 			Body ImportBundleRequest
 		}) (*showBody, error) {

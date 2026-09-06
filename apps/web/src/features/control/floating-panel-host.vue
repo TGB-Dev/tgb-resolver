@@ -63,6 +63,7 @@ useEventListener(window, "beforeunload", (event) => {
       :min-size="entry.config.minSize"
       :default-position="getDefaultPosition(entry.config.size)"
       :resizable="entry.config.resizable ?? true"
+      :draggable="true"
       :allow-overflow="false"
       :close-on-escape="true"
       strategy="fixed"

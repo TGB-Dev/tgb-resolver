@@ -2,6 +2,7 @@
 import { css } from "@styled-system/css";
 import { useTemplateRef } from "vue";
 
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
 
 import { INTERNAL_DRAG_MIME, useAssetsInteractionStore } from "./assets-interaction-store";
@@ -52,7 +53,7 @@ function handleDoubleClick(entry: FsEntry) {
 function handleDropError(error: unknown): void {
   toaster.create({
     title: "Move assets",
-    description: error instanceof Error ? error.message : String(error),
+    description: parseErrorMessage(error),
     type: "error",
   });
 }

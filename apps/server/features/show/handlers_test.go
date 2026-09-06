@@ -3,6 +3,7 @@ package show
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -64,6 +65,21 @@ func TestStaleVersionIsConflict(t *testing.T) {
 	router.ServeHTTP(w, req)
 	if w.Code != http.StatusConflict {
 		t.Fatalf("want 409 got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestImportBundleAcceptsBodiesOverOneMB(t *testing.T) {
+	router := setupTestRouter(t)
+	payload := `{"bytes":"` + base64.StdEncoding.EncodeToString(make([]byte, 1500*1024)) + `"}`
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/import/bundle", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+	if w.Code == http.StatusRequestEntityTooLarge {
+		t.Fatalf("want bundle over 1MB accepted, got 413")
+	}
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("want 422 invalid bundle got %d: %s", w.Code, w.Body.String()[:200])
 	}
 }
 

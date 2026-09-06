@@ -16,6 +16,7 @@ import {
 } from "@/features/control/control-edit-main-panel-store";
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
 import { useColorModeStore } from "@/stores/color-mode-store";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
@@ -181,7 +182,7 @@ function assetsSelectedIds(store: ReturnType<typeof useAssetsManagerStore>): Set
 }
 
 function assetsHandleError(e: unknown, label: string): void {
-  const msg = e instanceof Error ? e.message : String(e);
+  const msg = parseErrorMessage(e);
   console.error(`${label} error:`, e);
   toaster.create({ title: label, description: msg, type: "error" });
 }

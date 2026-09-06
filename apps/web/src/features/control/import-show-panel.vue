@@ -9,6 +9,7 @@ import { computed, ref } from "vue";
 
 import { useImportShowMutation, useImportXmlUsers } from "@/features/control/composables/use-show";
 import type { FloatingPanelHandle } from "@/features/control/floating-panel-types";
+import { parseErrorMessage as errorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
 
 const props = defineProps<{
@@ -25,7 +26,7 @@ const importShow = useImportShowMutation();
 // otherwise `importShow.error` is a truthy Ref object and the error paragraph
 // renders "Unknown error" as soon as the dialog opens.
 const importError = computed(() =>
-  importShow.error.value instanceof Error ? importShow.error.value.message : importShow.error.value,
+  importShow.error.value ? errorMessage(importShow.error.value) : importShow.error.value,
 );
 const importPending = computed(() => importShow.isPending.value);
 
@@ -51,31 +52,6 @@ const errorText = css({ color: "fg.error", fontSize: "sm" });
 const actions = css({ display: "flex", justifyContent: "flex-end", gap: "2", marginTop: "4" });
 
 const userStatus = css({ fontSize: "xs", color: "fg.muted", paddingY: "2" });
-
-function errorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  if (error && typeof error === "object") {
-    const body = error as {
-      message?: unknown;
-      errors?: Record<string, unknown> | undefined;
-    };
-    const errors = body.errors;
-    if (errors) {
-      // FastEndpoints surfaces endpoint AddError() failures under "GeneralErrors".
-      for (const key of ["GeneralErrors", "generalErrors", "General"]) {
-        const general = errors[key];
-        if (Array.isArray(general) && typeof general[0] === "string" && general[0]) {
-          return general[0];
-        }
-      }
-      const first = Object.values(errors).find((v) => Array.isArray(v) && v.length > 0);
-      if (Array.isArray(first) && typeof first[0] === "string" && first[0]) return first[0];
-    }
-    if (typeof body.message === "string" && body.message.length > 0) return body.message;
-  }
-  return "Unknown error";
-}
 
 async function onFileChange(acceptedFiles: File[]): Promise<void> {
   const f = acceptedFiles[0] ?? null;

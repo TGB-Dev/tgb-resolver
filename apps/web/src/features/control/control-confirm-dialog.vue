@@ -11,6 +11,9 @@ const dialogClasses = dialog({ placement: "center", size: "sm" });
 const fieldClasses = field();
 const inputClasses = input({ size: "md" });
 
+// Above floating panels (popover 1500), below toasts (1700): the unsaved-changes
+// prompt must win over panels when closing a dirty floating panel.
+const topLayer = css({ zIndex: 1600 });
 const content = css({ display: "flex", flexDirection: "column", gap: "4", alignItems: "stretch", padding: "6" });
 const message = css({ color: "fg.muted", fontSize: "sm" });
 const actions = css({ display: "flex", justifyContent: "flex-end", gap: "3" });
@@ -37,8 +40,8 @@ watch(
     @escape-key-down="store.resolveConfirmAction(false)"
     @pointer-down-outside="store.resolveConfirmAction(false)"
   >
-    <Dialog.Backdrop :class="dialogClasses.backdrop" />
-    <Dialog.Positioner :class="dialogClasses.positioner">
+    <Dialog.Backdrop :class="cx(dialogClasses.backdrop, topLayer)" />
+    <Dialog.Positioner :class="cx(dialogClasses.positioner, topLayer)">
       <Dialog.Content :class="dialogClasses.content">
         <div :class="content">
           <Dialog.Title :class="dialogClasses.title">{{ store.title }}</Dialog.Title>

@@ -4,11 +4,18 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 
 	"tgb-resolver/server/features/shared/domain"
 )
+
+// maxUploadBytes caps single-asset uploads at 1 GB (Huma defaults to 1 MB).
+const maxUploadBytes = 1 << 30
+
+// uploadReadTimeout allows slow 1 GB uploads to finish (Huma defaults to 5s).
+const uploadReadTimeout = 10 * time.Minute
 
 const (
 	opGetAsset      = "TGBResolverServerFeaturesAssetsGetAssetEndpoint"
@@ -48,7 +55,7 @@ func badRequest(err error) error {
 }
 
 func RegisterAssetRoutes(api huma.API, svc ShowService, blobs *FileStore) {
-	huma.Register(api, huma.Operation{OperationID: opPutAsset, Method: http.MethodPost, Path: "/assets/{id}"},
+	huma.Register(api, huma.Operation{OperationID: opPutAsset, Method: http.MethodPost, Path: "/assets/{id}", MaxBodyBytes: maxUploadBytes, BodyReadTimeout: uploadReadTimeout},
 		func(ctx context.Context, input *struct {
 			ID   string `path:"id"`
 			Body UpsertAssetRequest

@@ -34,6 +34,8 @@ import { type ComputedRef, computed } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { mapShowStateSnapshotToShowFile } from "@/features/control/show-mapper";
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
+import { toaster } from "@/features/shared/ui/toaster";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useShowStore } from "@/stores/show-store";
 
@@ -42,6 +44,12 @@ import { controlShowQueryKey } from "../realtime-handler";
 function setShowInCache(queryClient: QueryClient, snapshot: ShowStateSnapshot) {
   queryClient.setQueryData(controlShowQueryKey(), snapshot);
   usePlaybackStore().syncVersion(snapshot.showVersion ?? 0);
+}
+
+function toastMutationError(title: string) {
+  return (error: unknown) => {
+    toaster.create({ title, description: parseErrorMessage(error), type: "error" });
+  };
 }
 
 function requireShow(show: ShowFile | undefined) {
@@ -273,6 +281,7 @@ export function useRenameControlEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Rename event failed"),
   });
 }
 
@@ -311,6 +320,7 @@ export function usePatchTimelineEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Update event failed"),
   });
 }
 
@@ -341,6 +351,7 @@ export function useMoveTimelineEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Move event failed"),
   });
 }
 
@@ -394,6 +405,7 @@ export function useDeleteTimelineEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Delete event failed"),
   });
 }
 
