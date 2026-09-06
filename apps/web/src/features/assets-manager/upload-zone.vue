@@ -61,6 +61,43 @@ async function collectFilesAndFolders(
   }
 }
 
+type CollectedDrop = { isFile: boolean; file?: File; pathParts: string[] };
+
+function resolveDropFolderId(e: DragEvent): string | null {
+  const dropTarget = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+  const targetEntryId =
+    dropTarget?.closest<HTMLElement>("[data-entry-id]")?.dataset.entryId ?? null;
+  return interaction.resolveDropUploadTarget(targetEntryId);
+}
+
+function collectItemFile(item: DataTransferItem, collected: CollectedDrop[]): Promise<void> | undefined {
+  const entry = item.webkitGetAsEntry();
+  if (entry) return collectFilesAndFolders(entry, [], collected);
+  const file = item.getAsFile();
+  if (file) collected.push({ isFile: true, file, pathParts: [] });
+  return undefined;
+}
+
+async function collectFromItems(
+  items: DataTransferItemList,
+  collected: CollectedDrop[],
+): Promise<void> {
+  const promises: Promise<void>[] = [];
+  for (const item of Array.from(items)) {
+    if (item.kind !== "file") continue;
+    const pending = collectItemFile(item, collected);
+    if (pending) promises.push(pending);
+  }
+  await Promise.all(promises);
+}
+
+function collectFromFiles(files: FileList | undefined, collected: CollectedDrop[]) {
+  if (!files) return;
+  for (const file of Array.from(files)) {
+    collected.push({ isFile: true, file, pathParts: [] });
+  }
+}
+
 async function handleDrop(e: DragEvent) {
   if (interaction.isInternalDragData(e.dataTransfer)) return;
 
@@ -68,37 +105,11 @@ async function handleDrop(e: DragEvent) {
   e.stopPropagation();
   isDragOver.value = false;
 
+  const targetFolderId = resolveDropFolderId(e);
+  const collected: CollectedDrop[] = [];
   const items = e.dataTransfer?.items;
-  const dropTarget = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
-  const targetEntryId =
-    dropTarget?.closest<HTMLElement>("[data-entry-id]")?.dataset.entryId ?? null;
-  const targetFolderId = interaction.resolveDropUploadTarget(targetEntryId);
-  const collected: { isFile: boolean; file?: File; pathParts: string[] }[] = [];
-
-  if (items) {
-    const promises: Promise<void>[] = [];
-    for (const item of Array.from(items)) {
-      if (item.kind === "file") {
-        const entry = item.webkitGetAsEntry();
-        if (entry) {
-          promises.push(collectFilesAndFolders(entry, [], collected));
-        } else {
-          const file = item.getAsFile();
-          if (file) {
-            collected.push({ isFile: true, file, pathParts: [] });
-          }
-        }
-      }
-    }
-    await Promise.all(promises);
-  } else {
-    const files = e.dataTransfer?.files;
-    if (files) {
-      for (const file of Array.from(files)) {
-        collected.push({ isFile: true, file, pathParts: [] });
-      }
-    }
-  }
+  if (items) await collectFromItems(items, collected);
+  else collectFromFiles(e.dataTransfer?.files, collected);
 
   processUploadBatch(targetFolderId, collected);
 }

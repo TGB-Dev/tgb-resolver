@@ -6,7 +6,7 @@
     "rules": {
       "preset": "recommended",
       "complexity": {
-        "noUselessFragments": "off"
+        "noExcessiveCognitiveComplexity": "error"
       },
       "style": {
         "useVueHyphenatedAttributes": "off",

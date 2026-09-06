@@ -72,32 +72,49 @@ function collapse(message: string): string {
  * Turn anything thrown by API calls into a short human-readable line for
  * toasts and inline errors. Never returns raw JSON blobs.
  */
-export function parseErrorMessage(error: unknown): string {
-  const direct =
-    fromTransport(error) ??
-    fromValibotIssues(error) ??
-    (isRecord(error) && !(error instanceof Error)
-      ? (fromHumaModel(error as HumaErrorModel) ??
-        fromLegacyModel(error as { errors?: unknown; message?: unknown }))
-      : undefined);
-  if (direct) return collapse(direct);
+function fromPlainRecord(error: unknown): string | undefined {
+  if (!isRecord(error) || error instanceof Error) return undefined;
+  return (
+    fromHumaModel(error as HumaErrorModel) ??
+    fromLegacyModel(error as { errors?: unknown; message?: unknown })
+  );
+}
 
-  if (error instanceof Error && error.message) {
-    const trimmed = error.message.trim();
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-      try {
-        const parsed: unknown = JSON.parse(trimmed);
-        const fromJson = isRecord(parsed)
-          ? (fromHumaModel(parsed as HumaErrorModel) ??
-            fromLegacyModel(parsed as { errors?: unknown; message?: unknown }))
-          : undefined;
-        if (fromJson) return collapse(fromJson);
-      } catch {
-        // Not actually JSON; fall through to the raw message.
-      }
-    }
-    return collapse(error.message);
+function fromDirectSources(error: unknown): string | undefined {
+  return fromTransport(error) ?? fromValibotIssues(error) ?? fromPlainRecord(error);
+}
+
+function isJsonLike(value: string): boolean {
+  return value.startsWith("{") || value.startsWith("[");
+}
+
+function fromJsonString(trimmed: string): string | undefined {
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (!isRecord(parsed)) return undefined;
+    return (
+      fromHumaModel(parsed as HumaErrorModel) ??
+      fromLegacyModel(parsed as { errors?: unknown; message?: unknown })
+    );
+  } catch {
+    return undefined;
   }
+}
+
+function fromErrorInstance(error: Error): string {
+  if (!error.message) return "Unknown error";
+  const trimmed = error.message.trim();
+  if (isJsonLike(trimmed)) {
+    const fromJson = fromJsonString(trimmed);
+    if (fromJson) return collapse(fromJson);
+  }
+  return collapse(error.message);
+}
+
+export function parseErrorMessage(error: unknown): string {
+  const direct = fromDirectSources(error);
+  if (direct) return collapse(direct);
+  if (error instanceof Error) return fromErrorInstance(error);
   if (typeof error === "string") return collapse(error);
   return "Unknown error";
 }

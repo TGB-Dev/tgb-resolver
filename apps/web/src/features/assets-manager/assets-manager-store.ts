@@ -57,6 +57,24 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     selectedIds.value = new Set();
     lastClickedIndex.value = null;
   }
+  function isToggleSelect(event: { metaKey?: boolean; ctrlKey?: boolean }): boolean {
+    return event.metaKey === true || event.ctrlKey === true;
+  }
+  function isRangeSelect(event: { shiftKey?: boolean }): boolean {
+    return event.shiftKey === true && lastClickedIndex.value !== null;
+  }
+  function toggleSelect(next: Set<string>, id: string) {
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+  }
+  function addRange(next: Set<string>, from: number, to: number) {
+    const start = Math.min(from, to);
+    const end = Math.max(from, to);
+    for (let i = start; i <= end; i++) {
+      const rangeEntry = entries.value[i];
+      if (rangeEntry) next.add(rangeEntry.id);
+    }
+  }
   function handleEntryClick(
     event: { metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean },
     index: number,
@@ -64,17 +82,9 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
     const entry = entries.value[index];
     if (!entry) return;
     const next = new Set(selectedIds.value);
-    if (event.metaKey || event.ctrlKey) {
-      if (next.has(entry.id)) next.delete(entry.id);
-      else next.add(entry.id);
-    } else if (event.shiftKey && lastClickedIndex.value !== null) {
-      const start = Math.min(lastClickedIndex.value, index);
-      const end = Math.max(lastClickedIndex.value, index);
-      for (let i = start; i <= end; i++) {
-        const rangeEntry = entries.value[i];
-        if (rangeEntry) next.add(rangeEntry.id);
-      }
-    } else {
+    if (isToggleSelect(event)) toggleSelect(next, entry.id);
+    else if (isRangeSelect(event)) addRange(next, lastClickedIndex.value as number, index);
+    else {
       next.clear();
       next.add(entry.id);
     }

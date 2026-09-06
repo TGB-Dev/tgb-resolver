@@ -283,86 +283,124 @@ function entriesEqual(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
 ///   them when omitted). Names are resolved from the contest maps so callers
 ///   never need the denormalized strings.
 /// </summary>
-export function deriveLeaderboard(show: ShowFile, upToEventId?: number): LeaderboardEntry[] {
-  if (lastShow !== show) {
-    lastShow = show;
-    entryCache = new Map();
+interface MutableProblemState {
+  score: number;
+  verdict: VerdictRunResult;
+  timeSinceStart: number;
+}
+
+interface MutableEntryState {
+  score: number;
+  penalty: number;
+  rank: number;
+  problems: Map<number, MutableProblemState>;
+  lastSubmittedSeconds: number | null;
+}
+
+type EntryStates = Map<number, MutableEntryState>;
+
+function resetLeaderboardCache(show: ShowFile) {
+  if (lastShow === show) return;
+  lastShow = show;
+  entryCache = new Map();
+}
+
+function seedEntryProblems(
+  problems?: ShowFile["contest"]["preFreezeSnapshot"][number]["problems"],
+): Map<number, MutableProblemState> {
+  const seeded = new Map<number, MutableProblemState>();
+  for (const problem of problems ?? []) {
+    seeded.set(problem.problemId, {
+      score: problem.score,
+      verdict: problem.verdict,
+      timeSinceStart: 0,
+    });
   }
+  return seeded;
+}
 
-  const { userById, problemById } = buildContestLookups(show);
-  const entries = new Map<
-    number,
-    {
-      score: number;
-      penalty: number;
-      rank: number;
-      problems: Map<number, { score: number; verdict: VerdictRunResult; timeSinceStart: number }>;
-      lastSubmittedSeconds: number | null;
-    }
-  >();
-
+function seedEntriesFromSnapshot(show: ShowFile): EntryStates {
+  const entries: EntryStates = new Map();
   for (const entry of show.contest.preFreezeSnapshot ?? []) {
-    const problems = new Map<
-      number,
-      { score: number; verdict: VerdictRunResult; timeSinceStart: number }
-    >();
-    for (const problem of entry.problems ?? []) {
-      problems.set(problem.problemId, {
-        score: problem.score,
-        verdict: problem.verdict,
-        timeSinceStart: 0,
-      });
-    }
     entries.set(entry.userId, {
       score: entry.totalScore,
       penalty: entry.totalPenalty,
       rank: entry.rank,
-      problems,
+      problems: seedEntryProblems(entry.problems),
       lastSubmittedSeconds: entry.lastSubmittedSeconds,
     });
   }
+  return entries;
+}
 
-  const ordered = sortTimeline(show.timeline);
-  const target =
-    upToEventId !== undefined ? ordered.find((event) => event.id === upToEventId) : undefined;
-  const targetPosition =
-    target?.position ??
-    (upToEventId !== undefined ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY);
+function resolveTargetPosition(ordered: ShowFile["timeline"], upToEventId?: number): number {
+  if (upToEventId === undefined) return Number.POSITIVE_INFINITY;
+  return ordered.find((event) => event.id === upToEventId)?.position ?? Number.NEGATIVE_INFINITY;
+}
 
-  for (const event of ordered) {
+function applyPreEvent(
+  entries: EntryStates,
+  event: Extract<TimelineEvent, { type: TimelineEventType.PRE }>,
+) {
+  const state = entries.get(event.payload.userId);
+  if (!state) return;
+  const prev = state.problems.get(event.payload.problemId);
+  state.problems.set(event.payload.problemId, {
+    score: prev?.score ?? 0,
+    verdict: VerdictRunResult.PENDING,
+    timeSinceStart: prev?.timeSinceStart ?? 0,
+  });
+}
+
+function applyResEvent(
+  entries: EntryStates,
+  event: Extract<TimelineEvent, { type: TimelineEventType.RES }>,
+) {
+  const state = entries.get(event.payload.userId);
+  if (!state) return;
+  state.score = event.payload.newTotalScore;
+  state.rank = event.payload.newRank;
+  state.penalty = event.payload.newTotalPenalty;
+  // Finalization RES events (problemId 0) only lock in the team's rank and
+  // carry no problem result, so they must not add a phantom problem cell.
+  if (event.payload.problemId === 0) return;
+  state.problems.set(event.payload.problemId, {
+    score: event.payload.newProblemScore,
+    verdict: event.payload.verdict,
+    timeSinceStart: event.payload.timeSinceStart,
+  });
+}
+
+function applyTimelineEvents(entries: EntryStates, show: ShowFile, targetPosition: number) {
+  for (const event of sortTimeline(show.timeline)) {
     if (event.position > targetPosition) break;
-
-    if (event.type === TimelineEventType.PRE) {
-      const state = entries.get(event.payload.userId);
-      if (!state) continue;
-      const prev = state.problems.get(event.payload.problemId);
-      state.problems.set(event.payload.problemId, {
-        score: prev?.score ?? 0,
-        verdict: VerdictRunResult.PENDING,
-        timeSinceStart: prev?.timeSinceStart ?? 0,
-      });
-      continue;
-    }
-
-    if (event.type !== TimelineEventType.RES) continue;
-
-    const state = entries.get(event.payload.userId);
-    if (!state) continue;
-
-    state.score = event.payload.newTotalScore;
-    state.rank = event.payload.newRank;
-    state.penalty = event.payload.newTotalPenalty;
-    // Finalization RES events (problemId 0) only lock in the team's rank and
-    // carry no problem result, so they must not add a phantom problem cell.
-    if (event.payload.problemId !== 0)
-      state.problems.set(event.payload.problemId, {
-        score: event.payload.newProblemScore,
-        verdict: event.payload.verdict,
-        timeSinceStart: event.payload.timeSinceStart,
-      });
+    if (event.type === TimelineEventType.PRE) applyPreEvent(entries, event);
+    else if (event.type === TimelineEventType.RES) applyResEvent(entries, event);
   }
+}
 
-  const sorted: LeaderboardEntry[] = [...entries.entries()]
+function toLeaderboardProblems(
+  state: MutableEntryState,
+  problemById: Record<number, ProblemDefinition>,
+): LeaderboardProblemResult[] {
+  return [...state.problems.entries()]
+    .map(([problemId, result]) => ({
+      problemId,
+      label: problemById[problemId]?.label ?? "",
+      name: problemById[problemId]?.name ?? "",
+      score: result.score,
+      verdict: result.verdict,
+      timeSinceStart: result.timeSinceStart,
+    }))
+    .sort((a, b) => a.problemId - b.problemId);
+}
+
+function buildSortedEntries(
+  entries: EntryStates,
+  userById: Record<number, UserDefinition>,
+  problemById: Record<number, ProblemDefinition>,
+): LeaderboardEntry[] {
+  return [...entries.entries()]
     .map(([userId, state]) => {
       const user = userById[userId];
       return {
@@ -373,45 +411,53 @@ export function deriveLeaderboard(show: ShowFile, upToEventId?: number): Leaderb
         totalScore: state.score,
         totalPenalty: state.penalty,
         lastSubmittedSeconds: state.lastSubmittedSeconds,
-        problems: [...state.problems.entries()]
-          .map(([problemId, result]) => ({
-            problemId,
-            label: problemById[problemId]?.label ?? "",
-            name: problemById[problemId]?.name ?? "",
-            score: result.score,
-            verdict: result.verdict,
-            timeSinceStart: result.timeSinceStart,
-          }))
-          .sort((a, b) => a.problemId - b.problemId),
+        problems: toLeaderboardProblems(state, problemById),
       };
     })
     .sort(
       (a, b) =>
         b.totalScore - a.totalScore || a.totalPenalty - b.totalPenalty || a.userId - b.userId,
     );
+}
 
+function isNewRank(
+  entry: LeaderboardEntry,
+  priorScore: number | null,
+  priorPenalty: number | null,
+): boolean {
+  if (priorScore === null || priorPenalty === null) return true;
+  return (
+    Math.abs(entry.totalScore - priorScore) > 1e-9 ||
+    Math.abs(entry.totalPenalty - priorPenalty) > 1e-9
+  );
+}
+
+function assignRanksWithCache(sorted: LeaderboardEntry[]): LeaderboardEntry[] {
   let rank = 0;
   let priorScore: number | null = null;
   let priorPenalty: number | null = null;
-
   return sorted.map((entry, index) => {
-    if (
-      priorScore === null ||
-      priorPenalty === null ||
-      Math.abs(entry.totalScore - priorScore) > 1e-9 ||
-      Math.abs(entry.totalPenalty - priorPenalty) > 1e-9
-    ) {
+    if (isNewRank(entry, priorScore, priorPenalty)) {
       rank = index + 1;
       priorScore = entry.totalScore;
       priorPenalty = entry.totalPenalty;
     }
-
     entry.rank = rank;
-
     const cached = entryCache.get(entry.userId);
     if (cached && entriesEqual(cached, entry)) return cached;
-
     entryCache.set(entry.userId, entry);
     return entry;
   });
+}
+
+export function deriveLeaderboard(show: ShowFile, upToEventId?: number): LeaderboardEntry[] {
+  resetLeaderboardCache(show);
+  const { userById, problemById } = buildContestLookups(show);
+  const entries = seedEntriesFromSnapshot(show);
+  applyTimelineEvents(
+    entries,
+    show,
+    resolveTargetPosition(sortTimeline(show.timeline), upToEventId),
+  );
+  return assignRanksWithCache(buildSortedEntries(entries, userById, problemById));
 }

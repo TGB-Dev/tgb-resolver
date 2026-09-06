@@ -180,150 +180,159 @@ function scheduleReconnect() {
   }, delay);
 }
 
-function handleEnvelope(data: ArrayBuffer) {
-  let envelope: DecodedEnvelope;
-  try {
-    envelope = decodeEnvelope(data);
-  } catch {
-    return;
-  }
+type EnvelopePayload = NonNullable<DecodedEnvelope["payload"]>;
+type ProtoTimelineEvent = NonNullable<
+  Extract<EnvelopePayload, { case: "timelineEventAdded" }>["value"]["event"]
+>;
+type ProtoCustom = NonNullable<ProtoTimelineEvent["custom"]>;
 
+function decodeCustomPayload(custom: ProtoCustom | undefined) {
+  if (!custom) return undefined;
+  return {
+    extId: custom.extId,
+    extPayload: custom.extPayloadJson.length
+      ? (JSON.parse(new TextDecoder().decode(custom.extPayloadJson)) as Record<string, unknown>)
+      : undefined,
+  };
+}
+
+function toTimelineWire(event: ProtoTimelineEvent | undefined | null) {
+  return {
+    id: event?.id ?? 0,
+    position: event?.position ?? 0,
+    type: event?.type ?? "",
+    durationSeconds: event?.durationSeconds,
+    triggerOffsetSeconds: event?.triggerOffsetSeconds,
+    requireManualInteraction: event?.requireManualInteraction,
+    customName: event?.customName,
+    resolve: event?.resolve ? { ...event.resolve } : undefined,
+    pre: event?.pre ? { ...event.pre } : undefined,
+    custom: decodeCustomPayload(event?.custom),
+  };
+}
+
+function postEnvelopeMessage(message: Record<string, unknown>) {
+  post({ type: RealtimeWorkerResponseType.Message, message });
+}
+
+function postTimelineEventMessage(
+  type: ShowMessageType.TimelineEventAdded | ShowMessageType.TimelineEventUpdated,
+  showVersion: number,
+  event: ProtoTimelineEvent | undefined | null,
+) {
+  postEnvelopeMessage({ type, showVersion, event: mapTimelineEvent(toTimelineWire(event)) });
+}
+
+function handleAdded(payload: EnvelopePayload) {
+  if (payload.case !== "timelineEventAdded") return;
+  postTimelineEventMessage(
+    ShowMessageType.TimelineEventAdded,
+    payload.value.showVersion,
+    payload.value.event,
+  );
+}
+
+function handleUpdated(payload: EnvelopePayload) {
+  if (payload.case !== "timelineEventUpdated") return;
+  postTimelineEventMessage(
+    ShowMessageType.TimelineEventUpdated,
+    payload.value.showVersion,
+    payload.value.event,
+  );
+}
+
+function handleRemoved(payload: EnvelopePayload) {
+  if (payload.case !== "timelineEventRemoved") return;
+  postEnvelopeMessage({
+    type: ShowMessageType.TimelineEventRemoved,
+    showVersion: payload.value.showVersion,
+    eventId: payload.value.eventId,
+  });
+}
+
+function handleReordered(payload: EnvelopePayload) {
+  if (payload.case !== "timelineReordered") return;
+  postEnvelopeMessage({
+    type: ShowMessageType.TimelineReordered,
+    showVersion: payload.value.showVersion,
+    orderedEventIds: payload.value.orderedEventIds,
+  });
+}
+
+function handleReplaced(payload: EnvelopePayload) {
+  if (payload.case !== "showReplaced") return;
+  postEnvelopeMessage({
+    type: ShowMessageType.ShowReplaced,
+    showVersion: payload.value.showVersion,
+  });
+}
+
+function handlePlaybackChanged(payload: EnvelopePayload) {
+  if (payload.case !== "playbackStateChanged") return;
+  const p = payload.value.playback;
+  postEnvelopeMessage({
+    type: ShowMessageType.PlaybackStateChanged,
+    showVersion: payload.value.showVersion,
+    playback: {
+      status: mapStatus(p?.status ?? ""),
+      currentEventId: p?.currentEventId ?? undefined,
+      activeEventIds: p?.activeEventIds ?? [],
+      startedAt: p?.startedAtUnixMs != null ? Number(p.startedAtUnixMs) : undefined,
+    },
+  });
+}
+
+function handleLiveModeChanged(payload: EnvelopePayload) {
+  if (payload.case !== "liveModeChanged") return;
+  postEnvelopeMessage({
+    type: ShowMessageType.LiveModeChanged,
+    showVersion: payload.value.showVersion,
+    mode: mapMode(payload.value.mode),
+  });
+}
+
+function dispatchEnvelopeMessage(mapped: ShowMessageType, payload: EnvelopePayload) {
+  switch (mapped) {
+    case ShowMessageType.TimelineEventAdded:
+      handleAdded(payload);
+      break;
+    case ShowMessageType.TimelineEventUpdated:
+      handleUpdated(payload);
+      break;
+    case ShowMessageType.TimelineEventRemoved:
+      handleRemoved(payload);
+      break;
+    case ShowMessageType.TimelineReordered:
+      handleReordered(payload);
+      break;
+    case ShowMessageType.ShowReplaced:
+      handleReplaced(payload);
+      break;
+    case ShowMessageType.PlaybackStateChanged:
+      handlePlaybackChanged(payload);
+      break;
+    case ShowMessageType.LiveModeChanged:
+      handleLiveModeChanged(payload);
+      break;
+  }
+}
+
+function decodeEnvelopeSafe(data: ArrayBuffer): DecodedEnvelope | undefined {
+  try {
+    return decodeEnvelope(data);
+  } catch {
+    return undefined;
+  }
+}
+
+function handleEnvelope(data: ArrayBuffer) {
+  const envelope = decodeEnvelopeSafe(data);
+  if (!envelope) return;
   const mapped = envelopeToMessageType(envelope.type);
   if (!mapped) return;
   const payload = envelope.payload;
   if (!payload || payload.case === undefined) return;
-
-  switch (mapped) {
-    case ShowMessageType.TimelineEventAdded: {
-      if (payload.case !== "timelineEventAdded") return;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.TimelineEventAdded,
-          showVersion: payload.value.showVersion,
-          event: mapTimelineEvent({
-            id: payload.value.event?.id ?? 0,
-            position: payload.value.event?.position ?? 0,
-            type: payload.value.event?.type ?? "",
-            durationSeconds: payload.value.event?.durationSeconds,
-            triggerOffsetSeconds: payload.value.event?.triggerOffsetSeconds,
-            requireManualInteraction: payload.value.event?.requireManualInteraction,
-            customName: payload.value.event?.customName,
-            resolve: payload.value.event?.resolve ? { ...payload.value.event.resolve } : undefined,
-            pre: payload.value.event?.pre ? { ...payload.value.event.pre } : undefined,
-            custom: payload.value.event?.custom
-              ? {
-                  extId: payload.value.event.custom.extId,
-                  extPayload: payload.value.event.custom.extPayloadJson.length
-                    ? (JSON.parse(
-                        new TextDecoder().decode(payload.value.event.custom.extPayloadJson),
-                      ) as Record<string, unknown>)
-                    : undefined,
-                }
-              : undefined,
-          }),
-        },
-      });
-      break;
-    }
-    case ShowMessageType.TimelineEventUpdated: {
-      if (payload.case !== "timelineEventUpdated") return;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.TimelineEventUpdated,
-          showVersion: payload.value.showVersion,
-          event: mapTimelineEvent({
-            id: payload.value.event?.id ?? 0,
-            position: payload.value.event?.position ?? 0,
-            type: payload.value.event?.type ?? "",
-            durationSeconds: payload.value.event?.durationSeconds,
-            triggerOffsetSeconds: payload.value.event?.triggerOffsetSeconds,
-            requireManualInteraction: payload.value.event?.requireManualInteraction,
-            customName: payload.value.event?.customName,
-            resolve: payload.value.event?.resolve ? { ...payload.value.event.resolve } : undefined,
-            pre: payload.value.event?.pre ? { ...payload.value.event.pre } : undefined,
-            custom: payload.value.event?.custom
-              ? {
-                  extId: payload.value.event.custom.extId,
-                  extPayload: payload.value.event.custom.extPayloadJson.length
-                    ? (JSON.parse(
-                        new TextDecoder().decode(payload.value.event.custom.extPayloadJson),
-                      ) as Record<string, unknown>)
-                    : undefined,
-                }
-              : undefined,
-          }),
-        },
-      });
-      break;
-    }
-    case ShowMessageType.TimelineEventRemoved: {
-      if (payload.case !== "timelineEventRemoved") return;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.TimelineEventRemoved,
-          showVersion: payload.value.showVersion,
-          eventId: payload.value.eventId,
-        },
-      });
-      break;
-    }
-    case ShowMessageType.TimelineReordered: {
-      if (payload.case !== "timelineReordered") return;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.TimelineReordered,
-          showVersion: payload.value.showVersion,
-          orderedEventIds: payload.value.orderedEventIds,
-        },
-      });
-      break;
-    }
-    case ShowMessageType.ShowReplaced: {
-      if (payload.case !== "showReplaced") return;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.ShowReplaced,
-          showVersion: payload.value.showVersion,
-        },
-      });
-      break;
-    }
-    case ShowMessageType.PlaybackStateChanged: {
-      if (payload.case !== "playbackStateChanged") return;
-      const p = payload.value.playback;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.PlaybackStateChanged,
-          showVersion: payload.value.showVersion,
-          playback: {
-            status: mapStatus(p?.status ?? ""),
-            currentEventId: p?.currentEventId ?? undefined,
-            activeEventIds: p?.activeEventIds ?? [],
-            startedAt: p?.startedAtUnixMs != null ? Number(p.startedAtUnixMs) : undefined,
-          },
-        },
-      });
-      break;
-    }
-    case ShowMessageType.LiveModeChanged: {
-      if (payload.case !== "liveModeChanged") return;
-      post({
-        type: RealtimeWorkerResponseType.Message,
-        message: {
-          type: ShowMessageType.LiveModeChanged,
-          showVersion: payload.value.showVersion,
-          mode: mapMode(payload.value.mode),
-        },
-      });
-      break;
-    }
-  }
+  dispatchEnvelopeMessage(mapped, payload);
 }
 
 async function connectHub(url: string, isReconnect = false) {
