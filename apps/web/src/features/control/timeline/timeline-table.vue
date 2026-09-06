@@ -201,8 +201,8 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
         flex: 1,
         minH: 0,
         overflow: 'auto',
-        '& [data-timeline-row]:nth-of-type(odd) [data-event-id]': { bg: 'bg' },
-        '& [data-timeline-row]:nth-of-type(even) [data-event-id]': { bg: 'bg.emphasized' },
+        '& [data-timeline-row]:nth-of-type(odd) [data-event-id]': { bg: 'bg.emphasized' },
+        '& [data-timeline-row]:nth-of-type(even) [data-event-id]': { bg: 'bg' },
       })"
     >
       <div :class="css({ w: 'full', display: 'flex', flexDirection: 'column', alignItems: 'stretch' })">

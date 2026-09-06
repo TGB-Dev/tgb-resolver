@@ -40,10 +40,11 @@ const nodeClass = computed(() =>
     fontWeight: "normal",
     cursor: "pointer",
     borderLeftWidth: 3,
-    borderLeftColor: isDropTarget || isSelected ? "colorPalette.border" : "transparent",
-    bg: isDropTarget || isSelected ? "bg.muted" : undefined,
-    color: isSelected ? "colorPalette" : undefined,
-    _hover: { bg: "bg.subtle" },
+    borderLeftStyle: "solid",
+    borderLeftColor: isDropTarget.value || isSelected.value ? "colorPalette.border" : "transparent",
+    bg: isDropTarget.value || isSelected.value ? "bg.muted" : undefined,
+    color: isSelected.value ? "colorPalette" : undefined,
+    _hover: { bg: isDropTarget.value || isSelected.value ? "bg.muted" : "bg.subtle" },
   }),
 );
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Splitter } from "@ark-ui/vue";
-import { css } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
 import { whenever } from "@vueuse/core";
 import { onMounted, useTemplateRef } from "vue";
@@ -41,30 +41,44 @@ function handleFileInputChange(e: Event) {
 </script>
 
 <template>
-  <div :class="css({ boxSize: 'full', overflow: 'hidden' })">
+  <div :class="css({ flex: 1, minH: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' })">
     <Splitter.Root
-      :class="splitterClasses.root"
+      :class="cx(splitterClasses.root, css({ flex: 1, minH: '0', overflow: 'hidden' }))"
       orientation="horizontal"
       :defaultSize="[25, 75]"
       :panels="[{ id: 'tree', minSize: 15 }, { id: 'content', minSize: 40 }]"
     >
-      <Splitter.Panel id="tree" :minSize="15" :class="splitterClasses.panel">
+      <Splitter.Panel
+        id="tree"
+        :minSize="15"
+        :class="cx(splitterClasses.panel, css({ overflow: 'hidden', display: 'flex', flexDirection: 'column', minH: '0' }))"
+      >
         <FolderTreeView />
       </Splitter.Panel>
 
       <Splitter.ResizeTrigger id="tree:content" :class="splitterClasses.resizeTrigger" />
 
-      <Splitter.Panel id="content" :minSize="40" :class="splitterClasses.panel">
-        <div :class="css({ display: 'flex', flexDirection: 'column', overflow: 'hidden', h: 'full' })">
+      <Splitter.Panel
+        id="content"
+        :minSize="40"
+        :class="cx(splitterClasses.panel, css({ overflow: 'hidden', display: 'flex', flexDirection: 'column', minH: '0' }))"
+      >
+        <div
+          :class="
+            css({
+              display: 'flex',
+              flexDirection: 'column',
+              minH: '0',
+              overflow: 'hidden',
+              flex: 1,
+            })
+          "
+        >
           <AssetsToolbar />
-          <div :class="css({ flex: 1, overflow: 'hidden' })">
-            <UploadZone>
-              <div :class="css({ h: 'full' })">
-                <AssetsListView v-if="store.viewMode === 'list'" />
-                <AssetsGridView v-else />
-              </div>
-            </UploadZone>
-          </div>
+          <UploadZone :class="css({ flex: 1, minH: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' })">
+            <AssetsListView v-if="store.viewMode === 'list'" />
+            <AssetsGridView v-else />
+          </UploadZone>
         </div>
       </Splitter.Panel>
     </Splitter.Root>

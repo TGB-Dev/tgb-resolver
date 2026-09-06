@@ -55,19 +55,34 @@ const tabClasses = tabs({ variant: "line", size: "sm" });
       </Tabs.Trigger>
     </Tabs.List>
 
-    <Tabs.Content value="preview" :class="cx(tabClasses.content, css({ minH: 0 }))">
+    <Tabs.Content
+      value="preview"
+      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+    >
       <ControlMainPreviewTab />
     </Tabs.Content>
-    <Tabs.Content value="assets" :class="tabClasses.content">
+    <Tabs.Content
+      value="assets"
+      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+    >
       <ControlMainAssetsTab />
     </Tabs.Content>
-    <Tabs.Content value="cue" :class="tabClasses.content">
+    <Tabs.Content
+      value="cue"
+      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+    >
       <ControlMainCueTab />
     </Tabs.Content>
-    <Tabs.Content value="info" :class="tabClasses.content">
+    <Tabs.Content
+      value="info"
+      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+    >
       <ControlMainInfoTab />
     </Tabs.Content>
-    <Tabs.Content value="settings" :class="tabClasses.content">
+    <Tabs.Content
+      value="settings"
+      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+    >
       <ControlMainSettingsTab />
     </Tabs.Content>
   </Tabs.Root>

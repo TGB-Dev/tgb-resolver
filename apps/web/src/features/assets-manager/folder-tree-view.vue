@@ -31,10 +31,11 @@ const allAssetsClass = computed(() =>
     fontWeight: "normal",
     cursor: "pointer",
     borderLeftWidth: 3,
-    borderLeftColor: isAllAssetsDropTarget || isAllAssetsSelected ? "colorPalette.border" : "transparent",
-    bg: isAllAssetsDropTarget || isAllAssetsSelected ? "bg.muted" : undefined,
-    color: isAllAssetsSelected ? "colorPalette" : undefined,
-    _hover: { bg: "bg.subtle" },
+    borderLeftStyle: "solid",
+    borderLeftColor: isAllAssetsDropTarget.value || isAllAssetsSelected.value ? "colorPalette.border" : "transparent",
+    bg: isAllAssetsDropTarget.value || isAllAssetsSelected.value ? "bg.muted" : undefined,
+    color: isAllAssetsSelected.value ? "colorPalette" : undefined,
+    _hover: { bg: isAllAssetsDropTarget.value || isAllAssetsSelected.value ? "bg.muted" : "bg.subtle" },
   }),
 );
 
@@ -54,25 +55,40 @@ function handleContextMenu(
 
 <template>
   <div
-    role="tree"
-    :class="css({ overflowY: 'auto', h: 'full', px: '2', pt: '2' })"
+    :class="css({ display: 'flex', flexDirection: 'column', minH: '0', overflow: 'hidden', flex: 1 })"
     @pointerdown="store.focusedPanel = 'tree'"
-    @contextmenu="handleContextMenu($event, null)"
-    @dragover="(e) => {
-      if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      interactionStore.setDropTarget(null);
-      if (e.dataTransfer) e.dataTransfer.dropEffect = e.altKey ? 'copy' : 'move';
-    }"
-    @drop="(e) => {
-      if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
-      e.preventDefault();
-      interactionStore.setDropTarget(null);
-      void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
-    }"
   >
-    <div :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: '1', mb: '1' })">
+    <!-- biome-ignore lint/a11y/noStaticElementInteractions: tree toolbar is drop target -->
+    <div
+      :class="
+        css({
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: '1',
+          py: '1',
+          mb: '1',
+          borderBottomWidth: 1,
+          borderColor: 'border',
+          bg: 'bg',
+          flexShrink: 0,
+        })
+      "
+      @contextmenu="handleContextMenu($event, null)"
+      @dragover="(e) => {
+        if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        interactionStore.setDropTarget(null);
+        if (e.dataTransfer) e.dataTransfer.dropEffect = e.altKey ? 'copy' : 'move';
+      }"
+      @drop="(e) => {
+        if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        interactionStore.setDropTarget(null);
+        void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
+      }"
+    >
       <button type="button" :class="allAssetsClass" @click="() => { store.focusedPanel = 'tree'; store.selectEntry(null); }">
         <Folder :size="14" aria-hidden />
         <span>All Assets</span>
@@ -98,13 +114,32 @@ function handleContextMenu(
       </div>
     </div>
 
-    <div :class="css({ pl: '4' })">
-      <FolderNode
-        v-for="folder in store.folderTree"
-        :key="folder.id"
-        :node="folder"
-        @contextmenu="handleContextMenu"
-      />
+    <div
+      role="tree"
+      :class="css({ flex: 1, minH: '0', overflow: 'auto', px: '2', pt: '2' })"
+      @contextmenu="handleContextMenu($event, null)"
+      @dragover="(e) => {
+        if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        interactionStore.setDropTarget(null);
+        if (e.dataTransfer) e.dataTransfer.dropEffect = e.altKey ? 'copy' : 'move';
+      }"
+      @drop="(e) => {
+        if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
+        e.preventDefault();
+        interactionStore.setDropTarget(null);
+        void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
+      }"
+    >
+      <div :class="css({ pl: '4' })">
+        <FolderNode
+          v-for="folder in store.folderTree"
+          :key="folder.id"
+          :node="folder"
+          @contextmenu="handleContextMenu"
+        />
+      </div>
     </div>
 
     <ContextMenuOverlay :state="contextMenu.state.value" @close="contextMenu.close" />

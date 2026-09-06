@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
+import { onClickOutside, useEventListener } from "@vueuse/core";
 import { useTemplateRef } from "vue";
 
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
@@ -28,6 +29,19 @@ const { selectionRect, containerHandlers } = useRubberBandSelect(containerRef, (
   } else {
     store.selectedIds = new Set(ids);
   }
+});
+
+useEventListener(window, "keydown", (e) => {
+  if (e.key === "Escape" && store.selectedIds.size > 0) {
+    store.clearSelection();
+  }
+});
+
+onClickOutside(containerRef, (e) => {
+  const target = e.target as HTMLElement;
+  if (target.closest("[data-entry-id]")) return;
+  if (target.closest("[data-context-menu]")) return;
+  if (store.selectedIds.size > 0) store.clearSelection();
 });
 
 function handleContainerClick(e: MouseEvent) {
@@ -65,7 +79,18 @@ function handleDropError(error: unknown): void {
     role="listbox"
     aria-multiselectable="true"
     tabindex="-1"
-    :class="css({ overflowY: 'auto', h: 'full', userSelect: 'none' })"
+    :class="
+      css({
+        flex: 1,
+        minH: '0',
+        overflow: 'auto',
+        userSelect: 'none',
+        overscrollBehavior: 'contain',
+        outline: 'none',
+        _focus: { outline: 'none' },
+        _focusVisible: { outline: 'none' },
+      })
+    "
     @click="handleContainerClick"
     @contextmenu="
       (e) => {
@@ -80,6 +105,7 @@ function handleDropError(error: unknown): void {
         const target = e.target as HTMLElement;
         if (target.closest('[data-context-menu]')) return;
         store.focusedPanel = 'content';
+        containerRef?.focus({ preventScroll: true });
         containerHandlers.onPointerDown(e);
       }
     "
@@ -92,7 +118,9 @@ function handleDropError(error: unknown): void {
         containerHandlers.onClickCapture(e);
       }
     "
-    @keydown.esc="store.clearSelection"
+    @keydown="(e: KeyboardEvent) => {
+      if (e.key === 'Escape') store.clearSelection();
+    }"
     @dragover="
       (e) => {
         if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
@@ -192,15 +220,18 @@ function handleDropError(error: unknown): void {
       v-if="selectionRect"
       :class="css({
         position: 'fixed',
-        left: `${selectionRect.left}px`,
-        top: `${selectionRect.top}px`,
-        width: `${selectionRect.width}px`,
-        height: `${selectionRect.height}px`,
         bg: 'colorPalette.solid/10',
         borderWidth: 1,
         borderColor: 'colorPalette.solid',
         pointerEvents: 'none',
+        zIndex: 50,
       })"
+      :style="{
+        left: `${selectionRect.left}px`,
+        top: `${selectionRect.top}px`,
+        width: `${selectionRect.width}px`,
+        height: `${selectionRect.height}px`,
+      }"
     />
 
     <ContextMenuOverlay :state="contextMenu.state.value" @close="contextMenu.close" />

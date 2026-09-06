@@ -22,6 +22,9 @@ const dataListClasses = dataList({ orientation: "horizontal", size: "sm" });
         borderBottomWidth: 1,
         borderColor: 'border',
         w: 'full',
+        position: 'sticky',
+        top: '0',
+        zIndex: 1,
       })
     "
   >

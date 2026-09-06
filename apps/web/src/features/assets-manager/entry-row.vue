@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { File, Folder } from "@lucide/vue";
 import { css } from "@styled-system/css";
+import { computed } from "vue";
 
 import type { FsEntry } from "./types";
 
@@ -19,7 +20,7 @@ const emit = defineEmits<{
   drop: [event: DragEvent];
 }>();
 
-const rootClass = (() =>
+const rootClass = computed(() =>
   css({
     display: "grid",
     gridTemplateColumns: "1fr 120px 100px",
@@ -38,7 +39,8 @@ const rootClass = (() =>
     borderLeftColor: props.isSelected ? "colorPalette.border" : "transparent",
     bg: props.isSelected ? "bg.muted" : "bg.panel",
     _hover: { bg: "bg.subtle" },
-  }))();
+  }),
+);
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

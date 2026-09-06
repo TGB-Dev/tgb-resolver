@@ -16,6 +16,8 @@ const isLive = useControlIsLive();
         display: 'grid',
         gridTemplateRows: '1fr auto',
         h: 'full',
+        minH: 0,
+        overflow: 'hidden',
       })
     "
   >

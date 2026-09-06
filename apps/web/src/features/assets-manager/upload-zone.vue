@@ -131,7 +131,7 @@ const overlayClass = css({
 <template>
   <!-- biome-ignore lint/a11y/noStaticElementInteractions: external-file drop target; children remain interactive -->
   <div
-    :class="css({ position: 'relative', h: 'full' })"
+    :class="css({ position: 'relative', flex: 1, minH: '0', display: 'flex', flexDirection: 'column', overflow: 'hidden' })"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
