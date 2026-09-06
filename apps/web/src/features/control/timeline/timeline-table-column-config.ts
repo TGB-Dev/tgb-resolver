@@ -7,8 +7,8 @@ const columns = {
   problem: { minW: "5ch" },
   newScore: { minW: "7ch", maxW: "7ch" },
   newRank: { minW: "6ch", maxW: "6ch" },
-  durationSeconds: { minW: "10ch", maxW: "10ch" },
-  triggerOffsetSeconds: { minW: "6ch", maxW: "6ch" },
+  durationSeconds: { minW: "8ch", maxW: "8ch" },
+  triggerOffsetSeconds: { minW: "8ch", maxW: "8ch" },
   requireManualInteraction: { minW: "5ch", maxW: "5ch" },
   dragHandle: { minW: "3ch", maxW: "3ch" },
 } as const;

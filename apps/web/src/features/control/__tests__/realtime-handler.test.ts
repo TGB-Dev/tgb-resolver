@@ -33,7 +33,7 @@ const baseShow: ShowFile = {
   },
   automation: { autoResolveEnabled: false, autoResolveSpeedMs: 3000, fullAutoEnabled: false },
   playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
-  assets: { items: [] },
+  assets: { items: [], folders: [] },
   timeline: [
     {
       id: 1,
@@ -92,7 +92,7 @@ describe("applyControlRealtimeMessage", () => {
     const queryClient = new QueryClient();
     const initial = {
       showVersion: 1,
-      playback: { status: PlaybackStatus.IDLE },
+      playback: { status: PlaybackStatus.IDLE, activeEventIds: [] },
     } satisfies Partial<ShowFile>;
     queryClient.setQueryData(controlShowQueryKey(), initial);
 
@@ -254,7 +254,7 @@ describe("applyControlRealtimeMessage", () => {
     await applyControlRealtimeMessage(queryClient, {
       type: ShowMessageType.PlaybackStateChanged,
       showVersion: 2,
-      playback: { status: PlaybackStatus.IDLE, currentEventId: null, activeEventIds: [] },
+      playback: { status: PlaybackStatus.IDLE, currentEventId: undefined, activeEventIds: [] },
     });
 
     expect(animationsStore.skipNumberAnimations).toBe(true);

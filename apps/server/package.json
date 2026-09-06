@@ -3,14 +3,26 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "dotnet build TGB.Resolver.Server.slnx -p:GenerateOpenApiDocument=true",
-    "check-types": "dotnet build TGB.Resolver.Server.slnx",
-    "dev": "ASPNETCORE_ENVIRONMENT=Development dotnet watch --project TGB.Resolver.Server/TGB.Resolver.Server.csproj run --no-launch-profile --urls http://0.0.0.0:5001",
-    "nuget:outdated": "dotnet tool run dotnet-outdated TGB.Resolver.Server.slnx",
-    "nuget:update": "dotnet tool run dotnet-outdated TGB.Resolver.Server.slnx --upgrade",
-    "prepare": "husky",
-    "quality": "dotnet jb cleanupcode TGB.Resolver.Server.slnx && python3 scripts/run-inspect.py",
-    "serve": "ASPNETCORE_ENVIRONMENT=Development dotnet run --project TGB.Resolver.Server/TGB.Resolver.Server.csproj --no-build --no-launch-profile --urls http://0.0.0.0:5001",
-    "test": "dotnet test --solution TGB.Resolver.Server.slnx --no-restore"
+    "build": "run-s generate:wire build:binary generate:openapi",
+    "build:binary": "cross-env CGO_ENABLED=0 go build -trimpath -ldflags=\"-s -w\" -o dist/server .",
+    "check-types": "go vet ./...",
+    "dev": "go run .",
+    "format": "go fmt ./...",
+    "generate": "run-s generate:tools generate:proto generate:wire",
+    "generate:openapi": "go run . --dump-openapi openapi.yaml",
+    "generate:proto": "buf generate",
+    "generate:tools": "go build -o ./tools/bin/protoc-gen-go google.golang.org/protobuf/cmd/protoc-gen-go",
+    "generate:wire": "go run github.com/google/wire/cmd/wire ./...",
+    "preview": "run-s build serve:binary",
+    "serve": "node ./scripts/run-dist.mjs",
+    "serve:binary": "node ./scripts/run-dist.mjs",
+    "start": "node ./scripts/run-dist.mjs",
+    "test": "go test ./..."
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.57.0",
+    "@bufbuild/protoc-gen-es": "^2.14.1",
+    "cross-env": "^7.0.3",
+    "npm-run-all2": "^9.0.2"
   }
 }

@@ -139,6 +139,10 @@ export function mapShowStateSnapshotToShowFile(snapshot: ShowStateSnapshot): Sho
         startedAt: snapshot.playback?.startedAt ?? undefined,
       },
       assets: {
+        folders: (snapshot.assets?.folders ?? []).map((folder) => ({
+          ...folder,
+          children: folder.children ?? [],
+        })),
         items: (snapshot.assets?.items ?? []).map((asset) => ({
           id: asset.id ?? "",
           fileName: asset.fileName ?? "",

@@ -10,8 +10,6 @@ import { ExtensionType, getExtensionPayload, type ScriptOnlyExtension } from "..
 import { sharedValidatorRegistry } from "../init";
 import type { ScrollerExtensionPayload } from "./duration";
 
-export { computeScrollerExtensionDuration } from "./duration";
-
 const AUDIENCE_SCROLL_SELECTOR = "[data-audience-scroll]";
 
 const formSchema = defineForm(

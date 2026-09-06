@@ -12,5 +12,3 @@ export function useColorMode() {
     toggleColorMode: store.toggleColorMode,
   };
 }
-
-export type { ColorMode } from "@/stores/color-mode-store";

@@ -30,7 +30,7 @@ function withOverride(normalized: string, rendered: string): string {
   return DISPLAY_OVERRIDES[normalized] ?? rendered;
 }
 
-export function formatHotkeyDisplay(
+function formatHotkeyDisplay(
   hotkey: RegisterableHotkey,
   platform: Platform = detectCurrentPlatform(),
 ): string {
@@ -38,7 +38,7 @@ export function formatHotkeyDisplay(
   return withOverride(normalized, formatForDisplay(hotkey, { platform }));
 }
 
-export function formatSequenceDisplay(
+function formatSequenceDisplay(
   sequence: HotkeySequence,
   platform: Platform = detectCurrentPlatform(),
 ): string {

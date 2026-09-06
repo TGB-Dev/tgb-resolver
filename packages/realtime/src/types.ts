@@ -18,8 +18,6 @@ import {
   VerdictRunResult,
 } from "@tgb-resolver/contracts";
 
-import { ShowMessageType, ShowRefetchReason } from "./signalr";
-
 export type ShowPlaybackState = PlaybackStateSnapshot;
 export type ShowMeta = ShowMetaSnapshot;
 export type ShowAutomation = AutomationSnapshot;
@@ -49,7 +47,9 @@ export type ShowContestData = Required<
   preFreezeSnapshot: FreezeSnapshotEntry[];
 };
 
-export type ResolvePayload = Required<ResolveEventPayloadSnapshot>;
+export type ResolvePayload = Omit<Required<ResolveEventPayloadSnapshot>, "verdict"> & {
+  verdict: VerdictRunResult;
+};
 
 export interface ClockSyncRequest {
   sessionId: string;
@@ -63,25 +63,85 @@ export interface ClockSyncResponse {
   serverTransmittedAtUnixMs: number;
 }
 
-export type {
-  LiveModeChangedMessage,
-  PlaybackStateChangedMessage,
-  ShowReplacedMessage,
-  TimelineEventAddedMessage,
-  TimelineEventRemovedMessage,
-  TimelineEventUpdatedMessage,
-  TimelineReorderedMessage,
-} from "./signalr";
-export {
-  PlaybackStatus,
-  ShowMessageType,
-  ShowMode,
-  ShowRefetchReason,
-  ShowSource,
-  TimelineEventType,
-  TimelineMode,
-  VerdictRunResult,
-};
+export enum ShowMessageType {
+  ShowReplaced = "show-replaced",
+  TimelineEventAdded = "timeline-event-added",
+  TimelineEventUpdated = "timeline-event-updated",
+  TimelineEventRemoved = "timeline-event-removed",
+  TimelineReordered = "timeline-reordered",
+  PlaybackStateChanged = "playback-state-changed",
+  LiveModeChanged = "live-mode-changed",
+}
+
+export enum ShowRefetchReason {
+  ShowReplaced = "ShowReplaced",
+  Optimized = "Optimized",
+}
+
+export interface TimelineEventAddedMessage {
+  showVersion: number;
+  event: TimelineEventSnapshotWire;
+}
+
+export interface TimelineEventUpdatedMessage {
+  showVersion: number;
+  event: TimelineEventSnapshotWire;
+}
+
+export interface TimelineEventRemovedMessage {
+  showVersion: number;
+  eventId: number;
+}
+
+export interface TimelineReorderedMessage {
+  showVersion: number;
+  orderedEventIds: number[];
+}
+
+export interface ShowReplacedMessage {
+  showVersion: number;
+}
+
+export interface PlaybackStateChangedMessage {
+  showVersion: number;
+  playback: ShowPlaybackState;
+}
+
+export interface LiveModeChangedMessage {
+  showVersion: number;
+  mode: ShowMode;
+}
+
+export interface TimelineEventSnapshotWire {
+  id: number;
+  position: number;
+  type: string;
+  durationSeconds?: number;
+  triggerOffsetSeconds?: number;
+  requireManualInteraction?: boolean;
+  customName?: string;
+  resolve?: ResolvePayloadWire;
+  pre?: ResolvePayloadWire;
+  custom?: CustomPayloadWire;
+}
+
+export interface ResolvePayloadWire {
+  userId: number;
+  problemId: number;
+  newTotalScore: number;
+  newTotalPenalty: number;
+  newRank: number;
+  newProblemScore: number;
+  verdict: string;
+  timeSinceStart: number;
+}
+
+export interface CustomPayloadWire {
+  extId: string;
+  extPayload?: Record<string, unknown>;
+}
+
+export { PlaybackStatus, ShowMode, ShowSource, TimelineEventType, TimelineMode, VerdictRunResult };
 
 export const SHOW_SCHEMA_VERSION = 1;
 export const FILE_EXTENSION = ".tgbresolver";

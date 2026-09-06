@@ -6,7 +6,7 @@ import type { ShowAssetSnapshot } from "@tgb-resolver/contracts";
 const cache = new Map<string, ArrayBuffer>();
 
 export async function preloadAssets(
-  assets: ShowAssetSnapshot[] | { items?: ShowAssetSnapshot[] },
+  assets: ShowAssetSnapshot[] | { items?: ShowAssetSnapshot[] | null },
   baseUrl: string,
 ): Promise<Map<string, ArrayBuffer>> {
   const list = Array.isArray(assets) ? assets : (assets.items ?? []);

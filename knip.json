@@ -1,18 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": [
-    "**/*.gen.ts",
-    "**/src/generated/**",
-    "**/src/gen/**",
-    "**/.opencode/**",
-    "**/.github/**",
-    "**/.agents/**",
-    "**/.cursor/**",
-    "**/.codex/**",
-    "**/.husky/**",
-    "**/agent/**",
-    "skills-lock.json"
-  ],
+  "ignore": ["**/*.gen.ts", "**/src/generated/**", "**/src/proto/gen/**"],
   "workspaces": {
     ".": {
       "entry": ["*.json", "vitest.workspace.ts"],
@@ -21,15 +9,8 @@
       }
     },
     "apps/web": {
-      "entry": ["src/main.tsx", "src/router.tsx", "src/styles.css", "index.html"],
-      "ignore": [
-        "public",
-        ".tanstack",
-        "src/lib/api.ts",
-        "src/lib/realtime-client.ts",
-        "src/lib/sound-engine/audio.model.ts",
-        "src/lib/sound-engine/use-background-music.ts"
-      ],
+      "entry": ["index.html"],
+      "ignore": ["src/lib/api.ts", "src/lib/realtime-client.ts"],
       "ignoreIssues": {
         "src/features/extensions/base/types.ts": ["types"],
         "src/features/extensions/base/registry.ts": ["exports"],
@@ -37,58 +18,15 @@
         "src/lib/sound-engine/index.ts": ["exports"],
         "src/utils/preload-assets.ts": ["exports"]
       },
-      "ignoreDependencies": [
-        "@fontsource-variable/inter",
-        "@fontsource-variable/jetbrains-mono",
-        "@fontsource-variable/noto-sans-display",
-        "@testing-library/dom",
-        "@number-flow/react",
-        "@number-flow/vue",
-        "i"
-      ]
+      "ignoreDependencies": ["@pandacss/plugin-lightningcss", "browserslist", "lightningcss"]
     },
-    "apps/web-vue": {
-      "entry": ["src/main.ts", "src/App.vue", "index.html"],
-      "ignore": ["public", "styled-system", "e2e", "src/components/placeholder-route.vue"],
-      "ignoreIssues": {
-        "src/features/extensions/base/types.ts": ["types"],
-        "src/features/extensions/base/registry.ts": ["exports"],
-        "src/features/control/composables/use-show.ts": ["exports"],
-        "src/features/control/floating-panel-types.ts": ["exports", "types"],
-        "src/features/control/timeline/timeline-table-column-config.ts": ["exports"],
-        "src/features/extensions/confetti/presets.ts": ["exports", "types"],
-        "src/features/extensions/registry.ts": ["exports", "types"],
-        "src/features/extensions/scroller/duration.ts": ["exports"],
-        "src/features/extensions/scroller/index.ts": ["exports"],
-        "src/features/leaderboard/animations-store.ts": ["exports"],
-        "src/lib/api.ts": ["exports"],
-        "src/lib/leaderboard-comparators.ts": ["exports"],
-        "src/lib/realtime-client.ts": ["exports", "types"],
-        "src/features/shared/ui/color-mode.ts": ["types"],
-        "src/features/extensions/index.ts": ["types"]
-      },
-      "ignoreDependencies": [
-        "@fontsource-variable/jetbrains-mono",
-        "@fontsource-variable/lora",
-        "@fontsource-variable/noto-sans-display",
-        "@pandacss/plugin-lightningcss",
-        "@pandacss/studio",
-        "@tanstack/vue-form",
-        "@tgb-form/vue",
-        "@vue/test-utils",
-        "browserslist",
-        "lightningcss",
-        "mediabunny",
-        "motion-v"
-      ]
+    "apps/server": {
+      "ignoreBinaries": ["go"],
+      "ignoreDependencies": ["@bufbuild/protoc-gen-es"]
     },
     "packages/contracts": {
-      "entry": ["src/index.ts", "openapi-ts.config.ts"],
-      "ignoreDependencies": ["@tgb-resolver/server", "@tanstack/vue-query"]
+      "entry": ["src/index.ts"]
     },
-    "packages/realtime": {
-      "entry": ["src/index.ts", "src/signalr.ts"],
-      "ignoreDependencies": ["@tgb-resolver/server"]
-    }
+    "packages/realtime": {}
   }
 }

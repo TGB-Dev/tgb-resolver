@@ -4,453 +4,541 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
-export type ShowStateSnapshot = {
-    schemaVersion?: number;
-    showVersion?: number;
-    mode?: ShowMode;
-    timelineMode?: TimelineMode;
-    meta?: ShowMetaSnapshot;
-    contest?: ContestSnapshot;
-    automation?: AutomationSnapshot;
-    playback?: PlaybackStateSnapshot;
-    assets?: AssetCollectionSnapshot;
-    timeline?: Array<TimelineEventSnapshot>;
-    tickRate?: number | null;
+export type AssetCollection = {
+    folders: Array<FolderNode> | null;
+    items: Array<ShowAsset> | null;
 };
 
-export enum ShowMode {
-    /**
-     * Editing
-     */
-    EDITING = 'Editing',
-    /**
-     * Live
-     */
-    LIVE = 'Live'
-}
-
-export enum TimelineMode {
-    /**
-     * Rw
-     */
-    RW = 'Rw',
-    /**
-     * Ro
-     */
-    RO = 'Ro'
-}
-
-export type ShowMetaSnapshot = {
-    title?: string;
-    contestId?: string | null;
-    source?: ShowSource;
+export type AutomationState = {
+    autoResolveEnabled: boolean;
+    autoResolveSpeedMs: number;
+    fullAutoEnabled: boolean;
 };
 
-export enum ShowSource {
-    /**
-     * Xml
-     */
-    XML = 'Xml',
-    /**
-     * Bundle
-     */
-    BUNDLE = 'Bundle',
-    /**
-     * Manual
-     */
-    MANUAL = 'Manual'
-}
-
-export type ContestSnapshot = {
-    durationSeconds?: number;
-    freezeDurationSeconds?: number;
-    problems?: Array<ProblemDefinitionSnapshot>;
-    users?: Array<UserDefinitionSnapshot>;
-    preFreezeSnapshot?: Array<FreezeSnapshotEntrySnapshot>;
-};
-
-export type ProblemDefinitionSnapshot = {
-    id?: number;
-    label?: string;
-    name?: string;
-    score?: number;
-};
-
-export type UserDefinitionSnapshot = {
-    id?: number;
-    username?: string;
-    realName?: string;
-};
-
-export type FreezeSnapshotEntrySnapshot = {
-    userId?: number;
-    totalScore?: number;
-    totalPenalty?: number;
-    rank?: number;
-    problems?: Array<ProblemFreezeResultSnapshot>;
-    lastRunId?: number | null;
-    lastSubmittedSeconds?: number | null;
-};
-
-export type ProblemFreezeResultSnapshot = {
-    problemId?: number;
-    score?: number;
-    verdict?: VerdictRunResult;
-    preFreezeSubmissionCount?: number;
-    postFreezeSubmissionCount?: number;
-};
-
-export enum VerdictRunResult {
-    /**
-     * Unknown
-     */
-    UNKNOWN = 'Unknown',
-    /**
-     * Accepted
-     */
-    ACCEPTED = 'Accepted',
-    /**
-     * WrongAnswer
-     */
-    WRONG_ANSWER = 'WrongAnswer',
-    /**
-     * TimeLimitExceeded
-     */
-    TIME_LIMIT_EXCEEDED = 'TimeLimitExceeded',
-    /**
-     * MemoryLimitExceeded
-     */
-    MEMORY_LIMIT_EXCEEDED = 'MemoryLimitExceeded',
-    /**
-     * OutputLimitExceeded
-     */
-    OUTPUT_LIMIT_EXCEEDED = 'OutputLimitExceeded',
-    /**
-     * InvalidReturn
-     */
-    INVALID_RETURN = 'InvalidReturn',
-    /**
-     * RuntimeError
-     */
-    RUNTIME_ERROR = 'RuntimeError',
-    /**
-     * CompileError
-     */
-    COMPILE_ERROR = 'CompileError',
-    /**
-     * InternalError
-     */
-    INTERNAL_ERROR = 'InternalError',
-    /**
-     * ShortCircuited
-     */
-    SHORT_CIRCUITED = 'ShortCircuited',
-    /**
-     * Aborted
-     */
-    ABORTED = 'Aborted',
-    /**
-     * Unresolved
-     */
-    UNRESOLVED = 'Unresolved',
-    /**
-     * Pending
-     */
-    PENDING = 'Pending'
-}
-
-export type AutomationSnapshot = {
-    autoResolveEnabled?: boolean;
-    autoResolveSpeedMs?: number;
-    fullAutoEnabled?: boolean;
-};
-
-export type PlaybackStateSnapshot = {
-    status?: PlaybackStatus;
-    currentEventId?: number | null;
-    activeEventIds?: Array<number>;
-    startedAt?: number | null;
-};
-
-export enum PlaybackStatus {
-    /**
-     * Idle
-     */
-    IDLE = 'Idle',
-    /**
-     * Running
-     */
-    RUNNING = 'Running',
-    /**
-     * Paused
-     */
-    PAUSED = 'Paused'
-}
-
-export type AssetCollectionSnapshot = {
-    items?: Array<ShowAssetSnapshot>;
-    folders?: Array<FolderNodeSnapshot>;
-};
-
-export type ShowAssetSnapshot = {
-    id?: string;
-    fileName?: string;
-    originalName?: string;
-    contentType?: string;
-    sizeBytes?: number;
-    xxh3?: string;
-    folderId?: string | null;
-};
-
-export type FolderNodeSnapshot = {
-    id?: string;
-    name?: string;
-    children?: Array<FolderNodeSnapshot>;
-};
-
-export type TimelineEventSnapshot = {
-    id?: number;
-    position?: number;
-    type?: TimelineEventType;
-    durationSeconds?: number | null;
-    triggerOffsetSeconds?: number | null;
-    requireManualInteraction?: boolean | null;
-    customName?: string | null;
-    resolve?: ResolveEventPayloadSnapshot | null;
-    pre?: ResolveEventPayloadSnapshot | null;
-    custom?: CustomEventPayloadSnapshot | null;
-};
-
-export enum TimelineEventType {
-    /**
-     * Res
-     */
-    RES = 'Res',
-    /**
-     * Pre
-     */
-    PRE = 'Pre',
-    /**
-     * Cus
-     */
-    CUS = 'Cus'
-}
-
-export type ResolveEventPayloadSnapshot = {
-    userId?: number;
-    problemId?: number;
-    newTotalScore?: number;
-    newTotalPenalty?: number;
-    newRank?: number;
-    newProblemScore?: number;
-    verdict?: VerdictRunResult;
-    timeSinceStart?: number;
-};
-
-export type CustomEventPayloadSnapshot = {
-    extId?: string;
-    extPayload?: {
-        [key: string]: unknown;
-    } | null;
-};
-
-export type SetAutomationRequest = {
-    showVersion?: number;
-    autoResolveEnabled?: boolean | null;
-    autoResolveSpeedMs?: number | null;
-    fullAutoEnabled?: boolean | null;
-};
-
-export type VersionedCommandRequest = {
-    showVersion?: number;
-};
-
-/**
- * the dto used to send an error response to the client
- */
-export type ErrorResponse = {
-    /**
-     * the http status code sent to the client. default is 400.
-     */
-    statusCode?: number;
-    /**
-     * the message for the error response
-     */
-    message?: string;
-    /**
-     * the collection of errors for the current context
-     */
-    errors?: {
-        [key: string]: Array<string>;
-    };
-};
-
-export type SeekPlaybackRequest = {
-    showVersion?: number;
-    eventId?: number;
-};
-
-export type SetSettingsRequest = {
-    showVersion?: number;
-    tickRate?: number | null;
-};
-
-export type ImportXmlRequest = {
-    xml: string;
-    excludedUsernames?: Array<string> | null;
-};
-
-export type ImportBundleRequest = {
-    bytes: string;
-};
-
-export type ImportXmlUser = {
-    id?: number;
-    username?: string;
-    name?: string;
-};
-
-export type ImportXmlUsersRequest = {
-    xml?: string;
-};
-
-export type ResolveEventRenameRequest = {
-    showVersion?: number;
-    customName?: string;
-};
-
-export type NonResolveEventPatchRequest = {
-    showVersion?: number;
-    triggerOffsetSeconds?: number | null;
-    requireManualInteraction?: boolean | null;
-    customName?: string | null;
-    custom?: CustomEventPayloadSnapshot | null;
-};
-
-export type CreateTimelineEventRequest = {
-    showVersion?: number;
-    relativeToEventId?: number;
-    before?: boolean;
-    durationSeconds?: number | null;
-    triggerOffsetSeconds?: number | null;
-    requireManualInteraction?: boolean | null;
-    customName?: string | null;
-    custom?: CustomEventPayloadSnapshot | null;
-};
-
-export type MoveTimelineEventRequest = {
-    showVersion?: number;
-    relativeToEventId?: number;
-    before?: boolean;
-};
-
-export type PatchTimelineEventRequest = {
-    showVersion?: number;
-    durationSeconds?: number | null;
-    useDefaultDuration?: boolean;
-    customName?: string | null;
-    triggerOffsetSeconds?: number | null;
-    clearTriggerOffset?: boolean;
-    requireManualInteraction?: boolean | null;
-    custom?: CustomEventPayloadSnapshot | null;
-};
-
-export type SetTimelineModeRequest = {
-    showVersion?: number;
-    timelineMode?: TimelineMode;
-};
-
-export type UpsertAssetRequest = {
-    showVersion?: number;
-    fileName: string;
-    contentType: string;
-    bytes: string;
-    folderId?: string | null;
+export type ContestState = {
+    durationSeconds: number;
+    freezeDurationSeconds: number;
+    preFreezeSnapshot: Array<FreezeSnapshotEntry> | null;
+    problems: Array<ProblemDefinition> | null;
+    users: Array<UserDefinition> | null;
 };
 
 export type CreateFolderRequest = {
-    showVersion?: number;
-    parentFolderId?: string;
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
     name: string;
+    parentFolderId?: string;
+    showVersion?: number;
+};
+
+export type CreateTimelineEventRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    before?: boolean;
+    custom?: CustomEventPayload;
+    customName?: string;
+    durationSeconds?: number;
+    relativeToEventId?: number;
+    requireManualInteraction?: boolean;
+    showVersion?: number;
+    triggerOffsetSeconds?: number;
+};
+
+export type CustomEventPayload = {
+    extId: string;
+    extPayload?: {
+        [key: string]: unknown;
+    };
 };
 
 export type DeleteEntryRequest = {
-    showVersion?: number;
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
     isDirectory?: boolean;
+    showVersion?: number;
 };
 
-export type RenameEntryRequest = {
-    showVersion?: number;
-    isDirectory?: boolean;
-    newName: string;
+export type ErrorDetail = {
+    /**
+     * Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id'
+     */
+    location?: string;
+    /**
+     * Error message text
+     */
+    message?: string;
+    /**
+     * The value at the given location
+     */
+    value?: unknown;
+};
+
+export type ErrorModel = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    /**
+     * A human-readable explanation specific to this occurrence of the problem.
+     */
+    detail?: string;
+    /**
+     * Optional list of individual error details
+     */
+    errors?: Array<ErrorDetail> | null;
+    /**
+     * A URI reference that identifies the specific occurrence of the problem.
+     */
+    instance?: string;
+    /**
+     * HTTP status code
+     */
+    status?: number;
+    /**
+     * A short, human-readable summary of the problem type. This value should not change between occurrences of the error.
+     */
+    title?: string;
+    /**
+     * A URI reference to human-readable documentation for the error.
+     */
+    type?: string;
+};
+
+export type FolderNode = {
+    children: Array<FolderNode> | null;
+    id: string;
+    name: string;
+};
+
+export type FreezeSnapshotEntry = {
+    lastRunId?: number;
+    lastSubmittedSeconds?: number;
+    problems: Array<ProblemFreezeResult> | null;
+    rank: number;
+    totalPenalty: number;
+    totalScore: number;
+    userId: number;
+};
+
+export type ImportBundleRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    bytes: string;
+};
+
+export type ImportXmlRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    excludedUsernames?: Array<string> | null;
+    xml: string;
+};
+
+export type ImportXmlUser = {
+    id: number;
+    name: string;
+    username: string;
+};
+
+export type ImportXmlUsersRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    xml?: string;
 };
 
 export type MoveAssetRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    assetId?: string;
     showVersion?: number;
     targetFolderId: string;
 };
 
-export type TransferEntryRequest = {
+export type MoveTimelineEventRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    before?: boolean;
+    relativeToEventId?: number;
     showVersion?: number;
+};
+
+export type NonResolveEventPatchRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    custom?: CustomEventPayload;
+    customName?: string;
+    requireManualInteraction?: boolean;
+    showVersion?: number;
+    triggerOffsetSeconds?: number;
+};
+
+export type PatchTimelineEventRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    clearTriggerOffset?: boolean;
+    custom?: CustomEventPayload;
+    customName?: string;
+    durationSeconds?: number;
+    requireManualInteraction?: boolean;
+    showVersion?: number;
+    triggerOffsetSeconds?: number;
+    useDefaultDuration?: boolean;
+};
+
+export type PlaybackState = {
+    activeEventIds: Array<number> | null;
+    currentEventId?: number;
+    startedAt?: number;
+    status: 'Idle' | 'Running' | 'Paused';
+};
+
+export type ProblemDefinition = {
+    id: number;
+    label: string;
+    name: string;
+    score: number;
+};
+
+export type ProblemFreezeResult = {
+    postFreezeSubmissionCount: number;
+    preFreezeSubmissionCount: number;
+    problemId: number;
+    score: number;
+    verdict: string;
+};
+
+export type RenameEntryRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
     isDirectory?: boolean;
-    targetFolderId?: string | null;
+    newName: string;
+    showVersion?: number;
+};
+
+export type ResolveEventPayload = {
+    newProblemScore: number;
+    newRank: number;
+    newTotalPenalty: number;
+    newTotalScore: number;
+    problemId: number;
+    timeSinceStart: number;
+    userId: number;
+    verdict: string;
+};
+
+export type ResolveEventRenameRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    customName?: string;
+    showVersion?: number;
+};
+
+export type SeekPlaybackRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    eventId?: number;
+    showVersion?: number;
+};
+
+export type SetAutomationRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    autoResolveEnabled?: boolean;
+    autoResolveSpeedMs?: number;
+    fullAutoEnabled?: boolean;
+    showVersion?: number;
+};
+
+export type SetSettingsRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    showVersion?: number;
+    tickRate?: number;
+};
+
+export type SetTimelineModeRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    showVersion?: number;
+    timelineMode?: 'Rw' | 'Ro';
+};
+
+export type ShowAsset = {
+    contentType: string;
+    fileName: string;
+    folderId?: string;
+    id: string;
+    originalName: string;
+    sizeBytes: number;
+    xxh3: string;
+};
+
+export type ShowMeta = {
+    contestId?: string;
+    source: string;
+    title: string;
+};
+
+export type ShowState = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    assets: AssetCollection;
+    automation: AutomationState;
+    contest: ContestState;
+    meta: ShowMeta;
+    mode: 'Editing' | 'Live';
+    playback: PlaybackState;
+    schemaVersion: number;
+    showVersion: number;
+    tickRate?: number;
+    timeline: Array<TimelineEvent> | null;
+    timelineMode: string;
+};
+
+export type TimelineEvent = {
+    custom?: CustomEventPayload;
+    customName?: string;
+    durationSeconds?: number;
+    id: number;
+    position: number;
+    pre?: ResolveEventPayload;
+    requireManualInteraction?: boolean;
+    resolve?: ResolveEventPayload;
+    triggerOffsetSeconds?: number;
+    type: 'Res' | 'Pre' | 'Img' | 'Sfx' | 'Cus';
+};
+
+export type TransferEntryRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
     copy?: boolean;
+    isDirectory?: boolean;
+    showVersion?: number;
+    targetFolderId?: string;
 };
 
-export type GetData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/';
-};
-
-export type GetResponses = {
-    200: unknown;
-};
-
-export type TgbResolverServerFeaturesShowSetAutomationEndpointData = {
-    body: SetAutomationRequest;
-    path?: never;
-    query?: never;
-    url: '/api/show/automation';
-};
-
-export type TgbResolverServerFeaturesShowSetAutomationEndpointResponses = {
+export type UpsertAssetRequest = {
     /**
-     * Success
+     * A URL to the JSON Schema for this object.
      */
-    200: ShowStateSnapshot;
+    readonly $schema?: string;
+    bytes: string;
+    contentType: string;
+    fileName: string;
+    folderId?: string;
+    showVersion?: number;
 };
 
-export type TgbResolverServerFeaturesShowSetAutomationEndpointResponse = TgbResolverServerFeaturesShowSetAutomationEndpointResponses[keyof TgbResolverServerFeaturesShowSetAutomationEndpointResponses];
-
-export type TgbResolverServerFeaturesShowStartPlaybackEndpointData = {
-    body: VersionedCommandRequest;
-    path?: never;
-    query?: never;
-    url: '/api/playback/start';
+export type UserDefinition = {
+    id: number;
+    realName: string;
+    username: string;
 };
 
-export type TgbResolverServerFeaturesShowStartPlaybackEndpointErrors = {
+export type VersionedCommandRequest = {
     /**
-     * Bad Request
+     * A URL to the JSON Schema for this object.
      */
-    400: ErrorResponse;
+    readonly $schema?: string;
+    showVersion?: number;
 };
 
-export type TgbResolverServerFeaturesShowStartPlaybackEndpointError = TgbResolverServerFeaturesShowStartPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowStartPlaybackEndpointErrors];
+export type CreateFolderRequestWritable = {
+    name: string;
+    parentFolderId?: string;
+    showVersion?: number;
+};
 
-export type TgbResolverServerFeaturesShowStartPlaybackEndpointResponses = {
+export type CreateTimelineEventRequestWritable = {
+    before?: boolean;
+    custom?: CustomEventPayload;
+    customName?: string;
+    durationSeconds?: number;
+    relativeToEventId?: number;
+    requireManualInteraction?: boolean;
+    showVersion?: number;
+    triggerOffsetSeconds?: number;
+};
+
+export type DeleteEntryRequestWritable = {
+    isDirectory?: boolean;
+    showVersion?: number;
+};
+
+export type ErrorModelWritable = {
     /**
-     * Success
+     * A human-readable explanation specific to this occurrence of the problem.
      */
-    200: ShowStateSnapshot;
+    detail?: string;
+    /**
+     * Optional list of individual error details
+     */
+    errors?: Array<ErrorDetail> | null;
+    /**
+     * A URI reference that identifies the specific occurrence of the problem.
+     */
+    instance?: string;
+    /**
+     * HTTP status code
+     */
+    status?: number;
+    /**
+     * A short, human-readable summary of the problem type. This value should not change between occurrences of the error.
+     */
+    title?: string;
+    /**
+     * A URI reference to human-readable documentation for the error.
+     */
+    type?: string;
 };
 
-export type TgbResolverServerFeaturesShowStartPlaybackEndpointResponse = TgbResolverServerFeaturesShowStartPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowStartPlaybackEndpointResponses];
+export type ImportBundleRequestWritable = {
+    bytes: string;
+};
+
+export type ImportXmlRequestWritable = {
+    excludedUsernames?: Array<string> | null;
+    xml: string;
+};
+
+export type ImportXmlUsersRequestWritable = {
+    xml?: string;
+};
+
+export type MoveAssetRequestWritable = {
+    assetId?: string;
+    showVersion?: number;
+    targetFolderId: string;
+};
+
+export type MoveTimelineEventRequestWritable = {
+    before?: boolean;
+    relativeToEventId?: number;
+    showVersion?: number;
+};
+
+export type NonResolveEventPatchRequestWritable = {
+    custom?: CustomEventPayload;
+    customName?: string;
+    requireManualInteraction?: boolean;
+    showVersion?: number;
+    triggerOffsetSeconds?: number;
+};
+
+export type PatchTimelineEventRequestWritable = {
+    clearTriggerOffset?: boolean;
+    custom?: CustomEventPayload;
+    customName?: string;
+    durationSeconds?: number;
+    requireManualInteraction?: boolean;
+    showVersion?: number;
+    triggerOffsetSeconds?: number;
+    useDefaultDuration?: boolean;
+};
+
+export type RenameEntryRequestWritable = {
+    isDirectory?: boolean;
+    newName: string;
+    showVersion?: number;
+};
+
+export type ResolveEventRenameRequestWritable = {
+    customName?: string;
+    showVersion?: number;
+};
+
+export type SeekPlaybackRequestWritable = {
+    eventId?: number;
+    showVersion?: number;
+};
+
+export type SetAutomationRequestWritable = {
+    autoResolveEnabled?: boolean;
+    autoResolveSpeedMs?: number;
+    fullAutoEnabled?: boolean;
+    showVersion?: number;
+};
+
+export type SetSettingsRequestWritable = {
+    showVersion?: number;
+    tickRate?: number;
+};
+
+export type SetTimelineModeRequestWritable = {
+    showVersion?: number;
+    timelineMode?: 'Rw' | 'Ro';
+};
+
+export type ShowStateWritable = {
+    assets: AssetCollection;
+    automation: AutomationState;
+    contest: ContestState;
+    meta: ShowMeta;
+    mode: 'Editing' | 'Live';
+    playback: PlaybackState;
+    schemaVersion: number;
+    showVersion: number;
+    tickRate?: number;
+    timeline: Array<TimelineEvent> | null;
+    timelineMode: string;
+};
+
+export type TransferEntryRequestWritable = {
+    copy?: boolean;
+    isDirectory?: boolean;
+    showVersion?: number;
+    targetFolderId?: string;
+};
+
+export type UpsertAssetRequestWritable = {
+    bytes: string;
+    contentType: string;
+    fileName: string;
+    folderId?: string;
+    showVersion?: number;
+};
+
+export type VersionedCommandRequestWritable = {
+    showVersion?: number;
+};
 
 export type TgbResolverServerFeaturesShowResetPlaybackEndpointData = {
-    body: VersionedCommandRequest;
+    body: VersionedCommandRequestWritable;
     path?: never;
     query?: never;
     url: '/api/playback/reset';
@@ -458,106 +546,74 @@ export type TgbResolverServerFeaturesShowResetPlaybackEndpointData = {
 
 export type TgbResolverServerFeaturesShowResetPlaybackEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
 export type TgbResolverServerFeaturesShowResetPlaybackEndpointError = TgbResolverServerFeaturesShowResetPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowResetPlaybackEndpointErrors];
 
 export type TgbResolverServerFeaturesShowResetPlaybackEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesShowResetPlaybackEndpointResponse = TgbResolverServerFeaturesShowResetPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowResetPlaybackEndpointResponses];
 
-export type TgbResolverServerFeaturesShowSeekPlaybackEndpointData = {
-    body: SeekPlaybackRequest;
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointData = {
+    body: VersionedCommandRequestWritable;
     path?: never;
     query?: never;
-    url: '/playback/seek';
+    url: '/api/playback/start';
 };
 
-export type TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors = {
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
-export type TgbResolverServerFeaturesShowSeekPlaybackEndpointError = TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors];
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointError = TgbResolverServerFeaturesShowStartPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowStartPlaybackEndpointErrors];
 
-export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses = {
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
-export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses];
+export type TgbResolverServerFeaturesShowStartPlaybackEndpointResponse = TgbResolverServerFeaturesShowStartPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowStartPlaybackEndpointResponses];
 
-export type TgbResolverServerFeaturesShowSetSettingsEndpointData = {
-    body: SetSettingsRequest;
+export type TgbResolverServerFeaturesShowSetAutomationEndpointData = {
+    body: SetAutomationRequestWritable;
     path?: never;
     query?: never;
-    url: '/api/show/settings';
+    url: '/api/show/automation';
 };
 
-export type TgbResolverServerFeaturesShowSetSettingsEndpointResponses = {
+export type TgbResolverServerFeaturesShowSetAutomationEndpointErrors = {
     /**
-     * Success
+     * Error
      */
-    200: ShowStateSnapshot;
+    default: ErrorModel;
 };
 
-export type TgbResolverServerFeaturesShowSetSettingsEndpointResponse = TgbResolverServerFeaturesShowSetSettingsEndpointResponses[keyof TgbResolverServerFeaturesShowSetSettingsEndpointResponses];
+export type TgbResolverServerFeaturesShowSetAutomationEndpointError = TgbResolverServerFeaturesShowSetAutomationEndpointErrors[keyof TgbResolverServerFeaturesShowSetAutomationEndpointErrors];
 
-export type TgbResolverServerFeaturesShowGetShowEndpointData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/timeline';
-};
-
-export type TgbResolverServerFeaturesShowGetShowEndpointResponses = {
+export type TgbResolverServerFeaturesShowSetAutomationEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
-export type TgbResolverServerFeaturesShowGetShowEndpointResponse = TgbResolverServerFeaturesShowGetShowEndpointResponses[keyof TgbResolverServerFeaturesShowGetShowEndpointResponses];
-
-export type TgbResolverServerFeaturesShowOptimizeShowEndpointData = {
-    body: VersionedCommandRequest;
-    path?: never;
-    query?: never;
-    url: '/api/show/optimize';
-};
-
-export type TgbResolverServerFeaturesShowOptimizeShowEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesShowOptimizeShowEndpointError = TgbResolverServerFeaturesShowOptimizeShowEndpointErrors[keyof TgbResolverServerFeaturesShowOptimizeShowEndpointErrors];
-
-export type TgbResolverServerFeaturesShowOptimizeShowEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesShowOptimizeShowEndpointResponse = TgbResolverServerFeaturesShowOptimizeShowEndpointResponses[keyof TgbResolverServerFeaturesShowOptimizeShowEndpointResponses];
+export type TgbResolverServerFeaturesShowSetAutomationEndpointResponse = TgbResolverServerFeaturesShowSetAutomationEndpointResponses[keyof TgbResolverServerFeaturesShowSetAutomationEndpointResponses];
 
 export type TgbResolverServerFeaturesShowClearShowEndpointData = {
-    body: VersionedCommandRequest;
+    body: VersionedCommandRequestWritable;
     path?: never;
     query?: never;
     url: '/api/show/clear';
@@ -565,106 +621,51 @@ export type TgbResolverServerFeaturesShowClearShowEndpointData = {
 
 export type TgbResolverServerFeaturesShowClearShowEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
 export type TgbResolverServerFeaturesShowClearShowEndpointError = TgbResolverServerFeaturesShowClearShowEndpointErrors[keyof TgbResolverServerFeaturesShowClearShowEndpointErrors];
 
 export type TgbResolverServerFeaturesShowClearShowEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesShowClearShowEndpointResponse = TgbResolverServerFeaturesShowClearShowEndpointResponses[keyof TgbResolverServerFeaturesShowClearShowEndpointResponses];
 
-export type TgbResolverServerFeaturesShowImportXmlEndpointData = {
-    body: ImportXmlRequest;
-    path?: never;
+export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData = {
+    body: NonResolveEventPatchRequestWritable;
+    path: {
+        id: number;
+    };
     query?: never;
-    url: '/import/xml';
+    url: '/api/show/events/non-resolve/{id}';
 };
 
-export type TgbResolverServerFeaturesShowImportXmlEndpointErrors = {
+export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
-export type TgbResolverServerFeaturesShowImportXmlEndpointError = TgbResolverServerFeaturesShowImportXmlEndpointErrors[keyof TgbResolverServerFeaturesShowImportXmlEndpointErrors];
+export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointError = TgbResolverServerFeaturesShowPatchNonResolveEventEndpointErrors[keyof TgbResolverServerFeaturesShowPatchNonResolveEventEndpointErrors];
 
-export type TgbResolverServerFeaturesShowImportXmlEndpointResponses = {
+export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
-export type TgbResolverServerFeaturesShowImportXmlEndpointResponse = TgbResolverServerFeaturesShowImportXmlEndpointResponses[keyof TgbResolverServerFeaturesShowImportXmlEndpointResponses];
-
-export type TgbResolverServerFeaturesShowImportBundleEndpointData = {
-    body: ImportBundleRequest;
-    path?: never;
-    query?: never;
-    url: '/import/bundle';
-};
-
-export type TgbResolverServerFeaturesShowImportBundleEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesShowImportBundleEndpointError = TgbResolverServerFeaturesShowImportBundleEndpointErrors[keyof TgbResolverServerFeaturesShowImportBundleEndpointErrors];
-
-export type TgbResolverServerFeaturesShowImportBundleEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesShowImportBundleEndpointResponse = TgbResolverServerFeaturesShowImportBundleEndpointResponses[keyof TgbResolverServerFeaturesShowImportBundleEndpointResponses];
-
-export type TgbResolverServerFeaturesShowImportXmlUsersEndpointData = {
-    body: ImportXmlUsersRequest;
-    path?: never;
-    query?: never;
-    url: '/import/xml/users';
-};
-
-export type TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses = {
-    /**
-     * Success
-     */
-    200: Array<ImportXmlUser>;
-};
-
-export type TgbResolverServerFeaturesShowImportXmlUsersEndpointResponse = TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses[keyof TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses];
-
-export type TgbResolverServerFeaturesShowExportBundleEndpointData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/export/bundle';
-};
-
-export type TgbResolverServerFeaturesShowExportBundleEndpointResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type TgbResolverServerFeaturesShowExportBundleEndpointResponse = TgbResolverServerFeaturesShowExportBundleEndpointResponses[keyof TgbResolverServerFeaturesShowExportBundleEndpointResponses];
+export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse = TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses[keyof TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses];
 
 export type TgbResolverServerFeaturesShowRenameResolveEventEndpointData = {
-    body: ResolveEventRenameRequest;
+    body: ResolveEventRenameRequestWritable;
     path: {
         id: number;
     };
@@ -674,39 +675,21 @@ export type TgbResolverServerFeaturesShowRenameResolveEventEndpointData = {
 
 export type TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
 export type TgbResolverServerFeaturesShowRenameResolveEventEndpointError = TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors[keyof TgbResolverServerFeaturesShowRenameResolveEventEndpointErrors];
 
 export type TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse = TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses[keyof TgbResolverServerFeaturesShowRenameResolveEventEndpointResponses];
-
-export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData = {
-    body: NonResolveEventPatchRequest;
-    path: {
-        id: number;
-    };
-    query?: never;
-    url: '/api/show/events/non-resolve/{id}';
-};
-
-export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse = TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses[keyof TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponses];
 
 export type TgbResolverServerFeaturesShowDisableLiveModeEndpointData = {
     body?: never;
@@ -715,11 +698,20 @@ export type TgbResolverServerFeaturesShowDisableLiveModeEndpointData = {
     url: '/api/show/live';
 };
 
+export type TgbResolverServerFeaturesShowDisableLiveModeEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowDisableLiveModeEndpointError = TgbResolverServerFeaturesShowDisableLiveModeEndpointErrors[keyof TgbResolverServerFeaturesShowDisableLiveModeEndpointErrors];
+
 export type TgbResolverServerFeaturesShowDisableLiveModeEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesShowDisableLiveModeEndpointResponse = TgbResolverServerFeaturesShowDisableLiveModeEndpointResponses[keyof TgbResolverServerFeaturesShowDisableLiveModeEndpointResponses];
@@ -731,263 +723,76 @@ export type TgbResolverServerFeaturesShowEnableLiveModeEndpointData = {
     url: '/api/show/live';
 };
 
+export type TgbResolverServerFeaturesShowEnableLiveModeEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowEnableLiveModeEndpointError = TgbResolverServerFeaturesShowEnableLiveModeEndpointErrors[keyof TgbResolverServerFeaturesShowEnableLiveModeEndpointErrors];
+
 export type TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesShowEnableLiveModeEndpointResponse = TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses[keyof TgbResolverServerFeaturesShowEnableLiveModeEndpointResponses];
 
-export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointData = {
-    body: CreateTimelineEventRequest;
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointData = {
+    body: VersionedCommandRequestWritable;
     path?: never;
     query?: never;
-    url: '/timeline/event';
+    url: '/api/show/optimize';
 };
 
-export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors = {
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
-export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointError = TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors];
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointError = TgbResolverServerFeaturesShowOptimizeShowEndpointErrors[keyof TgbResolverServerFeaturesShowOptimizeShowEndpointErrors];
 
-export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses = {
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
-export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse = TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses];
+export type TgbResolverServerFeaturesShowOptimizeShowEndpointResponse = TgbResolverServerFeaturesShowOptimizeShowEndpointResponses[keyof TgbResolverServerFeaturesShowOptimizeShowEndpointResponses];
 
-export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointData = {
-    body: MoveTimelineEventRequest;
-    path: {
-        id: number;
-    };
-    query?: never;
-    url: '/timeline/event/{id}/position';
-};
-
-export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointError = TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors];
-
-export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse = TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses];
-
-export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData = {
-    body: VersionedCommandRequest;
-    path: {
-        id: number;
-    };
-    query?: never;
-    url: '/timeline/event/{id}';
-};
-
-export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError = TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors];
-
-export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse = TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses];
-
-export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointData = {
-    body: PatchTimelineEventRequest;
-    path: {
-        id: number;
-    };
-    query?: never;
-    url: '/timeline/event/{id}';
-};
-
-export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse = TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses];
-
-export type TgbResolverServerFeaturesShowSetTimelineModeEndpointData = {
-    body: SetTimelineModeRequest;
+export type TgbResolverServerFeaturesShowSetSettingsEndpointData = {
+    body: SetSettingsRequestWritable;
     path?: never;
     query?: never;
-    url: '/timeline/mode';
+    url: '/api/show/settings';
 };
 
-export type TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors = {
+export type TgbResolverServerFeaturesShowSetSettingsEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
-export type TgbResolverServerFeaturesShowSetTimelineModeEndpointError = TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors];
+export type TgbResolverServerFeaturesShowSetSettingsEndpointError = TgbResolverServerFeaturesShowSetSettingsEndpointErrors[keyof TgbResolverServerFeaturesShowSetSettingsEndpointErrors];
 
-export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses = {
+export type TgbResolverServerFeaturesShowSetSettingsEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
-export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses];
-
-export type TgbResolverServerFeaturesAssetsGetAssetEndpointData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/assets/{id}';
-};
-
-export type TgbResolverServerFeaturesAssetsGetAssetEndpointResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type TgbResolverServerFeaturesAssetsGetAssetEndpointResponse = TgbResolverServerFeaturesAssetsGetAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsGetAssetEndpointResponses];
-
-export type TgbResolverServerFeaturesAssetsPutAssetEndpointData = {
-    body: UpsertAssetRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/assets/{id}';
-};
-
-export type TgbResolverServerFeaturesAssetsPutAssetEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesAssetsPutAssetEndpointError = TgbResolverServerFeaturesAssetsPutAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsPutAssetEndpointErrors];
-
-export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponse = TgbResolverServerFeaturesAssetsPutAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsPutAssetEndpointResponses];
-
-export type TgbResolverServerFeaturesAssetsCreateFolderEndpointData = {
-    body: CreateFolderRequest;
-    path?: never;
-    query?: never;
-    url: '/assets/folders';
-};
-
-export type TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesAssetsCreateFolderEndpointError = TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors];
-
-export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses];
-
-export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointData = {
-    body: DeleteEntryRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/assets/entries/{id}';
-};
-
-export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointError = TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors];
-
-export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse = TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses];
-
-export type TgbResolverServerFeaturesAssetsRenameEntryEndpointData = {
-    body: RenameEntryRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/assets/entries/{id}';
-};
-
-export type TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-};
-
-export type TgbResolverServerFeaturesAssetsRenameEntryEndpointError = TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors];
-
-export type TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses = {
-    /**
-     * Success
-     */
-    200: ShowStateSnapshot;
-};
-
-export type TgbResolverServerFeaturesAssetsRenameEntryEndpointResponse = TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses];
+export type TgbResolverServerFeaturesShowSetSettingsEndpointResponse = TgbResolverServerFeaturesShowSetSettingsEndpointResponses[keyof TgbResolverServerFeaturesShowSetSettingsEndpointResponses];
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointData = {
-    body: MoveAssetRequest;
+    body: MoveAssetRequestWritable;
     path: {
         assetId: string;
     };
@@ -997,24 +802,105 @@ export type TgbResolverServerFeaturesAssetsMoveAssetEndpointData = {
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointError = TgbResolverServerFeaturesAssetsMoveAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsMoveAssetEndpointErrors];
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesAssetsMoveAssetEndpointResponse = TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsMoveAssetEndpointResponses];
 
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointData = {
+    body: UpsertAssetRequestWritable;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/{id}';
+};
+
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointError = TgbResolverServerFeaturesAssetsPutAssetEndpointErrors[keyof TgbResolverServerFeaturesAssetsPutAssetEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesAssetsPutAssetEndpointResponse = TgbResolverServerFeaturesAssetsPutAssetEndpointResponses[keyof TgbResolverServerFeaturesAssetsPutAssetEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointData = {
+    body: DeleteEntryRequestWritable;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/entries/{id}';
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointError = TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsDeleteEntryEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse = TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointData = {
+    body: RenameEntryRequestWritable;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/assets/entries/{id}';
+};
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointError = TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsRenameEntryEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesAssetsRenameEntryEndpointResponse = TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsRenameEntryEndpointResponses];
+
 export type TgbResolverServerFeaturesAssetsTransferEntryEndpointData = {
-    body: TransferEntryRequest;
+    body: TransferEntryRequestWritable;
     path: {
         id: string;
     };
@@ -1024,18 +910,324 @@ export type TgbResolverServerFeaturesAssetsTransferEntryEndpointData = {
 
 export type TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors = {
     /**
-     * Bad Request
+     * Error
      */
-    400: ErrorResponse;
+    default: ErrorModel;
 };
 
 export type TgbResolverServerFeaturesAssetsTransferEntryEndpointError = TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors[keyof TgbResolverServerFeaturesAssetsTransferEntryEndpointErrors];
 
 export type TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses = {
     /**
-     * Success
+     * OK
      */
-    200: ShowStateSnapshot;
+    200: ShowState;
 };
 
 export type TgbResolverServerFeaturesAssetsTransferEntryEndpointResponse = TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses[keyof TgbResolverServerFeaturesAssetsTransferEntryEndpointResponses];
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointData = {
+    body: CreateFolderRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/assets/folders';
+};
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointError = TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointErrors];
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses];
+
+export type TgbResolverServerFeaturesShowExportBundleEndpointData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/export/bundle';
+};
+
+export type TgbResolverServerFeaturesShowExportBundleEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowExportBundleEndpointError = TgbResolverServerFeaturesShowExportBundleEndpointErrors[keyof TgbResolverServerFeaturesShowExportBundleEndpointErrors];
+
+export type TgbResolverServerFeaturesShowExportBundleEndpointResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type TgbResolverServerFeaturesShowExportBundleEndpointResponse = TgbResolverServerFeaturesShowExportBundleEndpointResponses[keyof TgbResolverServerFeaturesShowExportBundleEndpointResponses];
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointData = {
+    body: ImportBundleRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/import/bundle';
+};
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointError = TgbResolverServerFeaturesShowImportBundleEndpointErrors[keyof TgbResolverServerFeaturesShowImportBundleEndpointErrors];
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowImportBundleEndpointResponse = TgbResolverServerFeaturesShowImportBundleEndpointResponses[keyof TgbResolverServerFeaturesShowImportBundleEndpointResponses];
+
+export type TgbResolverServerFeaturesShowImportXmlEndpointData = {
+    body: ImportXmlRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/import/xml';
+};
+
+export type TgbResolverServerFeaturesShowImportXmlEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowImportXmlEndpointError = TgbResolverServerFeaturesShowImportXmlEndpointErrors[keyof TgbResolverServerFeaturesShowImportXmlEndpointErrors];
+
+export type TgbResolverServerFeaturesShowImportXmlEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowImportXmlEndpointResponse = TgbResolverServerFeaturesShowImportXmlEndpointResponses[keyof TgbResolverServerFeaturesShowImportXmlEndpointResponses];
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointData = {
+    body: ImportXmlUsersRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/import/xml/users';
+};
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointError = TgbResolverServerFeaturesShowImportXmlUsersEndpointErrors[keyof TgbResolverServerFeaturesShowImportXmlUsersEndpointErrors];
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses = {
+    /**
+     * OK
+     */
+    200: Array<ImportXmlUser> | null;
+};
+
+export type TgbResolverServerFeaturesShowImportXmlUsersEndpointResponse = TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses[keyof TgbResolverServerFeaturesShowImportXmlUsersEndpointResponses];
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointData = {
+    body: SeekPlaybackRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/playback/seek';
+};
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointError = TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointErrors];
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse = TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses[keyof TgbResolverServerFeaturesShowSeekPlaybackEndpointResponses];
+
+export type TgbResolverServerFeaturesShowGetShowEndpointData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/timeline';
+};
+
+export type TgbResolverServerFeaturesShowGetShowEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowGetShowEndpointError = TgbResolverServerFeaturesShowGetShowEndpointErrors[keyof TgbResolverServerFeaturesShowGetShowEndpointErrors];
+
+export type TgbResolverServerFeaturesShowGetShowEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowGetShowEndpointResponse = TgbResolverServerFeaturesShowGetShowEndpointResponses[keyof TgbResolverServerFeaturesShowGetShowEndpointResponses];
+
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointData = {
+    body: CreateTimelineEventRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/timeline/event';
+};
+
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointError = TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowCreateTimelineEventEndpointErrors];
+
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse = TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponses];
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData = {
+    body: VersionedCommandRequestWritable;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/timeline/event/{id}';
+};
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError = TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowDeleteTimelineEventEndpointErrors];
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse = TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponses];
+
+export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointData = {
+    body: PatchTimelineEventRequestWritable;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/timeline/event/{id}';
+};
+
+export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointError = TgbResolverServerFeaturesShowPatchTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowPatchTimelineEventEndpointErrors];
+
+export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse = TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponses];
+
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointData = {
+    body: MoveTimelineEventRequestWritable;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/timeline/event/{id}/position';
+};
+
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointError = TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors[keyof TgbResolverServerFeaturesShowMoveTimelineEventEndpointErrors];
+
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse = TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses[keyof TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponses];
+
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointData = {
+    body: SetTimelineModeRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/timeline/mode';
+};
+
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointError = TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointErrors];
+
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses = {
+    /**
+     * OK
+     */
+    200: ShowState;
+};
+
+export type TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse = TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses[keyof TgbResolverServerFeaturesShowSetTimelineModeEndpointResponses];

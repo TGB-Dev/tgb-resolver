@@ -9,6 +9,7 @@ import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { useControlIsLive, useControlShowQuery, useMoveTimelineEventMutation, useSeekPlaybackMutation } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import Spinner from "@/features/shared/ui/spinner.vue";
 import { useShowStore } from "@/stores/show-store";
 
@@ -178,7 +179,7 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
     v-else-if="showQuery.error.value"
     :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', boxSize: 'full', px: 4 })"
   >
-    <p>{{ showQuery.error.value.message }}</p>
+    <p>{{ parseErrorMessage(showQuery.error.value) }}</p>
   </div>
 
   <div

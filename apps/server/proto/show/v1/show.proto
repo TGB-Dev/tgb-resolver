@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package show.v1;
+
+option go_package = "tgb-resolver/server/proto/gen/show/v1;showv1";
+
+message ResolvePayload {
+  int32 user_id = 1;
+  int32 problem_id = 2;
+  double new_total_score = 3;
+  double new_total_penalty = 4;
+  int32 new_rank = 5;
+  double new_problem_score = 6;
+  string verdict = 7;
+  double time_since_start = 8;
+}
+
+message CustomPayload {
+  string ext_id = 1;
+  bytes ext_payload_json = 2;
+}
+
+message TimelineEventSnapshot {
+  int32 id = 1;
+  int32 position = 2;
+  string type = 3;
+  optional double duration_seconds = 4;
+  optional double trigger_offset_seconds = 5;
+  optional bool require_manual_interaction = 6;
+  optional string custom_name = 7;
+  ResolvePayload resolve = 8;
+  ResolvePayload pre = 9;
+  CustomPayload custom = 10;
+}
+
+message PlaybackSnapshot {
+  string status = 1;
+  optional int32 current_event_id = 2;
+  repeated int32 active_event_ids = 3;
+  optional int64 started_at_unix_ms = 4;
+}
+
+message TimelineEventAdded {
+  int32 show_version = 1;
+  TimelineEventSnapshot event = 2;
+}
+
+message TimelineEventUpdated {
+  int32 show_version = 1;
+  TimelineEventSnapshot event = 2;
+}
+
+message TimelineEventRemoved {
+  int32 show_version = 1;
+  int32 event_id = 2;
+}
+
+message TimelineReordered {
+  int32 show_version = 1;
+  repeated int32 ordered_event_ids = 2;
+}
+
+message ShowReplaced {
+  int32 show_version = 1;
+}
+
+message PlaybackStateChanged {
+  int32 show_version = 1;
+  PlaybackSnapshot playback = 2;
+  int64 server_time_unix_ms = 3;
+}
+
+message LiveModeChanged {
+  int32 show_version = 1;
+  string mode = 2;
+}
+
+message ClockSyncRequest {
+  int64 client_time_unix_ms = 1;
+}
+
+message ClockSyncResponse {
+  int64 client_time_unix_ms = 1;
+  int64 received_at_unix_ms = 2;
+  int64 transmitted_at_unix_ms = 3;
+}
+
+message Envelope {
+  string type = 1;
+  oneof payload {
+    TimelineEventAdded timeline_event_added = 10;
+    TimelineEventUpdated timeline_event_updated = 11;
+    TimelineEventRemoved timeline_event_removed = 12;
+    TimelineReordered timeline_reordered = 13;
+    ShowReplaced show_replaced = 14;
+    PlaybackStateChanged playback_state_changed = 15;
+    LiveModeChanged live_mode_changed = 16;
+    ClockSyncResponse clock_sync_response = 17;
+  }
+}

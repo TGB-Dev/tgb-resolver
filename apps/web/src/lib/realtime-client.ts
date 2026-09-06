@@ -127,7 +127,7 @@ export function createRealtimeClient(
       notifyStatus(ShowConnectionStatus.Connecting, reconnectAttempt);
       postToWorker({
         type: RealtimeWorkerRequestType.Connect,
-        url: `${baseUrl}/hubs/show`,
+        url: baseUrl,
       });
 
       await waitForConnection();

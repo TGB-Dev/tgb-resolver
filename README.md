@@ -19,17 +19,17 @@ driving audience and control UIs from a single source of truth.
 | ----------- | ---------------------------------------------------------------------------------------- |
 | Workspace   | Turborepo, pnpm workspaces                                                               |
 | Frontend    | Vue 3.5, Pinia, vue-router, Vite 8, Panda CSS + Chakra preset, Ark UI, motion-v           |
-| Server      | .NET 10, FastEndpoints, SignalR (MessagePack), EF Core Sqlite, NSwag, Mapperly           |
-| Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot                                 |
-| Parsers     | .NET `TGB.Resolver.IcpcXmlParser` (server-side)                                          |
-| Lint/Format | Biome, syncpack                                                                          |
-| Tests       | Vitest, Testing Library (web), TUnit (.NET)                                              |
+| Server      | Go 1.26+, Gin, Huma v2, coder/websocket, Bun ORM, modernc.org/sqlite, Wire DI           |
+| Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot, Protobuf (buf)                 |
+| Parsers     | Go `features/importing` (server-side)                                                    |
+| Lint/Format | Biome, syncpack, go fmt                                                                  |
+| Tests       | Vitest, Testing Library (web), Go testing (server)                                       |
 
 ## Prerequisites
 
 - Node.js >= 24.15.0
 - pnpm >= 11.1.3
-- .NET 10 SDK
+- Go 1.26+
 
 ## Getting Started
 
@@ -51,36 +51,47 @@ Runs the server (port 5001) and the Vue frontend (port 3000) in parallel.
 | `/`        | Audience |
 | `/control` | Control  |
 
-Server solution: `apps/server/TGB.Resolver.Server.slnx` (.slnx format).
+Server: `apps/server/` — Go HTTP/WebSocket server.
 Frontend: `apps/web/` — the Vue 3 SPA (package `@tgb-resolver/web`, dev port 3000).
 
 ## Build & Test
 
 ```sh
 pnpm build          # Turborepo dependency-order build
-pnpm check-types    # tsc --noEmit for all TS packages
-pnpm test           # vitest (TS) + dotnet test (.NET)
+pnpm check-types    # tsc --noEmit for all TS packages, go vet for Go
+pnpm test           # vitest (TS) + go test (Go)
 pnpm serve          # production previews
+pnpm format         # go fmt (Go) + biome format (TS/Vue)
 ```
 
 The `packages/contracts` package generates its TypeScript HTTP client from
-`apps/server/TGB.Resolver.Server/openapi.yaml` (via `openapi-ts`) before building, and
-`packages/realtime` generates its SignalR hub client from the server via the `dotnet-tsrts` tool.
+`apps/server/openapi.yaml` (via `openapi-ts`) before building, and
+`packages/realtime` generates its Protobuf types from `apps/server/proto/` via `buf`.
 The OpenAPI document is emitted automatically by the server `build` (
-`dotnet build -p:GenerateOpenApiDocument=true`), so a normal `pnpm build` keeps both clients
+`go run . --dump-openapi openapi.yaml`), so a normal `pnpm build` keeps both clients
 current.
+
+## Environment
+
+Server configuration via environment variables:
+- `PORT` - Server port (default: 5001)
+- `ALLOWED_ORIGINS` - CORS allowed origins (default: `*`)
+- `DATA_DIR` - Data directory path (default: `.data`)
+
+Frontend configuration via `.env`:
+- `VITE_API_URL` - API base URL (default: `http://localhost:5001`)
 
 ## Git Hooks
 
 Hooks are managed by Husky (auto-installed via `pnpm install` `prepare` script).
 
-Pre-commit runs: `sync:check || sync` → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
+Pre-commit runs: `sync:check || sync` → `go fmt` (server) → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
 
 ## Structure
 
 ```text
 apps/
-  server/     .NET 10 solution (server + parser + tests)
+  server/     Go 1.26+ HTTP/WebSocket server (Gin, Huma v2, Bun ORM, Wire)
   web/        Canonical Vue 3 SPA frontend (Pinia, Panda CSS, Ark UI, vue-router)
               package @tgb-resolver/web, dev port 3000
               src/features/   — vertical feature slices
@@ -91,8 +102,12 @@ apps/
                 extensions/     — extension registry, config UI, server patch API
 packages/
   contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
-  realtime/    Client-side clock sync, timeline and domain helpers
+  realtime/    Protobuf-generated types, client-side clock sync, timeline and domain helpers
 ```
+
+## Documentation
+
+See [AGENTS.md](./AGENTS.md) for detailed architecture, conventions, and development guidelines.
 
 ## License:
 

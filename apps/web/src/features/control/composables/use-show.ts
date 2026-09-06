@@ -25,13 +25,17 @@ import {
   setSettings,
   startPlayback,
   TimelineEventType,
+  vImportXmlRequestWritable,
 } from "@tgb-resolver/contracts";
 import { FILE_EXTENSION, type ShowFile, type TimelineTableItem } from "@tgb-resolver/realtime";
 import { Effect, Schedule } from "effect";
+import * as v from "valibot";
 import { type ComputedRef, computed } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { mapShowStateSnapshotToShowFile } from "@/features/control/show-mapper";
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
+import { toaster } from "@/features/shared/ui/toaster";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useShowStore } from "@/stores/show-store";
 
@@ -40,6 +44,12 @@ import { controlShowQueryKey } from "../realtime-handler";
 function setShowInCache(queryClient: QueryClient, snapshot: ShowStateSnapshot) {
   queryClient.setQueryData(controlShowQueryKey(), snapshot);
   usePlaybackStore().syncVersion(snapshot.showVersion ?? 0);
+}
+
+function toastMutationError(title: string) {
+  return (error: unknown) => {
+    toaster.create({ title, description: parseErrorMessage(error), type: "error" });
+  };
 }
 
 function requireShow(show: ShowFile | undefined) {
@@ -57,7 +67,7 @@ function is409Error(error: unknown): boolean {
   );
 }
 
-export function withRetry<T>(queryClient: QueryClient, fn: () => Promise<T>): Promise<T> {
+function withRetry<T>(queryClient: QueryClient, fn: () => Promise<T>): Promise<T> {
   const runMutation = Effect.tryPromise({
     try: fn,
     catch: (error) => error,
@@ -271,7 +281,23 @@ export function useRenameControlEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Rename event failed"),
   });
+}
+
+export interface PatchTimelineEventPayload {
+  eventId: number;
+  durationSeconds?: number;
+  useDefaultDuration?: boolean;
+  triggerOffsetSeconds?: number;
+  clearTriggerOffset?: boolean;
+  requireManualInteraction?: boolean;
+}
+
+/** Split path id from body fields: the server rejects unknown body properties. */
+export function splitPatchTimelineEventPayload(payload: PatchTimelineEventPayload) {
+  const { eventId, ...body } = payload;
+  return { path: { id: eventId }, body };
 }
 
 export function usePatchTimelineEventMutation() {
@@ -279,20 +305,14 @@ export function usePatchTimelineEventMutation() {
   const showQuery = useControlShowQuery();
 
   return useMutation({
-    mutationFn: async (payload: {
-      eventId: number;
-      durationSeconds?: number;
-      useDefaultDuration?: boolean;
-      triggerOffsetSeconds?: number;
-      clearTriggerOffset?: boolean;
-      requireManualInteraction?: boolean;
-    }) => {
+    mutationFn: async (payload: PatchTimelineEventPayload) => {
       requireShow(showQuery.data.value);
       return await withRetry(queryClient, async () => {
+        const { path, body } = splitPatchTimelineEventPayload(payload);
         const { data } = await patchTimelineEvent({
           client: generatedClient,
-          path: { id: payload.eventId },
-          body: { showVersion: usePlaybackStore().state.showVersion, ...payload },
+          path,
+          body: { showVersion: usePlaybackStore().state.showVersion, ...body },
         });
         return data as ShowStateSnapshot;
       });
@@ -300,6 +320,7 @@ export function usePatchTimelineEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Update event failed"),
   });
 }
 
@@ -330,6 +351,7 @@ export function useMoveTimelineEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Move event failed"),
   });
 }
 
@@ -342,14 +364,18 @@ export function useCreateTimelineEventMutation() {
       relativeToEventId: number;
       before: boolean;
       customName?: string;
-      durationSeconds?: number | null;
+      durationSeconds?: number | null | undefined;
       custom: { extId: string; extPayload: Record<string, unknown> };
     }) => {
       requireShow(showQuery.data.value);
       return await withRetry(queryClient, async () => {
         const { data } = await createTimelineEvent({
           client: generatedClient,
-          body: { showVersion: usePlaybackStore().state.showVersion, ...payload },
+          body: {
+            showVersion: usePlaybackStore().state.showVersion,
+            ...payload,
+            durationSeconds: payload.durationSeconds ?? undefined,
+          },
         });
         return data as ShowStateSnapshot;
       });
@@ -379,6 +405,7 @@ export function useDeleteTimelineEventMutation() {
     onSuccess: (data) => {
       setShowInCache(queryClient, data);
     },
+    onError: toastMutationError("Delete event failed"),
   });
 }
 
@@ -396,9 +423,16 @@ export function useImportShowMutation() {
       const fileName = file.name.toLowerCase();
 
       if (fileName.endsWith(".xml")) {
+        const body = { xml: await file.text(), excludedUsernames };
+        const parsed = v.safeParse(vImportXmlRequestWritable, body);
+        if (!parsed.success) {
+          throw new Error(
+            `Invalid XML import: ${parsed.issues.map((issue) => issue.message).join(", ")}`,
+          );
+        }
         const { data } = await importShowXml({
           client: generatedClient,
-          body: { xml: await file.text(), excludedUsernames },
+          body: parsed.output,
           throwOnError: true,
         });
         return data as ShowStateSnapshot;
@@ -503,14 +537,14 @@ export function useUpdateSettingsMutation() {
   const showQuery = useControlShowQuery();
 
   return useMutation({
-    mutationFn: async (tickRate: number | null) => {
+    mutationFn: async (tickRate: number | null | undefined) => {
       requireShow(showQuery.data.value);
       return await withRetry(queryClient, async () => {
         const { data } = await setSettings({
           client: generatedClient,
           body: {
             showVersion: usePlaybackStore().state.showVersion,
-            tickRate,
+            tickRate: tickRate ?? undefined,
           },
         });
         return data as ShowStateSnapshot;

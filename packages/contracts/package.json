@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
-    "@tgb-resolver/server": "workspace:*",
     "@types/node": "^26.4.1",
     "bumpp": "^12.2.3",
     "tsdown": "^0.22.14",

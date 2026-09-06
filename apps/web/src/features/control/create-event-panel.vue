@@ -18,6 +18,7 @@ import ExtensionConfigForm from "@/features/extensions/extension-config-form.vue
 import { extensionRegistry } from "@/features/extensions/registry";
 import { extensionRendererRegistry } from "@/features/extensions/renderers";
 import { computeScrollerExtensionDuration } from "@/features/extensions/scroller/duration";
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import Spinner from "@/features/shared/ui/spinner.vue";
 
 const props = defineProps<{
@@ -80,7 +81,7 @@ async function handleCreate() {
     });
     props.panel.close(true);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
+    error.value = parseErrorMessage(err);
   } finally {
     props.panel.setSaving(false);
   }

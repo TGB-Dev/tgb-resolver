@@ -1,0 +1,1493 @@
+components:
+  schemas:
+    AssetCollection:
+      additionalProperties: false
+      properties:
+        folders:
+          items:
+            $ref: '#/components/schemas/FolderNode'
+          type:
+          - array
+          - "null"
+        items:
+          items:
+            $ref: '#/components/schemas/ShowAsset'
+          type:
+          - array
+          - "null"
+      required:
+      - items
+      - folders
+      type: object
+    AutomationState:
+      additionalProperties: false
+      properties:
+        autoResolveEnabled:
+          type: boolean
+        autoResolveSpeedMs:
+          format: int64
+          type: integer
+        fullAutoEnabled:
+          type: boolean
+      required:
+      - autoResolveEnabled
+      - autoResolveSpeedMs
+      - fullAutoEnabled
+      type: object
+    ContestState:
+      additionalProperties: false
+      properties:
+        durationSeconds:
+          format: int64
+          type: integer
+        freezeDurationSeconds:
+          format: int64
+          type: integer
+        preFreezeSnapshot:
+          items:
+            $ref: '#/components/schemas/FreezeSnapshotEntry'
+          type:
+          - array
+          - "null"
+        problems:
+          items:
+            $ref: '#/components/schemas/ProblemDefinition'
+          type:
+          - array
+          - "null"
+        users:
+          items:
+            $ref: '#/components/schemas/UserDefinition'
+          type:
+          - array
+          - "null"
+      required:
+      - durationSeconds
+      - freezeDurationSeconds
+      - problems
+      - users
+      - preFreezeSnapshot
+      type: object
+    CreateFolderRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/CreateFolderRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        name:
+          maxLength: 100
+          type: string
+        parentFolderId:
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+      required:
+      - name
+      type: object
+    CreateTimelineEventRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/CreateTimelineEventRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        before:
+          type: boolean
+        custom:
+          $ref: '#/components/schemas/CustomEventPayload'
+        customName:
+          maxLength: 100
+          type: string
+        durationSeconds:
+          format: double
+          type: number
+        relativeToEventId:
+          format: int64
+          type: integer
+        requireManualInteraction:
+          type: boolean
+        showVersion:
+          format: int64
+          type: integer
+        triggerOffsetSeconds:
+          format: double
+          type: number
+      type: object
+    CustomEventPayload:
+      additionalProperties: false
+      properties:
+        extId:
+          type: string
+        extPayload:
+          additionalProperties: {}
+          type: object
+      required:
+      - extId
+      type: object
+    DeleteEntryRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/DeleteEntryRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        isDirectory:
+          type: boolean
+        showVersion:
+          format: int64
+          type: integer
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        location:
+          description: Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id'
+          type: string
+        message:
+          description: Error message text
+          type: string
+        value:
+          description: The value at the given location
+      type: object
+    ErrorModel:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/ErrorModel.json
+          format: uri
+          readOnly: true
+          type: string
+        detail:
+          description: A human-readable explanation specific to this occurrence of
+            the problem.
+          examples:
+          - Property foo is required but is missing.
+          type: string
+        errors:
+          description: Optional list of individual error details
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          type:
+          - array
+          - "null"
+        instance:
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+          examples:
+          - https://example.com/error-log/abc123
+          format: uri
+          type: string
+        status:
+          description: HTTP status code
+          examples:
+          - 400
+          format: int64
+          type: integer
+        title:
+          description: A short, human-readable summary of the problem type. This value
+            should not change between occurrences of the error.
+          examples:
+          - Bad Request
+          type: string
+        type:
+          default: about:blank
+          description: A URI reference to human-readable documentation for the error.
+          examples:
+          - https://example.com/errors/example
+          format: uri
+          type: string
+      type: object
+    FolderNode:
+      additionalProperties: false
+      properties:
+        children:
+          items:
+            $ref: '#/components/schemas/FolderNode'
+          type:
+          - array
+          - "null"
+        id:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - name
+      - children
+      type: object
+    FreezeSnapshotEntry:
+      additionalProperties: false
+      properties:
+        lastRunId:
+          format: int64
+          type: integer
+        lastSubmittedSeconds:
+          format: double
+          type: number
+        problems:
+          items:
+            $ref: '#/components/schemas/ProblemFreezeResult'
+          type:
+          - array
+          - "null"
+        rank:
+          format: int64
+          type: integer
+        totalPenalty:
+          format: double
+          type: number
+        totalScore:
+          format: double
+          type: number
+        userId:
+          format: int64
+          type: integer
+      required:
+      - userId
+      - totalScore
+      - totalPenalty
+      - rank
+      - problems
+      type: object
+    ImportBundleRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/ImportBundleRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        bytes:
+          minLength: 1
+          type: string
+      required:
+      - bytes
+      type: object
+    ImportXmlRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/ImportXmlRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        excludedUsernames:
+          items:
+            type: string
+          type:
+          - array
+          - "null"
+        xml:
+          maxLength: 10485760
+          minLength: 1
+          type: string
+      required:
+      - xml
+      type: object
+    ImportXmlUser:
+      additionalProperties: false
+      properties:
+        id:
+          format: int64
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
+      required:
+      - id
+      - username
+      - name
+      type: object
+    ImportXmlUsersRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/ImportXmlUsersRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        xml:
+          type: string
+      type: object
+    MoveAssetRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/MoveAssetRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        assetId:
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+        targetFolderId:
+          type: string
+      required:
+      - targetFolderId
+      type: object
+    MoveTimelineEventRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/MoveTimelineEventRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        before:
+          type: boolean
+        relativeToEventId:
+          format: int64
+          type: integer
+        showVersion:
+          format: int64
+          type: integer
+      type: object
+    NonResolveEventPatchRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/NonResolveEventPatchRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        custom:
+          $ref: '#/components/schemas/CustomEventPayload'
+        customName:
+          type: string
+        requireManualInteraction:
+          type: boolean
+        showVersion:
+          format: int64
+          type: integer
+        triggerOffsetSeconds:
+          format: double
+          type: number
+      type: object
+    PatchTimelineEventRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/PatchTimelineEventRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        clearTriggerOffset:
+          type: boolean
+        custom:
+          $ref: '#/components/schemas/CustomEventPayload'
+        customName:
+          type: string
+        durationSeconds:
+          format: double
+          type: number
+        requireManualInteraction:
+          type: boolean
+        showVersion:
+          format: int64
+          type: integer
+        triggerOffsetSeconds:
+          format: double
+          type: number
+        useDefaultDuration:
+          type: boolean
+      type: object
+    PlaybackState:
+      additionalProperties: false
+      properties:
+        activeEventIds:
+          items:
+            format: int64
+            type: integer
+          type:
+          - array
+          - "null"
+        currentEventId:
+          format: int64
+          type: integer
+        startedAt:
+          format: int64
+          type: integer
+        status:
+          enum:
+          - Idle
+          - Running
+          - Paused
+          type: string
+      required:
+      - status
+      - activeEventIds
+      type: object
+    ProblemDefinition:
+      additionalProperties: false
+      properties:
+        id:
+          format: int64
+          type: integer
+        label:
+          type: string
+        name:
+          type: string
+        score:
+          format: double
+          type: number
+      required:
+      - id
+      - label
+      - name
+      - score
+      type: object
+    ProblemFreezeResult:
+      additionalProperties: false
+      properties:
+        postFreezeSubmissionCount:
+          format: int64
+          type: integer
+        preFreezeSubmissionCount:
+          format: int64
+          type: integer
+        problemId:
+          format: int64
+          type: integer
+        score:
+          format: double
+          type: number
+        verdict:
+          type: string
+      required:
+      - problemId
+      - score
+      - verdict
+      - preFreezeSubmissionCount
+      - postFreezeSubmissionCount
+      type: object
+    RenameEntryRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/RenameEntryRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        isDirectory:
+          type: boolean
+        newName:
+          maxLength: 100
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+      required:
+      - newName
+      type: object
+    ResolveEventPayload:
+      additionalProperties: false
+      properties:
+        newProblemScore:
+          format: double
+          type: number
+        newRank:
+          format: int64
+          type: integer
+        newTotalPenalty:
+          format: double
+          type: number
+        newTotalScore:
+          format: double
+          type: number
+        problemId:
+          format: int64
+          type: integer
+        timeSinceStart:
+          format: double
+          type: number
+        userId:
+          format: int64
+          type: integer
+        verdict:
+          type: string
+      required:
+      - userId
+      - problemId
+      - newTotalScore
+      - newTotalPenalty
+      - newRank
+      - newProblemScore
+      - verdict
+      - timeSinceStart
+      type: object
+    ResolveEventRenameRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/ResolveEventRenameRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        customName:
+          maxLength: 100
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+      type: object
+    SeekPlaybackRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/SeekPlaybackRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        eventId:
+          format: int64
+          type: integer
+        showVersion:
+          format: int64
+          type: integer
+      type: object
+    SetAutomationRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/SetAutomationRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        autoResolveEnabled:
+          type: boolean
+        autoResolveSpeedMs:
+          format: int64
+          type: integer
+        fullAutoEnabled:
+          type: boolean
+        showVersion:
+          format: int64
+          type: integer
+      type: object
+    SetSettingsRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/SetSettingsRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+        tickRate:
+          format: double
+          type: number
+      type: object
+    SetTimelineModeRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/SetTimelineModeRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+        timelineMode:
+          enum:
+          - Rw
+          - Ro
+          type: string
+      type: object
+    ShowAsset:
+      additionalProperties: false
+      properties:
+        contentType:
+          type: string
+        fileName:
+          type: string
+        folderId:
+          type: string
+        id:
+          type: string
+        originalName:
+          type: string
+        sizeBytes:
+          format: int64
+          type: integer
+        xxh3:
+          type: string
+      required:
+      - id
+      - fileName
+      - originalName
+      - contentType
+      - sizeBytes
+      - xxh3
+      type: object
+    ShowMeta:
+      additionalProperties: false
+      properties:
+        contestId:
+          type: string
+        source:
+          type: string
+        title:
+          type: string
+      required:
+      - title
+      - source
+      type: object
+    ShowState:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/ShowState.json
+          format: uri
+          readOnly: true
+          type: string
+        assets:
+          $ref: '#/components/schemas/AssetCollection'
+        automation:
+          $ref: '#/components/schemas/AutomationState'
+        contest:
+          $ref: '#/components/schemas/ContestState'
+        meta:
+          $ref: '#/components/schemas/ShowMeta'
+        mode:
+          enum:
+          - Editing
+          - Live
+          type: string
+        playback:
+          $ref: '#/components/schemas/PlaybackState'
+        schemaVersion:
+          format: int64
+          type: integer
+        showVersion:
+          format: int64
+          type: integer
+        tickRate:
+          format: double
+          type: number
+        timeline:
+          items:
+            $ref: '#/components/schemas/TimelineEvent'
+          type:
+          - array
+          - "null"
+        timelineMode:
+          type: string
+      required:
+      - schemaVersion
+      - showVersion
+      - mode
+      - timelineMode
+      - meta
+      - contest
+      - automation
+      - playback
+      - assets
+      - timeline
+      type: object
+    TimelineEvent:
+      additionalProperties: false
+      properties:
+        custom:
+          $ref: '#/components/schemas/CustomEventPayload'
+        customName:
+          type: string
+        durationSeconds:
+          format: double
+          type: number
+        id:
+          format: int64
+          type: integer
+        position:
+          format: int64
+          type: integer
+        pre:
+          $ref: '#/components/schemas/ResolveEventPayload'
+        requireManualInteraction:
+          type: boolean
+        resolve:
+          $ref: '#/components/schemas/ResolveEventPayload'
+        triggerOffsetSeconds:
+          format: double
+          type: number
+        type:
+          enum:
+          - Res
+          - Pre
+          - Img
+          - Sfx
+          - Cus
+          type: string
+      required:
+      - id
+      - position
+      - type
+      type: object
+    TransferEntryRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/TransferEntryRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        copy:
+          type: boolean
+        isDirectory:
+          type: boolean
+        showVersion:
+          format: int64
+          type: integer
+        targetFolderId:
+          type: string
+      type: object
+    UpsertAssetRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/UpsertAssetRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        bytes:
+          minLength: 1
+          type: string
+        contentType:
+          maxLength: 100
+          minLength: 1
+          type: string
+        fileName:
+          maxLength: 255
+          minLength: 1
+          type: string
+        folderId:
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+      required:
+      - fileName
+      - contentType
+      - bytes
+      type: object
+    UserDefinition:
+      additionalProperties: false
+      properties:
+        id:
+          format: int64
+          type: integer
+        realName:
+          type: string
+        username:
+          type: string
+      required:
+      - id
+      - username
+      - realName
+      type: object
+    VersionedCommandRequest:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+          - https://example.com/schemas/VersionedCommandRequest.json
+          format: uri
+          readOnly: true
+          type: string
+        showVersion:
+          format: int64
+          type: integer
+      type: object
+info:
+  title: TGB Resolver Server
+  version: v1
+openapi: 3.1.0
+paths:
+  /api/playback/reset:
+    post:
+      operationId: TGBResolverServerFeaturesShowResetPlaybackEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/playback/start:
+    post:
+      operationId: TGBResolverServerFeaturesShowStartPlaybackEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/automation:
+    patch:
+      operationId: TGBResolverServerFeaturesShowSetAutomationEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetAutomationRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/clear:
+    post:
+      operationId: TGBResolverServerFeaturesShowClearShowEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/events/non-resolve/{id}:
+    patch:
+      operationId: TGBResolverServerFeaturesShowPatchNonResolveEventEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonResolveEventPatchRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/events/resolve/{id}:
+    patch:
+      operationId: TGBResolverServerFeaturesShowRenameResolveEventEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveEventRenameRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/live:
+    delete:
+      operationId: TGBResolverServerFeaturesShowDisableLiveModeEndpoint
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+    post:
+      operationId: TGBResolverServerFeaturesShowEnableLiveModeEndpoint
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/optimize:
+    post:
+      operationId: TGBResolverServerFeaturesShowOptimizeShowEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /api/show/settings:
+    patch:
+      operationId: TGBResolverServerFeaturesShowSetSettingsEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetSettingsRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /assets/{assetId}/move:
+    patch:
+      operationId: TGBResolverServerFeaturesAssetsMoveAssetEndpoint
+      parameters:
+      - in: path
+        name: assetId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveAssetRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /assets/{id}:
+    post:
+      operationId: TGBResolverServerFeaturesAssetsPutAssetEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertAssetRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /assets/entries/{id}:
+    delete:
+      operationId: TGBResolverServerFeaturesAssetsDeleteEntryEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEntryRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+    patch:
+      operationId: TGBResolverServerFeaturesAssetsRenameEntryEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameEntryRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /assets/entries/{id}/transfer:
+    patch:
+      operationId: TGBResolverServerFeaturesAssetsTransferEntryEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferEntryRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /assets/folders:
+    post:
+      operationId: TGBResolverServerFeaturesAssetsCreateFolderEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /export/bundle:
+    get:
+      operationId: TGBResolverServerFeaturesShowExportBundleEndpoint
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                contentEncoding: base64
+                type: string
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /import/bundle:
+    post:
+      operationId: TGBResolverServerFeaturesShowImportBundleEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportBundleRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /import/xml:
+    post:
+      operationId: TGBResolverServerFeaturesShowImportXmlEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportXmlRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /import/xml/users:
+    post:
+      operationId: TGBResolverServerFeaturesShowImportXmlUsersEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportXmlUsersRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ImportXmlUser'
+                type:
+                - array
+                - "null"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /playback/seek:
+    post:
+      operationId: TGBResolverServerFeaturesShowSeekPlaybackEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeekPlaybackRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /timeline:
+    get:
+      operationId: TGBResolverServerFeaturesShowGetShowEndpoint
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /timeline/event:
+    post:
+      operationId: TGBResolverServerFeaturesShowCreateTimelineEventEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTimelineEventRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /timeline/event/{id}:
+    delete:
+      operationId: TGBResolverServerFeaturesShowDeleteTimelineEventEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedCommandRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+    patch:
+      operationId: TGBResolverServerFeaturesShowPatchTimelineEventEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTimelineEventRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /timeline/event/{id}/position:
+    patch:
+      operationId: TGBResolverServerFeaturesShowMoveTimelineEventEndpoint
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveTimelineEventRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error
+  /timeline/mode:
+    patch:
+      operationId: TGBResolverServerFeaturesShowSetTimelineModeEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTimelineModeRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowState'
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Error

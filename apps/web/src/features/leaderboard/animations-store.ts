@@ -6,7 +6,7 @@ import { useShowStore } from "@/stores/show-store";
 
 const SEEK_EVENTS_ANIM_THRESHOLD = 10;
 
-export function shouldSkipSeek(
+function shouldSkipSeek(
   orderedEventIds: readonly number[],
   fromEventId: number | null,
   toEventId: number | null,

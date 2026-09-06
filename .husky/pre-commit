@@ -4,6 +4,7 @@ pnpm -w run sync:check || pnpm -w run sync
 
 pnpm -w run test
 
+pnpm turbo run format --filter=@tgb-resolver/server
 pnpm exec biome check --write --staged --no-errors-on-unmatched
 
 git add -u

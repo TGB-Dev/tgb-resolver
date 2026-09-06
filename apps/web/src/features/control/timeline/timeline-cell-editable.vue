@@ -93,6 +93,9 @@ function handleValueCommit(details: { value: string }) {
     :class="cx(editableClasses.root, css({ w: 'full', alignItems: 'flex-start' }))"
     @value-change="handleValueChange"
     @value-commit="handleValueCommit"
+    @dblclick.stop="() => {
+      // stop propagation to the parent
+    }"
   >
     <Editable.Area :class="cx(editableClasses.area, areaClass)">
       <Editable.Preview :class="cx(editableClasses.preview, fieldClass, previewClass)">

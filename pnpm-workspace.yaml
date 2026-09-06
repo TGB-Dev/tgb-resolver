@@ -11,13 +11,10 @@ allowBuilds:
   xxhash-addon: true
   sharp: true
   vue-demi: true
+  '@bufbuild/buf': true
 
 blockExoticSubdeps: false
 
 minimumReleaseAgeExclude:
   - '@tgb-form/core@0.0.5'
   - '@tgb-form/vue@0.0.5'
-
-onlyBuiltDependencies:
-  - esbuild
-  - lightningcss

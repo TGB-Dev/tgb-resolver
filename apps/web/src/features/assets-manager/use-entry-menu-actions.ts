@@ -1,3 +1,4 @@
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
@@ -9,7 +10,7 @@ import type { ContextMenuState } from "./use-entry-context-menu";
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
 
 function handleOperationError(error: unknown, label: string): void {
-  const description = error instanceof Error ? error.message : String(error);
+  const description = parseErrorMessage(error);
   toaster.create({ title: label, description, type: "error" });
 }
 

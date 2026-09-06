@@ -2,27 +2,14 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": [
-        "TGB.Resolver.Server/bin/**",
-        "TGB.Resolver.Server.Tests/bin/**",
-        "TGB.Resolver.IcpcXmlParser/bin/**",
-        "TGB.Resolver.IcpcXmlParser.Tests/bin/**",
-        "TGB.Resolver.Server/openapi.yaml"
-      ]
+      "outputs": ["dist/**", "openapi.yaml"]
     },
-    "check-types": {
-      "outputs": [
-        "TGB.Resolver.Server/bin/**",
-        "TGB.Resolver.Server.Tests/bin/**",
-        "TGB.Resolver.IcpcXmlParser/bin/**",
-        "TGB.Resolver.IcpcXmlParser.Tests/bin/**"
-      ]
-    },
-    "nuget:outdated": {
+    "format": {
       "cache": false
     },
-    "nuget:update": {
-      "cache": false
+    "test": {
+      "cache": true,
+      "inputs": ["**/*.go", "go.mod", "go.sum", "testdata/**"]
     }
   }
 }
