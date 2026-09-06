@@ -24,13 +24,16 @@ a relative timeline with a main panel showing the current, next, and prior cues.
 
 ## System boundaries
 
-- `apps/server/`: .NET 10 solution — server, parser, and tests.
-  - `TGB.Resolver.Server`: API + SignalR host
-  - `TGB.Resolver.IcpcXmlParser`: server-side ICPC XML parser
-  - `TGB.Resolver.Server.Tests`, `TGB.Resolver.IcpcXmlParser.Tests`
+- `apps/server/`: Go 1.26+ server — HTTP/WebSocket, parsing, and tests.
+  - `features/importing`: ICPC XML parser (`encoding/xml`) + resolver engine
+  - `features/show`: show state, timeline, playback, import/export (Huma + Gin handlers + Bun store)
+  - `features/assets`: asset filestore (`.data/assets`) + bundle zip (`archive/zip` + `zeebo/xxh3`)
+  - `features/realtime`: `Clock` (ticker + heap), `Orchestrator`, `Hub` (`coder/websocket` + Protobuf `Envelope`)
+  - `features/shared/config`: Viper config (`PORT`, `ALLOWED_ORIGINS`, `DATA_DIR`)
+  - `proto/show/v1/show.proto`: single source of truth for all WS messages
 - `apps/web/`: canonical Vue 3 SPA (package `@tgb-resolver/web`) — audience and control UIs
 - `packages/contracts/`: OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
-- `packages/realtime/`: client-side clock sync, timeline, and domain helpers
+- `packages/realtime/`: Protobuf-generated types, `ws-client.ts`, clock sync helpers, timeline and domain helpers
 
 ### Client-side architecture
 
@@ -46,7 +49,7 @@ Vue feature state uses Pinia setup stores and Vue's fine-grained `ref`/`computed
 
 ## Engineering conventions
 
-Use string-valued enums for finite domain vocabularies in TypeScript and .NET.
+Use string-valued enums for finite domain vocabularies in TypeScript and Go.
 Do not introduce handwritten string unions for modes, status, event types, or
 asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 `packages/realtime` re-exports those enums; it must not redeclare them.
@@ -55,13 +58,15 @@ asset kinds. Generated OpenAPI contracts own REST/shared wire enums.
 
 | Decision                                     | Rationale                                                                                               |
 |----------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| **Turborepo**                                | Pruned Docker images + caching; handles .NET + TS projects efficiently                                  |
-| **Pinia + Vue reactivity** | Fine-grained state updates with feature-owned setup stores and computed derivations |
-| **Panda CSS + Chakra preset** | Generated recipes, slot recipes, atomic classes, and conditional styles for consistent visual fidelity |
-| **Ark UI Vue** | Accessible headless behavior, always bound to the corresponding Panda slot recipe |
-| **SignalR + MessagePack**                    | Smaller wire payload than JSON for realtime frames                                                      |
-| **Source-generated JSON serializer**          | `JsonSourceGenerationOptions` for AOT-compatible serialization; keeps most endpoints at 8–9 ms         |
-| **Feature-based server structure**           | Domain-organized endpoints, dtos, and services per feature                                              |
+| **Turborepo**                                | Pruned builds + caching across the pnpm workspace                                                       |
+| **Pinia + Vue reactivity**                   | Fine-grained state updates with feature-owned setup stores and computed derivations                     |
+| **Panda CSS + Chakra preset**                | Generated recipes, slot recipes, atomic classes, and conditional styles for consistent visual fidelity  |
+| **Ark UI Vue**                               | Accessible headless behavior, always bound to the corresponding Panda slot recipe                       |
+| **Protobuf + coder/websocket**               | Smaller wire payload than JSON; binary `Envelope` frames on `/hubs/show`                                |
+| **Huma v2 + Gin**                            | Typed handlers + OpenAPI generation; Gin router; Scalar docs at `/scalar`, spec at `/openapi`           |
+| **Bun ORM + modernc.org/sqlite**             | Pure-Go SQLite (no CGO); single `show_states` row; trivial Docker/Turbo usage                           |
+| **https://github.com/goforj/wire**           | Compile-time DI; provider sets per feature (`wire.go` → `wire_gen.go`)                                  |
+| **Feature-based server structure**           | Domain-organized handlers, dtos, and services per feature                                               |
 
 ### Frontend rendering performance
 
@@ -83,31 +88,26 @@ object, so it is the dominant re-render source. Conventions:
 
 - Run workspace tasks through Turborepo: `pnpm test`, `pnpm check-types`, `pnpm build`.
 - Contract changes: the server `build` emits `openapi.yaml` automatically
-  (`-p:GenerateOpenApiDocument=true`); `packages/contracts` consumes it at build
-  time (`openapi-ts` → `tsdown`). The strongly-typed SignalR hub client in
-  `packages/realtime/src/gen` is generated from the server's `IShowHubClient`
-  interface via the `dotnet-tsrts` tool — the `connection.on(...)` handlers in
-  `apps/web/src/lib/realtime.worker.ts` are written by hand on top of it.
+  (`go run . --dump-openapi openapi.yaml`); `packages/contracts` consumes it at build
+  time (`openapi-ts` → `tsdown`). The Protobuf types in `apps/server/proto/gen` and
+  `packages/realtime/src/proto/gen` are generated via `buf generate` (`buf.yaml` + `buf.gen.yaml`).
 - Biome (not ESLint/Prettier) for lint + format. syncpack for dependency consistency.
-- `dotnet-outdated` (local tool in `apps/server/dotnet-tools.json`) lints/upgrades NuGet packages (
-  `nuget:outdated` / `nuget:update`). `knip` (config `knip.json`) lints the TS packages for unused
-  dependencies and exports.
+- `knip` (config `knip.json`) lints the TS packages for unused dependencies and exports.
 - `verbatimModuleSyntax` enabled root-wide — always `import type` for type-only.
-- The server solution uses `.slnx` format (not `.sln`).
-- ReSharper CLI (`dotnet jb cleanupcode` + `inspectcode`) runs a .NET-only
-  quality pass via `pnpm turbo run quality --filter=@tgb-resolver/server`.
-- The pre-commit hook runs `sync:check || sync` → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
+- `gofmt` + `go vet` for Go formatting and static analysis (`pnpm --filter @tgb-resolver/server run format/check-types`).
+- Wire (`github.com/google/wire`) is the Go DI codegen — `wire_gen.go` is committed and regenerated via `go run github.com/google/wire/cmd/wire ./...`.
+- The pre-commit hook runs `sync:check || sync` → `turbo run format --filter=@tgb-resolver/server` → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
 
-### .NET test filter
+### Go tests
 
-Tests use TUnit (`[Test]`, `sealed class`, `await Assert.That(...)`) with
-Microsoft.Testing.Platform. Filter by tree node, not VSTest:
+Tests use the standard `testing` package:
 
 ```sh
-dotnet run --project <test.csproj> -- --treenode-filter "/*/*/Class/*"
+# internally run go test ./...
+pnpm --filter @tgb-resolver/server test
 ```
 
-Two test projects: `TGB.Resolver.Server.Tests` and `TGB.Resolver.IcpcXmlParser.Tests`.
+Features own their tests (`features/importing/*_test.go`, `features/show/*_test.go`, `features/realtime/*_test.go`, `features/shared/domain/*_test.go`).
 
 ## Timeline
 
@@ -116,16 +116,16 @@ A timeline is an ordered list of typed events:
 - `Res`, short name `RES`: reveal one team/problem resolution and its resulting score/rank.
 - `Pre`, short name `PRE`: pre-resolve cue emitted before each `Res` so the frontend
   can focus on the upcoming resolution.
-- `Img`, short name `IMG`: display an image asset.
-- `Sfx`, short name `SFX`: request local sound playback.
-- `Cus`, short name `CUS`: custom user-defined event with freeform payload.
+- `Cus`, short name `CUS`: custom user-defined event with freeform payload (`extId` + `extPayload`).
 
 Resolve events are generated by import. Their IDs, order, and resolve payloads
 are immutable: they cannot be deleted or reordered. Presentation metadata may
-be edited. Image and SFX events support full CRUD, including ordering.
+be edited. Custom (`Cus`) events support full CRUD, including ordering.
 
-Timeline access mode is an extensible enum. `RW` is the default; `RO` prevents
-editing. Do not represent it as a Boolean.
+Two orthogonal modes:
+
+- `ShowMode`: `Editing` (default) vs `Live` — controls whether the show is broadcast as live.
+- `TimelineMode`: `Rw` (default, read-write) vs `Ro` (read-only, prevents editing). Do not represent either as a Boolean.
 
 ## XML conversion
 
@@ -150,49 +150,66 @@ optimizer or intentionally reorder events for dramatic effect.
 
 ## HTTP API
 
+All mutations are versioned: the caller sends the `showVersion` it observed and
+the server rejects stale versions with `409 Conflict` (`ErrVersionDrift`). A
+rejected client fetches the latest snapshot; it never merges state locally.
+
 Import / export:
 
-- `POST /import/xml`, `POST /import/bundle`
-- `GET /export/bundle`
-- `POST /api/show/optimize`, `POST /api/show/clear`
+- `POST /import/xml` — import ICPC/DMOJ XML (`{ xml, excludedUsernames }`)
+- `POST /import/bundle` — import zipped bundle (base64 `bytes`, 1 GB limit, 10 min read timeout)
+- `POST /import/xml/users` — preview users from XML without importing
+- `GET /export/bundle` — export bundle as `[]byte` (zip + xxh3)
 
-Timeline and assets:
+Show and timeline:
 
-- `GET /timeline`
-- `POST /timeline/event`
-- `PATCH /timeline/event/:id`, `PATCH /timeline/event/:id/position`, `DELETE /timeline/event/:id`
-- `PATCH /timeline/mode`
-- `PATCH /api/show/events/resolve/:id`, `PATCH /api/show/events/non-resolve/:id`
-- `GET /assets/:id`, `POST /assets/:id`
-- `DELETE /assets/entries/{id}`, `PATCH /assets/entries/{id}`
-- `POST /assets/folders`
-- `PATCH /assets/{assetId}/move`
+- `GET /timeline` — current `ShowState` snapshot
+- `POST /api/show/optimize`, `POST /api/show/clear` — optimize (deduplicate) / clear show
+- `PATCH /api/show/events/resolve/{id}` — rename a resolve event (`customName`)
+- `PATCH /api/show/events/non-resolve/{id}` — patch a non-resolve (custom) event (`triggerOffsetSeconds`, `requireManualInteraction`, `customName`, `custom`)
+- `POST /timeline/event` — create custom event (relative to another event, `before` flag)
+- `PATCH /timeline/event/{id}`, `PATCH /timeline/event/{id}/position`, `DELETE /timeline/event/{id}` — patch / move / delete custom events
+- `PATCH /timeline/mode` — set `timelineMode` (`Rw` / `Ro`)
+- `GET /assets/:id`, `POST /assets/:id` (multipart via `assets/handlers.go`), `DELETE /assets/entries/{id}`, `PATCH /assets/entries/{id}`, `POST /assets/folders`, `PATCH /assets/{assetId}/move`
 
 Playback and show control:
 
-- `POST /playback/seek`, `POST /api/playback/start`, `POST /api/playback/reset`
-- `POST /api/show/live`, `DELETE /api/show/live`
-- `PATCH /api/show/automation`
+- `POST /playback/seek` — seek to an event ID
+- `POST /api/playback/start`, `POST /api/playback/reset` — start / reset playback (orchestrator-driven auto-advance)
+- `POST /api/show/live`, `DELETE /api/show/live` — enable / disable live mode
+- `PATCH /api/show/automation` — set `autoResolveEnabled`, `autoResolveSpeedMs`, `fullAutoEnabled`
+- `PATCH /api/show/settings` — set `tickRate` (must be one of `AllowedTickRates`: 120, 120/1.001, 100, 60, 60/1.001, 50, 30, 30/1.001, 25, 24, 24/1.001)
+- `GET /` — health check
 
-Every mutation includes the snapshot version observed by the caller. The server
-rejects stale versions. A rejected client fetches the latest snapshot; it never
-merges state locally.
+OpenAPI and docs: `GET /openapi` (JSON), dumped `openapi.yaml` on build, Scalar UI at `/scalar`.
 
 ## Realtime and clock sync
 
 The server is authoritative for playback. It persists the cursor before
-broadcasting. Clients do not advance the timeline independently.
+broadcasting. Clients do not advance the timeline independently. Persistence
+is via Bun ORM on `show_states` with `MutateShow(version, fn)` compare-and-swap.
+
+Protobuf is the single source of truth for WS messages (`apps/server/proto/show/v1/show.proto`).
+The server broadcasts binary `Envelope` frames over `coder/websocket` at `/hubs/show`;
+the client decodes them with `@bufbuild/protobuf` in `packages/realtime/src/ws-client.ts` and
+`apps/web/src/lib/realtime.worker.ts`.
+
+Envelope variants (all carry `show_version`):
+
+- `TimelineEventAdded`, `TimelineEventUpdated`, `TimelineEventRemoved`, `TimelineReordered`
+- `ShowReplaced`, `PlaybackStateChanged` (includes `server_time_unix_ms`), `LiveModeChanged`
+- `ClockSyncRequest` / `ClockSyncResponse` (client ↔ server round-trip, not broadcast)
 
 ### Clock synchronization
 
 Inspired by NTP/SMPTE-timecode principles, adapted for venue networks that
 cannot reliably carry SMPTE 2110. Timing is anchored to the server clock:
 
-1. Client sends a SignalR request with its `int64` UTC Unix milliseconds.
-2. Server replies with `receivedAt` and `transmittedAt`.
-3. After eight request/response pairs, the client selects the lowest-RTT sample.
-4. That sample is anchored to `performance.now()` for drift-resistant projection.
-5. Resync every 10 seconds and after reconnect.
+1. Client sends a binary `ClockSyncRequest` (`client_time_unix_ms`) over the same WS.
+2. Server replies with `ClockSyncResponse` (`client_time_unix_ms`, `received_at_unix_ms`, `transmitted_at_unix_ms`) using `Clock.Now()`.
+3. Worker collects 5 request/response samples (`CLOCK_SYNC_SAMPLES`), computing RTT and offset per sample (`server-clock.ts` / `clock.ts`).
+4. The worker selects the most robust estimate (`selectRobustEstimate`, median-like filtering) and anchors it to `performance.now()` for drift-resistant projection.
+5. Resync every 5 seconds (`Schedule.fixed("5 seconds")` in `realtime.worker.ts`) and after reconnect.
 
 Control clients must complete clock sync before issuing playback commands.
 Audience clients hold their last confirmed state while disconnected.
@@ -200,12 +217,10 @@ Audience clients hold their last confirmed state while disconnected.
 ### Playback
 
 - Supports forward seek, backward seek, and jump to any event ID.
-- Server atomically replaces cursor, cancels prior schedule, and broadcasts
-  durable state.
-- Clients cancel local schedules and render the target state; they do not
-  replay skipped transient effects (e.g. SFX).
-- Playback messages carry snapshot version, event ID, and
-  server execution time. Clients ignore duplicate/older messages.
+- Server atomically replaces cursor, cancels prior schedule via `Orchestrator`, and broadcasts durable state.
+- Clients cancel local schedules and render the target state; they do not replay skipped transient effects (e.g. SFX).
+- `Clock` uses `time.Ticker` at the current tick rate plus a `container/heap` priority queue for scheduled ops. `ScheduleIn` / `Cancel` manage orchestrator tickets; `ProcessDue` drains due ops with panic recovery so one action never kills the tick loop.
+- `Orchestrator.ScheduleAdvance` / `CancelAdvance` drive auto-advance; `PlaybackStateChanged` carries snapshot version, playback state, and server execution time. Clients ignore duplicate/older messages.
 - A timeline version gap triggers a full snapshot resync.
 
 Client connection lifecycle:

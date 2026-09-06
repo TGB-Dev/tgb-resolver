@@ -140,7 +140,7 @@ The assets manager treats folders and files uniformly as `FsEntry` (UNIX-style) 
 - Turborepo: `@tgb-resolver/server` package at `apps/server/package.json` wraps the Go toolchain;
   `apps/server/turbo.json` declares build outputs. Tasks: `build` (also emits `openapi.yaml`),
   `test`, `dev`, `serve`, `generate`
-- **Dependency injection**: Google Wire (`wire.go`, `wire_gen.go`, `wire_providers.go`)
+- **Dependency injection**: https://github.com/goforj/wire (`wire.go`, `wire_gen.go`, `wire_providers.go`)
 - **Database**: Bun ORM with modernc.org/sqlite (pure-Go, no CGO)
 - **HTTP**: Gin router + Huma v2 (OpenAPI generation, validation)
 - **WebSocket**: `github.com/coder/websocket` for `/hubs/show` endpoint

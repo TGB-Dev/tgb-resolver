@@ -27,7 +27,6 @@ out/
 build
 dist
 bin/
-obj/
 
 
 # Debug
@@ -53,13 +52,8 @@ logs/*.log
 # Server data
 .data/
 .local/
-apps/server/inspect.sarif.json
-
 .claude/worktrees
 .claude/settings.local.json
-
-# Tests
-TestResults/
 
 # Agent docs
 docs/
