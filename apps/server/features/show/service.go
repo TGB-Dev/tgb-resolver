@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/zeebo/xxh3"
@@ -137,6 +138,7 @@ func (s *Service) Optimize(ctx context.Context, showVersion int) (domain.ShowSta
 	if err != nil {
 		return domain.ShowState{}, err
 	}
+	s.rearmAdvance(updated)
 	s.broadcastReordered(updated)
 	return updated, nil
 }
@@ -257,6 +259,7 @@ func (s *Service) PatchNonResolveEvent(ctx context.Context, eventID int, in NonR
 	if err != nil {
 		return domain.ShowState{}, err
 	}
+	s.rearmAdvance(updated)
 	s.broadcastUpdated(updated, eventID)
 	return updated, nil
 }
@@ -329,6 +332,7 @@ func (s *Service) CreateEvent(ctx context.Context, in CreateEventInput) (domain.
 	if err != nil {
 		return domain.ShowState{}, err
 	}
+	s.rearmAdvance(updated)
 	s.broadcastAdded(updated, createdID)
 	return updated, nil
 }
@@ -373,6 +377,7 @@ func (s *Service) PatchEvent(ctx context.Context, eventID int, in PatchEventInpu
 	if err != nil {
 		return domain.ShowState{}, err
 	}
+	s.rearmAdvance(updated)
 	s.broadcastUpdated(updated, eventID)
 	return updated, nil
 }
@@ -461,6 +466,7 @@ func (s *Service) MoveEvent(ctx context.Context, eventID int, in MoveEventInput)
 	if err != nil {
 		return domain.ShowState{}, err
 	}
+	s.rearmAdvance(updated)
 	s.broadcastReordered(updated)
 	return updated, nil
 }
@@ -497,6 +503,7 @@ func (s *Service) DeleteEvent(ctx context.Context, showVersion, id int) (domain.
 	if err != nil {
 		return domain.ShowState{}, err
 	}
+	s.rearmAdvance(updated)
 	s.hub.Broadcast(&showv1.Envelope{Type: "TimelineEventRemoved",
 		Payload: &showv1.Envelope_TimelineEventRemoved{TimelineEventRemoved: &showv1.TimelineEventRemoved{
 			ShowVersion: int32(updated.ShowVersion), EventId: int32(id)}}})
@@ -1030,6 +1037,17 @@ func (s *Service) RescheduleAdvance(ctx context.Context) error {
 	return nil
 }
 
+// rearmAdvance recomputes the pending auto-advance after a timeline edit.
+// Edits can change the next event's offset, duration, manual flag, or order,
+// invalidating any ticket scheduled before the edit.
+func (s *Service) rearmAdvance(updated domain.ShowState) {
+	if updated.Playback.Status != domain.PlaybackRunning {
+		return
+	}
+	s.orchestrator.CancelAdvance()
+	s.scheduleNext(updated)
+}
+
 func (s *Service) scheduleNext(st domain.ShowState) {
 	if st.Playback.Status != domain.PlaybackRunning || st.Playback.CurrentEventID == nil {
 		return
@@ -1248,7 +1266,7 @@ func BuildShowFromXML(xml []byte, excluded []string, showVersion int) domain.Sho
 }
 
 func normalizeFolderID(id string) *string {
-	if id == "" {
+	if strings.TrimSpace(id) == "" {
 		return nil
 	}
 	return &id

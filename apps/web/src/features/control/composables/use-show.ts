@@ -276,25 +276,34 @@ export function useRenameControlEventMutation() {
   });
 }
 
+export interface PatchTimelineEventPayload {
+  eventId: number;
+  durationSeconds?: number;
+  useDefaultDuration?: boolean;
+  triggerOffsetSeconds?: number;
+  clearTriggerOffset?: boolean;
+  requireManualInteraction?: boolean;
+}
+
+/** Split path id from body fields: the server rejects unknown body properties. */
+export function splitPatchTimelineEventPayload(payload: PatchTimelineEventPayload) {
+  const { eventId, ...body } = payload;
+  return { path: { id: eventId }, body };
+}
+
 export function usePatchTimelineEventMutation() {
   const queryClient = useQueryClient();
   const showQuery = useControlShowQuery();
 
   return useMutation({
-    mutationFn: async (payload: {
-      eventId: number;
-      durationSeconds?: number;
-      useDefaultDuration?: boolean;
-      triggerOffsetSeconds?: number;
-      clearTriggerOffset?: boolean;
-      requireManualInteraction?: boolean;
-    }) => {
+    mutationFn: async (payload: PatchTimelineEventPayload) => {
       requireShow(showQuery.data.value);
       return await withRetry(queryClient, async () => {
+        const { path, body } = splitPatchTimelineEventPayload(payload);
         const { data } = await patchTimelineEvent({
           client: generatedClient,
-          path: { id: payload.eventId },
-          body: { showVersion: usePlaybackStore().state.showVersion, ...payload },
+          path,
+          body: { showVersion: usePlaybackStore().state.showVersion, ...body },
         });
         return data as ShowStateSnapshot;
       });

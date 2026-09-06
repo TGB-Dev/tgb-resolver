@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/rs/zerolog/log"
@@ -11,6 +12,8 @@ import (
 
 	showv1 "tgb-resolver/server/proto/gen/show/v1"
 )
+
+const broadcastWriteTimeout = 5 * time.Second
 
 type Hub struct {
 	mu    sync.Mutex
@@ -75,16 +78,14 @@ func (h *Hub) Broadcast(env *showv1.Envelope) {
 		return
 	}
 	h.mu.Lock()
-	conns := make([]*websocket.Conn, 0, len(h.conns))
+	defer h.mu.Unlock()
 	for c := range h.conns {
-		conns = append(conns, c)
-	}
-	h.mu.Unlock()
-	for _, c := range conns {
-		if err := c.Write(context.Background(), websocket.MessageBinary, data); err != nil {
-			h.mu.Lock()
+		ctx, cancel := context.WithTimeout(context.Background(), broadcastWriteTimeout)
+		err := c.Write(ctx, websocket.MessageBinary, data)
+		cancel()
+		if err != nil {
 			delete(h.conns, c)
-			h.mu.Unlock()
+			_ = c.Close(websocket.StatusGoingAway, "broadcast failed")
 		}
 	}
 }

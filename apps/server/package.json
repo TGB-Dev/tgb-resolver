@@ -14,7 +14,7 @@
     "generate:tools": "go build -o ./tools/bin/protoc-gen-go google.golang.org/protobuf/cmd/protoc-gen-go",
     "generate:wire": "go run github.com/google/wire/cmd/wire ./...",
     "preview": "run-s build serve:binary",
-    "serve": "run-s build serve:binary",
+    "serve": "node ./scripts/run-dist.mjs",
     "serve:binary": "node ./scripts/run-dist.mjs",
     "start": "node ./scripts/run-dist.mjs",
     "test": "go test ./..."

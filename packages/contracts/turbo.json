@@ -5,7 +5,7 @@
       "dependsOn": ["^build", "generate"]
     },
     "generate": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["@tgb-resolver/server#build"]
     }
   }
 }
