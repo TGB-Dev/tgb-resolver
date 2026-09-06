@@ -175,7 +175,7 @@ function handleDoubleClick() {
         v-if="!isLive"
         :class="css({ display: 'flex', alignItems: 'center', justifyContent: 'center', h: 'full' })"
       >
-        <Tooltip content="Drag to reorder event" :open-delay="0">
+        <Tooltip :content="isReorderable ? 'Drag to reorder event' : 'Cannot be reordered'" :open-delay="0">
           <button
             type="button"
             data-drag-handle

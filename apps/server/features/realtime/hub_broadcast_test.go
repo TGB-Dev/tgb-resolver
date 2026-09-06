@@ -37,7 +37,7 @@ func TestBroadcast_ConcurrentWritesReachAllClients(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	for i := 0; i < messages; i++ {
+	for i := range messages {
 		wg.Add(1)
 		go func(version int32) {
 			defer wg.Done()

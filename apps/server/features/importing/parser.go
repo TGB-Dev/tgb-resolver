@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
+
 	"tgb-resolver/server/features/shared/domain"
 )
 
@@ -96,21 +98,26 @@ type Contest struct {
 }
 
 func ParseFile(path string) (*Contest, error) {
+	log.Debug().Str("path", path).Msg("ParseFile start")
 	data, err := os.ReadFile(path)
 	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("ParseFile read failed")
 		return nil, err
 	}
 	return Parse(data)
 }
 
 func Parse(data []byte) (*Contest, error) {
+	log.Debug().Int("bytes", len(data)).Msg("Parse start")
 	var raw rawContest
 	dec := xml.NewDecoder(strings.NewReader(string(data)))
 	dec.Strict = true
 	if err := dec.Decode(&raw); err != nil {
+		log.Warn().Err(err).Msg("Parse xml decode failed")
 		return nil, fmt.Errorf("Failed to parse XML: %w", err)
 	}
 	if raw.XMLName.Local != "contest" {
+		log.Warn().Str("root", raw.XMLName.Local).Msg("Parse invalid root")
 		return nil, fmt.Errorf("Failed to parse XML: missing or invalid <contest> root element")
 	}
 
@@ -122,6 +129,7 @@ func Parse(data []byte) (*Contest, error) {
 	for _, p := range raw.Problems {
 		parsed, err := parseProblem(p)
 		if err != nil {
+			log.Warn().Err(err).Msg("Parse problem failed")
 			return nil, err
 		}
 		problems = append(problems, parsed)
@@ -130,6 +138,7 @@ func Parse(data []byte) (*Contest, error) {
 	for _, tm := range raw.Teams {
 		parsed, err := parseTeam(tm)
 		if err != nil {
+			log.Warn().Err(err).Msg("Parse team failed")
 			return nil, err
 		}
 		teams = append(teams, parsed)
@@ -138,13 +147,16 @@ func Parse(data []byte) (*Contest, error) {
 	for _, r := range raw.Runs {
 		parsed, err := parseRun(r)
 		if err != nil {
+			log.Warn().Err(err).Msg("Parse run failed")
 			return nil, err
 		}
 		runs = append(runs, parsed)
 	}
 	if err := validateRunIDsMonotonic(runs); err != nil {
+		log.Warn().Err(err).Msg("Parse validateRunIDsMonotonic failed")
 		return nil, err
 	}
+	log.Info().Int("problems", len(problems)).Int("teams", len(teams)).Int("runs", len(runs)).Msg("Parse succeeded")
 	return &Contest{Info: info, Problems: problems, Teams: teams, Runs: runs}, nil
 }
 
@@ -368,12 +380,12 @@ func (c *Contest) Marshal() ([]byte, error) {
 	}
 	for _, p := range c.Problems {
 		raw.Problems = append(raw.Problems, rawProblem{
-			ID: strPtr(formatNum(float64(p.ID))), Label: strPtr(p.Label), Name: strPtr(p.Name), Score: strPtr(formatNum(p.Score)),
+			ID: new(formatNum(float64(p.ID))), Label: new(p.Label), Name: new(p.Name), Score: new(formatNum(p.Score)),
 		})
 	}
 	for _, tm := range c.Teams {
 		raw.Teams = append(raw.Teams, rawTeam{
-			ID: strPtr(formatNum(float64(tm.ID))), Name: strPtr(tm.Name), Username: strPtr(tm.Username),
+			ID: new(formatNum(float64(tm.ID))), Name: new(tm.Name), Username: new(tm.Username),
 		})
 	}
 	for _, r := range c.Runs {

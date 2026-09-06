@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/rs/zerolog/log"
 )
 
 type FileStore struct {
@@ -35,38 +37,55 @@ func (s *FileStore) pathFor(id string) (string, error) {
 }
 
 func (s *FileStore) Save(id string, data []byte) error {
+	log.Debug().Str("id", id).Int("bytes", len(data)).Msg("FileStore Save start")
 	path, err := s.pathFor(id)
 	if err != nil {
+		log.Warn().Err(err).Str("id", id).Msg("FileStore Save invalid id")
 		return err
 	}
 	if err := os.MkdirAll(s.root, 0o755); err != nil {
+		log.Error().Err(err).Str("id", id).Msg("FileStore Save mkdir failed")
 		return err
 	}
-	return os.WriteFile(path, data, 0o644)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		log.Error().Err(err).Str("id", id).Msg("FileStore Save write failed")
+		return err
+	}
+	log.Info().Str("id", id).Int("bytes", len(data)).Msg("FileStore Save succeeded")
+	return nil
 }
 
 func (s *FileStore) Read(id string) ([]byte, error) {
+	log.Debug().Str("id", id).Msg("FileStore Read start")
 	path, err := s.pathFor(id)
 	if err != nil {
+		log.Warn().Err(err).Str("id", id).Msg("FileStore Read invalid id")
 		return nil, err
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Warn().Err(err).Str("id", id).Msg("FileStore Read not found")
 			return nil, fmt.Errorf("asset does not exist: %s", id)
 		}
+		log.Error().Err(err).Str("id", id).Msg("FileStore Read failed")
 		return nil, err
 	}
+	log.Debug().Str("id", id).Int("bytes", len(data)).Msg("FileStore Read succeeded")
 	return data, nil
 }
 
 func (s *FileStore) Delete(id string) error {
+	log.Debug().Str("id", id).Msg("FileStore Delete start")
 	path, err := s.pathFor(id)
 	if err != nil {
+		log.Warn().Err(err).Str("id", id).Msg("FileStore Delete invalid id")
 		return err
 	}
 	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		log.Error().Err(err).Str("id", id).Msg("FileStore Delete failed")
 		return err
 	}
+	log.Info().Str("id", id).Msg("FileStore Delete succeeded")
 	return nil
 }

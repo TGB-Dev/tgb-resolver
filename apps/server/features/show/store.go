@@ -4,11 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	_ "modernc.org/sqlite"
@@ -29,20 +32,26 @@ type StoredShowState struct {
 }
 
 type Store struct {
-	db  *bun.DB
-	now func() time.Time
+	db       *bun.DB
+	now      func() time.Time
+	initOnce sync.Once
+	initErr  error
 }
 
 func Open(path string) (*bun.DB, error) {
+	log.Debug().Str("path", path).Msg("Store Open start")
 	if dir := filepath.Dir(path); dir != "" {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
+			log.Error().Err(err).Str("path", path).Msg("Store Open mkdir failed")
 			return nil, err
 		}
 	}
 	sqldb, err := sql.Open("sqlite", path)
 	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("Store Open sql open failed")
 		return nil, err
 	}
+	log.Info().Str("path", path).Msg("Store Open succeeded")
 	return bun.NewDB(sqldb, sqlitedialect.New()), nil
 }
 
@@ -51,45 +60,73 @@ func NewStore(db *bun.DB) *Store {
 }
 
 func (s *Store) Migrate(ctx context.Context) error {
+	log.Debug().Msg("Store Migrate start")
 	_, err := s.db.NewCreateTable().Model((*StoredShowState)(nil)).IfNotExists().Exec(ctx)
-	return err
+	if err != nil {
+		log.Error().Err(err).Msg("Store Migrate failed")
+		return err
+	}
+	log.Info().Msg("Store Migrate succeeded")
+	return nil
 }
 
 func (s *Store) EnsureSeeded(ctx context.Context) error {
+	log.Debug().Msg("Store EnsureSeeded start")
 	if err := s.Migrate(ctx); err != nil {
+		log.Error().Err(err).Msg("Store EnsureSeeded migrate failed")
 		return err
 	}
 	exists, err := s.db.NewSelect().Model((*StoredShowState)(nil)).Where("id = ?", localShowID).Exists(ctx)
 	if err != nil {
+		log.Error().Err(err).Msg("Store EnsureSeeded exists check failed")
 		return err
 	}
 	if exists {
+		log.Debug().Msg("Store EnsureSeeded already seeded")
 		return nil
 	}
 	seeded := CreateSeededShow()
 	payload, err := json.Marshal(seeded)
 	if err != nil {
+		log.Error().Err(err).Msg("Store EnsureSeeded marshal failed")
 		return err
 	}
 	_, err = s.db.NewInsert().Model(&StoredShowState{
 		ID: localShowID, ShowVersion: seeded.ShowVersion,
 		PayloadJSON: string(payload), UpdatedAtUnixMs: s.now().UnixMilli(),
 	}).Exec(ctx)
-	return err
+	if err != nil {
+		log.Error().Err(err).Msg("Store EnsureSeeded insert failed")
+		return err
+	}
+	log.Info().Int("showVersion", seeded.ShowVersion).Msg("Store EnsureSeeded seeded")
+	return nil
+}
+
+func (s *Store) ensureInit(ctx context.Context) error {
+	s.initOnce.Do(func() {
+		s.initErr = s.EnsureSeeded(ctx)
+	})
+	return s.initErr
 }
 
 func (s *Store) GetState(ctx context.Context) (domain.ShowState, error) {
-	if err := s.EnsureSeeded(ctx); err != nil {
+	log.Debug().Msg("Store GetState start")
+	if err := s.ensureInit(ctx); err != nil {
+		log.Error().Err(err).Msg("Store GetState ensure seeded failed")
 		return domain.ShowState{}, err
 	}
 	var entity StoredShowState
 	if err := s.db.NewSelect().Model(&entity).Where("id = ?", localShowID).Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("Store GetState scan failed")
 		return domain.ShowState{}, err
 	}
 	var state domain.ShowState
 	if err := json.Unmarshal([]byte(entity.PayloadJSON), &state); err != nil {
+		log.Error().Err(err).Msg("Store GetState unmarshal corrupt payload")
 		return domain.ShowState{}, fmt.Errorf("stored show payload corrupt: %w", err)
 	}
+	log.Debug().Int("showVersion", state.ShowVersion).Msg("Store GetState succeeded")
 	return normalizeShowState(state), nil
 }
 
@@ -155,25 +192,35 @@ func (s *Store) Replace(ctx context.Context, next domain.ShowState) (domain.Show
 }
 
 func (s *Store) transact(ctx context.Context, fn func(*StoredShowState, domain.ShowState) (domain.ShowState, error)) (domain.ShowState, error) {
-	if err := s.EnsureSeeded(ctx); err != nil {
+	log.Debug().Msg("Store transact start")
+	if err := s.ensureInit(ctx); err != nil {
+		log.Error().Err(err).Msg("Store transact ensure seeded failed")
 		return domain.ShowState{}, err
 	}
 	var out domain.ShowState
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		var entity StoredShowState
 		if err := tx.NewSelect().Model(&entity).Where("id = ?", localShowID).Scan(ctx); err != nil {
+			log.Error().Err(err).Msg("Store transact select failed")
 			return err
 		}
 		var current domain.ShowState
 		if err := json.Unmarshal([]byte(entity.PayloadJSON), &current); err != nil {
+			log.Error().Err(err).Msg("Store transact unmarshal corrupt payload")
 			return fmt.Errorf("stored show payload corrupt: %w", err)
 		}
 		updated, err := fn(&entity, current)
 		if err != nil {
+			if errors.Is(err, domain.ErrVersionDrift) {
+				log.Warn().Err(err).Int("expected", current.ShowVersion).Msg("Store transact version drift")
+			} else {
+				log.Warn().Err(err).Msg("Store transact business error")
+			}
 			return err
 		}
 		payload, err := json.Marshal(updated)
 		if err != nil {
+			log.Error().Err(err).Msg("Store transact marshal failed")
 			return err
 		}
 		entity.ShowVersion = updated.ShowVersion
@@ -181,11 +228,17 @@ func (s *Store) transact(ctx context.Context, fn func(*StoredShowState, domain.S
 		entity.UpdatedAtUnixMs = s.now().UnixMilli()
 		_, err = tx.NewUpdate().Model(&entity).Where("id = ?", localShowID).Exec(ctx)
 		if err != nil {
+			log.Error().Err(err).Msg("Store transact update failed")
 			return err
 		}
 		out = updated
 		return nil
 	})
+	if err != nil {
+		log.Warn().Err(err).Msg("Store transact failed")
+		return domain.ShowState{}, err
+	}
+	log.Debug().Int("showVersion", out.ShowVersion).Msg("Store transact succeeded")
 	return out, err
 }
 

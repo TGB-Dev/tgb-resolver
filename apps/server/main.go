@@ -99,6 +99,7 @@ func main() {
 	}
 
 	app.Clock.Start()
+	log.Info().Msg("server ready")
 	log.Info().Int("port", cfg.Port).Msg("listening")
 	if err := router.Run(fmt.Sprintf(":%d", cfg.Port)); err != nil {
 		log.Fatal().Err(err).Msg("serve")

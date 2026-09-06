@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
+
 	"tgb-resolver/server/features/shared/domain"
 )
 
@@ -33,8 +35,10 @@ type Resolution struct {
 }
 
 func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
+	log.Debug().Int("bytes", len(data)).Int("excluded", len(excludedUsernames)).Msg("Convert start")
 	contest, err := Parse(data)
 	if err != nil {
+		log.Warn().Err(err).Msg("Convert parse failed")
 		return nil, err
 	}
 	excluded := map[string]bool{}
@@ -206,6 +210,7 @@ func Convert(data []byte, excludedUsernames []string) (*Resolution, error) {
 		preFreeze = append(preFreeze, entry)
 	}
 
+	log.Info().Str("title", contest.Info.Title).Int("events", len(events)).Int("users", len(users)).Msg("Convert succeeded")
 	return &Resolution{
 		Title: contest.Info.Title, ContestID: contest.Info.ContestID,
 		DurationSeconds:       durationSeconds,

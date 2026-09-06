@@ -2,15 +2,20 @@ package show
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	"tgb-resolver/server/features/assets"
 	"tgb-resolver/server/features/shared/domain"
 )
 
 func (s *Service) UpsertAsset(ctx context.Context, assetID, fileName, contentType string, raw []byte, folderID *string, showVersion int) (domain.ShowState, error) {
+	log.Debug().Str("assetID", assetID).Str("fileName", fileName).Str("contentType", contentType).Int("sizeBytes", len(raw)).Int("showVersion", showVersion).Msg("UpsertAsset start")
 	if err := s.blobs.Save(assetID, raw); err != nil {
+		log.Error().Err(err).Str("assetID", assetID).Msg("UpsertAsset blob save failed")
 		return domain.ShowState{}, err
 	}
 	updated, err := s.store.MutateShow(ctx, showVersion, func(st domain.ShowState) domain.ShowState {
@@ -31,15 +36,23 @@ func (s *Service) UpsertAsset(ctx context.Context, assetID, fileName, contentTyp
 	})
 	if err != nil {
 		_ = s.blobs.Delete(assetID)
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("assetID", assetID).Int("showVersion", showVersion).Msg("UpsertAsset version drift")
+		} else {
+			log.Error().Err(err).Str("assetID", assetID).Int("showVersion", showVersion).Msg("UpsertAsset store mutate failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("assetID", assetID).Int("showVersion", updated.ShowVersion).Msg("UpsertAsset succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) DeleteEntry(ctx context.Context, id string, isDirectory bool, showVersion int) (domain.ShowState, error) {
+	log.Debug().Str("id", id).Bool("isDirectory", isDirectory).Int("showVersion", showVersion).Msg("DeleteEntry start")
 	if !isDirectory {
 		if err := s.blobs.Delete(id); err != nil {
+			log.Error().Err(err).Str("id", id).Msg("DeleteEntry blob delete failed")
 			return domain.ShowState{}, err
 		}
 	}
@@ -64,13 +77,20 @@ func (s *Service) DeleteEntry(ctx context.Context, id string, isDirectory bool, 
 		return st
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", showVersion).Msg("DeleteEntry version drift")
+		} else {
+			log.Error().Err(err).Str("id", id).Int("showVersion", showVersion).Msg("DeleteEntry store mutate failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("id", id).Bool("isDirectory", isDirectory).Int("showVersion", updated.ShowVersion).Msg("DeleteEntry succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) RenameEntry(ctx context.Context, id string, isDirectory bool, newName string, showVersion int) (domain.ShowState, error) {
+	log.Debug().Str("id", id).Bool("isDirectory", isDirectory).Str("newName", newName).Int("showVersion", showVersion).Msg("RenameEntry start")
 	updated, err := s.store.MutateShow(ctx, showVersion, func(st domain.ShowState) domain.ShowState {
 		if isDirectory {
 			st.Assets.Folders = renameFolderNode(st.Assets.Folders, id, newName)
@@ -84,13 +104,20 @@ func (s *Service) RenameEntry(ctx context.Context, id string, isDirectory bool, 
 		return st
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", showVersion).Msg("RenameEntry version drift")
+		} else {
+			log.Error().Err(err).Str("id", id).Int("showVersion", showVersion).Msg("RenameEntry store mutate failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("id", id).Str("newName", newName).Int("showVersion", updated.ShowVersion).Msg("RenameEntry succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) CreateFolder(ctx context.Context, name, parentFolderID string, showVersion int) (domain.ShowState, error) {
+	log.Debug().Str("name", name).Str("parentFolderID", parentFolderID).Int("showVersion", showVersion).Msg("CreateFolder start")
 	updated, err := s.store.MutateShowChecked(ctx, showVersion, func(st domain.ShowState) (domain.ShowState, error) {
 		if err := ensureWritable(st); err != nil {
 			return st, err
@@ -108,13 +135,20 @@ func (s *Service) CreateFolder(ctx context.Context, name, parentFolderID string,
 		return st, nil
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("name", name).Int("showVersion", showVersion).Msg("CreateFolder version drift")
+		} else {
+			log.Warn().Err(err).Str("name", name).Str("parentFolderID", parentFolderID).Int("showVersion", showVersion).Msg("CreateFolder failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("name", name).Str("parentFolderID", parentFolderID).Int("showVersion", updated.ShowVersion).Msg("CreateFolder succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) MoveAsset(ctx context.Context, assetID, targetFolderID string, showVersion int) (domain.ShowState, error) {
+	log.Debug().Str("assetID", assetID).Str("targetFolderID", targetFolderID).Int("showVersion", showVersion).Msg("MoveAsset start")
 	updated, err := s.store.MutateShowChecked(ctx, showVersion, func(st domain.ShowState) (domain.ShowState, error) {
 		if err := ensureWritable(st); err != nil {
 			return st, err
@@ -140,13 +174,20 @@ func (s *Service) MoveAsset(ctx context.Context, assetID, targetFolderID string,
 		return st, nil
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("assetID", assetID).Int("showVersion", showVersion).Msg("MoveAsset version drift")
+		} else {
+			log.Warn().Err(err).Str("assetID", assetID).Str("targetFolderID", targetFolderID).Int("showVersion", showVersion).Msg("MoveAsset failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("assetID", assetID).Str("targetFolderID", targetFolderID).Int("showVersion", updated.ShowVersion).Msg("MoveAsset succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) TransferEntry(ctx context.Context, id string, in assets.TransferInput) (domain.ShowState, error) {
+	log.Debug().Str("id", id).Bool("isDirectory", in.IsDirectory).Bool("copy", in.Copy).Int("showVersion", in.ShowVersion).Msg("TransferEntry start")
 	if in.IsDirectory {
 		if in.Copy {
 			return s.copyFolder(ctx, id, in)
@@ -164,15 +205,19 @@ func (s *Service) TransferEntry(ctx context.Context, id string, in assets.Transf
 }
 
 func (s *Service) copyAsset(ctx context.Context, id string, in assets.TransferInput) (domain.ShowState, error) {
+	log.Debug().Str("id", id).Int("showVersion", in.ShowVersion).Msg("copyAsset start")
 	cur, err := s.store.GetState(ctx)
 	if err != nil {
+		log.Error().Err(err).Str("id", id).Msg("copyAsset get state failed")
 		return domain.ShowState{}, err
 	}
 	if err := ensureWritable(cur); err != nil {
+		log.Warn().Err(err).Str("id", id).Msg("copyAsset show not writable")
 		return domain.ShowState{}, err
 	}
 	target := normalizeFolderID(ptrStr(in.TargetFolderID))
 	if target != nil && findFolderNode(cur.Assets.Folders, *target) == nil {
+		log.Warn().Str("id", id).Str("targetFolderID", ptrStr(in.TargetFolderID)).Msg("copyAsset target folder does not exist")
 		return domain.ShowState{}, fmt.Errorf("target folder does not exist")
 	}
 	var source domain.ShowAsset
@@ -184,14 +229,17 @@ func (s *Service) copyAsset(ctx context.Context, id string, in assets.TransferIn
 		}
 	}
 	if !found {
+		log.Warn().Str("id", id).Msg("copyAsset asset does not exist")
 		return domain.ShowState{}, fmt.Errorf("asset '%s' does not exist", id)
 	}
 	raw, err := s.blobs.Read(source.ID)
 	if err != nil {
+		log.Error().Err(err).Str("id", id).Msg("copyAsset blob read failed")
 		return domain.ShowState{}, err
 	}
 	clonedID := newID()
 	if err := s.blobs.Save(clonedID, raw); err != nil {
+		log.Error().Err(err).Str("id", id).Str("clonedID", clonedID).Msg("copyAsset blob save failed")
 		return domain.ShowState{}, err
 	}
 	updated, err := s.store.MutateShowChecked(ctx, in.ShowVersion, func(st domain.ShowState) (domain.ShowState, error) {
@@ -219,13 +267,20 @@ func (s *Service) copyAsset(ctx context.Context, id string, in assets.TransferIn
 	})
 	if err != nil {
 		_ = s.blobs.Delete(clonedID)
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", in.ShowVersion).Msg("copyAsset version drift")
+		} else {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", in.ShowVersion).Msg("copyAsset failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("id", id).Str("clonedID", clonedID).Int("showVersion", updated.ShowVersion).Msg("copyAsset succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) moveFolder(ctx context.Context, id string, in assets.TransferInput) (domain.ShowState, error) {
+	log.Debug().Str("id", id).Int("showVersion", in.ShowVersion).Msg("moveFolder start")
 	updated, err := s.store.MutateShowChecked(ctx, in.ShowVersion, func(st domain.ShowState) (domain.ShowState, error) {
 		if err := ensureWritable(st); err != nil {
 			return st, err
@@ -256,29 +311,41 @@ func (s *Service) moveFolder(ctx context.Context, id string, in assets.TransferI
 		return st, nil
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", in.ShowVersion).Msg("moveFolder version drift")
+		} else {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", in.ShowVersion).Msg("moveFolder failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("id", id).Int("showVersion", updated.ShowVersion).Msg("moveFolder succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }
 
 func (s *Service) copyFolder(ctx context.Context, id string, in assets.TransferInput) (domain.ShowState, error) {
+	log.Debug().Str("id", id).Int("showVersion", in.ShowVersion).Msg("copyFolder start")
 	cur, err := s.store.GetState(ctx)
 	if err != nil {
+		log.Error().Err(err).Str("id", id).Msg("copyFolder get state failed")
 		return domain.ShowState{}, err
 	}
 	if err := ensureWritable(cur); err != nil {
+		log.Warn().Err(err).Str("id", id).Msg("copyFolder show not writable")
 		return domain.ShowState{}, err
 	}
 	target := normalizeFolderID(ptrStr(in.TargetFolderID))
 	if target != nil && *target == id {
+		log.Warn().Str("id", id).Msg("copyFolder cannot copy into itself")
 		return domain.ShowState{}, fmt.Errorf("folder cannot be copied into itself")
 	}
 	if target != nil && isDescendant(cur.Assets.Folders, id, *target) {
+		log.Warn().Str("id", id).Str("targetFolderID", ptrStr(in.TargetFolderID)).Msg("copyFolder cannot copy into descendant")
 		return domain.ShowState{}, fmt.Errorf("folder cannot be copied into one of its descendants")
 	}
 	source := findFolderNode(cur.Assets.Folders, id)
 	if source == nil {
+		log.Warn().Str("id", id).Msg("copyFolder folder does not exist")
 		return domain.ShowState{}, fmt.Errorf("folder '%s' does not exist", id)
 	}
 	idMap := map[string]string{}
@@ -297,6 +364,7 @@ func (s *Service) copyFolder(ctx context.Context, id string, in assets.TransferI
 				for _, c := range copies {
 					_ = s.blobs.Delete(c.meta.ID)
 				}
+				log.Error().Err(err).Str("assetID", a.ID).Msg("copyFolder blob read failed")
 				return domain.ShowState{}, err
 			}
 			clonedID := newID()
@@ -304,6 +372,7 @@ func (s *Service) copyFolder(ctx context.Context, id string, in assets.TransferI
 				for _, c := range copies {
 					_ = s.blobs.Delete(c.meta.ID)
 				}
+				log.Error().Err(err).Str("assetID", a.ID).Str("clonedID", clonedID).Msg("copyFolder blob save failed")
 				return domain.ShowState{}, err
 			}
 			meta := a
@@ -337,8 +406,14 @@ func (s *Service) copyFolder(ctx context.Context, id string, in assets.TransferI
 		for _, c := range copies {
 			_ = s.blobs.Delete(c.meta.ID)
 		}
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", in.ShowVersion).Msg("copyFolder version drift")
+		} else {
+			log.Warn().Err(err).Str("id", id).Int("showVersion", in.ShowVersion).Msg("copyFolder failed")
+		}
 		return domain.ShowState{}, err
 	}
+	log.Info().Str("id", id).Int("assetCopies", len(copies)).Int("showVersion", updated.ShowVersion).Msg("copyFolder succeeded")
 	s.broadcastReplaced(updated)
 	return updated, nil
 }

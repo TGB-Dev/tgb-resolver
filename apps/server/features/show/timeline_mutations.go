@@ -2,8 +2,11 @@ package show
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+
+	"github.com/rs/zerolog/log"
 
 	"tgb-resolver/server/features/shared/domain"
 	showv1 "tgb-resolver/server/proto/gen/show/v1"
@@ -15,6 +18,7 @@ type RenameResolveInput struct {
 }
 
 func (s *Service) RenameResolveEvent(ctx context.Context, eventID int, in RenameResolveInput) (domain.ShowState, error) {
+	log.Debug().Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("RenameResolveEvent start")
 	updated, err := s.store.MutateShow(ctx, in.ShowVersion, func(st domain.ShowState) domain.ShowState {
 		for i, e := range st.Timeline {
 			if e.ID == eventID && e.Type == domain.TimelineRes {
@@ -25,9 +29,15 @@ func (s *Service) RenameResolveEvent(ctx context.Context, eventID int, in Rename
 		return st
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("RenameResolveEvent version drift")
+		} else {
+			log.Error().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("RenameResolveEvent failed")
+		}
 		return domain.ShowState{}, err
 	}
 	s.broadcastUpdated(updated, eventID)
+	log.Info().Int("eventID", eventID).Int("showVersion", updated.ShowVersion).Msg("RenameResolveEvent succeeded")
 	return updated, nil
 }
 
@@ -40,7 +50,9 @@ type NonResolvePatch struct {
 }
 
 func (s *Service) PatchNonResolveEvent(ctx context.Context, eventID int, in NonResolvePatch) (domain.ShowState, error) {
+	log.Debug().Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("PatchNonResolveEvent start")
 	if err := ensureFiniteOrNull(in.TriggerOffsetSeconds, "triggerOffsetSeconds"); err != nil {
+		log.Warn().Err(err).Int("eventID", eventID).Msg("PatchNonResolveEvent invalid triggerOffsetSeconds")
 		return domain.ShowState{}, err
 	}
 	updated, err := s.store.MutateShow(ctx, in.ShowVersion, func(st domain.ShowState) domain.ShowState {
@@ -65,10 +77,16 @@ func (s *Service) PatchNonResolveEvent(ctx context.Context, eventID int, in NonR
 		return st
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("PatchNonResolveEvent version drift")
+		} else {
+			log.Error().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("PatchNonResolveEvent failed")
+		}
 		return domain.ShowState{}, err
 	}
 	s.rearmAdvance(updated)
 	s.broadcastUpdated(updated, eventID)
+	log.Info().Int("eventID", eventID).Int("showVersion", updated.ShowVersion).Msg("PatchNonResolveEvent succeeded")
 	return updated, nil
 }
 
@@ -84,10 +102,13 @@ type CreateEventInput struct {
 }
 
 func (s *Service) CreateEvent(ctx context.Context, in CreateEventInput) (domain.ShowState, error) {
+	log.Debug().Int("showVersion", in.ShowVersion).Int("relativeToEventID", in.RelativeToEventID).Msg("CreateEvent start")
 	if err := ensureFiniteOrNull(in.DurationSeconds, "durationSeconds"); err != nil {
+		log.Warn().Err(err).Msg("CreateEvent invalid durationSeconds")
 		return domain.ShowState{}, err
 	}
 	if err := ensureFiniteOrNull(in.TriggerOffsetSeconds, "triggerOffsetSeconds"); err != nil {
+		log.Warn().Err(err).Msg("CreateEvent invalid triggerOffsetSeconds")
 		return domain.ShowState{}, err
 	}
 	createdID := 0
@@ -138,10 +159,16 @@ func (s *Service) CreateEvent(ctx context.Context, in CreateEventInput) (domain.
 		return st
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Int("showVersion", in.ShowVersion).Msg("CreateEvent version drift")
+		} else {
+			log.Error().Err(err).Int("showVersion", in.ShowVersion).Msg("CreateEvent failed")
+		}
 		return domain.ShowState{}, err
 	}
 	s.rearmAdvance(updated)
 	s.broadcastAdded(updated, createdID)
+	log.Info().Int("createdID", createdID).Int("showVersion", updated.ShowVersion).Msg("CreateEvent succeeded")
 	return updated, nil
 }
 
@@ -157,10 +184,13 @@ type PatchEventInput struct {
 }
 
 func (s *Service) PatchEvent(ctx context.Context, eventID int, in PatchEventInput) (domain.ShowState, error) {
+	log.Debug().Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("PatchEvent start")
 	if err := ensureFiniteOrNull(in.DurationSeconds, "durationSeconds"); err != nil {
+		log.Warn().Err(err).Int("eventID", eventID).Msg("PatchEvent invalid durationSeconds")
 		return domain.ShowState{}, err
 	}
 	if err := ensureFiniteOrNull(in.TriggerOffsetSeconds, "triggerOffsetSeconds"); err != nil {
+		log.Warn().Err(err).Int("eventID", eventID).Msg("PatchEvent invalid triggerOffsetSeconds")
 		return domain.ShowState{}, err
 	}
 	updated, err := s.store.MutateShow(ctx, in.ShowVersion, func(st domain.ShowState) domain.ShowState {
@@ -183,10 +213,16 @@ func (s *Service) PatchEvent(ctx context.Context, eventID int, in PatchEventInpu
 		return st
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("PatchEvent version drift")
+		} else {
+			log.Error().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("PatchEvent failed")
+		}
 		return domain.ShowState{}, err
 	}
 	s.rearmAdvance(updated)
 	s.broadcastUpdated(updated, eventID)
+	log.Info().Int("eventID", eventID).Int("showVersion", updated.ShowVersion).Msg("PatchEvent succeeded")
 	return updated, nil
 }
 
@@ -216,6 +252,7 @@ type MoveEventInput struct {
 }
 
 func (s *Service) MoveEvent(ctx context.Context, eventID int, in MoveEventInput) (domain.ShowState, error) {
+	log.Debug().Int("eventID", eventID).Int("relativeToEventID", in.RelativeToEventID).Bool("before", in.Before).Int("showVersion", in.ShowVersion).Msg("MoveEvent start")
 	updated, err := s.store.MutateShowChecked(ctx, in.ShowVersion, func(st domain.ShowState) (domain.ShowState, error) {
 		if err := ensureWritable(st); err != nil {
 			return st, err
@@ -272,14 +309,21 @@ func (s *Service) MoveEvent(ctx context.Context, eventID int, in MoveEventInput)
 		return st, nil
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("MoveEvent version drift")
+		} else {
+			log.Warn().Err(err).Int("eventID", eventID).Int("showVersion", in.ShowVersion).Msg("MoveEvent failed")
+		}
 		return domain.ShowState{}, err
 	}
 	s.rearmAdvance(updated)
 	s.broadcastReordered(updated)
+	log.Info().Int("eventID", eventID).Int("showVersion", updated.ShowVersion).Msg("MoveEvent succeeded")
 	return updated, nil
 }
 
 func (s *Service) DeleteEvent(ctx context.Context, showVersion, id int) (domain.ShowState, error) {
+	log.Debug().Int("id", id).Int("showVersion", showVersion).Msg("DeleteEvent start")
 	updated, err := s.store.MutateShowChecked(ctx, showVersion, func(st domain.ShowState) (domain.ShowState, error) {
 		if err := ensureWritable(st); err != nil {
 			return st, err
@@ -309,11 +353,17 @@ func (s *Service) DeleteEvent(ctx context.Context, showVersion, id int) (domain.
 		return st, nil
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrVersionDrift) {
+			log.Warn().Err(err).Int("id", id).Int("showVersion", showVersion).Msg("DeleteEvent version drift")
+		} else {
+			log.Warn().Err(err).Int("id", id).Int("showVersion", showVersion).Msg("DeleteEvent failed")
+		}
 		return domain.ShowState{}, err
 	}
 	s.rearmAdvance(updated)
 	s.hub.Broadcast(&showv1.Envelope{Type: "TimelineEventRemoved",
 		Payload: &showv1.Envelope_TimelineEventRemoved{TimelineEventRemoved: &showv1.TimelineEventRemoved{
 			ShowVersion: int32(updated.ShowVersion), EventId: int32(id)}}})
+	log.Info().Int("id", id).Int("showVersion", updated.ShowVersion).Msg("DeleteEvent succeeded")
 	return updated, nil
 }
