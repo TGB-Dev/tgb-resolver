@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Splitter } from "@ark-ui/vue";
 import { css, cx } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
 import { whenever } from "@vueuse/core";
 import { onMounted, useTemplateRef } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
+import { Splitter } from "@/features/shared/ui/splitter";
 
 import AssetsGridView from "./assets-grid-view.vue";
 import AssetsListView from "./assets-list-view.vue";

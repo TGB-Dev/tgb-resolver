@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Splitter } from "@ark-ui/vue";
 import { css, cx } from "@styled-system/css";
 import { splitter } from "@styled-system/recipes";
 import { useIntervalFn } from "@vueuse/core";
@@ -10,6 +9,7 @@ import FloatingPanelHost from "@/features/control/floating-panel-host.vue";
 import ControlMainPanel from "@/features/control/panels/control-main-panel.vue";
 import ControlTimelinePanel from "@/features/control/panels/control-timeline-panel.vue";
 import ControlStatusBar from "@/features/control/status-bar/control-status-bar.vue";
+import { Splitter } from "@/features/shared/ui/splitter";
 import { getServerNow } from "@/lib/realtime-client";
 
 const controlNowStore = useControlNowStore();
