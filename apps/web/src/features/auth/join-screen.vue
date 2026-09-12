@@ -197,6 +197,7 @@ onMounted(() => {
             autocomplete="off"
             autocapitalize="characters"
             spellcheck="false"
+            maxlength="6"
             :disabled="busy"
             @keydown.enter="submit(code)"
           />

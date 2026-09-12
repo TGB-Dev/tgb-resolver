@@ -17,3 +17,8 @@ func Setup(debug bool) {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 }
+
+func For(domain string) *zerolog.Logger {
+	logger := log.With().Str("component", domain).Logger()
+	return &logger
+}

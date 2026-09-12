@@ -62,6 +62,11 @@ test("lowercase input with spaces and newline is trimmed and uppercased", async 
   });
 });
 
+test("input is capped at 6 characters", () => {
+  const wrapper = mount(JoinScreen);
+  expect(wrapper.find("input").attributes("maxlength")).toBe("6");
+});
+
 test("short code shows an inline hint instead of calling join", async () => {
   window.history.replaceState(null, "", "/?join=ab");
   const wrapper = mount(JoinScreen);

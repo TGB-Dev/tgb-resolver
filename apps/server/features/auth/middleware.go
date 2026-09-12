@@ -6,8 +6,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
+
+	"tgb-resolver/server/features/shared/logging"
 )
+
+var authLog = logging.For("auth")
 
 func BearerToken(header string) string {
 	if len(header) > 7 && strings.EqualFold(header[:7], "Bearer ") {
@@ -54,12 +57,12 @@ func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
 			return
 		}
 		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
-			log.Debug().
+			authLog.Debug().
 				Str("method", method).
 				Str("path", path).
 				Str("remote", c.Request.RemoteAddr).
 				Str("reason", err.Error()).
-				Msg("auth middleware rejected request")
+				Msg("middleware rejected request")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}

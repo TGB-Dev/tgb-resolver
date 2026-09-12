@@ -105,13 +105,14 @@ func main() {
 	if err := app.Store.EnsureSeeded(nilContext()); err != nil {
 		log.Fatal().Err(err).Msg("seed store")
 	}
-	freshCode, err := app.Auth.EnsureSeeded(nilContext())
-	if err != nil {
+	if _, err := app.Auth.EnsureSeeded(nilContext()); err != nil {
 		log.Fatal().Err(err).Msg("seed auth")
 	}
-	if freshCode != "" {
-		log.Warn().Str("joinCode", freshCode).Msg("first boot: share this join code with crew devices")
+	joinCode, err := app.Auth.CurrentCode(nilContext())
+	if err != nil {
+		log.Fatal().Err(err).Msg("load join code")
 	}
+	logging.For("auth").Warn().Str("joinCode", joinCode).Msg("USE THIS TO JOIN DEVICES")
 	if n, err := app.Auth.PurgeExpired(nilContext()); err != nil {
 		log.Error().Err(err).Msg("purge expired sessions failed")
 	} else if n > 0 {

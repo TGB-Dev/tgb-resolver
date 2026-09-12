@@ -6,8 +6,11 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/rs/zerolog/log"
+
+	"tgb-resolver/server/features/shared/logging"
 )
+
+var routeLog = logging.For("auth")
 
 type joinInput struct {
 	Body struct {
@@ -65,7 +68,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 				if errors.Is(err, ErrInvalidCode) {
 					return nil, huma.Error401Unauthorized("invalid join code")
 				}
-				log.Error().Err(err).Msg("auth join failed")
+				routeLog.Error().Err(err).Msg("join failed")
 				return nil, huma.Error500InternalServerError("cannot join right now")
 			}
 			resp := &joinOutput{}
@@ -80,7 +83,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*codeOutput, error) {
 			code, err := svc.CurrentCode(ctx)
 			if err != nil {
-				log.Error().Err(err).Msg("auth load join code failed")
+				routeLog.Error().Err(err).Msg("load join code failed")
 				return nil, huma.Error500InternalServerError("cannot load join code")
 			}
 			resp := &codeOutput{}
@@ -92,7 +95,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*codeOutput, error) {
 			code, err := svc.Rotate(ctx)
 			if err != nil {
-				log.Error().Err(err).Msg("auth rotate failed")
+				routeLog.Error().Err(err).Msg("rotate failed")
 				return nil, huma.Error500InternalServerError("cannot rotate join code")
 			}
 			resp := &codeOutput{}
@@ -104,7 +107,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*sessionsOutput, error) {
 			sessions, err := svc.List(ctx)
 			if err != nil {
-				log.Error().Err(err).Msg("auth list sessions failed")
+				routeLog.Error().Err(err).Msg("list sessions failed")
 				return nil, huma.Error500InternalServerError("cannot list sessions")
 			}
 			out := make([]sessionDTO, 0, len(sessions))
@@ -127,7 +130,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 				if errors.Is(err, ErrInvalidToken) {
 					return nil, huma.Error404NotFound("session not found")
 				}
-				log.Error().Err(err).Str("session", input.ID).Msg("auth revoke failed")
+				routeLog.Error().Err(err).Str("session", input.ID).Msg("revoke failed")
 				return nil, huma.Error500InternalServerError("cannot kick right now")
 			}
 			if onRevoke != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 
+	"tgb-resolver/server/features/shared/logging"
 	showv1 "tgb-resolver/server/proto/gen/show/v1"
 )
 
@@ -42,7 +43,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Str("remote", r.RemoteAddr).Msg("Hub ServeHTTP start")
 	sessionID, err := h.verify(r.URL.Query().Get("token"))
 	if err != nil {
-		log.Debug().Str("remote", r.RemoteAddr).Str("reason", err.Error()).Msg("Hub rejected connection")
+		logging.For("hub").Debug().Str("remote", r.RemoteAddr).Str("reason", err.Error()).Msg("rejected connection")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
