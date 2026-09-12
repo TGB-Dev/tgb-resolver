@@ -6,7 +6,7 @@ export const LABEL_KEY = "tgb:device-label";
 export const EXPIRY_KEY = "tgb:device-expires-at";
 export const SESSION_KEY = "tgb:device-session-id";
 
-export const EXPIRY_WARNING_MS = 3_600_000;
+const EXPIRY_WARNING_MS = 3_600_000;
 
 export function normalizeJoinCode(raw: string): string {
   return raw.toUpperCase().replace(/[-\s]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");

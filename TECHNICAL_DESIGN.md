@@ -172,6 +172,14 @@ Show and timeline:
 - `PATCH /timeline/mode` — set `timelineMode` (`Rw` / `Ro`)
 - `GET /assets/:id`, `POST /assets/:id` (multipart via `assets/handlers.go`), `DELETE /assets/entries/{id}`, `PATCH /assets/entries/{id}`, `POST /assets/folders`, `PATCH /assets/{assetId}/move`
 
+Auth (single shared join code → per-device tokens, BLAKE3-hashed at rest):
+
+- `POST /auth/join` — exchange join code for a device token + `foo-bar` label (rate-limited)
+- `GET /auth/join-code` — current code (Bearer, or loopback without a token for first setup)
+- `POST /auth/rotate` — new join code, existing sessions survive
+- `GET /auth/sessions` — device list (label, last seen, expiry)
+- `DELETE /auth/sessions/{id}` — revoke one device (kicks its live socket with WS close 4401)
+
 Playback and show control:
 
 - `POST /playback/seek` — seek to an event ID
@@ -225,6 +233,19 @@ Audience clients hold their last confirmed state while disconnected.
 
 Client connection lifecycle:
 `Idle → Connecting → Connected → Reconnecting → Disconnected → Failed`
+
+### Authenticated transport
+
+HTTP carries `Authorization: Bearer <device-token>` (public: `GET /` health,
+`POST /auth/join`, `GET /openapi`, Scalar docs). The hub takes
+`/hubs/show?token=` and rejects missing/expired tokens before upgrade; revoked
+devices are kicked with close code `4401`, which the worker surfaces as an
+auth-expired event instead of reconnecting. Never-lockout rules: network
+blips and 5xx reconnect with the same token and never show the Join screen;
+only `401`/`4401` (expired or revoked) does. Join-code rotation is hitless for
+existing sockets. Plain HTTP on shared venue WiFi is passively sniffable —
+short 30h TTLs, code≠token separation, and kick/rotate shrink the window, but
+TLS termination at the venue router is the real fix (out of scope).
 
 SFX is best-effort: each receiving client plays it on event delivery. Exact
 cross-client audio synchronization and replay of missed audio are out of scope.

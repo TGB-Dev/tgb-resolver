@@ -139,6 +139,8 @@ const controlTabInfo: HotkeyCallback = () =>
   controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Info);
 const controlTabSettings: HotkeyCallback = () =>
   controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Settings);
+const controlTabAuth: HotkeyCallback = () =>
+  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Auth);
 
 /* ------------------------------------------------------------------ */
 /* Control: transport prev/next                                        */
@@ -415,6 +417,15 @@ export const commands: readonly CommandDefinition[] = [
     category: "Tabs",
     defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+5" },
     handler: controlTabSettings,
+  },
+  {
+    id: "control-tab-auth",
+    title: "Tab: Auth",
+    description: "Switch the main panel to the Auth tab",
+    scope: CommandScope.Control,
+    category: "Tabs",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+6" },
+    handler: controlTabAuth,
   },
   {
     id: "transport-prev",

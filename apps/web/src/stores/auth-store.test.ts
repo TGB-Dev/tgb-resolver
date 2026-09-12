@@ -6,6 +6,7 @@ import {
   isAuthError,
   LABEL_KEY,
   normalizeJoinCode,
+  SESSION_KEY,
   TOKEN_KEY,
   useAuthStore,
 } from "@/stores/auth-store";
@@ -27,13 +28,15 @@ describe("auth store", () => {
     expect(useAuthStore().isAuthenticated).toBe(false);
   });
 
-  it("persists token, label and expiry to localStorage", () => {
+  it("persists token, label, expiry and session to localStorage", () => {
     const store = useAuthStore();
     store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z", "s1");
     expect(store.isAuthenticated).toBe(true);
     expect(localStorage.getItem(TOKEN_KEY)).toBe("tok");
     expect(localStorage.getItem(LABEL_KEY)).toBe("brave-fox");
     expect(localStorage.getItem(EXPIRY_KEY)).toBe("2026-09-13T00:00:00Z");
+    expect(localStorage.getItem(SESSION_KEY)).toBe("s1");
+    expect(store.sessionId).toBe("s1");
   });
 
   it("markExpired keeps the token for rejoin debugging but gates access", () => {

@@ -63,6 +63,7 @@ export type CommandId =
   | "control-tab-cue"
   | "control-tab-info"
   | "control-tab-settings"
+  | "control-tab-auth"
   | "transport-prev"
   | "transport-next"
   | "assets-delete"
