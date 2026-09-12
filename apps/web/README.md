@@ -1,31 +1,43 @@
-# web — canonical Vue frontend
+# web — Vue frontend
 
-The Vue 3 SPA for tgb-resolver. This is the canonical (and only) frontend; there is no
-separate React app.
+- Vue 3 SPA for tgb-resolver
 
-Stack: Vue 3.5, Pinia, vue-router, TanStack Vue Query, Panda CSS with the Chakra preset, Ark UI,
-`motion-v`, and the vanilla `motion` core package.
+- Stack:
+  - Vue 3.5
+  - Pinia
+  - vue-router
+  - TanStack Vue Query
+  - Panda CSS + Chakra preset
+  - Ark UI
+  - `motion-v` + vanilla `motion` core
 
-## Recommended IDE Setup
+- See [QUICK_REF.md](./QUICK_REF.md) for state, styling, tokens, layout
+- See root [AGENTS.md](../../AGENTS.md) for workspace conventions
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Recommended IDE setup
 
-## Recommended Browser Setup
+- [VS Code](https://code.visualstudio.com/)
+- [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+- Disable Vetur
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
+## Recommended browser setup
+
+- Chromium (Chrome, Edge, Brave):
   - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
+  - [Turn on Custom Object Formatter](http://bit.ly/object-formatters)
 - Firefox:
   - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+  - [Turn on Custom Object Formatter](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
 
-## Type Support for `.vue` Imports in TS
+## Type support for `.vue` imports
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+- TypeScript cannot type `.vue` imports by default
+- We replace `tsc` with `vue-tsc` for type checking
+- Editors need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) for `.vue` types
 
 ## Customize configuration
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+- See [Vite Configuration Reference](https://vite.dev/config/)
 
 ## Commands
 
@@ -33,35 +45,28 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 pnpm install
 ```
 
-### Development
-
-```sh
-pnpm dev
-```
-
-### Production build and preview
-
-```sh
+- Development:
+  ```sh
+  pnpm dev
+  ```
+- Production build + preview:
+  ```sh
   pnpm build
   pnpm serve
-```
+  ```
+- Unit tests + type-check:
+  ```sh
+  pnpm test
+  pnpm type-check
+  ```
+- E2E with [Playwright](https://playwright.dev):
+  ```sh
+  npx playwright install
+  pnpm test:e2e
+  ```
 
-### Unit tests and type-check
+## Layout
 
-```sh
-pnpm test
-pnpm type-check
-```
-
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
-
-```sh
-# Install browsers for the first run
-npx playwright install
-
-pnpm test:e2e
-```
-
-Feature code is vertically sliced under `src/features/`; shared state uses Pinia setup stores.
-Use generated styled-system JSX components and recipes for layout and component styling. See the
-root `AGENTS.md` for workspace-wide conventions.
+- Feature code vertically sliced under `src/features/`
+- Shared state uses Pinia setup stores
+- Styling uses generated styled-system JSX + recipes

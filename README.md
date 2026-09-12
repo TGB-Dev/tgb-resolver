@@ -1,29 +1,28 @@
 # tgb-resolver
 
-The Gifted Battlefield resolver for ICPC/DMOJ/VNOJ-style contest feeds.
+- ICPC/DMOJ/VNOJ-style contest feed resolver
+- Server-authoritative event timeline
+- Single source of truth drives audience + control UIs
 
 > [!NOTE]
-> This project is heavily inspired, with a large portion of parsing code being ported over/referenced from the [ICPC resolver](https://github.com/icpctools/icpctools/tree/main/Resolver), and [VNOI Resolver](https://github.com/VNOI-Admin/vnoi-resolver).
->
-> We sincerely thanks the authors for their time on crafting algorithms for these beautiful leaderboard resolving systems!
+> - Parsing code ported / referenced from [ICPC resolver](https://github.com/icpctools/icpctools/tree/main/Resolver)
+> - Also referenced from [VNOI Resolver](https://github.com/VNOI-Admin/vnoi-resolver)
+> - Thanks to the authors for their leaderboard-resolving algorithms
 
 > [!WARNING]
-> We currently support only the VNOJ contest format. See https://github.com/VNOI-Admin/OJ/blob/master/judge/contest_format/vnoj.py for more details.
-
-Server-authoritative event timeline with realtime signaling,
-driving audience and control UIs from a single source of truth.
+> - VNOJ contest format only
+> - See [vnoj.py](https://github.com/VNOI-Admin/OJ/blob/master/judge/contest_format/vnoj.py)
 
 ## Stack
 
-| Layer       | Tech                                                                                     |
-| ----------- | ---------------------------------------------------------------------------------------- |
-| Workspace   | Turborepo, pnpm workspaces                                                               |
-| Frontend    | Vue 3.5, Pinia, vue-router, Vite 8, Panda CSS + Chakra preset, Ark UI, motion-v           |
-| Server      | Go 1.26+, Gin, Huma v2, coder/websocket, Bun ORM, modernc.org/sqlite, Wire DI           |
-| Contracts   | `@hey-api/openapi-ts`, `ofetch`, TanStack Query, Valibot, Protobuf (buf)                 |
-| Parsers     | Go `features/importing` (server-side)                                                    |
-| Lint/Format | Biome, syncpack, go fmt                                                                  |
-| Tests       | Vitest, Testing Library (web), Go testing (server)                                       |
+- Workspace: Turborepo + pnpm workspaces
+- Frontend: Vue 3.5 + Pinia + vue-router + Vite 8
+- Styling: Panda CSS + Chakra preset + Ark UI + motion-v
+- Server: Go 1.26+ + Gin + Huma v2 + coder/websocket + Bun ORM + modernc.org/sqlite + Wire DI
+- Contracts: openapi-ts + ofetch + TanStack Query + Valibot + Protobuf (buf)
+- Parsers: Go `features/importing` (server-side)
+- Lint/Format: Biome + syncpack + go fmt
+- Tests: Vitest + Testing Library (web) + Go testing (server)
 
 ## Prerequisites
 
@@ -31,12 +30,14 @@ driving audience and control UIs from a single source of truth.
 - pnpm >= 11.1.3
 - Go 1.26+
 
-## Getting Started
+## Getting started
 
 ```sh
 pnpm install
-cp .env.example .env    # VITE_API_URL defaults to http://localhost:5001
+cp .env.example .env
 ```
+
+- `VITE_API_URL` defaults to `http://localhost:5001`
 
 ## Development
 
@@ -44,88 +45,82 @@ cp .env.example .env    # VITE_API_URL defaults to http://localhost:5001
 pnpm dev
 ```
 
-Runs the server (port 5001) and the Vue frontend (port 3000) in parallel.
+- Server: port 5001
+- Web: port 3000
+- `/`: Audience UI
+- `/control`: Control UI
+- Server code: `apps/server/`
+- Frontend code: `apps/web/` (`@tgb-resolver/web`)
 
-| Route      | UI       |
-| ---------- | -------- |
-| `/`        | Audience |
-| `/control` | Control  |
+## Build and test
 
-Server: `apps/server/` — Go HTTP/WebSocket server.
-Frontend: `apps/web/` — the Vue 3 SPA (package `@tgb-resolver/web`, dev port 3000).
-
-## Build & Test
-
-```sh
-pnpm build          # Turborepo dependency-order build
-pnpm check-types    # tsc --noEmit for all TS packages, go vet for Go
-pnpm test           # vitest (TS) + go test (Go)
-pnpm serve          # production previews
-pnpm format         # go fmt (Go) + biome format (TS/Vue)
-```
-
-The `packages/contracts` package generates its TypeScript HTTP client from
-`apps/server/openapi.yaml` (via `openapi-ts`) before building, and
-`packages/realtime` generates its Protobuf types from `apps/server/proto/` via `buf`.
-The OpenAPI document is emitted automatically by the server `build` (
-`go run . --dump-openapi openapi.yaml`), so a normal `pnpm build` keeps both clients
-current.
+- `pnpm build`: Turborepo dependency-order build
+- `pnpm check-types`: `tsc --noEmit` + `go vet`
+- `pnpm test`: vitest + go test
+- `pnpm serve`: production previews
+- `pnpm format`: go fmt + Biome format
+- See [AGENTS.md](./AGENTS.md) for the full command list
 
 ## Environment
 
-Server configuration via environment variables:
-- `PORT` - Server port (default: 5001)
-- `ALLOWED_ORIGINS` - CORS allowed origins (default: `*`)
-- `DATA_DIR` - Data directory path (default: `.data`)
-- `JOIN_CODE` - preset 6-char join code (default: generated on first boot, printed as `JOIN CODE: ...` in the server log)
-- `SESSION_TTL_HOURS` - device session lifetime (default: `30`)
+- `PORT`: server port
+  - Default: `5001`
+- `ALLOWED_ORIGINS`: CORS origins
+  - Default: `*`
+- `DATA_DIR`: data directory
+  - Default: `.data`
+- `JOIN_CODE`: preset 6-char join code
+  - Default: generated on first boot
+  - Printed as `JOIN CODE: ...` in server log
+- `SESSION_TTL_HOURS`: device session lifetime
+  - Default: `30`
+- `VITE_API_URL`: API base URL (frontend `.env`)
+  - Default: `http://localhost:5001`
 
 ## Venue auth
 
-The venue network is shared, so every HTTP route and the `/hubs/show`
-WebSocket require a device token. New devices join once via the Auth tab
-(control panel, Lock icon, visible in Live mode too): it shows a QR magic link
-plus a typable code. Joining mints a random device token stored on the device;
-reconnects reuse it silently. Rotating the join code never kicks connected
-devices; the kick list drops a single device back to the Join screen. Sessions
-and the join code persist in SQLite across server restarts.
-
-Frontend configuration via `.env`:
-- `VITE_API_URL` - API base URL (default: `http://localhost:5001`)
-
-## Git Hooks
-
-Hooks are managed by Husky (auto-installed via `pnpm install` `prepare` script).
-
-Pre-commit runs: `sync:check || sync` → `go fmt` (server) → `test` → `biome check --write --staged --no-errors-on-unmatched` → `git add -u`.
+- Shared venue network
+- Every HTTP route requires a device token
+- `/hubs/show` WebSocket requires a device token
+- Join once via Auth tab in control panel
+  - Lock icon
+  - Visible in Live mode too
+- Join UI shows:
+  - QR magic link
+  - Typable code
+- Joining mints a random device token
+- Token stored on the device
+- Reconnects reuse the token silently
+- Rotating join code never kicks connected devices
+- Kick list drops one device back to Join screen
+- Sessions persist in SQLite across restarts
+- Join code persists in SQLite across restarts
 
 ## Structure
 
-```text
-apps/
-  server/     Go 1.26+ HTTP/WebSocket server (Gin, Huma v2, Bun ORM, Wire)
-  web/        Canonical Vue 3 SPA frontend (Pinia, Panda CSS, Ark UI, vue-router)
-              package @tgb-resolver/web, dev port 3000
-              src/features/   — vertical feature slices
-                control/        — playback, timeline, transport, cue tab stores
-                leaderboard/    — leaderboard grid/table stores
-                assets-manager/ — folder/file asset browser store
-                shared/         — cross-feature stores (show, realtime, confirm, fullscreen)
-                extensions/     — extension registry, config UI, server patch API
-packages/
-  contracts/   OpenAPI-generated TS HTTP client, TanStack Query helpers, Valibot schemas
-  realtime/    Protobuf-generated types, client-side clock sync, timeline and domain helpers
-```
+- `apps/server/`: Go HTTP/WebSocket server
+- `apps/web/`: Vue 3 SPA frontend
+  - `src/features/`: vertical feature slices
+  - `control/`: playback, timeline, transport, cue tab
+  - `leaderboard/`: leaderboard grid/table
+  - `assets-manager/`: folder/file browser
+  - `shared/`: show, realtime, confirm, fullscreen
+  - `extensions/`: registry, config UI, server patch API
+- `packages/contracts/`: OpenAPI-generated TS HTTP client + Query helpers + Valibot schemas
+- `packages/realtime/`: Protobuf types + clock sync + timeline/domain helpers
+- See [AGENTS.md](./AGENTS.md) for roles and ports
+- See [TECHNICAL_DESIGN.md](./TECHNICAL_DESIGN.md) for system design
 
 ## Documentation
 
-See [AGENTS.md](./AGENTS.md) for detailed architecture, conventions, and development guidelines.
+- [AGENTS.md](./AGENTS.md): architecture, conventions, tooling
+- [TECHNICAL_DESIGN.md](./TECHNICAL_DESIGN.md): timeline, API, realtime, invariants
+- [apps/web/QUICK_REF.md](./apps/web/QUICK_REF.md): frontend state, styling, tokens
 
-## License:
+## License
 
-MIT License
-
-Copyright (c) 2026 The Gifted Battlefield Organization.
+- MIT License
+- Copyright (c) 2026 The Gifted Battlefield Organization
 
 ## Backstory
 
