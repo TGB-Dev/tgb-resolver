@@ -17,7 +17,9 @@ const busy = ref(false);
 const error = ref<string | null>(null);
 const showScanner = ref(false);
 const pendingLabel = ref<string | null>(null);
-const pendingJoin = ref<{ token: string; label: string; expiresAt: string } | null>(null);
+const pendingJoin = ref<{ token: string; label: string; expiresAt: string; sessionId: string } | null>(
+  null,
+);
 const videoRef = useTemplateRef<HTMLVideoElement>("videoRef");
 const buttonClasses = button();
 
@@ -91,6 +93,7 @@ async function submit(raw: string) {
       token: data.token,
       label: data.label,
       expiresAt: data.expiresAt,
+      sessionId: data.sessionId,
     };
   } finally {
     busy.value = false;
@@ -99,7 +102,12 @@ async function submit(raw: string) {
 
 async function confirm() {
   if (!pendingJoin.value) return;
-  authStore.persist(pendingJoin.value.token, pendingJoin.value.label, pendingJoin.value.expiresAt);
+  authStore.persist(
+    pendingJoin.value.token,
+    pendingJoin.value.label,
+    pendingJoin.value.expiresAt,
+    pendingJoin.value.sessionId,
+  );
   const { reconnectRealtime } = await import("@/lib/realtime-client");
   reconnectRealtime();
 }

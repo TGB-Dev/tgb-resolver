@@ -29,7 +29,7 @@ describe("auth store", () => {
 
   it("persists token, label and expiry to localStorage", () => {
     const store = useAuthStore();
-    store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z");
+    store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z", "s1");
     expect(store.isAuthenticated).toBe(true);
     expect(localStorage.getItem(TOKEN_KEY)).toBe("tok");
     expect(localStorage.getItem(LABEL_KEY)).toBe("brave-fox");
@@ -38,7 +38,7 @@ describe("auth store", () => {
 
   it("markExpired keeps the token for rejoin debugging but gates access", () => {
     const store = useAuthStore();
-    store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z");
+    store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z", "s1");
     store.markExpired();
     expect(store.isAuthenticated).toBe(false);
     expect(localStorage.getItem(TOKEN_KEY)).toBe("tok");
@@ -46,7 +46,7 @@ describe("auth store", () => {
 
   it("clear wipes everything", () => {
     const store = useAuthStore();
-    store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z");
+    store.persist("tok", "brave-fox", "2026-09-13T00:00:00Z", "s1");
     store.clear();
     expect(store.isAuthenticated).toBe(false);
     expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
@@ -61,7 +61,7 @@ describe("auth store", () => {
 
   it("flags expiry within the warning window", () => {
     const store = useAuthStore();
-    store.persist("tok", "brave-fox", new Date(Date.now() + 60_000).toISOString());
+    store.persist("tok", "brave-fox", new Date(Date.now() + 60_000).toISOString(), "s1");
     expect(store.expirySoon).toBe(true);
   });
 });

@@ -7,6 +7,7 @@ export enum ControlEditMainPanelTab {
   Cue = "cue",
   Info = "info",
   Settings = "settings",
+  Auth = "auth",
 }
 
 export const useControlEditMainPanelStore = defineStore("control-edit-main-panel", () => {
