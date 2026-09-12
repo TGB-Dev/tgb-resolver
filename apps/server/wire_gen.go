@@ -21,10 +21,12 @@ func initApp(cfg *config.Config) (*App, func(), error) {
 	}
 	store := show.NewStore(db)
 	clock := provideClock()
-	hub := realtime.NewHub(clock)
+	v := provideHubVerifier()
+	hub := realtime.NewHub(clock, v)
 	fileStore := provideBlobs(cfg)
 	service := show.NewService(store, hub, clock, fileStore)
-	app := NewApp(cfg, db, store, service, hub, clock, fileStore)
+	authService := provideAuth(db, cfg)
+	app := NewApp(cfg, db, store, service, hub, clock, fileStore, authService)
 	return app, func() {
 		cleanup()
 	}, nil

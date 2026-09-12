@@ -15,7 +15,7 @@ import (
 )
 
 func TestBroadcast_ConcurrentWritesReachAllClients(t *testing.T) {
-	hub := NewHub(NewClock(nil))
+	hub := NewHub(NewClock(nil), func(token string) (string, error) { return token, nil })
 	server := httptest.NewServer(hub)
 	defer server.Close()
 

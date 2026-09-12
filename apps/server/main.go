@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -13,6 +14,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"tgb-resolver/server/features/assets"
+	"tgb-resolver/server/features/auth"
 	"tgb-resolver/server/features/realtime"
 	"tgb-resolver/server/features/shared/config"
 	"tgb-resolver/server/features/shared/logging"
@@ -24,13 +26,21 @@ type App struct {
 	DB      *bun.DB
 	Store   *show.Store
 	Service *show.Service
+	Auth    *auth.Service
 	Hub     *realtime.Hub
 	Clock   *realtime.Clock
 	Blobs   *assets.FileStore
 }
 
-func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service, hub *realtime.Hub, clock *realtime.Clock, blobs *assets.FileStore) *App {
-	return &App{Config: cfg, DB: db, Store: store, Service: svc, Hub: hub, Clock: clock, Blobs: blobs}
+func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service, hub *realtime.Hub, clock *realtime.Clock, blobs *assets.FileStore, authSvc *auth.Service) *App {
+	hub.SetVerifier(func(token string) (string, error) {
+		sess, err := authSvc.Verify(token)
+		if err != nil {
+			return "", err
+		}
+		return sess.ID, nil
+	})
+	return &App{Config: cfg, DB: db, Store: store, Service: svc, Auth: authSvc, Hub: hub, Clock: clock, Blobs: blobs}
 }
 
 func main() {
@@ -53,11 +63,13 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(corsMiddleware(cfg.AllowedOrigins))
+	router.Use(auth.Middleware(app.Auth, auth.NewRateLimiter(10, time.Minute)))
 	humaConfig := huma.DefaultConfig("TGB Resolver Server", "v1")
 	humaConfig.OpenAPIPath = "/openapi"
 	humaConfig.DocsPath = "/scalar"
 	humaConfig.DocsRenderer = huma.DocsRendererScalar
 	api := humagin.New(router, humaConfig)
+	auth.RegisterAuthRoutes(api, app.Auth, app.Hub.CloseSession)
 	show.RegisterShowRoutes(api, app.Service)
 	assets.RegisterAssetRoutes(api, app.Service, app.Blobs)
 	show.SetupRouter(router, app.Service)
@@ -90,6 +102,30 @@ func main() {
 	if err := app.Store.EnsureSeeded(nilContext()); err != nil {
 		log.Fatal().Err(err).Msg("seed store")
 	}
+	freshCode, err := app.Auth.EnsureSeeded(nilContext())
+	if err != nil {
+		log.Fatal().Err(err).Msg("seed auth")
+	}
+	if freshCode != "" {
+		log.Info().Msg("first boot: join new devices with this code")
+		fmt.Fprintln(os.Stderr, "JOIN CODE: "+freshCode)
+	}
+	if n, err := app.Auth.PurgeExpired(nilContext()); err != nil {
+		log.Error().Err(err).Msg("purge expired sessions failed")
+	} else if n > 0 {
+		log.Info().Int("purged", n).Msg("purged expired sessions")
+	}
+	go func() {
+		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			if n, err := app.Auth.PurgeExpired(nilContext()); err != nil {
+				log.Error().Err(err).Msg("hourly purge failed")
+			} else if n > 0 {
+				log.Info().Int("purged", n).Msg("hourly purge expired sessions")
+			}
+		}
+	}()
 	snapshot, err := app.Service.Snapshot(nilContext())
 	if err != nil {
 		log.Fatal().Err(err).Msg("load snapshot")

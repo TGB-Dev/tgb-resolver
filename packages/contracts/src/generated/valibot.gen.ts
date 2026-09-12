@@ -12,6 +12,11 @@ export const vAutomationState = v.strictObject({
     fullAutoEnabled: v.boolean()
 });
 
+export const vCodeOutputBody = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    code: v.string()
+});
+
 export const vCreateFolderRequest = v.strictObject({
     $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
     name: v.pipe(v.string(), v.maxLength(100)),
@@ -108,6 +113,19 @@ export const vImportXmlUser = v.strictObject({
 export const vImportXmlUsersRequest = v.strictObject({
     $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
     xml: v.optional(v.string())
+});
+
+export const vJoinInputBody = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    code: v.string()
+});
+
+export const vJoinOutputBody = v.strictObject({
+    $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
+    expiresAt: v.string(),
+    label: v.string(),
+    sessionId: v.string(),
+    token: v.string()
 });
 
 export const vMoveAssetRequest = v.strictObject({
@@ -299,6 +317,14 @@ export const vSeekPlaybackRequest = v.strictObject({
     ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
 });
 
+export const vSessionDto = v.strictObject({
+    createdAt: v.string(),
+    expiresAt: v.string(),
+    id: v.string(),
+    label: v.string(),
+    lastSeen: v.string()
+});
+
 export const vSetAutomationRequest = v.strictObject({
     $schema: v.optional(v.pipe(v.pipe(v.string(), v.url()), v.readonly())),
     autoResolveEnabled: v.optional(v.boolean()),
@@ -470,6 +496,10 @@ export const vVersionedCommandRequest = v.strictObject({
     ]), v.transform(x => BigInt(x)), v.minValue(BigInt('-9223372036854775808'), 'Invalid value: Expected int64 to be >= -9223372036854775808'), v.maxValue(BigInt('9223372036854775807'), 'Invalid value: Expected int64 to be <= 9223372036854775807')))
 });
 
+export const vCodeOutputBodyWritable = v.strictObject({
+    code: v.string()
+});
+
 export const vCreateFolderRequestWritable = v.strictObject({
     name: v.pipe(v.string(), v.maxLength(100)),
     parentFolderId: v.optional(v.string()),
@@ -532,6 +562,17 @@ export const vImportXmlRequestWritable = v.strictObject({
 
 export const vImportXmlUsersRequestWritable = v.strictObject({
     xml: v.optional(v.string())
+});
+
+export const vJoinInputBodyWritable = v.strictObject({
+    code: v.string()
+});
+
+export const vJoinOutputBodyWritable = v.strictObject({
+    expiresAt: v.string(),
+    label: v.string(),
+    sessionId: v.string(),
+    token: v.string()
 });
 
 export const vMoveAssetRequestWritable = v.strictObject({
@@ -846,6 +887,41 @@ export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointBody = vCreateF
  * OK
  */
 export const vTgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = vShowState;
+
+export const vTgbResolverServerFeaturesAuthJoinEndpointBody = vJoinInputBodyWritable;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAuthJoinEndpointResponse = vJoinOutputBody;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAuthJoinCodeEndpointResponse = vCodeOutputBody;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAuthRotateEndpointResponse = vCodeOutputBody;
+
+/**
+ * OK
+ */
+export const vTgbResolverServerFeaturesAuthSessionsEndpointResponse = v.nullable(v.array(vSessionDto));
+
+export const vTgbResolverServerFeaturesAuthRevokeEndpointHeaders = v.object({
+    Authorization: v.optional(v.string())
+});
+
+export const vTgbResolverServerFeaturesAuthRevokeEndpointPath = v.object({
+    id: v.string()
+});
+
+/**
+ * No Content
+ */
+export const vTgbResolverServerFeaturesAuthRevokeEndpointResponse = v.void();
 
 /**
  * OK

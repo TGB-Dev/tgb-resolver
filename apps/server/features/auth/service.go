@@ -52,9 +52,12 @@ func GenerateJoinCode() string {
 	return string(out)
 }
 
-func hashCode(code string) string {
-	sum := sha256.Sum256([]byte(NormalizeCode(code)))
-	return hex.EncodeToString(sum[:])
+func codesEqual(a, b string) bool {
+	an, bn := NormalizeCode(a), NormalizeCode(b)
+	if len(an) != len(bn) {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(an), []byte(bn)) == 1
 }
 
 func hashToken(token string) string {
@@ -146,13 +149,21 @@ func (s *Service) EnsureSeeded(ctx context.Context) (string, error) {
 	}
 	nowMs := s.now().UnixMilli()
 	_, err = s.db.NewInsert().Model(&AuthState{
-		ID: localAuthID, JoinCodeHash: hashCode(code),
+		ID: localAuthID, JoinCode: code,
 		CreatedAtMs: nowMs, RotatedAtMs: nowMs,
 	}).Exec(ctx)
 	if err != nil {
 		return "", err
 	}
 	return fresh, nil
+}
+
+func (s *Service) CurrentCode(ctx context.Context) (string, error) {
+	var state AuthState
+	if err := s.db.NewSelect().Model(&state).Where("id = ?", localAuthID).Scan(ctx); err != nil {
+		return "", err
+	}
+	return state.JoinCode, nil
 }
 
 func (s *Service) Join(ctx context.Context, code string) (JoinOutput, error) {
@@ -162,7 +173,7 @@ func (s *Service) Join(ctx context.Context, code string) (JoinOutput, error) {
 	if err := s.db.NewSelect().Model(&state).Where("id = ?", localAuthID).Scan(ctx); err != nil {
 		return JoinOutput{}, err
 	}
-	if subtle.ConstantTimeCompare([]byte(hashCode(code)), []byte(state.JoinCodeHash)) != 1 {
+	if !codesEqual(code, state.JoinCode) {
 		return JoinOutput{}, ErrInvalidCode
 	}
 	token, err := randomToken()
@@ -221,7 +232,7 @@ func (s *Service) Rotate(ctx context.Context) (string, error) {
 	defer s.mu.Unlock()
 	code := GenerateJoinCode()
 	_, err := s.db.NewUpdate().Model((*AuthState)(nil)).
-		Set("join_code_hash = ?", hashCode(code)).
+		Set("join_code = ?", code).
 		Set("rotated_at_ms = ?", s.now().UnixMilli()).
 		Where("id = ?", localAuthID).Exec(ctx)
 	if err != nil {

@@ -18,8 +18,10 @@ func initApp(cfg *config.Config) (*App, func(), error) {
 		provideClock,
 		provideBlobs,
 		wire.Bind(new(show.BlobStore), new(*assets.FileStore)),
+		provideHubVerifier,
 		realtime.NewHub,
 		show.NewService,
+		provideAuth,
 		NewApp,
 	))
 }

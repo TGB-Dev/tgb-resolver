@@ -7,7 +7,7 @@ const localAuthID = "auth"
 type AuthState struct {
 	bun.BaseModel `bun:"table:auth_state"`
 	ID            string `bun:"id,pk"`
-	JoinCodeHash  string `bun:"join_code_hash"`
+	JoinCode      string `bun:"join_code"`
 	CreatedAtMs   int64  `bun:"created_at_ms"`
 	RotatedAtMs   int64  `bun:"rotated_at_ms"`
 }

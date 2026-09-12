@@ -35,7 +35,7 @@ func setupTestRouter(t *testing.T) *gin.Engine {
 	t.Cleanup(func() { sqldb.Close() })
 	store := NewStore(bun.NewDB(sqldb, sqlitedialect.New()))
 	clock := realtime.NewClock(nil)
-	hub := realtime.NewHub(clock)
+	hub := realtime.NewHub(clock, nil)
 	svc := NewService(store, hub, clock, nilBlobs{})
 	if err := store.EnsureSeeded(context.Background()); err != nil {
 		t.Fatal(err)

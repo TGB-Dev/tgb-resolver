@@ -2,6 +2,7 @@ package realtime
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 	"time"
@@ -13,20 +14,37 @@ import (
 	showv1 "tgb-resolver/server/proto/gen/show/v1"
 )
 
+var errMissingVerifier = errors.New("hub token verifier not configured")
+
 const broadcastWriteTimeout = 5 * time.Second
 
 type Hub struct {
-	mu    sync.Mutex
-	conns map[*websocket.Conn]bool
-	clock *Clock
+	mu     sync.Mutex
+	conns  map[*websocket.Conn]string
+	clock  *Clock
+	verify func(token string) (string, error)
 }
 
-func NewHub(clock *Clock) *Hub {
-	return &Hub{conns: map[*websocket.Conn]bool{}, clock: clock}
+func NewHub(clock *Clock, verify func(token string) (string, error)) *Hub {
+	if verify == nil {
+		verify = func(string) (string, error) { return "", errMissingVerifier }
+	}
+	return &Hub{conns: map[*websocket.Conn]string{}, clock: clock, verify: verify}
+}
+
+func (h *Hub) SetVerifier(verify func(token string) (string, error)) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.verify = verify
 }
 
 func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Str("remote", r.RemoteAddr).Msg("Hub ServeHTTP start")
+	sessionID, err := h.verify(r.URL.Query().Get("token"))
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: []string{"*"},
 	})
@@ -36,7 +54,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.CloseNow()
 	h.mu.Lock()
-	h.conns[c] = true
+	h.conns[c] = sessionID
 	conns := len(h.conns)
 	h.mu.Unlock()
 	log.Info().Str("remote", r.RemoteAddr).Int("conns", conns).Msg("Hub client connected")
@@ -77,6 +95,17 @@ func (h *Hub) HandleSyncClock(clientTimeUnixMs int64) *showv1.ClockSyncResponse 
 	return &showv1.ClockSyncResponse{
 		ClientTimeUnixMs: clientTimeUnixMs,
 		ReceivedAtUnixMs: now, TransmittedAtUnixMs: h.clock.Now().UnixMilli(),
+	}
+}
+
+func (h *Hub) CloseSession(sessionID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for c, sid := range h.conns {
+		if sid == sessionID {
+			delete(h.conns, c)
+			_ = c.Close(4401, "session revoked")
+		}
 	}
 }
 

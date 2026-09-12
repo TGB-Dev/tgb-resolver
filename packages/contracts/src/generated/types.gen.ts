@@ -15,6 +15,14 @@ export type AutomationState = {
     fullAutoEnabled: boolean;
 };
 
+export type CodeOutputBody = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    code: string;
+};
+
 export type ContestState = {
     durationSeconds: number;
     freezeDurationSeconds: number;
@@ -157,6 +165,25 @@ export type ImportXmlUsersRequest = {
     xml?: string;
 };
 
+export type JoinInputBody = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    code: string;
+};
+
+export type JoinOutputBody = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    expiresAt: string;
+    label: string;
+    sessionId: string;
+    token: string;
+};
+
 export type MoveAssetRequest = {
     /**
      * A URL to the JSON Schema for this object.
@@ -263,6 +290,14 @@ export type SeekPlaybackRequest = {
     readonly $schema?: string;
     eventId?: number;
     showVersion?: number;
+};
+
+export type SessionDto = {
+    createdAt: string;
+    expiresAt: string;
+    id: string;
+    label: string;
+    lastSeen: string;
 };
 
 export type SetAutomationRequest = {
@@ -378,6 +413,10 @@ export type VersionedCommandRequest = {
     showVersion?: number;
 };
 
+export type CodeOutputBodyWritable = {
+    code: string;
+};
+
 export type CreateFolderRequestWritable = {
     name: string;
     parentFolderId?: string;
@@ -438,6 +477,17 @@ export type ImportXmlRequestWritable = {
 
 export type ImportXmlUsersRequestWritable = {
     xml?: string;
+};
+
+export type JoinInputBodyWritable = {
+    code: string;
+};
+
+export type JoinOutputBodyWritable = {
+    expiresAt: string;
+    label: string;
+    sessionId: string;
+    token: string;
 };
 
 export type MoveAssetRequestWritable = {
@@ -950,6 +1000,136 @@ export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses = {
 };
 
 export type TgbResolverServerFeaturesAssetsCreateFolderEndpointResponse = TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses[keyof TgbResolverServerFeaturesAssetsCreateFolderEndpointResponses];
+
+export type TgbResolverServerFeaturesAuthJoinEndpointData = {
+    body: JoinInputBodyWritable;
+    path?: never;
+    query?: never;
+    url: '/auth/join';
+};
+
+export type TgbResolverServerFeaturesAuthJoinEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAuthJoinEndpointError = TgbResolverServerFeaturesAuthJoinEndpointErrors[keyof TgbResolverServerFeaturesAuthJoinEndpointErrors];
+
+export type TgbResolverServerFeaturesAuthJoinEndpointResponses = {
+    /**
+     * OK
+     */
+    200: JoinOutputBody;
+};
+
+export type TgbResolverServerFeaturesAuthJoinEndpointResponse = TgbResolverServerFeaturesAuthJoinEndpointResponses[keyof TgbResolverServerFeaturesAuthJoinEndpointResponses];
+
+export type TgbResolverServerFeaturesAuthJoinCodeEndpointData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/join-code';
+};
+
+export type TgbResolverServerFeaturesAuthJoinCodeEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAuthJoinCodeEndpointError = TgbResolverServerFeaturesAuthJoinCodeEndpointErrors[keyof TgbResolverServerFeaturesAuthJoinCodeEndpointErrors];
+
+export type TgbResolverServerFeaturesAuthJoinCodeEndpointResponses = {
+    /**
+     * OK
+     */
+    200: CodeOutputBody;
+};
+
+export type TgbResolverServerFeaturesAuthJoinCodeEndpointResponse = TgbResolverServerFeaturesAuthJoinCodeEndpointResponses[keyof TgbResolverServerFeaturesAuthJoinCodeEndpointResponses];
+
+export type TgbResolverServerFeaturesAuthRotateEndpointData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/rotate';
+};
+
+export type TgbResolverServerFeaturesAuthRotateEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAuthRotateEndpointError = TgbResolverServerFeaturesAuthRotateEndpointErrors[keyof TgbResolverServerFeaturesAuthRotateEndpointErrors];
+
+export type TgbResolverServerFeaturesAuthRotateEndpointResponses = {
+    /**
+     * OK
+     */
+    200: CodeOutputBody;
+};
+
+export type TgbResolverServerFeaturesAuthRotateEndpointResponse = TgbResolverServerFeaturesAuthRotateEndpointResponses[keyof TgbResolverServerFeaturesAuthRotateEndpointResponses];
+
+export type TgbResolverServerFeaturesAuthSessionsEndpointData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/sessions';
+};
+
+export type TgbResolverServerFeaturesAuthSessionsEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAuthSessionsEndpointError = TgbResolverServerFeaturesAuthSessionsEndpointErrors[keyof TgbResolverServerFeaturesAuthSessionsEndpointErrors];
+
+export type TgbResolverServerFeaturesAuthSessionsEndpointResponses = {
+    /**
+     * OK
+     */
+    200: Array<SessionDto> | null;
+};
+
+export type TgbResolverServerFeaturesAuthSessionsEndpointResponse = TgbResolverServerFeaturesAuthSessionsEndpointResponses[keyof TgbResolverServerFeaturesAuthSessionsEndpointResponses];
+
+export type TgbResolverServerFeaturesAuthRevokeEndpointData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/auth/sessions/{id}';
+};
+
+export type TgbResolverServerFeaturesAuthRevokeEndpointErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type TgbResolverServerFeaturesAuthRevokeEndpointError = TgbResolverServerFeaturesAuthRevokeEndpointErrors[keyof TgbResolverServerFeaturesAuthRevokeEndpointErrors];
+
+export type TgbResolverServerFeaturesAuthRevokeEndpointResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type TgbResolverServerFeaturesAuthRevokeEndpointResponse = TgbResolverServerFeaturesAuthRevokeEndpointResponses[keyof TgbResolverServerFeaturesAuthRevokeEndpointResponses];
 
 export type TgbResolverServerFeaturesShowExportBundleEndpointData = {
     body?: never;

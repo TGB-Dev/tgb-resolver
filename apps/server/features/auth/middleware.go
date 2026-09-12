@@ -1,0 +1,61 @@
+package auth
+
+import (
+	"net"
+	"net/http"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+)
+
+func BearerToken(header string) string {
+	if len(header) > 7 && strings.EqualFold(header[:7], "Bearer ") {
+		return strings.TrimSpace(header[7:])
+	}
+	return ""
+}
+
+func isLoopback(remote string) bool {
+	host, _, err := net.SplitHostPort(remote)
+	if err != nil {
+		host = remote
+	}
+	ip := net.ParseIP(strings.Trim(host, "[]"))
+	return ip != nil && ip.IsLoopback()
+}
+
+func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+		method := c.Request.Method
+		if method == http.MethodGet && path == "/" {
+			c.Next()
+			return
+		}
+		if method == http.MethodPost && path == "/auth/join" {
+			if !limiter.Allow(c.ClientIP()) {
+				c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "too many join attempts"})
+				return
+			}
+			c.Next()
+			return
+		}
+		if method == http.MethodGet && (path == "/openapi" || path == "/scalar") {
+			c.Next()
+			return
+		}
+		if path == "/hubs/show" {
+			c.Next()
+			return
+		}
+		if method == http.MethodGet && path == "/auth/join-code" && isLoopback(c.Request.RemoteAddr) {
+			c.Next()
+			return
+		}
+		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		c.Next()
+	}
+}
