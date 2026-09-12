@@ -12,8 +12,10 @@ import {
   listSessions,
   revokeSession,
   rotateJoinCode,
+  vTgbResolverServerFeaturesAuthSessionsEndpointResponse,
 } from "@tgb-resolver/contracts";
-import { computed } from "vue";
+import * as v from "valibot";
+import { computed, watch } from "vue";
 
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { gridTableTemplate } from "@/features/shared/ui/grid-table";
@@ -38,7 +40,11 @@ const sessionsQuery = useQuery({
   queryKey: ["auth", "sessions"],
   queryFn: async () => {
     const { data } = await listSessions({ client: generatedClient, throwOnError: true });
-    return (data ?? []) as AuthSessionSnapshot[];
+    const parsed = v.safeParse(vTgbResolverServerFeaturesAuthSessionsEndpointResponse, data);
+    if (!parsed.success) {
+      throw new Error("Bad sessions response - retrying may help.");
+    }
+    return (parsed.output ?? []) as AuthSessionSnapshot[];
   },
 });
 
@@ -59,9 +65,30 @@ const bodyRow = gridTableRow();
 
 async function copyLink() {
   if (!magicLink.value) return;
-  await navigator.clipboard.writeText(magicLink.value);
-  toaster.create({ title: "Link copied", type: "success" });
+  try {
+    await navigator.clipboard.writeText(magicLink.value);
+    toaster.create({ title: "Link copied", type: "success" });
+  } catch (e) {
+    toaster.create({
+      title: "Copy failed",
+      description: `${parseErrorMessage(e)} Type the code instead.`,
+      type: "error",
+    });
+  }
 }
+
+watch(
+  () => joinCodeQuery.error.value ?? sessionsQuery.error.value,
+  (queryError) => {
+    if (queryError) {
+      toaster.create({
+        title: "Auth data failed to load",
+        description: parseErrorMessage(queryError),
+        type: "error",
+      });
+    }
+  },
+);
 
 const rotateMutation = useMutation({
   mutationFn: async () => {
@@ -123,7 +150,7 @@ function shortTime(iso: string): string {
         </QrCode.Frame>
       </QrCode.Root>
       <code :class="cx(code({ size: 'lg' }), css({ fontSize: 'xl', letterSpacing: '0.2em' }))">
-        {{ joinCodeQuery.data.value || "······" }}
+        {{ joinCodeQuery.data.value || "------" }}
       </code>
       <Box :flexGrow="1" />
       <button type="button" :class="button({ variant: 'outline' })" @click="copyLink">
@@ -138,7 +165,7 @@ function shortTime(iso: string): string {
 
     <div :class="css({ fontSize: 'sm', color: 'fg.muted' })">
       This device: {{ authStore.label ?? "unknown" }}
-      <span v-if="authStore.expirySoon"> — session expires soon, rejoin after the show.</span>
+      <span v-if="authStore.expirySoon"> - session expires soon, rejoin after the show.</span>
     </div>
 
     <div :class="headerRow" :style="{ gridTemplateColumns: columns }">

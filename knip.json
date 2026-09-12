@@ -12,6 +12,7 @@
       "entry": ["index.html"],
       "ignore": ["src/lib/api.ts", "src/lib/realtime-client.ts"],
       "ignoreIssues": {
+        "src/features/shared/ui/splitter/index.ts": ["exports"],
         "src/features/extensions/base/types.ts": ["types"],
         "src/features/extensions/base/registry.ts": ["exports"],
         "src/features/extensions/confetti/presets.ts": ["types"],

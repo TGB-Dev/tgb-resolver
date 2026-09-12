@@ -52,6 +52,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	if mode := os.Getenv("GIN_MODE"); mode != "" {
+		gin.SetMode(mode)
+	}
 	logging.Setup(gin.Mode() == gin.DebugMode)
 
 	app, cleanup, err := initApp(cfg)

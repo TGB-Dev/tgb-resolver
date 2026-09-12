@@ -5,6 +5,7 @@ import {
   type ShowWebSocketMessage,
 } from "@tgb-resolver/realtime";
 
+import { toaster } from "@/features/shared/ui/toaster";
 import RealtimeWorker from "@/lib/realtime.worker?worker";
 import { API_BASE_URL } from "@/lib/runtime-config";
 import { getServerNow, updateServerClock } from "@/lib/server-clock";
@@ -79,9 +80,12 @@ export function createRealtimeClient(
       case RealtimeWorkerResponseType.AuthExpired: {
         try {
           useAuthStore().markExpired();
-        } catch {
-          // Pinia may be unavailable in worker-test contexts; the Join gate
-          // also observes the 401 path, so this is best-effort.
+        } finally {
+          toaster.create({
+            title: "Session ended",
+            description: "Enter the current code to rejoin.",
+            type: "error",
+          });
         }
         break;
       }

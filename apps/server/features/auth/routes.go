@@ -2,9 +2,11 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type joinInput struct {
@@ -60,7 +62,11 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, input *joinInput) (*joinOutput, error) {
 			out, err := svc.Join(ctx, input.Body.Code)
 			if err != nil {
-				return nil, huma.Error401Unauthorized("invalid join code")
+				if errors.Is(err, ErrInvalidCode) {
+					return nil, huma.Error401Unauthorized("invalid join code")
+				}
+				log.Error().Err(err).Msg("auth join failed")
+				return nil, huma.Error500InternalServerError("cannot join right now")
 			}
 			resp := &joinOutput{}
 			resp.Body.Token = out.Token
@@ -74,6 +80,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*codeOutput, error) {
 			code, err := svc.CurrentCode(ctx)
 			if err != nil {
+				log.Error().Err(err).Msg("auth load join code failed")
 				return nil, huma.Error500InternalServerError("cannot load join code")
 			}
 			resp := &codeOutput{}
@@ -85,6 +92,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*codeOutput, error) {
 			code, err := svc.Rotate(ctx)
 			if err != nil {
+				log.Error().Err(err).Msg("auth rotate failed")
 				return nil, huma.Error500InternalServerError("cannot rotate join code")
 			}
 			resp := &codeOutput{}
@@ -96,6 +104,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*sessionsOutput, error) {
 			sessions, err := svc.List(ctx)
 			if err != nil {
+				log.Error().Err(err).Msg("auth list sessions failed")
 				return nil, huma.Error500InternalServerError("cannot list sessions")
 			}
 			out := make([]sessionDTO, 0, len(sessions))
@@ -115,7 +124,11 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 				return nil, huma.Error400BadRequest("cannot kick your own session")
 			}
 			if err := svc.Revoke(ctx, input.ID); err != nil {
-				return nil, huma.Error404NotFound("session not found")
+				if errors.Is(err, ErrInvalidToken) {
+					return nil, huma.Error404NotFound("session not found")
+				}
+				log.Error().Err(err).Str("session", input.ID).Msg("auth revoke failed")
+				return nil, huma.Error500InternalServerError("cannot kick right now")
 			}
 			if onRevoke != nil {
 				onRevoke(input.ID)

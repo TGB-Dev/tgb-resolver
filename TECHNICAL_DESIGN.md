@@ -172,7 +172,7 @@ Show and timeline:
 - `PATCH /timeline/mode` — set `timelineMode` (`Rw` / `Ro`)
 - `GET /assets/:id`, `POST /assets/:id` (multipart via `assets/handlers.go`), `DELETE /assets/entries/{id}`, `PATCH /assets/entries/{id}`, `POST /assets/folders`, `PATCH /assets/{assetId}/move`
 
-Auth (single shared join code → per-device tokens, BLAKE3-hashed at rest):
+Auth (single shared join code minted into per-device tokens, BLAKE3-hashed at rest):
 
 - `POST /auth/join` — exchange join code for a device token + `foo-bar` label (rate-limited)
 - `GET /auth/join-code` — current code (Bearer, or loopback without a token for first setup)

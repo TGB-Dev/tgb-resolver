@@ -77,7 +77,7 @@ Server configuration via environment variables:
 - `PORT` - Server port (default: 5001)
 - `ALLOWED_ORIGINS` - CORS allowed origins (default: `*`)
 - `DATA_DIR` - Data directory path (default: `.data`)
-- `JOIN_CODE` - preset 6-char join code (default: generated on first boot, printed as `JOIN CODE: …` in the server log)
+- `JOIN_CODE` - preset 6-char join code (default: generated on first boot, printed as `JOIN CODE: ...` in the server log)
 - `SESSION_TTL_HOURS` - device session lifetime (default: `30`)
 
 ## Venue auth

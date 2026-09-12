@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func BearerToken(header string) string {
@@ -53,6 +54,12 @@ func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
 			return
 		}
 		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
+			log.Debug().
+				Str("method", method).
+				Str("path", path).
+				Str("remote", c.Request.RemoteAddr).
+				Str("reason", err.Error()).
+				Msg("auth middleware rejected request")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}

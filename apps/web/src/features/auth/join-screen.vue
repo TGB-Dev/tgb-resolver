@@ -3,10 +3,18 @@ import { Field } from "@ark-ui/vue";
 import { ScanLine } from "@lucide/vue";
 import { css } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
-import { generatedClient, joinWithCode } from "@tgb-resolver/contracts";
+import {
+  generatedClient,
+  joinWithCode,
+  vJoinInputBodyWritable,
+  vJoinOutputBody,
+} from "@tgb-resolver/contracts";
+import * as v from "valibot";
 import { onMounted, ref, useTemplateRef } from "vue";
 
 import { useQrScanner } from "@/features/auth/use-qr-scanner";
+import { parseErrorMessage } from "@/features/shared/ui/error-message";
+import { toaster } from "@/features/shared/ui/toaster";
 import { normalizeJoinCode, useAuthStore } from "@/stores/auth-store";
 
 const authStore = useAuthStore();
@@ -73,8 +81,14 @@ function codeFromScanned(raw: string): string {
 }
 
 async function submit(raw: string) {
+  if (busy.value) return;
   const normalized = normalizeJoinCode(raw);
-  if (normalized.length < 4 || busy.value) return;
+  code.value = normalized;
+  const input = v.safeParse(vJoinInputBodyWritable, { code: normalized });
+  if (!input.success || normalized.length < 6) {
+    error.value = "Enter the 6-character code from the operator.";
+    return;
+  }
   busy.value = true;
   error.value = null;
   try {
@@ -84,17 +98,29 @@ async function submit(raw: string) {
     });
     if (joinError || !data) {
       const status = (joinError as { status?: number })?.status;
-      error.value =
-        status === 429 ? "Too many tries — wait a minute." : "Wrong code — check with the operator.";
+      if (status === 429) {
+        error.value = "Too many tries - wait a minute.";
+      } else if (status === undefined) {
+        error.value = "Can't reach the server - check the network.";
+      } else {
+        error.value = "Wrong code - check with the operator.";
+      }
       return;
     }
-    pendingLabel.value = data.label;
+    const output = v.safeParse(vJoinOutputBody, data);
+    if (!output.success) {
+      error.value = "Bad server response - try again.";
+      return;
+    }
+    pendingLabel.value = output.output.label;
     pendingJoin.value = {
-      token: data.token,
-      label: data.label,
-      expiresAt: data.expiresAt,
-      sessionId: data.sessionId,
+      token: output.output.token,
+      label: output.output.label,
+      expiresAt: output.output.expiresAt,
+      sessionId: output.output.sessionId,
     };
+  } catch (e) {
+    error.value = parseErrorMessage(e);
   } finally {
     busy.value = false;
   }
@@ -108,8 +134,16 @@ async function confirm() {
     pendingJoin.value.expiresAt,
     pendingJoin.value.sessionId,
   );
-  const { reconnectRealtime } = await import("@/lib/realtime-client");
-  reconnectRealtime();
+  try {
+    const { reconnectRealtime } = await import("@/lib/realtime-client");
+    reconnectRealtime();
+  } catch (e) {
+    toaster.create({
+      title: "Realtime reconnect failed",
+      description: `${parseErrorMessage(e)} Reload the page.`,
+      type: "error",
+    });
+  }
 }
 
 async function startScan() {
@@ -124,7 +158,7 @@ async function startScan() {
       void submit(codeFromScanned(raw));
     });
   } catch (e) {
-    error.value = e instanceof Error ? e.message : "Camera unavailable — type the code instead.";
+    error.value = e instanceof Error ? e.message : "Camera unavailable - type the code instead.";
     showScanner.value = false;
   }
 }
@@ -152,14 +186,14 @@ onMounted(() => {
       <template v-else>
         <div :class="title">Join show</div>
         <div v-if="authStore.status === 'expired'" :class="hint">
-          Session expired — enter the current code to rejoin.
+          Session expired - enter the current code to rejoin.
         </div>
         <div v-else :class="hint">Ask the operator for the code or scan their QR.</div>
         <Field.Root :invalid="!!error">
           <Field.Input
             v-model="code"
             :class="input"
-            placeholder="······"
+            placeholder="------"
             autocomplete="off"
             autocapitalize="characters"
             spellcheck="false"
@@ -171,7 +205,7 @@ onMounted(() => {
         <video v-if="showScanner" ref="videoRef" :class="video" muted playsinline />
         <div v-if="scanError" :class="errorText">{{ scanError }}</div>
         <button type="submit" :class="buttonClasses" :disabled="busy" @click="submit(code)">
-          {{ busy ? "Joining…" : "Join" }}
+          {{ busy ? "Joining..." : "Join" }}
         </button>
         <button type="button" :class="button({ variant: 'ghost' })" @click="startScan">
           <ScanLine :size="16" aria-hidden />

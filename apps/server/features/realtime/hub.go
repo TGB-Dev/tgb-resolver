@@ -42,6 +42,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Str("remote", r.RemoteAddr).Msg("Hub ServeHTTP start")
 	sessionID, err := h.verify(r.URL.Query().Get("token"))
 	if err != nil {
+		log.Debug().Str("remote", r.RemoteAddr).Str("reason", err.Error()).Msg("Hub rejected connection")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
