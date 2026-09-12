@@ -298,6 +298,7 @@ export type SessionDto = {
     id: string;
     label: string;
     lastSeen: string;
+    online: boolean;
 };
 
 export type SetAutomationRequest = {

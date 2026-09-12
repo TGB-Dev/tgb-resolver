@@ -20,7 +20,7 @@ func newTestEngine(t *testing.T, svc *Service, limiter *RateLimiter) *gin.Engine
 	engine := gin.New()
 	engine.Use(Middleware(svc, limiter))
 	api := humagin.New(engine, huma.DefaultConfig("test", "v1"))
-	RegisterAuthRoutes(api, svc, nil)
+	RegisterAuthRoutes(api, svc, nil, NewHub(nil))
 	return engine
 }
 

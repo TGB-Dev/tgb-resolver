@@ -179,6 +179,9 @@ Auth (single shared join code minted into per-device tokens, BLAKE3-hashed at re
 - `POST /auth/rotate` — new join code, existing sessions survive
 - `GET /auth/sessions` — device list (label, last seen, expiry)
 - `DELETE /auth/sessions/{id}` — revoke one device (kicks its live socket with WS close 4401)
+- `/hubs/auth` — presence hub (token-gated JSON socket): `sessions-changed` and
+  `join-code-changed` frames so open Auth tabs refresh live; sessions carry an
+  `online` flag (socket-connected counts as now, plus a 10s grace on last seen)
 
 Playback and show control:
 
@@ -243,7 +246,10 @@ devices are kicked with close code `4401`, which the worker surfaces as an
 auth-expired event instead of reconnecting. Never-lockout rules: network
 blips and 5xx reconnect with the same token and never show the Join screen;
 only `401`/`4401` (expired or revoked) does. Join-code rotation is hitless for
-existing sockets. Plain HTTP on shared venue WiFi is passively sniffable —
+existing sockets. SQLite runs a single writer with a 5s busy timeout
+(`show.Open`), so concurrent joins and heartbeat writes never surface
+`SQLITE_BUSY`. Logs use per-domain zerologgers (`component` field: `auth`,
+`hub`); serve mode defaults to info+. Plain HTTP on shared venue WiFi is passively sniffable —
 short 30h TTLs, code≠token separation, and kick/rotate shrink the window, but
 TLS termination at the venue router is the real fix (out of scope).
 

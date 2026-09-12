@@ -27,20 +27,23 @@ type App struct {
 	Store   *show.Store
 	Service *show.Service
 	Auth    *auth.Service
+	AuthHub *auth.Hub
 	Hub     *realtime.Hub
 	Clock   *realtime.Clock
 	Blobs   *assets.FileStore
 }
 
 func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service, hub *realtime.Hub, clock *realtime.Clock, blobs *assets.FileStore, authSvc *auth.Service) *App {
-	hub.SetVerifier(func(token string) (string, error) {
+	verify := func(token string) (string, error) {
 		sess, err := authSvc.Verify(token)
 		if err != nil {
 			return "", err
 		}
 		return sess.ID, nil
-	})
-	return &App{Config: cfg, DB: db, Store: store, Service: svc, Auth: authSvc, Hub: hub, Clock: clock, Blobs: blobs}
+	}
+	hub.SetVerifier(verify)
+	authHub := auth.NewHub(verify)
+	return &App{Config: cfg, DB: db, Store: store, Service: svc, Auth: authSvc, AuthHub: authHub, Hub: hub, Clock: clock, Blobs: blobs}
 }
 
 func main() {
@@ -72,11 +75,12 @@ func main() {
 	humaConfig.DocsPath = "/scalar"
 	humaConfig.DocsRenderer = huma.DocsRendererScalar
 	api := humagin.New(router, humaConfig)
-	auth.RegisterAuthRoutes(api, app.Auth, app.Hub.CloseSession)
+	auth.RegisterAuthRoutes(api, app.Auth, app.Hub.CloseSession, app.AuthHub)
 	show.RegisterShowRoutes(api, app.Service)
 	assets.RegisterAssetRoutes(api, app.Service, app.Blobs)
 	show.SetupRouter(router, app.Service)
 	router.GET("/hubs/show", gin.WrapF(app.Hub.ServeHTTP))
+	router.GET("/hubs/auth", gin.WrapF(app.AuthHub.ServeHTTP))
 	router.GET("/assets/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		data, err := app.Blobs.Read(id)

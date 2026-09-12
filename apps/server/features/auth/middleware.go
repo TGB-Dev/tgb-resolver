@@ -10,8 +10,6 @@ import (
 	"tgb-resolver/server/features/shared/logging"
 )
 
-var authLog = logging.For("auth")
-
 func BearerToken(header string) string {
 	if len(header) > 7 && strings.EqualFold(header[:7], "Bearer ") {
 		return strings.TrimSpace(header[7:])
@@ -48,7 +46,7 @@ func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		if path == "/hubs/show" {
+		if path == "/hubs/show" || path == "/hubs/auth" {
 			c.Next()
 			return
 		}
@@ -57,7 +55,7 @@ func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
 			return
 		}
 		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
-			authLog.Debug().
+			logging.For("auth").Debug().
 				Str("method", method).
 				Str("path", path).
 				Str("remote", c.Request.RemoteAddr).

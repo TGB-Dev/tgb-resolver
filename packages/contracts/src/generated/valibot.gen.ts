@@ -322,7 +322,8 @@ export const vSessionDto = v.strictObject({
     expiresAt: v.string(),
     id: v.string(),
     label: v.string(),
-    lastSeen: v.string()
+    lastSeen: v.string(),
+    online: v.boolean()
 });
 
 export const vSetAutomationRequest = v.strictObject({

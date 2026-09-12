@@ -17,6 +17,8 @@ import {
 import * as v from "valibot";
 import { computed, watch } from "vue";
 
+import { formatLastSeen } from "@/features/auth/last-seen";
+import { useAuthPresence } from "@/features/auth/use-auth-presence";
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { gridTableTemplate } from "@/features/shared/ui/grid-table";
 import { toaster } from "@/features/shared/ui/toaster";
@@ -27,6 +29,8 @@ const authStore = useAuthStore();
 const confirmStore = useConfirmActionStore();
 const queryClient = useQueryClient();
 const qrClasses = qrCode({ size: "md" });
+
+useAuthPresence();
 
 const joinCodeQuery = useQuery({
   queryKey: ["auth", "join-code"],
@@ -134,11 +138,6 @@ async function kick(session: AuthSessionSnapshot) {
   if (ok) kickMutation.mutate(session.id);
 }
 
-function shortTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString();
-}
 </script>
 
 <template>
@@ -181,8 +180,8 @@ function shortTime(iso: string): string {
       :style="{ gridTemplateColumns: columns }"
     >
       <div :class="css({ fontFamily: 'mono' })">{{ session.label }}</div>
-      <div>{{ shortTime(session.lastSeen) }}</div>
-      <div>{{ shortTime(session.expiresAt) }}</div>
+      <div>{{ formatLastSeen(session.online, session.lastSeen) }}</div>
+      <div>{{ new Date(session.expiresAt).toLocaleString() }}</div>
       <div>
         <button
           type="button"

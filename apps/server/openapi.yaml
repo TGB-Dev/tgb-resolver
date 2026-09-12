@@ -648,12 +648,15 @@ components:
           type: string
         lastSeen:
           type: string
+        online:
+          type: boolean
       required:
       - id
       - label
       - createdAt
       - lastSeen
       - expiresAt
+      - online
       type: object
     SetAutomationRequest:
       additionalProperties: false
