@@ -42,6 +42,7 @@
     "@tgb-resolver/contracts": "workspace:*",
     "@tgb-resolver/realtime": "workspace:*",
     "@vueuse/core": "^14.4.0",
+    "barcode-detector": "^3.2.2",
     "canvas-confetti": "^1.9.4",
     "effect": "^3.22.1",
     "mediabunny": "^1.55.5",
@@ -51,7 +52,8 @@
     "uuid": "^14.0.2",
     "valibot": "^1.4.2",
     "vue": "^3.5.42",
-    "vue-router": "^5.3.1"
+    "vue-router": "^5.3.1",
+    "zxing-wasm": "^3.1.4"
   },
   "devDependencies": {
     "@pandacss/dev": "^1.12.0",

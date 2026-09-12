@@ -3,6 +3,7 @@ import { css } from "@styled-system/css";
 import { HotkeysProvider } from "@tanstack/vue-hotkeys";
 import { type ComponentPublicInstance, onErrorCaptured, ref } from "vue";
 
+import AuthGate from "@/features/auth/auth-gate.vue";
 import BigRefetchOverlay from "@/features/control/big-refetch-overlay.vue";
 import { useLiveWakeLock } from "@/features/control/composables/use-live-wake-lock";
 import { useRealtimeConnection } from "@/features/control/composables/use-realtime-connection";
@@ -32,7 +33,9 @@ useLiveWakeLock();
   <HotkeysProvider :defaultOptions="hotkeysDefaultOptions">
     <div :class="css({ minH: '100vh', w: 'full', px: 0 })">
       <ErrorPage v-if="renderError" :error="renderError" />
-      <RouterView v-else />
+      <AuthGate v-else>
+        <RouterView />
+      </AuthGate>
       <Toaster />
       <AppDevtools />
       <BigRefetchOverlay />
