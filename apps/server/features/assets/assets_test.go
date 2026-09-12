@@ -33,6 +33,24 @@ func TestFileStoreRoundTrip(t *testing.T) {
 	if string(data) != "hello" {
 		t.Fatalf("want hello got %q", data)
 	}
+	f, info, err := store.Open("a1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if info.Size() != int64(len("hello")) {
+		t.Fatalf("want size 5 got %d", info.Size())
+	}
+	head := make([]byte, 5)
+	if _, err := f.ReadAt(head, 0); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(head, []byte("hello")) {
+		t.Fatalf("want hello got %q", head)
+	}
+	if _, _, err := store.Open("missing"); err == nil {
+		t.Fatal("want error for missing id")
+	}
 	if err := store.Delete("a1"); err != nil {
 		t.Fatal(err)
 	}

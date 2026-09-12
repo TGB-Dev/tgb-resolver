@@ -84,12 +84,13 @@ func main() {
 	router.GET("/hubs/auth", gin.WrapF(app.AuthHub.ServeHTTP))
 	router.GET("/assets/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		data, err := app.Blobs.Read(id)
+		f, info, err := app.Blobs.Open(id)
 		if err != nil {
 			c.Status(http.StatusNotFound)
 			return
 		}
-		contentType := "application/octet-stream"
+		defer f.Close()
+		contentType := ""
 		if snapshot, err := app.Service.Snapshot(c.Request.Context()); err == nil {
 			for _, a := range snapshot.Assets.Items {
 				if a.ID == id {
@@ -97,7 +98,13 @@ func main() {
 				}
 			}
 		}
-		c.Data(http.StatusOK, contentType, data)
+		if contentType == "" {
+			head := make([]byte, 512)
+			n, _ := f.ReadAt(head, 0)
+			contentType = http.DetectContentType(head[:n])
+		}
+		c.Header("Content-Type", contentType)
+		http.ServeContent(c.Writer, c.Request, id, info.ModTime(), f)
 	})
 
 	if *dumpPath != "" {
