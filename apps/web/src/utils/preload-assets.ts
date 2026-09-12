@@ -3,19 +3,19 @@
 
 import type { ShowAssetSnapshot } from "@tgb-resolver/contracts";
 
+import { assetUrl } from "@/lib/asset-url";
+
 const cache = new Map<string, ArrayBuffer>();
 
 export async function preloadAssets(
   assets: ShowAssetSnapshot[] | { items?: ShowAssetSnapshot[] | null },
-  baseUrl: string,
 ): Promise<Map<string, ArrayBuffer>> {
   const list = Array.isArray(assets) ? assets : (assets.items ?? []);
   const results = await Promise.allSettled(
     list.map(async (asset) => {
       const id = asset.id ?? "";
       if (!id) return null;
-      const url = `${baseUrl}/assets/${id}`;
-      const res = await fetch(url);
+      const res = await fetch(assetUrl(id));
       if (!res.ok) throw new Error(`Failed to fetch asset ${id}: ${res.status}`);
       const buffer = await res.arrayBuffer();
       cache.set(id, buffer);

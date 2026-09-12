@@ -241,7 +241,9 @@ Client connection lifecycle:
 ### Authenticated transport
 
 HTTP carries `Authorization: Bearer <device-token>` (public: `GET /` health,
-`POST /auth/join`, `GET /openapi`, Scalar docs). The hub takes
+`POST /auth/join`, `GET /openapi`, Scalar docs). `GET /assets/*` also accepts
+`?token=` because `img`/media tags and downloads cannot set headers; the
+frontend builds those URLs with a shared helper. The hub takes
 `/hubs/show?token=` and rejects missing/expired tokens before upgrade; revoked
 devices are kicked with close code `4401`, which the worker surfaces as an
 auth-expired event instead of reconnecting. Never-lockout rules: network

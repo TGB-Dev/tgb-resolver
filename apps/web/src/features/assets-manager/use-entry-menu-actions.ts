@@ -1,13 +1,12 @@
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
+import { assetUrl } from "@/lib/asset-url";
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
 import { useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import { processUploadBatch } from "./upload-helpers";
 import type { ContextMenuState } from "./use-entry-context-menu";
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
 
 function handleOperationError(error: unknown, label: string): void {
   const description = parseErrorMessage(error);
@@ -91,13 +90,13 @@ export function useEntryMenuActions(close: () => void, state: () => ContextMenuS
 
   function handleOpenFile(id: string) {
     close();
-    window.open(`${API_URL}/assets/${id}`, "_blank");
+    window.open(assetUrl(id), "_blank");
   }
 
   function handleDownloadFile(target: NonNullable<ContextMenuState["target"]>) {
     close();
     const a = document.createElement("a");
-    a.href = `${API_URL}/assets/${target.id}`;
+    a.href = assetUrl(target.id);
     a.download = target.name;
     a.click();
   }

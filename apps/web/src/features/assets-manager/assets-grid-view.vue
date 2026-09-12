@@ -19,7 +19,7 @@ const interactionStore = useAssetsInteractionStore();
 const contextMenu = useEntryContextMenu();
 const containerRef = useTemplateRef<HTMLElement>("containerRef");
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
+import { assetUrl } from "@/lib/asset-url";
 
 const { selectionRect, containerHandlers } = useRubberBandSelect(containerRef, (ids, mod) => {
   if (mod) {
@@ -60,7 +60,7 @@ function handleDoubleClick(entry: FsEntry) {
   if (entry.isDirectory) {
     store.selectEntry(entry.id);
   } else {
-    window.open(`${API_URL}/assets/${entry.id}`, "_blank");
+    window.open(assetUrl(entry.id), "_blank");
   }
 }
 

@@ -1,6 +1,6 @@
 import { onUnmounted, ref, watch } from "vue";
 
-import { API_BASE_URL } from "@/lib/runtime-config";
+import { assetUrl } from "@/lib/asset-url";
 import { getPreloadedAsset } from "@/utils/preload-assets";
 
 /**
@@ -30,7 +30,7 @@ export function useAssetUrl(getAssetId: () => string) {
       url.value = objectUrl;
       return;
     }
-    url.value = `${API_BASE_URL}/assets/${assetId}`;
+    url.value = assetUrl(assetId);
   }
 
   // Retry imperatively when an element fails to load: only worth retrying

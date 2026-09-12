@@ -20,7 +20,8 @@ const emit = defineEmits<{
   drop: [event: DragEvent];
 }>();
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
+import { assetUrl } from "@/lib/asset-url";
+
 const imgError = ref(false);
 const isImage = computed(
   () => !props.entry.isDirectory && props.entry.contentType?.startsWith("image/"),
@@ -80,7 +81,7 @@ function formatSize(bytes: number): string {
       <Folder v-if="entry.isDirectory" :size="40" aria-hidden />
       <img
         v-else-if="isImage && !imgError"
-        :src="`${API_URL}/assets/${entry.id}`"
+        :src="assetUrl(entry.id)"
         :alt="entry.name"
         :class="css({ boxSize: 'full', objectFit: 'contain' })"
         @error="imgError = true"

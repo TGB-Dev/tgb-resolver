@@ -1,7 +1,7 @@
 import { ALL_FORMATS, BufferSource, Input } from "mediabunny";
 
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
-import { API_BASE_URL } from "@/lib/runtime-config";
+import { assetUrl } from "@/lib/asset-url";
 import { useShowStore } from "@/stores/show-store";
 import { getPreloadedAsset } from "@/utils/preload-assets";
 
@@ -28,7 +28,7 @@ async function computeAssetDuration(assetId: string): Promise<number | null> {
 
   let buffer = getPreloadedAsset(assetId);
   if (!buffer) {
-    const response = await fetch(`${API_BASE_URL}/assets/${assetId}`);
+    const response = await fetch(assetUrl(assetId));
     if (!response.ok) throw new Error(`Failed to fetch asset ${assetId}: ${response.status}`);
     buffer = await response.arrayBuffer();
   }

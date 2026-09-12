@@ -46,7 +46,7 @@ export function useRealtimeConnection() {
     realtimeStore.bigRefetching = false;
     const assets = data.assets;
     if (assets?.items && assets.items.length > 0) {
-      void preloadAssets(assets, import.meta.env.VITE_API_URL ?? "http://localhost:5001");
+      void preloadAssets(assets);
     }
   });
 

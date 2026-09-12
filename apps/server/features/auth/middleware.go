@@ -53,6 +53,24 @@ func Middleware(svc *Service, limiter *RateLimiter, logger *zerolog.Logger) gin.
 			c.Next()
 			return
 		}
+		if method == http.MethodGet && strings.HasPrefix(path, "/assets/") {
+			token := BearerToken(c.GetHeader("Authorization"))
+			if token == "" {
+				token = c.Query("token")
+			}
+			if _, err := svc.Verify(token); err != nil {
+				logger.Debug().
+					Str("method", method).
+					Str("path", path).
+					Str("remote", c.Request.RemoteAddr).
+					Str("reason", err.Error()).
+					Msg("middleware rejected request")
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+				return
+			}
+			c.Next()
+			return
+		}
 		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
 			logger.Debug().
 				Str("method", method).
