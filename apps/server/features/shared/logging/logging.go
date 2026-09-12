@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"io"
 	"os"
 	"time"
 
@@ -20,5 +21,19 @@ func Setup(debug bool) {
 
 func For(domain string) *zerolog.Logger {
 	logger := log.With().Str("component", domain).Logger()
+	return &logger
+}
+
+type Domains struct {
+	Auth *zerolog.Logger
+	Hub  *zerolog.Logger
+}
+
+func ProvideDomains() *Domains {
+	return &Domains{Auth: For("auth"), Hub: For("hub")}
+}
+
+func Discard() *zerolog.Logger {
+	logger := zerolog.New(io.Discard)
 	return &logger
 }

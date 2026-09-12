@@ -179,9 +179,10 @@ Auth (single shared join code minted into per-device tokens, BLAKE3-hashed at re
 - `POST /auth/rotate` — new join code, existing sessions survive
 - `GET /auth/sessions` — device list (label, last seen, expiry)
 - `DELETE /auth/sessions/{id}` — revoke one device (kicks its live socket with WS close 4401)
-- `/hubs/auth` — presence hub (token-gated JSON socket): `sessions-changed` and
-  `join-code-changed` frames so open Auth tabs refresh live; sessions carry an
-  `online` flag (socket-connected counts as now, plus a 10s grace on last seen)
+- `/hubs/auth` — presence hub (token-gated protobuf socket, `proto/auth/v1`):
+  binary `AuthUpdate` frames (`sessions-changed`, `join-code-changed`) so open
+  Auth tabs refresh live; sessions carry an `online` flag (socket-connected
+  counts as now, plus a 10s grace on last seen)
 
 Playback and show control:
 

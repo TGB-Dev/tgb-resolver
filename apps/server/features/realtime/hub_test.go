@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"tgb-resolver/server/features/shared/logging"
 	"time"
 
 	"github.com/coder/websocket"
@@ -14,7 +15,7 @@ import (
 func TestHandleSyncClockEchoesClientTime(t *testing.T) {
 	fixed := time.UnixMilli(1782734400050)
 	c := NewClock(func() time.Time { return fixed })
-	hub := NewHub(c, nil)
+	hub := NewHub(c, nil, logging.Discard())
 	resp := hub.HandleSyncClock(1782734400000)
 	if resp.ClientTimeUnixMs != 1782734400000 {
 		t.Fatalf("want client time echoed got %d", resp.ClientTimeUnixMs)
@@ -34,7 +35,7 @@ func allowKnown(tokens map[string]string) func(string) (string, error) {
 }
 
 func TestServeHTTP_RejectsMissingToken(t *testing.T) {
-	hub := NewHub(NewClock(nil), allowKnown(map[string]string{"good": "s1"}))
+	hub := NewHub(NewClock(nil), allowKnown(map[string]string{"good": "s1"}), logging.Discard())
 	server := httptest.NewServer(hub)
 	defer server.Close()
 	url := "ws" + strings.TrimPrefix(server.URL, "http")
@@ -54,7 +55,7 @@ func TestServeHTTP_RejectsMissingToken(t *testing.T) {
 }
 
 func TestCloseSession_KicksOnlyTarget(t *testing.T) {
-	hub := NewHub(NewClock(nil), allowKnown(map[string]string{"tok-a": "a", "tok-b": "b"}))
+	hub := NewHub(NewClock(nil), allowKnown(map[string]string{"tok-a": "a", "tok-b": "b"}), logging.Discard())
 	server := httptest.NewServer(hub)
 	defer server.Close()
 	url := "ws" + strings.TrimPrefix(server.URL, "http")

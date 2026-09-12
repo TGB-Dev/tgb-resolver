@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/vue-query";
+import { type AuthUpdateKind, decodeAuthUpdate } from "@tgb-resolver/realtime";
 import { onUnmounted } from "vue";
 
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
@@ -26,11 +27,13 @@ export function useAuthPresence() {
   function connect() {
     if (stopped) return;
     const ws = new WebSocket(url());
+    ws.binaryType = "arraybuffer";
     socket = ws;
     ws.onmessage = (event: MessageEvent) => {
-      let type: unknown;
+      if (!(event.data instanceof ArrayBuffer)) return;
+      let kind: AuthUpdateKind;
       try {
-        type = (JSON.parse(String(event.data)) as { type?: unknown }).type;
+        kind = decodeAuthUpdate(event.data);
       } catch (e) {
         toaster.create({
           title: "Auth update unreadable",
@@ -39,9 +42,9 @@ export function useAuthPresence() {
         });
         return;
       }
-      if (type === "sessions-changed") {
+      if (kind === "sessions-changed") {
         void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
-      } else if (type === "join-code-changed") {
+      } else if (kind === "join-code-changed") {
         void queryClient.invalidateQueries({ queryKey: ["auth", "join-code"] });
         void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
       }

@@ -4,12 +4,14 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 
 	"tgb-resolver/server/features/assets"
 	"tgb-resolver/server/features/auth"
 	"tgb-resolver/server/features/realtime"
 	"tgb-resolver/server/features/shared/config"
+	"tgb-resolver/server/features/shared/logging"
 	"tgb-resolver/server/features/show"
 )
 
@@ -31,6 +33,10 @@ func provideBlobs(cfg *config.Config) *assets.FileStore {
 
 func provideHubVerifier() func(token string) (string, error) {
 	return nil
+}
+
+func provideHubLogger(domains *logging.Domains) *zerolog.Logger {
+	return domains.Hub
 }
 
 func provideAuth(db *bun.DB, cfg *config.Config) *auth.Service {

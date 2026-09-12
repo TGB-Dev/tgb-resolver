@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"tgb-resolver/server/features/shared/logging"
 	"time"
 
 	"github.com/coder/websocket"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestBroadcast_ConcurrentWritesReachAllClients(t *testing.T) {
-	hub := NewHub(NewClock(nil), func(token string) (string, error) { return token, nil })
+	hub := NewHub(NewClock(nil), func(token string) (string, error) { return token, nil }, logging.Discard())
 	server := httptest.NewServer(hub)
 	defer server.Close()
 

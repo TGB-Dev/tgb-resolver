@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"tgb-resolver/server/features/shared/logging"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -18,9 +19,9 @@ func newTestEngine(t *testing.T, svc *Service, limiter *RateLimiter) *gin.Engine
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	engine.Use(Middleware(svc, limiter))
+	engine.Use(Middleware(svc, limiter, logging.Discard()))
 	api := humagin.New(engine, huma.DefaultConfig("test", "v1"))
-	RegisterAuthRoutes(api, svc, nil, NewHub(nil))
+	RegisterAuthRoutes(api, svc, nil, NewHub(nil, logging.Discard()), logging.Discard())
 	return engine
 }
 

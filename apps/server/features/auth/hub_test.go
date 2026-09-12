@@ -2,14 +2,17 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"tgb-resolver/server/features/shared/logging"
 	"time"
 
 	"github.com/coder/websocket"
+	"google.golang.org/protobuf/proto"
+
+	authv1 "tgb-resolver/server/proto/gen/auth/v1"
 )
 
 func allowKnown(tokens map[string]string) func(string) (string, error) {
@@ -22,7 +25,7 @@ func allowKnown(tokens map[string]string) func(string) (string, error) {
 }
 
 func TestPresenceHub_RejectsMissingToken(t *testing.T) {
-	hub := NewHub(allowKnown(map[string]string{"good": "s1"}))
+	hub := NewHub(allowKnown(map[string]string{"good": "s1"}), logging.Discard())
 	server := httptest.NewServer(hub)
 	defer server.Close()
 	url := "ws" + strings.TrimPrefix(server.URL, "http")
@@ -39,7 +42,7 @@ func TestPresenceHub_RejectsMissingToken(t *testing.T) {
 }
 
 func TestPresenceHub_BroadcastReachesClients(t *testing.T) {
-	hub := NewHub(allowKnown(map[string]string{"tok": "s1"}))
+	hub := NewHub(allowKnown(map[string]string{"tok": "s1"}), logging.Discard())
 	server := httptest.NewServer(hub)
 	defer server.Close()
 	url := "ws" + strings.TrimPrefix(server.URL, "http")
@@ -58,12 +61,12 @@ func TestPresenceHub_BroadcastReachesClients(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
-	var msg hubMessage
-	if err := json.Unmarshal(raw, &msg); err != nil {
+	var msg authv1.AuthUpdate
+	if err := proto.Unmarshal(raw, &msg); err != nil {
 		t.Fatal(err)
 	}
-	if msg.Type != HubMsgJoinCodeChanged {
-		t.Fatalf("want %q got %q", HubMsgJoinCodeChanged, msg.Type)
+	if _, ok := msg.Update.(*authv1.AuthUpdate_JoinCodeChanged); !ok {
+		t.Fatalf("want join-code-changed got %T", msg.Update)
 	}
 	hub.CloseSession("s1")
 	if _, _, err := c.Read(ctx); err == nil {

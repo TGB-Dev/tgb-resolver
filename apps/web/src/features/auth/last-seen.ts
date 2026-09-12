@@ -1,4 +1,4 @@
-export const ONLINE_GRACE_MS = 10_000;
+const ONLINE_GRACE_MS = 10_000;
 
 function shortTime(iso: string): string {
   const date = new Date(iso);

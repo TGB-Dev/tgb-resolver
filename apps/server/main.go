@@ -31,9 +31,10 @@ type App struct {
 	Hub     *realtime.Hub
 	Clock   *realtime.Clock
 	Blobs   *assets.FileStore
+	Loggers *logging.Domains
 }
 
-func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service, hub *realtime.Hub, clock *realtime.Clock, blobs *assets.FileStore, authSvc *auth.Service) *App {
+func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service, hub *realtime.Hub, clock *realtime.Clock, blobs *assets.FileStore, authSvc *auth.Service, loggers *logging.Domains) *App {
 	verify := func(token string) (string, error) {
 		sess, err := authSvc.Verify(token)
 		if err != nil {
@@ -42,8 +43,8 @@ func NewApp(cfg *config.Config, db *bun.DB, store *show.Store, svc *show.Service
 		return sess.ID, nil
 	}
 	hub.SetVerifier(verify)
-	authHub := auth.NewHub(verify)
-	return &App{Config: cfg, DB: db, Store: store, Service: svc, Auth: authSvc, AuthHub: authHub, Hub: hub, Clock: clock, Blobs: blobs}
+	authHub := auth.NewHub(verify, loggers.Auth)
+	return &App{Config: cfg, DB: db, Store: store, Service: svc, Auth: authSvc, AuthHub: authHub, Hub: hub, Clock: clock, Blobs: blobs, Loggers: loggers}
 }
 
 func main() {
@@ -69,13 +70,13 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(corsMiddleware(cfg.AllowedOrigins))
-	router.Use(auth.Middleware(app.Auth, auth.NewRateLimiter(10, time.Minute)))
+	router.Use(auth.Middleware(app.Auth, auth.NewRateLimiter(10, time.Minute), app.Loggers.Auth))
 	humaConfig := huma.DefaultConfig("TGB Resolver Server", "v1")
 	humaConfig.OpenAPIPath = "/openapi"
 	humaConfig.DocsPath = "/scalar"
 	humaConfig.DocsRenderer = huma.DocsRendererScalar
 	api := humagin.New(router, humaConfig)
-	auth.RegisterAuthRoutes(api, app.Auth, app.Hub.CloseSession, app.AuthHub)
+	auth.RegisterAuthRoutes(api, app.Auth, app.Hub.CloseSession, app.AuthHub, app.Loggers.Auth)
 	show.RegisterShowRoutes(api, app.Service)
 	assets.RegisterAssetRoutes(api, app.Service, app.Blobs)
 	show.SetupRouter(router, app.Service)
@@ -116,7 +117,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("load join code")
 	}
-	logging.For("auth").Warn().Str("joinCode", joinCode).Msg("USE THIS TO JOIN DEVICES")
+	app.Loggers.Auth.Warn().Str("joinCode", joinCode).Msg("USE THIS TO JOIN DEVICES")
 	if n, err := app.Auth.PurgeExpired(nilContext()); err != nil {
 		log.Error().Err(err).Msg("purge expired sessions failed")
 	} else if n > 0 {

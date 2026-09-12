@@ -6,8 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-
-	"tgb-resolver/server/features/shared/logging"
+	"github.com/rs/zerolog"
 )
 
 func BearerToken(header string) string {
@@ -26,7 +25,7 @@ func isLoopback(remote string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
-func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
+func Middleware(svc *Service, limiter *RateLimiter, logger *zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 		method := c.Request.Method
@@ -55,7 +54,7 @@ func Middleware(svc *Service, limiter *RateLimiter) gin.HandlerFunc {
 			return
 		}
 		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
-			logging.For("auth").Debug().
+			logger.Debug().
 				Str("method", method).
 				Str("path", path).
 				Str("remote", c.Request.RemoteAddr).

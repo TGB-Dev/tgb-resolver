@@ -6,8 +6,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-
-	"tgb-resolver/server/features/shared/logging"
+	"github.com/rs/zerolog"
 )
 
 type joinInput struct {
@@ -60,7 +59,7 @@ func toDTO(s SessionInfo, online bool) sessionDTO {
 	}
 }
 
-func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID string), events *Hub) {
+func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID string), events *Hub, logger *zerolog.Logger) {
 	huma.Register(api, huma.Operation{OperationID: "TGBResolverServerFeaturesAuthJoinEndpoint", Method: http.MethodPost, Path: "/auth/join"},
 		func(ctx context.Context, input *joinInput) (*joinOutput, error) {
 			out, err := svc.Join(ctx, input.Body.Code)
@@ -68,7 +67,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 				if errors.Is(err, ErrInvalidCode) {
 					return nil, huma.Error401Unauthorized("invalid join code")
 				}
-				logging.For("auth").Error().Err(err).Msg("join failed")
+				logger.Error().Err(err).Msg("join failed")
 				return nil, huma.Error500InternalServerError("cannot join right now")
 			}
 			resp := &joinOutput{}
@@ -86,7 +85,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*codeOutput, error) {
 			code, err := svc.CurrentCode(ctx)
 			if err != nil {
-				logging.For("auth").Error().Err(err).Msg("load join code failed")
+				logger.Error().Err(err).Msg("load join code failed")
 				return nil, huma.Error500InternalServerError("cannot load join code")
 			}
 			resp := &codeOutput{}
@@ -98,7 +97,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*codeOutput, error) {
 			code, err := svc.Rotate(ctx)
 			if err != nil {
-				logging.For("auth").Error().Err(err).Msg("rotate failed")
+				logger.Error().Err(err).Msg("rotate failed")
 				return nil, huma.Error500InternalServerError("cannot rotate join code")
 			}
 			resp := &codeOutput{}
@@ -113,7 +112,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, _ *struct{}) (*sessionsOutput, error) {
 			sessions, err := svc.List(ctx)
 			if err != nil {
-				logging.For("auth").Error().Err(err).Msg("list sessions failed")
+				logger.Error().Err(err).Msg("list sessions failed")
 				return nil, huma.Error500InternalServerError("cannot list sessions")
 			}
 			var online map[string]bool
@@ -140,7 +139,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 				if errors.Is(err, ErrInvalidToken) {
 					return nil, huma.Error404NotFound("session not found")
 				}
-				logging.For("auth").Error().Err(err).Str("session", input.ID).Msg("revoke failed")
+				logger.Error().Err(err).Str("session", input.ID).Msg("revoke failed")
 				return nil, huma.Error500InternalServerError("cannot kick right now")
 			}
 			if onRevoke != nil {

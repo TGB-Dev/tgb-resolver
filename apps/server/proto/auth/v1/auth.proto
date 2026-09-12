@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "tgb-resolver/server/proto/gen/auth/v1;authv1";
+
+message SessionsChanged {
+}
+
+message JoinCodeChanged {
+}
+
+message AuthUpdate {
+  oneof update {
+    SessionsChanged sessions_changed = 1;
+    JoinCodeChanged join_code_changed = 2;
+  }
+}
