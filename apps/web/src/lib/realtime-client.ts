@@ -8,6 +8,7 @@ import {
 import RealtimeWorker from "@/lib/realtime.worker?worker";
 import { API_BASE_URL } from "@/lib/runtime-config";
 import { getServerNow, updateServerClock } from "@/lib/server-clock";
+import { readStoredToken, useAuthStore } from "@/stores/auth-store";
 
 export { getServerNow, ShowConnectionStatus };
 
@@ -23,6 +24,8 @@ export interface RealtimeClient {
   connect(): Promise<void>;
 
   disconnect(): void;
+
+  reconnectWithToken(): void;
 
   onStatusChange(listener: (status: ShowConnectionStatus, attempt: number) => void): () => void;
 }
@@ -71,6 +74,15 @@ export function createRealtimeClient(
       }
       case RealtimeWorkerResponseType.Error: {
         callbacks.onError(reconnectAttempt, new Error(data.error as string));
+        break;
+      }
+      case RealtimeWorkerResponseType.AuthExpired: {
+        try {
+          useAuthStore().markExpired();
+        } catch {
+          // Pinia may be unavailable in worker-test contexts; the Join gate
+          // also observes the 401 path, so this is best-effort.
+        }
         break;
       }
     }
@@ -128,9 +140,18 @@ export function createRealtimeClient(
       postToWorker({
         type: RealtimeWorkerRequestType.Connect,
         url: baseUrl,
+        token: readStoredToken() ?? undefined,
       });
 
       await waitForConnection();
+    },
+
+    reconnectWithToken: () => {
+      postToWorker({
+        type: RealtimeWorkerRequestType.ReconnectNow,
+        url: baseUrl,
+        token: readStoredToken() ?? undefined,
+      });
     },
 
     disconnect: () => {
@@ -228,4 +249,9 @@ export function connectRealtime(
       }
     }, STRICT_MODE_DISCONNECT_DELAY_MS);
   };
+}
+
+/** Reconnect the shared hub socket with the current stored token (after join). */
+export function reconnectRealtime(): void {
+  sharedClient?.reconnectWithToken();
 }
