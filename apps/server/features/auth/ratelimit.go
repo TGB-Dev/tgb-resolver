@@ -29,9 +29,24 @@ func (r *RateLimiter) Allow(ip string) bool {
 		}
 	}
 	if len(kept) >= r.limit {
-		r.hits[ip] = kept
+		if len(kept) == 0 {
+			delete(r.hits, ip)
+		} else {
+			r.hits[ip] = kept
+		}
 		return false
 	}
+	if len(kept) == 0 && len(r.hits[ip]) > 0 {
+		delete(r.hits, ip)
+		kept = nil
+	}
 	r.hits[ip] = append(kept, now)
+	if len(r.hits) > 10000 {
+		for key, times := range r.hits {
+			if len(times) == 0 || !times[len(times)-1].After(cutoff) {
+				delete(r.hits, key)
+			}
+		}
+	}
 	return true
 }

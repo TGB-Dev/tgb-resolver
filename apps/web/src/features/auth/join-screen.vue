@@ -119,6 +119,12 @@ async function submit(raw: string) {
       expiresAt: output.output.expiresAt,
       sessionId: output.output.sessionId,
     };
+    authStore.persist(
+      output.output.token,
+      output.output.label,
+      output.output.expiresAt,
+      output.output.sessionId,
+    );
   } catch (e) {
     error.value = parseErrorMessage(e);
   } finally {

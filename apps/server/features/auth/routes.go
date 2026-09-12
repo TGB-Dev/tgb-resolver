@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/rs/zerolog"
@@ -52,9 +53,9 @@ func toDTO(s SessionInfo, online bool) sessionDTO {
 	return sessionDTO{
 		ID:        s.ID,
 		Label:     s.Label,
-		CreatedAt: s.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
-		LastSeen:  s.LastSeen.UTC().Format("2006-01-02T15:04:05Z"),
-		ExpiresAt: s.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z"),
+		CreatedAt: s.CreatedAt.UTC().Format(time.RFC3339Nano),
+		LastSeen:  s.LastSeen.UTC().Format(time.RFC3339Nano),
+		ExpiresAt: s.ExpiresAt.UTC().Format(time.RFC3339Nano),
 		Online:    online,
 	}
 }
@@ -74,7 +75,7 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 			resp.Body.Token = out.Token
 			resp.Body.SessionID = out.SessionID
 			resp.Body.Label = out.Label
-			resp.Body.ExpiresAt = out.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
+			resp.Body.ExpiresAt = out.ExpiresAt.UTC().Format(time.RFC3339Nano)
 			if events != nil {
 				events.SessionsChanged()
 			}
@@ -130,7 +131,11 @@ func RegisterAuthRoutes(api huma.API, svc *Service, onRevoke func(sessionID stri
 		func(ctx context.Context, input *revokeInput) (*struct{}, error) {
 			caller, err := svc.Verify(BearerToken(input.Authorization))
 			if err != nil {
-				return nil, huma.Error401Unauthorized("unauthorized")
+				if errors.Is(err, ErrInvalidToken) || errors.Is(err, ErrExpired) {
+					return nil, huma.Error401Unauthorized("unauthorized")
+				}
+				logger.Error().Err(err).Msg("verify caller failed")
+				return nil, huma.Error500InternalServerError("cannot verify session")
 			}
 			if input.ID == caller.ID {
 				return nil, huma.Error400BadRequest("cannot kick your own session")

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"strings"
@@ -23,6 +24,20 @@ func isLoopback(remote string) bool {
 	}
 	ip := net.ParseIP(strings.Trim(host, "[]"))
 	return ip != nil && ip.IsLoopback()
+}
+
+func reject(c *gin.Context, logger *zerolog.Logger, method, path string, err error) {
+	logger.Debug().
+		Str("method", method).
+		Str("path", path).
+		Str("remote", c.Request.RemoteAddr).
+		Str("reason", err.Error()).
+		Msg("middleware rejected request")
+	if errors.Is(err, ErrInvalidToken) || errors.Is(err, ErrInvalidCode) || errors.Is(err, ErrExpired) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "cannot verify session"})
 }
 
 func Middleware(svc *Service, limiter *RateLimiter, logger *zerolog.Logger) gin.HandlerFunc {
@@ -59,26 +74,14 @@ func Middleware(svc *Service, limiter *RateLimiter, logger *zerolog.Logger) gin.
 				token = c.Query("token")
 			}
 			if _, err := svc.Verify(token); err != nil {
-				logger.Debug().
-					Str("method", method).
-					Str("path", path).
-					Str("remote", c.Request.RemoteAddr).
-					Str("reason", err.Error()).
-					Msg("middleware rejected request")
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+				reject(c, logger, method, path, err)
 				return
 			}
 			c.Next()
 			return
 		}
 		if _, err := svc.Verify(BearerToken(c.GetHeader("Authorization"))); err != nil {
-			logger.Debug().
-				Str("method", method).
-				Str("path", path).
-				Str("remote", c.Request.RemoteAddr).
-				Str("reason", err.Error()).
-				Msg("middleware rejected request")
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			reject(c, logger, method, path, err)
 			return
 		}
 		c.Next()

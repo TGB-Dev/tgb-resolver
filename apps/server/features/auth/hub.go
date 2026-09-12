@@ -70,15 +70,29 @@ func (h *Hub) broadcast(update *authv1.AuthUpdate) {
 		return
 	}
 	h.mu.Lock()
-	defer h.mu.Unlock()
+	conns := make([]*websocket.Conn, 0, len(h.conns))
 	for c := range h.conns {
+		conns = append(conns, c)
+	}
+	h.mu.Unlock()
+	var failed []*websocket.Conn
+	for _, c := range conns {
 		ctx, cancel := context.WithTimeout(context.Background(), hubWriteTimeout)
 		err := c.Write(ctx, websocket.MessageBinary, raw)
 		cancel()
 		if err != nil {
-			delete(h.conns, c)
-			_ = c.Close(websocket.StatusGoingAway, "broadcast failed")
+			failed = append(failed, c)
 		}
+	}
+	if len(failed) > 0 {
+		h.mu.Lock()
+		for _, c := range failed {
+			if _, ok := h.conns[c]; ok {
+				delete(h.conns, c)
+				_ = c.Close(websocket.StatusGoingAway, "broadcast failed")
+			}
+		}
+		h.mu.Unlock()
 	}
 }
 

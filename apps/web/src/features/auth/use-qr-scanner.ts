@@ -33,12 +33,28 @@ export function useQrScanner() {
     return new BarcodeDetector({ formats: ["qr_code"] }) as QrDetector;
   }
 
+  async function pollDetector(
+    video: HTMLVideoElement,
+    detector: QrDetector,
+    isCancelled: () => boolean,
+  ): Promise<string | null> {
+    while (!isCancelled()) {
+      const codes = await detector.detect(video);
+      const first = codes[0]?.rawValue;
+      if (first) return first;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    return null;
+  }
+
   async function scanOnce(video: HTMLVideoElement, onCode: (code: string) => void) {
     error.value = null;
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" },
     });
+    let cancelled = false;
     const stopStream = () => {
+      cancelled = true;
       for (const track of stream.getTracks()) {
         track.stop();
       }
@@ -50,20 +66,12 @@ export function useQrScanner() {
     scanning.value = true;
     const detector = await createDetector();
     try {
-      for (;;) {
-        const codes = await detector.detect(video);
-        const first = codes[0]?.rawValue;
-        if (first) {
-          onCode(first);
-          stopStream();
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
+      const found = await pollDetector(video, detector, () => cancelled);
+      if (found && !cancelled) onCode(found);
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-      stopStream();
+      if (!cancelled) error.value = e instanceof Error ? e.message : String(e);
     }
+    stopStream();
   }
 
   return { error, scanning, scanOnce };

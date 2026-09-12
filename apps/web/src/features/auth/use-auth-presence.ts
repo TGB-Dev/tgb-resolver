@@ -24,42 +24,61 @@ export function useAuthPresence() {
     return token ? `${base}?token=${encodeURIComponent(token)}` : base;
   }
 
+  function handleMessage(event: MessageEvent) {
+    if (!(event.data instanceof ArrayBuffer)) return;
+    let kind: AuthUpdateKind;
+    try {
+      kind = decodeAuthUpdate(event.data);
+    } catch (e) {
+      toaster.create({
+        title: "Auth update unreadable",
+        description: parseErrorMessage(e),
+        type: "error",
+      });
+      return;
+    }
+    if (kind === "sessions-changed") {
+      void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
+    } else if (kind === "join-code-changed") {
+      void queryClient.invalidateQueries({ queryKey: ["auth", "join-code"] });
+      void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
+    }
+  }
+
+  function shouldGiveUp(code: number): boolean {
+    return attempt > 3 && (code === 1006 || code === 1011 || code === 1008);
+  }
+
+  function handleClose(ws: WebSocket, event: CloseEvent) {
+    if (socket === ws) socket = null;
+    if (stopped) return;
+    if (event.code === AUTH_CLOSE_CODE) {
+      authStore.markExpired();
+      return;
+    }
+    if (!readStoredToken()) {
+      authStore.markExpired();
+      return;
+    }
+    attempt += 1;
+    if (shouldGiveUp(event.code)) {
+      authStore.markExpired();
+      return;
+    }
+    const delay = RECONNECT_DELAYS[Math.min(attempt, RECONNECT_DELAYS.length - 1)];
+    timer = setTimeout(connect, delay);
+  }
+
   function connect() {
     if (stopped) return;
     const ws = new WebSocket(url());
     ws.binaryType = "arraybuffer";
     socket = ws;
-    ws.onmessage = (event: MessageEvent) => {
-      if (!(event.data instanceof ArrayBuffer)) return;
-      let kind: AuthUpdateKind;
-      try {
-        kind = decodeAuthUpdate(event.data);
-      } catch (e) {
-        toaster.create({
-          title: "Auth update unreadable",
-          description: parseErrorMessage(e),
-          type: "error",
-        });
-        return;
-      }
-      if (kind === "sessions-changed") {
-        void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
-      } else if (kind === "join-code-changed") {
-        void queryClient.invalidateQueries({ queryKey: ["auth", "join-code"] });
-        void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
-      }
+    ws.onmessage = handleMessage;
+    ws.onopen = () => {
+      attempt = 0;
     };
-    ws.onclose = (event: CloseEvent) => {
-      if (socket === ws) socket = null;
-      if (stopped) return;
-      if (event.code === AUTH_CLOSE_CODE) {
-        authStore.markExpired();
-        return;
-      }
-      const delay = RECONNECT_DELAYS[Math.min(attempt, RECONNECT_DELAYS.length - 1)];
-      attempt += 1;
-      timer = setTimeout(connect, delay);
-    };
+    ws.onclose = (event) => handleClose(ws, event);
     ws.onerror = () => {
       ws.close();
     };

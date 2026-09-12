@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -185,45 +186,44 @@ func (s *Service) Join(ctx context.Context, code string) (JoinOutput, error) {
 		return JoinOutput{}, err
 	}
 	now := s.now()
-	label := ""
-	for i := 0; i < 8; i++ {
-		candidate := GenerateLabel()
-		exists, err := s.db.NewSelect().Model((*AuthSession)(nil)).Where("label = ?", candidate).Exists(ctx)
-		if err != nil {
-			return JoinOutput{}, err
-		}
-		if !exists {
-			label = candidate
-			break
-		}
-	}
-	if label == "" {
-		label = GenerateLabel()
-	}
 	expires := now.Add(s.ttl)
-	_, err = s.db.NewInsert().Model(&AuthSession{
-		ID: id, TokenHash: hashToken(token), Label: label,
-		CreatedAtMs: now.UnixMilli(), ExpiresAtMs: expires.UnixMilli(),
-		LastSeenMs: now.UnixMilli(),
-	}).Exec(ctx)
-	if err != nil {
-		return JoinOutput{}, err
+	var lastErr error
+	for i := 0; i < 8; i++ {
+		label := GenerateLabel()
+		_, err = s.db.NewInsert().Model(&AuthSession{
+			ID: id, TokenHash: hashToken(token), Label: label,
+			CreatedAtMs: now.UnixMilli(), ExpiresAtMs: expires.UnixMilli(),
+			LastSeenMs: now.UnixMilli(),
+		}).Exec(ctx)
+		if err == nil {
+			return JoinOutput{Token: token, SessionID: id, Label: label, ExpiresAt: expires}, nil
+		}
+		lastErr = err
 	}
-	return JoinOutput{Token: token, SessionID: id, Label: label, ExpiresAt: expires}, nil
+	if lastErr != nil {
+		return JoinOutput{}, lastErr
+	}
+	return JoinOutput{}, errors.New("cannot allocate session label")
 }
 
 func (s *Service) Verify(token string) (SessionInfo, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	var sess AuthSession
 	if err := s.db.NewSelect().Model(&sess).Where("token_hash = ?", hashToken(token)).Scan(ctx); err != nil {
-		return SessionInfo{}, ErrInvalidToken
+		if errors.Is(err, sql.ErrNoRows) {
+			return SessionInfo{}, ErrInvalidToken
+		}
+		return SessionInfo{}, err
 	}
 	nowMs := s.now().UnixMilli()
 	if nowMs > sess.ExpiresAtMs {
 		return SessionInfo{}, ErrExpired
 	}
-	sess.LastSeenMs = nowMs
-	_, _ = s.db.NewUpdate().Model(&sess).Column("last_seen_ms").Where("id = ?", sess.ID).Exec(ctx)
+	if nowMs-sess.LastSeenMs > 60_000 {
+		_, _ = s.db.NewUpdate().Model((*AuthSession)(nil)).Set("last_seen_ms = ?", nowMs).Where("id = ?", sess.ID).Exec(ctx)
+		sess.LastSeenMs = nowMs
+	}
 	return toInfo(sess), nil
 }
 

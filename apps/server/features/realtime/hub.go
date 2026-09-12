@@ -20,7 +20,7 @@ var errMissingVerifier = errors.New("hub token verifier not configured")
 const broadcastWriteTimeout = 5 * time.Second
 
 type Hub struct {
-	mu     sync.Mutex
+	mu     sync.RWMutex
 	conns  map[*websocket.Conn]string
 	clock  *Clock
 	verify func(token string) (string, error)
@@ -45,7 +45,10 @@ func (h *Hub) SetVerifier(verify func(token string) (string, error)) {
 
 func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.log.Debug().Str("remote", r.RemoteAddr).Msg("Hub ServeHTTP start")
-	sessionID, err := h.verify(r.URL.Query().Get("token"))
+	h.mu.RLock()
+	verify := h.verify
+	h.mu.RUnlock()
+	sessionID, err := verify(r.URL.Query().Get("token"))
 	if err != nil {
 		h.log.Debug().Str("remote", r.RemoteAddr).Str("reason", err.Error()).Msg("rejected connection")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -122,26 +125,37 @@ func (h *Hub) Broadcast(env *showv1.Envelope) {
 		h.log.Error().Err(err).Str("type", env.Type).Msg("marshal broadcast envelope")
 		return
 	}
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if len(h.conns) == 0 {
+	h.mu.RLock()
+	conns := make([]*websocket.Conn, 0, len(h.conns))
+	for c := range h.conns {
+		conns = append(conns, c)
+	}
+	h.mu.RUnlock()
+	if len(conns) == 0 {
 		h.log.Debug().Str("type", env.Type).Msg("Hub Broadcast no conns")
 		return
 	}
-	failed := 0
-	for c := range h.conns {
+	var failed []*websocket.Conn
+	for _, c := range conns {
 		ctx, cancel := context.WithTimeout(context.Background(), broadcastWriteTimeout)
 		err := c.Write(ctx, websocket.MessageBinary, data)
 		cancel()
 		if err != nil {
-			failed++
-			delete(h.conns, c)
-			_ = c.Close(websocket.StatusGoingAway, "broadcast failed")
+			failed = append(failed, c)
 		}
 	}
-	if failed > 0 {
-		h.log.Warn().Str("type", env.Type).Int("failed", failed).Int("remaining", len(h.conns)).Msg("Hub Broadcast partial failure")
+	if len(failed) > 0 {
+		h.mu.Lock()
+		for _, c := range failed {
+			if _, ok := h.conns[c]; ok {
+				delete(h.conns, c)
+				_ = c.Close(websocket.StatusGoingAway, "broadcast failed")
+			}
+		}
+		remaining := len(h.conns)
+		h.mu.Unlock()
+		h.log.Warn().Str("type", env.Type).Int("failed", len(failed)).Int("remaining", remaining).Msg("Hub Broadcast partial failure")
 	} else {
-		h.log.Debug().Str("type", env.Type).Int("conns", len(h.conns)).Msg("Hub Broadcast succeeded")
+		h.log.Debug().Str("type", env.Type).Int("conns", len(conns)).Msg("Hub Broadcast succeeded")
 	}
 }

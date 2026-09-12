@@ -16,7 +16,7 @@ type AuthSession struct {
 	bun.BaseModel `bun:"table:auth_sessions"`
 	ID            string `bun:"id,pk"`
 	TokenHash     string `bun:"token_hash,unique"`
-	Label         string `bun:"label"`
+	Label         string `bun:"label,unique"`
 	CreatedAtMs   int64  `bun:"created_at_ms"`
 	ExpiresAtMs   int64  `bun:"expires_at_ms"`
 	LastSeenMs    int64  `bun:"last_seen_ms"`
