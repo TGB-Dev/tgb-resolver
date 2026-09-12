@@ -1,7 +1,21 @@
 import type { HotkeysProviderOptions } from "@tanstack/vue-hotkeys";
-import { QueryClient } from "@tanstack/vue-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/vue-query";
+
+import { isAuthError, useAuthStore } from "@/stores/auth-store";
+
+function handleCacheError(error: unknown) {
+  if (isAuthError(error)) {
+    useAuthStore().markExpired();
+  }
+}
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: handleCacheError,
+  }),
+  mutationCache: new MutationCache({
+    onError: handleCacheError,
+  }),
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,

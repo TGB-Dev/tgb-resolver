@@ -9,4 +9,5 @@ export enum RealtimeWorkerResponseType {
   Message = "message",
   ServerNow = "serverNow",
   Error = "error",
+  AuthExpired = "authExpired",
 }

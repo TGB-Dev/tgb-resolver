@@ -75,6 +75,30 @@ func (s *FileStore) Read(id string) ([]byte, error) {
 	return data, nil
 }
 
+func (s *FileStore) Open(id string) (*os.File, os.FileInfo, error) {
+	path, err := s.pathFor(id)
+	if err != nil {
+		log.Warn().Err(err).Str("id", id).Msg("FileStore Open invalid id")
+		return nil, nil, err
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Warn().Err(err).Str("id", id).Msg("FileStore Open not found")
+			return nil, nil, fmt.Errorf("asset does not exist: %s", id)
+		}
+		log.Error().Err(err).Str("id", id).Msg("FileStore Open failed")
+		return nil, nil, err
+	}
+	info, err := f.Stat()
+	if err != nil {
+		_ = f.Close()
+		log.Error().Err(err).Str("id", id).Msg("FileStore Open stat failed")
+		return nil, nil, err
+	}
+	return f, info, nil
+}
+
 func (s *FileStore) Delete(id string) error {
 	log.Debug().Str("id", id).Msg("FileStore Delete start")
 	path, err := s.pathFor(id)

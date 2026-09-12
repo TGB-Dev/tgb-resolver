@@ -77,6 +77,18 @@ Server configuration via environment variables:
 - `PORT` - Server port (default: 5001)
 - `ALLOWED_ORIGINS` - CORS allowed origins (default: `*`)
 - `DATA_DIR` - Data directory path (default: `.data`)
+- `JOIN_CODE` - preset 6-char join code (default: generated on first boot, printed as `JOIN CODE: ...` in the server log)
+- `SESSION_TTL_HOURS` - device session lifetime (default: `30`)
+
+## Venue auth
+
+The venue network is shared, so every HTTP route and the `/hubs/show`
+WebSocket require a device token. New devices join once via the Auth tab
+(control panel, Lock icon, visible in Live mode too): it shows a QR magic link
+plus a typable code. Joining mints a random device token stored on the device;
+reconnects reuse it silently. Rotating the join code never kicks connected
+devices; the kick list drops a single device back to the Join screen. Sessions
+and the join code persist in SQLite across server restarts.
 
 Frontend configuration via `.env`:
 - `VITE_API_URL` - API base URL (default: `http://localhost:5001`)

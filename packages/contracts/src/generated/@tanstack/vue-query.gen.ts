@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/vue-query';
 
 import { client } from '../client.gen';
-import { type Options, tgbResolverServerFeaturesAssetsCreateFolderEndpoint, tgbResolverServerFeaturesAssetsDeleteEntryEndpoint, tgbResolverServerFeaturesAssetsMoveAssetEndpoint, tgbResolverServerFeaturesAssetsPutAssetEndpoint, tgbResolverServerFeaturesAssetsRenameEntryEndpoint, tgbResolverServerFeaturesAssetsTransferEntryEndpoint, tgbResolverServerFeaturesShowClearShowEndpoint, tgbResolverServerFeaturesShowCreateTimelineEventEndpoint, tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint, tgbResolverServerFeaturesShowDisableLiveModeEndpoint, tgbResolverServerFeaturesShowEnableLiveModeEndpoint, tgbResolverServerFeaturesShowExportBundleEndpoint, tgbResolverServerFeaturesShowGetShowEndpoint, tgbResolverServerFeaturesShowImportBundleEndpoint, tgbResolverServerFeaturesShowImportXmlEndpoint, tgbResolverServerFeaturesShowImportXmlUsersEndpoint, tgbResolverServerFeaturesShowMoveTimelineEventEndpoint, tgbResolverServerFeaturesShowOptimizeShowEndpoint, tgbResolverServerFeaturesShowPatchNonResolveEventEndpoint, tgbResolverServerFeaturesShowPatchTimelineEventEndpoint, tgbResolverServerFeaturesShowRenameResolveEventEndpoint, tgbResolverServerFeaturesShowResetPlaybackEndpoint, tgbResolverServerFeaturesShowSeekPlaybackEndpoint, tgbResolverServerFeaturesShowSetAutomationEndpoint, tgbResolverServerFeaturesShowSetSettingsEndpoint, tgbResolverServerFeaturesShowSetTimelineModeEndpoint, tgbResolverServerFeaturesShowStartPlaybackEndpoint } from '../sdk.gen';
-import type { TgbResolverServerFeaturesAssetsCreateFolderEndpointData, TgbResolverServerFeaturesAssetsCreateFolderEndpointError, TgbResolverServerFeaturesAssetsCreateFolderEndpointResponse, TgbResolverServerFeaturesAssetsDeleteEntryEndpointData, TgbResolverServerFeaturesAssetsDeleteEntryEndpointError, TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse, TgbResolverServerFeaturesAssetsMoveAssetEndpointData, TgbResolverServerFeaturesAssetsMoveAssetEndpointError, TgbResolverServerFeaturesAssetsMoveAssetEndpointResponse, TgbResolverServerFeaturesAssetsPutAssetEndpointData, TgbResolverServerFeaturesAssetsPutAssetEndpointError, TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, TgbResolverServerFeaturesAssetsRenameEntryEndpointData, TgbResolverServerFeaturesAssetsRenameEntryEndpointError, TgbResolverServerFeaturesAssetsRenameEntryEndpointResponse, TgbResolverServerFeaturesAssetsTransferEntryEndpointData, TgbResolverServerFeaturesAssetsTransferEntryEndpointError, TgbResolverServerFeaturesAssetsTransferEntryEndpointResponse, TgbResolverServerFeaturesShowClearShowEndpointData, TgbResolverServerFeaturesShowClearShowEndpointError, TgbResolverServerFeaturesShowClearShowEndpointResponse, TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, TgbResolverServerFeaturesShowCreateTimelineEventEndpointError, TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDisableLiveModeEndpointData, TgbResolverServerFeaturesShowDisableLiveModeEndpointError, TgbResolverServerFeaturesShowDisableLiveModeEndpointResponse, TgbResolverServerFeaturesShowEnableLiveModeEndpointData, TgbResolverServerFeaturesShowEnableLiveModeEndpointError, TgbResolverServerFeaturesShowEnableLiveModeEndpointResponse, TgbResolverServerFeaturesShowExportBundleEndpointData, TgbResolverServerFeaturesShowExportBundleEndpointError, TgbResolverServerFeaturesShowExportBundleEndpointResponse, TgbResolverServerFeaturesShowGetShowEndpointData, TgbResolverServerFeaturesShowGetShowEndpointError, TgbResolverServerFeaturesShowGetShowEndpointResponse, TgbResolverServerFeaturesShowImportBundleEndpointData, TgbResolverServerFeaturesShowImportBundleEndpointError, TgbResolverServerFeaturesShowImportBundleEndpointResponse, TgbResolverServerFeaturesShowImportXmlEndpointData, TgbResolverServerFeaturesShowImportXmlEndpointError, TgbResolverServerFeaturesShowImportXmlEndpointResponse, TgbResolverServerFeaturesShowImportXmlUsersEndpointData, TgbResolverServerFeaturesShowImportXmlUsersEndpointError, TgbResolverServerFeaturesShowImportXmlUsersEndpointResponse, TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, TgbResolverServerFeaturesShowMoveTimelineEventEndpointError, TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, TgbResolverServerFeaturesShowOptimizeShowEndpointData, TgbResolverServerFeaturesShowOptimizeShowEndpointError, TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointError, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse, TgbResolverServerFeaturesShowPatchTimelineEventEndpointData, TgbResolverServerFeaturesShowPatchTimelineEventEndpointError, TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse, TgbResolverServerFeaturesShowRenameResolveEventEndpointData, TgbResolverServerFeaturesShowRenameResolveEventEndpointError, TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointData, TgbResolverServerFeaturesShowResetPlaybackEndpointError, TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowSeekPlaybackEndpointData, TgbResolverServerFeaturesShowSeekPlaybackEndpointError, TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse, TgbResolverServerFeaturesShowSetAutomationEndpointData, TgbResolverServerFeaturesShowSetAutomationEndpointError, TgbResolverServerFeaturesShowSetAutomationEndpointResponse, TgbResolverServerFeaturesShowSetSettingsEndpointData, TgbResolverServerFeaturesShowSetSettingsEndpointError, TgbResolverServerFeaturesShowSetSettingsEndpointResponse, TgbResolverServerFeaturesShowSetTimelineModeEndpointData, TgbResolverServerFeaturesShowSetTimelineModeEndpointError, TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, TgbResolverServerFeaturesShowStartPlaybackEndpointData, TgbResolverServerFeaturesShowStartPlaybackEndpointError, TgbResolverServerFeaturesShowStartPlaybackEndpointResponse } from '../types.gen';
+import { type Options, tgbResolverServerFeaturesAssetsCreateFolderEndpoint, tgbResolverServerFeaturesAssetsDeleteEntryEndpoint, tgbResolverServerFeaturesAssetsMoveAssetEndpoint, tgbResolverServerFeaturesAssetsPutAssetEndpoint, tgbResolverServerFeaturesAssetsRenameEntryEndpoint, tgbResolverServerFeaturesAssetsTransferEntryEndpoint, tgbResolverServerFeaturesAuthJoinCodeEndpoint, tgbResolverServerFeaturesAuthJoinEndpoint, tgbResolverServerFeaturesAuthRevokeEndpoint, tgbResolverServerFeaturesAuthRotateEndpoint, tgbResolverServerFeaturesAuthSessionsEndpoint, tgbResolverServerFeaturesShowClearShowEndpoint, tgbResolverServerFeaturesShowCreateTimelineEventEndpoint, tgbResolverServerFeaturesShowDeleteTimelineEventEndpoint, tgbResolverServerFeaturesShowDisableLiveModeEndpoint, tgbResolverServerFeaturesShowEnableLiveModeEndpoint, tgbResolverServerFeaturesShowExportBundleEndpoint, tgbResolverServerFeaturesShowGetShowEndpoint, tgbResolverServerFeaturesShowImportBundleEndpoint, tgbResolverServerFeaturesShowImportXmlEndpoint, tgbResolverServerFeaturesShowImportXmlUsersEndpoint, tgbResolverServerFeaturesShowMoveTimelineEventEndpoint, tgbResolverServerFeaturesShowOptimizeShowEndpoint, tgbResolverServerFeaturesShowPatchNonResolveEventEndpoint, tgbResolverServerFeaturesShowPatchTimelineEventEndpoint, tgbResolverServerFeaturesShowRenameResolveEventEndpoint, tgbResolverServerFeaturesShowResetPlaybackEndpoint, tgbResolverServerFeaturesShowSeekPlaybackEndpoint, tgbResolverServerFeaturesShowSetAutomationEndpoint, tgbResolverServerFeaturesShowSetSettingsEndpoint, tgbResolverServerFeaturesShowSetTimelineModeEndpoint, tgbResolverServerFeaturesShowStartPlaybackEndpoint } from '../sdk.gen';
+import type { TgbResolverServerFeaturesAssetsCreateFolderEndpointData, TgbResolverServerFeaturesAssetsCreateFolderEndpointError, TgbResolverServerFeaturesAssetsCreateFolderEndpointResponse, TgbResolverServerFeaturesAssetsDeleteEntryEndpointData, TgbResolverServerFeaturesAssetsDeleteEntryEndpointError, TgbResolverServerFeaturesAssetsDeleteEntryEndpointResponse, TgbResolverServerFeaturesAssetsMoveAssetEndpointData, TgbResolverServerFeaturesAssetsMoveAssetEndpointError, TgbResolverServerFeaturesAssetsMoveAssetEndpointResponse, TgbResolverServerFeaturesAssetsPutAssetEndpointData, TgbResolverServerFeaturesAssetsPutAssetEndpointError, TgbResolverServerFeaturesAssetsPutAssetEndpointResponse, TgbResolverServerFeaturesAssetsRenameEntryEndpointData, TgbResolverServerFeaturesAssetsRenameEntryEndpointError, TgbResolverServerFeaturesAssetsRenameEntryEndpointResponse, TgbResolverServerFeaturesAssetsTransferEntryEndpointData, TgbResolverServerFeaturesAssetsTransferEntryEndpointError, TgbResolverServerFeaturesAssetsTransferEntryEndpointResponse, TgbResolverServerFeaturesAuthJoinCodeEndpointData, TgbResolverServerFeaturesAuthJoinCodeEndpointError, TgbResolverServerFeaturesAuthJoinCodeEndpointResponse, TgbResolverServerFeaturesAuthJoinEndpointData, TgbResolverServerFeaturesAuthJoinEndpointError, TgbResolverServerFeaturesAuthJoinEndpointResponse, TgbResolverServerFeaturesAuthRevokeEndpointData, TgbResolverServerFeaturesAuthRevokeEndpointError, TgbResolverServerFeaturesAuthRevokeEndpointResponse, TgbResolverServerFeaturesAuthRotateEndpointData, TgbResolverServerFeaturesAuthRotateEndpointError, TgbResolverServerFeaturesAuthRotateEndpointResponse, TgbResolverServerFeaturesAuthSessionsEndpointData, TgbResolverServerFeaturesAuthSessionsEndpointError, TgbResolverServerFeaturesAuthSessionsEndpointResponse, TgbResolverServerFeaturesShowClearShowEndpointData, TgbResolverServerFeaturesShowClearShowEndpointError, TgbResolverServerFeaturesShowClearShowEndpointResponse, TgbResolverServerFeaturesShowCreateTimelineEventEndpointData, TgbResolverServerFeaturesShowCreateTimelineEventEndpointError, TgbResolverServerFeaturesShowCreateTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointData, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointError, TgbResolverServerFeaturesShowDeleteTimelineEventEndpointResponse, TgbResolverServerFeaturesShowDisableLiveModeEndpointData, TgbResolverServerFeaturesShowDisableLiveModeEndpointError, TgbResolverServerFeaturesShowDisableLiveModeEndpointResponse, TgbResolverServerFeaturesShowEnableLiveModeEndpointData, TgbResolverServerFeaturesShowEnableLiveModeEndpointError, TgbResolverServerFeaturesShowEnableLiveModeEndpointResponse, TgbResolverServerFeaturesShowExportBundleEndpointData, TgbResolverServerFeaturesShowExportBundleEndpointError, TgbResolverServerFeaturesShowExportBundleEndpointResponse, TgbResolverServerFeaturesShowGetShowEndpointData, TgbResolverServerFeaturesShowGetShowEndpointError, TgbResolverServerFeaturesShowGetShowEndpointResponse, TgbResolverServerFeaturesShowImportBundleEndpointData, TgbResolverServerFeaturesShowImportBundleEndpointError, TgbResolverServerFeaturesShowImportBundleEndpointResponse, TgbResolverServerFeaturesShowImportXmlEndpointData, TgbResolverServerFeaturesShowImportXmlEndpointError, TgbResolverServerFeaturesShowImportXmlEndpointResponse, TgbResolverServerFeaturesShowImportXmlUsersEndpointData, TgbResolverServerFeaturesShowImportXmlUsersEndpointError, TgbResolverServerFeaturesShowImportXmlUsersEndpointResponse, TgbResolverServerFeaturesShowMoveTimelineEventEndpointData, TgbResolverServerFeaturesShowMoveTimelineEventEndpointError, TgbResolverServerFeaturesShowMoveTimelineEventEndpointResponse, TgbResolverServerFeaturesShowOptimizeShowEndpointData, TgbResolverServerFeaturesShowOptimizeShowEndpointError, TgbResolverServerFeaturesShowOptimizeShowEndpointResponse, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointData, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointError, TgbResolverServerFeaturesShowPatchNonResolveEventEndpointResponse, TgbResolverServerFeaturesShowPatchTimelineEventEndpointData, TgbResolverServerFeaturesShowPatchTimelineEventEndpointError, TgbResolverServerFeaturesShowPatchTimelineEventEndpointResponse, TgbResolverServerFeaturesShowRenameResolveEventEndpointData, TgbResolverServerFeaturesShowRenameResolveEventEndpointError, TgbResolverServerFeaturesShowRenameResolveEventEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointData, TgbResolverServerFeaturesShowResetPlaybackEndpointError, TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowSeekPlaybackEndpointData, TgbResolverServerFeaturesShowSeekPlaybackEndpointError, TgbResolverServerFeaturesShowSeekPlaybackEndpointResponse, TgbResolverServerFeaturesShowSetAutomationEndpointData, TgbResolverServerFeaturesShowSetAutomationEndpointError, TgbResolverServerFeaturesShowSetAutomationEndpointResponse, TgbResolverServerFeaturesShowSetSettingsEndpointData, TgbResolverServerFeaturesShowSetSettingsEndpointError, TgbResolverServerFeaturesShowSetSettingsEndpointResponse, TgbResolverServerFeaturesShowSetTimelineModeEndpointData, TgbResolverServerFeaturesShowSetTimelineModeEndpointError, TgbResolverServerFeaturesShowSetTimelineModeEndpointResponse, TgbResolverServerFeaturesShowStartPlaybackEndpointData, TgbResolverServerFeaturesShowStartPlaybackEndpointError, TgbResolverServerFeaturesShowStartPlaybackEndpointResponse } from '../types.gen';
 
 export const tgbResolverServerFeaturesShowResetPlaybackEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointError, Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData>> => {
     const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesShowResetPlaybackEndpointResponse, TgbResolverServerFeaturesShowResetPlaybackEndpointError, Options<TgbResolverServerFeaturesShowResetPlaybackEndpointData>> = {
@@ -230,6 +230,20 @@ export const tgbResolverServerFeaturesAssetsCreateFolderEndpointMutation = (opti
     return mutationOptions;
 };
 
+export const tgbResolverServerFeaturesAuthJoinEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAuthJoinEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAuthJoinEndpointResponse, TgbResolverServerFeaturesAuthJoinEndpointError, Options<TgbResolverServerFeaturesAuthJoinEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAuthJoinEndpointResponse, TgbResolverServerFeaturesAuthJoinEndpointError, Options<TgbResolverServerFeaturesAuthJoinEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await tgbResolverServerFeaturesAuthJoinEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
         _id: string;
@@ -261,6 +275,64 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
         params.query = options.query;
     }
     return [params];
+};
+
+export const tgbResolverServerFeaturesAuthJoinCodeEndpointQueryKey = (options?: Options<TgbResolverServerFeaturesAuthJoinCodeEndpointData>) => createQueryKey('tgbResolverServerFeaturesAuthJoinCodeEndpoint', options);
+
+export const tgbResolverServerFeaturesAuthJoinCodeEndpointOptions = (options?: Options<TgbResolverServerFeaturesAuthJoinCodeEndpointData>) => queryOptions<TgbResolverServerFeaturesAuthJoinCodeEndpointResponse, TgbResolverServerFeaturesAuthJoinCodeEndpointError, TgbResolverServerFeaturesAuthJoinCodeEndpointResponse, ReturnType<typeof tgbResolverServerFeaturesAuthJoinCodeEndpointQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await tgbResolverServerFeaturesAuthJoinCodeEndpoint({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: tgbResolverServerFeaturesAuthJoinCodeEndpointQueryKey(options)
+});
+
+export const tgbResolverServerFeaturesAuthRotateEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAuthRotateEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAuthRotateEndpointResponse, TgbResolverServerFeaturesAuthRotateEndpointError, Options<TgbResolverServerFeaturesAuthRotateEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAuthRotateEndpointResponse, TgbResolverServerFeaturesAuthRotateEndpointError, Options<TgbResolverServerFeaturesAuthRotateEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await tgbResolverServerFeaturesAuthRotateEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const tgbResolverServerFeaturesAuthSessionsEndpointQueryKey = (options?: Options<TgbResolverServerFeaturesAuthSessionsEndpointData>) => createQueryKey('tgbResolverServerFeaturesAuthSessionsEndpoint', options);
+
+export const tgbResolverServerFeaturesAuthSessionsEndpointOptions = (options?: Options<TgbResolverServerFeaturesAuthSessionsEndpointData>) => queryOptions<TgbResolverServerFeaturesAuthSessionsEndpointResponse, TgbResolverServerFeaturesAuthSessionsEndpointError, TgbResolverServerFeaturesAuthSessionsEndpointResponse, ReturnType<typeof tgbResolverServerFeaturesAuthSessionsEndpointQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await tgbResolverServerFeaturesAuthSessionsEndpoint({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: tgbResolverServerFeaturesAuthSessionsEndpointQueryKey(options)
+});
+
+export const tgbResolverServerFeaturesAuthRevokeEndpointMutation = (options?: Partial<Options<TgbResolverServerFeaturesAuthRevokeEndpointData>>): UseMutationOptions<TgbResolverServerFeaturesAuthRevokeEndpointResponse, TgbResolverServerFeaturesAuthRevokeEndpointError, Options<TgbResolverServerFeaturesAuthRevokeEndpointData>> => {
+    const mutationOptions: UseMutationOptions<TgbResolverServerFeaturesAuthRevokeEndpointResponse, TgbResolverServerFeaturesAuthRevokeEndpointError, Options<TgbResolverServerFeaturesAuthRevokeEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await tgbResolverServerFeaturesAuthRevokeEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
 };
 
 export const tgbResolverServerFeaturesShowExportBundleEndpointQueryKey = (options?: Options<TgbResolverServerFeaturesShowExportBundleEndpointData>) => createQueryKey('tgbResolverServerFeaturesShowExportBundleEndpoint', options);

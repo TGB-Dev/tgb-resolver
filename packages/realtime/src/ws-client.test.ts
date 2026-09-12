@@ -34,4 +34,11 @@ describe("envelopeToMessage", () => {
     expect(hubUrl("http://localhost:5001")).toBe("ws://localhost:5001/hubs/show");
     expect(hubUrl("https://example.com")).toBe("wss://example.com/hubs/show");
   });
+
+  it("appends encoded device token", () => {
+    expect(hubUrl("http://localhost:5001", "abc")).toBe("ws://localhost:5001/hubs/show?token=abc");
+    expect(hubUrl("http://localhost:5001", "a+b/c=")).toBe(
+      "ws://localhost:5001/hubs/show?token=a%2Bb%2Fc%3D",
+    );
+  });
 });

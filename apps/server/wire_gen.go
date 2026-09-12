@@ -9,6 +9,7 @@ package main
 import (
 	"tgb-resolver/server/features/realtime"
 	"tgb-resolver/server/features/shared/config"
+	"tgb-resolver/server/features/shared/logging"
 	"tgb-resolver/server/features/show"
 )
 
@@ -21,10 +22,14 @@ func initApp(cfg *config.Config) (*App, func(), error) {
 	}
 	store := show.NewStore(db)
 	clock := provideClock()
-	hub := realtime.NewHub(clock)
+	v := provideHubVerifier()
+	domains := logging.ProvideDomains()
+	logger := provideHubLogger(domains)
+	hub := realtime.NewHub(clock, v, logger)
 	fileStore := provideBlobs(cfg)
 	service := show.NewService(store, hub, clock, fileStore)
-	app := NewApp(cfg, db, store, service, hub, clock, fileStore)
+	authService := provideAuth(db, cfg)
+	app := NewApp(cfg, db, store, service, hub, clock, fileStore, authService, domains)
 	return app, func() {
 		cleanup()
 	}, nil

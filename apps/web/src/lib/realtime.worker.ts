@@ -10,6 +10,7 @@ import {
   decodeEnvelope,
   encodeClockSyncRequest,
   envelopeToMessageType,
+  HUB_AUTH_CLOSE_CODE,
   RealtimeWorkerRequestType,
   RealtimeWorkerResponseType,
   ShowMessageType,
@@ -29,6 +30,7 @@ let manualStopInProgress = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let clockSyncFiber: ReturnType<typeof Effect.runFork> | null = null;
 let lastUrl: string | null = null;
+let lastToken: string | undefined;
 
 function post(data: Record<string, unknown>) {
   self.postMessage(data);
@@ -175,7 +177,7 @@ function scheduleReconnect() {
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     if (lastUrl !== null) {
-      void connectHub(lastUrl, true);
+      void connectHub(lastUrl, lastToken, true);
     }
   }, delay);
 }
@@ -335,7 +337,7 @@ function handleEnvelope(data: ArrayBuffer) {
   dispatchEnvelopeMessage(mapped, payload);
 }
 
-async function connectHub(url: string, isReconnect = false) {
+async function connectHub(url: string, token?: string, isReconnect = false) {
   if (socket) {
     try {
       socket.close();
@@ -345,13 +347,12 @@ async function connectHub(url: string, isReconnect = false) {
     socket = null;
   }
 
-  console.log(`[realtime.worker] Connecting to: ${url}`);
-
   if (!isReconnect) {
     manualStopInProgress = false;
     reconnectAttempt = 0;
   }
   lastUrl = url;
+  lastToken = token;
   clearReconnectTimer();
 
   post({
@@ -360,48 +361,61 @@ async function connectHub(url: string, isReconnect = false) {
     attempt: reconnectAttempt,
   });
 
-  socket = connectShowHub(url, {
-    onEnvelope: (_envelope: DecodedEnvelope) => undefined,
-    onOpen: () => {
-      console.log("[realtime.worker] WebSocket opened");
-      const attempt = reconnectAttempt;
-      reconnectAttempt = 0;
-      void syncClock().then(() => startClockSync());
-      post({
-        type: RealtimeWorkerResponseType.Status,
-        status: "connected",
-        attempt,
-      });
-    },
-    onClose: (event) => {
-      console.log(`[realtime.worker] WebSocket closed: code=${event.code} reason=${event.reason}`);
-      stopClockSync();
-      if (manualStopInProgress) {
-        manualStopInProgress = false;
+  socket = connectShowHub(
+    url,
+    {
+      onEnvelope: (_envelope: DecodedEnvelope) => undefined,
+      onOpen: () => {
+        console.log("[realtime.worker] WebSocket opened");
+        const attempt = reconnectAttempt;
+        reconnectAttempt = 0;
+        void syncClock().then(() => startClockSync());
         post({
           type: RealtimeWorkerResponseType.Status,
-          status: "disconnected",
-          attempt: 0,
+          status: "connected",
+          attempt,
         });
-        return;
-      }
-      reconnectAttempt = Math.min(reconnectAttempt + 1, MAX_RECONNECT_ATTEMPTS);
-      post({
-        type: RealtimeWorkerResponseType.Status,
-        status: "reconnecting",
-        attempt: reconnectAttempt,
-      });
-      scheduleReconnect();
+      },
+      onClose: (event) => {
+        console.log(
+          `[realtime.worker] WebSocket closed: code=${event.code} reason=${event.reason}`,
+        );
+        stopClockSync();
+        if (event.code === HUB_AUTH_CLOSE_CODE) {
+          manualStopInProgress = true;
+          lastUrl = null;
+          lastToken = undefined;
+          post({ type: RealtimeWorkerResponseType.AuthExpired });
+          return;
+        }
+        if (manualStopInProgress) {
+          manualStopInProgress = false;
+          post({
+            type: RealtimeWorkerResponseType.Status,
+            status: "disconnected",
+            attempt: 0,
+          });
+          return;
+        }
+        reconnectAttempt = Math.min(reconnectAttempt + 1, MAX_RECONNECT_ATTEMPTS);
+        post({
+          type: RealtimeWorkerResponseType.Status,
+          status: "reconnecting",
+          attempt: reconnectAttempt,
+        });
+        scheduleReconnect();
+      },
+      onError: () => {
+        console.error("[realtime.worker] WebSocket error");
+        post({
+          type: RealtimeWorkerResponseType.Error,
+          error: "hub connection error",
+          attempt: reconnectAttempt,
+        });
+      },
     },
-    onError: () => {
-      console.error("[realtime.worker] WebSocket error");
-      post({
-        type: RealtimeWorkerResponseType.Error,
-        error: "hub connection error",
-        attempt: reconnectAttempt,
-      });
-    },
-  });
+    token,
+  );
 
   const active = socket;
   active?.addEventListener("message", (event: MessageEvent) => {
@@ -439,7 +453,7 @@ self.onmessage = async (event: MessageEvent) => {
 
     switch (data.type) {
       case RealtimeWorkerRequestType.Connect: {
-        await connectHub(data.url as string);
+        await connectHub(data.url as string, data.token as string | undefined);
         break;
       }
       case RealtimeWorkerRequestType.Disconnect: {
@@ -447,7 +461,7 @@ self.onmessage = async (event: MessageEvent) => {
         break;
       }
       case RealtimeWorkerRequestType.ReconnectNow: {
-        await connectHub(data.url as string);
+        await connectHub(data.url as string, data.token as string | undefined);
         break;
       }
     }

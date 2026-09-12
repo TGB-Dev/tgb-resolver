@@ -15,6 +15,7 @@ import (
 	"tgb-resolver/server/features/assets"
 	"tgb-resolver/server/features/realtime"
 	"tgb-resolver/server/features/shared/domain"
+	"tgb-resolver/server/features/shared/logging"
 )
 
 type testEnv struct {
@@ -34,7 +35,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	now := time.Now()
 	clock := realtime.NewClock(func() time.Time { return now })
 	store := NewStore(bun.NewDB(sqldb, sqlitedialect.New()))
-	hub := realtime.NewHub(clock)
+	hub := realtime.NewHub(clock, nil, logging.Discard())
 	env := &testEnv{store: store, clock: clock, now: &now}
 	env.svc = NewService(store, hub, clock, nilBlobs{})
 	ctx := context.Background()
@@ -1202,7 +1203,7 @@ func newTestEnvWithBlobs(t *testing.T, blobs BlobStore) *testEnv {
 	now := time.Now()
 	clock := realtime.NewClock(func() time.Time { return now })
 	store := NewStore(bun.NewDB(sqldb, sqlitedialect.New()))
-	hub := realtime.NewHub(clock)
+	hub := realtime.NewHub(clock, nil, logging.Discard())
 	env := &testEnv{store: store, clock: clock, now: &now}
 	env.svc = NewService(store, hub, clock, blobs)
 	if err := store.EnsureSeeded(context.Background()); err != nil {

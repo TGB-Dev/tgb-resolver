@@ -46,11 +46,12 @@ func Open(path string) (*bun.DB, error) {
 			return nil, err
 		}
 	}
-	sqldb, err := sql.Open("sqlite", path)
+	sqldb, err := sql.Open("sqlite", path+"?_pragma=busy_timeout(5000)")
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("Store Open sql open failed")
 		return nil, err
 	}
+	sqldb.SetMaxOpenConns(1)
 	log.Info().Str("path", path).Msg("Store Open succeeded")
 	return bun.NewDB(sqldb, sqlitedialect.New()), nil
 }

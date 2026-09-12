@@ -62,8 +62,11 @@ export function envelopeToMessage(envelope: {
   >;
 }
 
-export function hubUrl(httpUrl: string): string {
-  return `${httpUrl.replace(/^http/, "ws")}/hubs/show`;
+export const HUB_AUTH_CLOSE_CODE = 4401;
+
+export function hubUrl(httpUrl: string, token?: string): string {
+  const base = `${httpUrl.replace(/^http/, "ws")}/hubs/show`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }
 
 export interface HubCallbacks {
@@ -73,13 +76,14 @@ export interface HubCallbacks {
   onError: () => void;
 }
 
-export function connectShowHub(url: string, callbacks: HubCallbacks): WebSocket {
-  const wsUrl = hubUrl(url);
-  console.log(`[ws-client] Connecting to WebSocket: ${wsUrl}`);
+export function connectShowHub(url: string, callbacks: HubCallbacks, token?: string): WebSocket {
+  const wsUrl = hubUrl(url, token);
+  const loggedUrl = hubUrl(url);
+  console.log(`[ws-client] Connecting to WebSocket: ${loggedUrl}`);
   const ws = new WebSocket(wsUrl);
   ws.binaryType = "arraybuffer";
   ws.onopen = () => {
-    console.log(`[ws-client] WebSocket connected to ${wsUrl}`);
+    console.log(`[ws-client] WebSocket connected to ${loggedUrl}`);
     callbacks.onOpen();
   };
   ws.onclose = (event) => {

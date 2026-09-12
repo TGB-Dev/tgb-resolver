@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Tabs } from "@ark-ui/vue";
-import { Images, Info, Logs, ScanEye, Settings } from "@lucide/vue";
+import { Images, Info, Lock, Logs, ScanEye, Settings } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { tabs } from "@styled-system/recipes";
 
 import { useControlEditMainPanelStore } from "@/features/control/control-edit-main-panel-store";
 import ControlMainAssetsTab from "@/features/control/panels/main/tabs/control-main-assets-tab.vue";
+import ControlMainAuthTab from "@/features/control/panels/main/tabs/control-main-auth-tab.vue";
 import ControlMainCueTab from "@/features/control/panels/main/tabs/control-main-cue-tab.vue";
 import ControlMainInfoTab from "@/features/control/panels/main/tabs/control-main-info-tab.vue";
 import ControlMainPreviewTab from "@/features/control/panels/main/tabs/control-main-preview-tab.vue";
@@ -53,6 +54,10 @@ const tabClasses = tabs({ variant: "line", size: "sm" });
         <Settings :size="16" aria-hidden />
         Settings
       </Tabs.Trigger>
+      <Tabs.Trigger value="auth" :class="tabClasses.trigger">
+        <Lock :size="16" aria-hidden />
+        Auth
+      </Tabs.Trigger>
     </Tabs.List>
 
     <Tabs.Content
@@ -84,6 +89,12 @@ const tabClasses = tabs({ variant: "line", size: "sm" });
       :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
     >
       <ControlMainSettingsTab />
+    </Tabs.Content>
+    <Tabs.Content
+      value="auth"
+      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+    >
+      <ControlMainAuthTab />
     </Tabs.Content>
   </Tabs.Root>
 </template>
