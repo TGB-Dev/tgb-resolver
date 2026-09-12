@@ -9,6 +9,14 @@ generatedClient.setConfig({
   baseUrl: API_BASE_URL,
 });
 
+generatedClient.interceptors.request.use((request) => {
+  const token = localStorage.getItem("tgb:device-token");
+  if (token) {
+    request.headers.set("Authorization", `Bearer ${token}`);
+  }
+  return request;
+});
+
 export const apiClient = {
   get: () => Promise.resolve({ data: "TGB Resolver Server", error: undefined }),
 };

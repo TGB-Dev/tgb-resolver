@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
+	"github.com/zeebo/blake3"
 )
 
 var (
@@ -61,7 +61,7 @@ func codesEqual(a, b string) bool {
 }
 
 func hashToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
+	sum := blake3.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
 }
 
