@@ -110,8 +110,7 @@ func main() {
 		log.Fatal().Err(err).Msg("seed auth")
 	}
 	if freshCode != "" {
-		log.Info().Msg("first boot: join new devices with this code")
-		fmt.Fprintln(os.Stderr, "JOIN CODE: "+freshCode)
+		log.Warn().Str("joinCode", freshCode).Msg("first boot: share this join code with crew devices")
 	}
 	if n, err := app.Auth.PurgeExpired(nilContext()); err != nil {
 		log.Error().Err(err).Msg("purge expired sessions failed")
