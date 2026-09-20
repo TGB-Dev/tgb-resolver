@@ -7,7 +7,7 @@ import { computed, TransitionGroup } from "vue";
 
 import { useLeaderboardStore } from "@/stores/leaderboard-store";
 
-defineProps<{ problems?: ProblemDefinition[] }>();
+defineProps<{ problems?: ProblemDefinition[]; totalSize?: number }>();
 
 const { isBigScreen } = storeToRefs(useLeaderboardStore());
 
@@ -17,19 +17,20 @@ const classes = computed(() =>
 </script>
 
 <template>
-  <table
-    :class="
-      cx(
-        classes.root,
-        css({
-          borderCollapse: 'collapse',
-          borderSpacing: 0,
-          fontSize: isBigScreen ? '2xl' : undefined,
-          lineHeight: isBigScreen ? 'tall' : undefined,
-        }),
-      )
-    "
-  >
+  <div :style="totalSize != null ? { height: `${totalSize}px` } : undefined">
+    <table
+      :class="
+        cx(
+          classes.root,
+          css({
+            borderCollapse: 'collapse',
+            borderSpacing: 0,
+            fontSize: isBigScreen ? '2xl' : undefined,
+            lineHeight: isBigScreen ? 'tall' : undefined,
+          }),
+        )
+      "
+    >
     <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 999 }))">
       <tr :class="classes.row">
         <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
@@ -72,9 +73,21 @@ const classes = computed(() =>
         </th>
       </tr>
     </thead>
-    <!-- TransitionGroup FLIP-animates rows when rank swaps reorder them. -->
-    <TransitionGroup tag="tbody" name="leaderboard-row" :class="classes.body">
+    <!-- Unvirtualized (totalSize == null): TransitionGroup FLIP-animates rows
+      on rank swaps. Virtualized: rows are windowed, so a plain tbody is used
+      and the parent applies per-row translate (FLIP transform would collide
+      with the virtual translate). -->
+    <TransitionGroup
+      v-if="totalSize == null"
+      tag="tbody"
+      name="leaderboard-row"
+      :class="classes.body"
+    >
       <slot />
     </TransitionGroup>
-  </table>
+    <tbody v-else :class="classes.body">
+      <slot />
+    </tbody>
+    </table>
+  </div>
 </template>

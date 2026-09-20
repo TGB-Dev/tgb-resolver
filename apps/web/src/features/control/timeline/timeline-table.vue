@@ -2,13 +2,14 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider, type DragEndEvent, type DragOverEvent } from "@dnd-kit/vue";
 import { css } from "@styled-system/css";
+import { useVirtualizer } from "@tanstack/vue-virtual";
 import { PlaybackStatus, TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem as TimelineRowPayload } from "@tgb-resolver/realtime";
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 
 import { useControlIsLive, useControlShowQuery, useMoveTimelineEventMutation, useSeekPlaybackMutation } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
-import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import { scrollToListItem } from "@/features/leaderboard/utils/scroll";
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import Spinner from "@/features/shared/ui/spinner.vue";
 import { useShowStore } from "@/stores/show-store";
@@ -42,11 +43,46 @@ function onSeek(id: number) {
   seekPlayback.mutate(id);
 }
 
-function scrollEventToTop(eventId: number | null) {
-  if (!containerRef.value || eventId == null) return;
-  const el = containerRef.value.querySelector<HTMLElement>(`[data-event-id="${eventId}"]`);
-  if (!el) return;
-  animateScrollIntoView(el, containerRef.value, { block: "start", duration: 0.15 });
+// Virtualized list: rows are fixed height (min-h-8 = 32px). Block translation
+// (single translateY for the whole rendered block, per TanStack smooth-scroll
+// guidance) keeps dnd-kit sortable elements in normal flow.
+const TIMELINE_ROW_ESTIMATE = 32;
+const rowVirtualizerOptions = computed(() => ({
+  count: displayRows.value.length,
+  getScrollElement: () => containerRef.value,
+  estimateSize: () => TIMELINE_ROW_ESTIMATE,
+  overscan: 12,
+  getItemKey: (index: number) => displayIds.value[index] ?? index,
+}));
+const rowVirtualizer = useVirtualizer(rowVirtualizerOptions);
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems());
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+const firstStart = computed(() => virtualRows.value[0]?.start ?? 0);
+
+interface TimelineRenderItem {
+  key: string;
+  payload: TimelineRowPayload;
+  index: number;
+  striped: boolean;
+}
+const timelineRenderList = computed<TimelineRenderItem[]>(() =>
+  virtualRows.value.map((virtualRow) => ({
+    key: String(virtualRow.key),
+    payload: displayRows.value[virtualRow.index] as TimelineRowPayload,
+    index: virtualRow.index,
+    striped: virtualRow.index % 2 === 1,
+  })),
+);
+
+function scrollEventToTop(eventId: number | null, behavior: "auto" | "smooth" = "auto") {
+  if (eventId == null) return;
+  scrollToListItem({
+    container: containerRef.value,
+    virtualizer: rowVirtualizer.value,
+    index: displayIds.value.indexOf(eventId),
+    align: "start",
+    behavior,
+  });
 }
 
 function scrollToCurrent() {
@@ -83,7 +119,6 @@ watch(
     requestAnimationFrame(() => scrollEventToTop(target));
   },
 );
-
 // --- Reorder wiring, ported 1:1 from the React reference (timeline-table.tsx
 // :: TimelineReorderList + commitReorder). DragOver keeps a provisional order;
 // DragEnd commits it as a single move mutation with optimistic apply/revert.
@@ -197,40 +232,49 @@ function openContextMenu(event: MouseEvent, payload: TimelineRowPayload) {
 
     <div
       ref="containerRef"
-      :class="css({
-        flex: 1,
-        minH: 0,
-        overflow: 'auto',
-        '& [data-timeline-row]:nth-of-type(odd) [data-event-id]': { bg: 'bg.emphasized' },
-        '& [data-timeline-row]:nth-of-type(even) [data-event-id]': { bg: 'bg' },
-      })"
+      :class="css({ flex: 1, minH: 0, overflow: 'auto' })"
     >
-      <div :class="css({ w: 'full', display: 'flex', flexDirection: 'column', alignItems: 'stretch' })">
-        <template v-if="displayIds.length > 0">
-          <DragDropProvider v-if="!isLive" @drag-over="onDragOver" @drag-end="onDragEnd">
-            <TimelineSortableRow
-              v-for="(row, index) in displayRows"
-              :key="row.id"
-              :payload="row"
-              :index="index"
-              :is-live="isLive"
-              @seek="onSeek"
-              @contextmenu="openContextMenu"
-            />
-          </DragDropProvider>
-          <!-- Live mode renders a static list: no dnd context, no sortable wiring -->
-          <template v-else>
-            <TimelineSortableRow
-              v-for="(row, index) in displayRows"
-              :key="row.id"
-              :payload="row"
-              :index="index"
-              :is-live="isLive"
-              @seek="onSeek"
-              @contextmenu="openContextMenu"
-            />
+      <div :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+        <div
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${firstStart}px)`,
+          }"
+          :class="css({ display: 'flex', flexDirection: 'column', alignItems: 'stretch' })"
+        >
+          <template v-if="displayIds.length > 0">
+            <DragDropProvider v-if="!isLive" @drag-over="onDragOver" @drag-end="onDragEnd">
+              <TimelineSortableRow
+                v-for="item in timelineRenderList"
+                :key="item.key"
+                :payload="item.payload"
+                :index="item.index"
+                :is-live="isLive"
+                :striped="item.striped"
+                :data-index="item.index"
+                @seek="onSeek"
+                @contextmenu="openContextMenu"
+              />
+            </DragDropProvider>
+            <!-- Live mode renders a static list: no dnd context, no sortable wiring -->
+            <template v-else>
+              <TimelineSortableRow
+                v-for="item in timelineRenderList"
+                :key="item.key"
+                :payload="item.payload"
+                :index="item.index"
+                :is-live="isLive"
+                :striped="item.striped"
+                :data-index="item.index"
+                @seek="onSeek"
+                @contextmenu="openContextMenu"
+              />
+            </template>
           </template>
-        </template>
+        </div>
       </div>
     </div>
 

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { css } from "@styled-system/css";
+import { useVirtualizer } from "@tanstack/vue-virtual";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
-import { computed, nextTick, onMounted, useTemplateRef, watch } from "vue";
+import { computed, onMounted, useTemplateRef, watch } from "vue";
 
 import { useControlShowQuery } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
-import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
+import { scrollToListItem } from "@/features/leaderboard/utils/scroll";
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { useLeaderboardStore } from "@/stores/leaderboard-store";
 
@@ -25,45 +26,94 @@ const playback = usePlaybackStore();
 
 const scroller = useTemplateRef<HTMLElement>("scroller");
 
-// Scrolls the container's last row to its end edge. Runs after DOM flush plus
-// a frame so the row layout is final before measuring.
-function scrollToEnd(duration = 0.8) {
-  void nextTick(() => {
-    requestAnimationFrame(() => {
-      const scrollerEl = scroller.value;
-      if (!scrollerEl) return;
-      const last = scrollerEl.querySelector<HTMLElement>("[data-user-id]:last-of-type");
-      if (!last) return;
-      animateScrollIntoView(last, scrollerEl, {
-        block: "end",
-        duration,
-        ease: TgbResolverEasings.inOutQuad,
-      });
-    });
-  });
-}
-
-function scrollToUser(userId: number, duration = 0.8) {
-  void nextTick(() => {
-    requestAnimationFrame(() => {
-      const scrollerEl = scroller.value;
-      if (!scrollerEl) return;
-      const el = scrollerEl.querySelector<HTMLElement>(`[data-user-id="${userId}"]`);
-      if (!el) return;
-      animateScrollIntoView(el, scrollerEl, {
-        block: "end",
-        duration,
-        ease: TgbResolverEasings.inOutQuad,
-      });
-    });
-  });
-}
-
 const rows = computed(() =>
   leaderboard.userIds
     .map((userId) => ({ userId, data: leaderboard.entryFor(userId) }))
     .filter((row): row is { userId: number; data: LeaderboardEntry } => row.data !== null),
 );
+
+// FLIP rank animation is O(n) layout work, so it stays on for small
+// standings and the virtualizer takes over above this threshold (where FLIP
+// would both jank and collide with the virtual translate).
+const LEADERBOARD_VIRTUALIZE_THRESHOLD = 100;
+
+const shouldVirtualize = computed(() => rows.value.length > LEADERBOARD_VIRTUALIZE_THRESHOLD);
+
+// Virtualized table (TanStack table-example pattern: per-row translate inside
+// a totalSize sizer). Fixed heights match LeaderboardRow (44px / 76px big).
+const rowVirtualizerOptions = computed(() => ({
+  count: rows.value.length,
+  getScrollElement: () => scroller.value,
+  estimateSize: () => (leaderboard.isBigScreen ? 76 : 44),
+  overscan: 10,
+  enabled: shouldVirtualize.value,
+  getItemKey: (index: number) => rows.value[index]?.userId ?? index,
+}));
+const rowVirtualizer = useVirtualizer(rowVirtualizerOptions);
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems());
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+
+interface LeaderboardRenderItem {
+  key: string;
+  userId: number;
+  data: LeaderboardEntry;
+  transform: string;
+}
+const renderList = computed<LeaderboardRenderItem[]>(() =>
+  virtualRows.value.map((virtualRow, loopIndex) => {
+    const entry = rows.value[virtualRow.index] as { userId: number; data: LeaderboardEntry };
+    return {
+      key: String(virtualRow.key),
+      userId: entry.userId,
+      data: entry.data,
+      transform: `translateY(${virtualRow.start - loopIndex * virtualRow.size}px)`,
+    };
+  }),
+);
+
+// Follow-scrolls route through one helper: index + virtualizer.scrollToIndex
+// when windowed (off-screen rows aren't mounted, so selectors can't find
+// them), motion-tweened querySelector lookup otherwise.
+function scrollToEnd(behavior: "auto" | "smooth" = "smooth") {
+  if (rows.value.length === 0) return;
+  if (shouldVirtualize.value) {
+    scrollToListItem({
+      container: scroller.value,
+      virtualizer: rowVirtualizer.value,
+      index: rows.value.length - 1,
+      align: "end",
+      behavior,
+    });
+  } else {
+    scrollToListItem({
+      container: scroller.value,
+      selector: "[data-user-id]:last-of-type",
+      align: "end",
+      duration: 0.8,
+      ease: TgbResolverEasings.inOutQuad,
+    });
+  }
+}
+
+function scrollToUser(userId: number, behavior: "auto" | "smooth" = "smooth") {
+  if (shouldVirtualize.value) {
+    scrollToListItem({
+      container: scroller.value,
+      virtualizer: rowVirtualizer.value,
+      index: leaderboard.userIds.indexOf(userId),
+      align: "end",
+      behavior,
+    });
+  } else {
+    scrollToListItem({
+      container: scroller.value,
+      selector: `[data-user-id="${userId}"]`,
+      align: "end",
+      duration: 0.8,
+      ease: TgbResolverEasings.inOutQuad,
+    });
+  }
+}
 
 watch(
   () => props.isBigScreen,
@@ -84,9 +134,9 @@ function scrollToCurrentOnMount() {
   hasScrolledOnMount = true;
   const targetId = leaderboard.currentBottomView;
   if (targetId > 0) {
-    scrollToUser(targetId);
+    scrollToUser(targetId, "auto");
   } else {
-    scrollToEnd();
+    scrollToEnd("auto");
   }
 }
 
@@ -159,13 +209,28 @@ watch(
       data-audience-scroll
     >
       <template v-if="query.data.value">
-        <LeaderboardTable :problems="query.data.value.contest.problems">
-          <LeaderboardRow
-            v-for="row in rows"
-            :key="row.userId"
-            :data="row.data"
-            :is-current-resolved="leaderboard.currentResolvedUserId === row.userId"
-          />
+        <LeaderboardTable
+          :problems="query.data.value.contest.problems"
+          :total-size="shouldVirtualize ? totalSize : undefined"
+        >
+          <template v-if="shouldVirtualize">
+            <LeaderboardRow
+              v-for="item in renderList"
+              :key="item.key"
+              :data="item.data"
+              :is-current-resolved="leaderboard.currentResolvedUserId === item.userId"
+              :style="{ transform: item.transform }"
+            />
+          </template>
+          <template v-else>
+            <LeaderboardRow
+              v-for="row in rows"
+              :key="row.userId"
+              :data="row.data"
+              :is-current-resolved="leaderboard.currentResolvedUserId === row.userId"
+              :flip="true"
+            />
+          </template>
         </LeaderboardTable>
         <ActiveExtensionsOverlay />
       </template>
