@@ -13,9 +13,10 @@ import * as v from "valibot";
 import { onMounted, ref, useTemplateRef } from "vue";
 
 import { useQrScanner } from "@/features/auth/use-qr-scanner";
+import { queryClient } from "@/features/shared/app/providers";
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
-import { normalizeJoinCode, useAuthStore } from "@/stores/auth-store";
+import { JOIN_CODE_LENGTH, normalizeJoinCode, useAuthStore } from "@/stores/auth-store";
 
 const authStore = useAuthStore();
 const { error: scanError, scanOnce } = useQrScanner();
@@ -80,12 +81,37 @@ function codeFromScanned(raw: string): string {
   }
 }
 
+function sanitizePastedCode(raw: string): string {
+  return normalizeJoinCode(codeFromScanned(raw)).slice(0, JOIN_CODE_LENGTH);
+}
+
+function onCodeInput(event: Event) {
+  // Strip separators live so typing/pasting "ab-12cd" never hits a raw
+  // maxlength cap before normalization gets a chance to clean it.
+  const el = event.target as HTMLInputElement;
+  const normalized = normalizeJoinCode(el.value).slice(0, JOIN_CODE_LENGTH);
+  code.value = normalized;
+  if (el.value !== normalized) el.value = normalized;
+}
+
+function onCodePaste(event: ClipboardEvent) {
+  const text = event.clipboardData?.getData("text");
+  if (!text) return;
+  event.preventDefault();
+  const candidate = sanitizePastedCode(text);
+  code.value = candidate;
+  error.value = null;
+  if (candidate.length === JOIN_CODE_LENGTH) {
+    void submit(candidate);
+  }
+}
+
 async function submit(raw: string) {
   if (busy.value) return;
-  const normalized = normalizeJoinCode(raw);
+  const normalized = normalizeJoinCode(raw).slice(0, JOIN_CODE_LENGTH);
   code.value = normalized;
   const input = v.safeParse(vJoinInputBodyWritable, { code: normalized });
-  if (!input.success || normalized.length < 6) {
+  if (!input.success || normalized.length < JOIN_CODE_LENGTH) {
     error.value = "Enter the 6-character code from the operator.";
     return;
   }
@@ -119,12 +145,10 @@ async function submit(raw: string) {
       expiresAt: output.output.expiresAt,
       sessionId: output.output.sessionId,
     };
-    authStore.persist(
-      output.output.token,
-      output.output.label,
-      output.output.expiresAt,
-      output.output.sessionId,
-    );
+    // Do NOT persist here: AuthGate unmounts this screen as soon as the store
+    // becomes authenticated, which would hide the confirm step (and skip the
+    // realtime reconnect below) before the user ever sees it. Persist in
+    // confirm() instead so reauth converges without a manual reload.
   } catch (e) {
     error.value = parseErrorMessage(e);
   } finally {
@@ -140,6 +164,9 @@ async function confirm() {
     pendingJoin.value.expiresAt,
     pendingJoin.value.sessionId,
   );
+  // Reauth with a fresh token: drop errored/stale query results so they
+  // refetch authorized, then reconnect the hub on the new token.
+  void queryClient.invalidateQueries();
   try {
     const { reconnectRealtime } = await import("@/lib/realtime-client");
     reconnectRealtime();
@@ -200,11 +227,15 @@ onMounted(() => {
             v-model="code"
             :class="input"
             placeholder="------"
-            autocomplete="off"
+            autocomplete="one-time-code"
             autocapitalize="characters"
+            autocorrect="off"
             spellcheck="false"
-            maxlength="6"
+            inputmode="text"
+            maxlength="12"
             :disabled="busy"
+            @input="onCodeInput"
+            @paste="onCodePaste"
             @keydown.enter="submit(code)"
           />
           <Field.ErrorText v-if="error" :class="errorText">{{ error }}</Field.ErrorText>

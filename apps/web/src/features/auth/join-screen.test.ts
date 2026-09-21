@@ -21,7 +21,14 @@ vi.mock("@tgb-resolver/contracts", () => ({
   }),
 }));
 
+vi.mock("@/lib/realtime-client", () => ({
+  reconnectRealtime: vi.fn(),
+}));
+
 import { joinWithCode } from "@tgb-resolver/contracts";
+
+import { reconnectRealtime } from "@/lib/realtime-client";
+import { useAuthStore } from "@/stores/auth-store";
 
 function flush() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -62,9 +69,47 @@ test("lowercase input with spaces and newline is trimmed and uppercased", async 
   });
 });
 
-test("input is capped at 6 characters", () => {
+test("input allows separators so pasted codes survive normalization", async () => {
   const wrapper = mount(JoinScreen);
-  expect(wrapper.find("input").attributes("maxlength")).toBe("6");
+  const input = wrapper.find("input");
+  // Raw entry is longer than 6 chars but normalizes down to a full code.
+  await input.setValue("ab-12cd");
+  expect((input.element as HTMLInputElement).value).toBe("AB12CD");
+});
+
+test("pasting a code with a dash fills the normalized code and joins", async () => {
+  const wrapper = mount(JoinScreen);
+  await wrapper.find("input").trigger("paste", {
+    clipboardData: { getData: () => "ab-12cd" },
+  });
+  await flush();
+  await nextTick();
+  await flush();
+  await nextTick();
+  expect(joinWithCode).toHaveBeenCalledWith({
+    client: expect.anything(),
+    body: { code: "AB12CD" },
+  });
+  expect(wrapper.text()).toContain("brave-fox");
+});
+
+test("successful join waits for Continue before authenticating", async () => {
+  window.history.replaceState(null, "", "/?join=ab12cd");
+  const wrapper = mount(JoinScreen);
+  await flush();
+  await nextTick();
+  await flush();
+  await nextTick();
+  expect(joinWithCode).toHaveBeenCalled();
+  // Confirm step is visible but the store is still anonymous: AuthGate must
+  // keep this screen mounted so the user can actually press Continue.
+  expect(wrapper.text()).toContain("brave-fox");
+  expect(useAuthStore().isAuthenticated).toBe(false);
+  await wrapper.find("button").trigger("click");
+  await flush();
+  await nextTick();
+  expect(useAuthStore().isAuthenticated).toBe(true);
+  expect(reconnectRealtime).toHaveBeenCalled();
 });
 
 test("short code shows an inline hint instead of calling join", async () => {

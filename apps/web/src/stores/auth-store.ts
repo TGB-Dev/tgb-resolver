@@ -12,6 +12,16 @@ export function normalizeJoinCode(raw: string): string {
   return raw.toUpperCase().replace(/[-\s]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
 }
 
+/** Join codes are fixed-length; UI caps normalized input at this length. */
+export const JOIN_CODE_LENGTH = 6;
+
+function isExpiredAt(value: string | null): boolean {
+  if (!value) return false;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return false;
+  return parsed <= Date.now();
+}
+
 export enum AuthStatus {
   Anonymous = "anonymous",
   Authenticated = "authenticated",
@@ -34,7 +44,17 @@ export const useAuthStore = defineStore("auth", () => {
   const label = ref<string | null>(localStorage.getItem(LABEL_KEY));
   const expiresAt = ref<string | null>(localStorage.getItem(EXPIRY_KEY));
   const sessionId = ref<string | null>(localStorage.getItem(SESSION_KEY));
-  const status = ref<AuthStatus>(token.value ? AuthStatus.Authenticated : AuthStatus.Anonymous);
+  // A token whose stored expiry is already past must not boot as authenticated:
+  // after days away the server has purged/expired the session, so starting
+  // authenticated would fire doomed requests (and sockets) with the dead token
+  // until the first 401 flips us to expired. Expire proactively instead.
+  const status = ref<AuthStatus>(
+    !token.value
+      ? AuthStatus.Anonymous
+      : isExpiredAt(expiresAt.value)
+        ? AuthStatus.Expired
+        : AuthStatus.Authenticated,
+  );
 
   const isAuthenticated = computed(
     () => status.value === AuthStatus.Authenticated && token.value !== null,

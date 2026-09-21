@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
+  AuthStatus,
   EXPIRY_KEY,
   isAuthError,
   LABEL_KEY,
@@ -26,6 +27,23 @@ describe("auth store", () => {
 
   it("starts anonymous without stored token", () => {
     expect(useAuthStore().isAuthenticated).toBe(false);
+  });
+
+  it("starts expired when the stored expiry is already past", () => {
+    localStorage.setItem(TOKEN_KEY, "tok");
+    localStorage.setItem(LABEL_KEY, "brave-fox");
+    localStorage.setItem(EXPIRY_KEY, new Date(Date.now() - 24 * 3_600_000).toISOString());
+    localStorage.setItem(SESSION_KEY, "s1");
+    const store = useAuthStore();
+    expect(store.isAuthenticated).toBe(false);
+    expect(store.status).toBe(AuthStatus.Expired);
+  });
+
+  it("stays authenticated when the stored expiry is in the future", () => {
+    localStorage.setItem(TOKEN_KEY, "tok");
+    localStorage.setItem(EXPIRY_KEY, new Date(Date.now() + 3_600_000).toISOString());
+    const store = useAuthStore();
+    expect(store.isAuthenticated).toBe(true);
   });
 
   it("persists token, label, expiry and session to localStorage", () => {
