@@ -8,6 +8,7 @@ allowBuilds:
   sharp: true
   vue-demi: true
   '@bufbuild/buf': true
+  '@parcel/watcher': true
 
 blockExoticSubdeps: false
 autoDedupe: true
