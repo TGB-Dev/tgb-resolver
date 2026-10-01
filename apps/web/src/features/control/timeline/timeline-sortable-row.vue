@@ -42,7 +42,7 @@ const sortable = props.isLive
     });
 
 const wrapperClass = css({ position: "relative", userSelect: "none" });
-const stripeClass = computed(() => css({ bg: props.striped ? "bg.emphasized" : "bg" }));
+const stripeClass = css({ bg: "bg", '&[data-striped="true"]': { bg: "bg.emphasized" } });
 </script>
 
 <template>
@@ -50,6 +50,7 @@ const stripeClass = computed(() => css({ bg: props.striped ? "bg.emphasized" : "
     ref="row"
     class="group"
     :class="cx(wrapperClass, stripeClass)"
+    :data-striped="striped"
     data-timeline-row
     :data-dragging="sortable?.isDragging.value || undefined"
   >

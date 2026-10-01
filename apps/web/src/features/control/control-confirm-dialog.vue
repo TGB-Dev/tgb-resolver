@@ -19,6 +19,10 @@ const message = css({ color: "fg.muted", fontSize: "sm" });
 const actions = css({ display: "flex", justifyContent: "flex-end", gap: "3" });
 
 const inputRef = useTemplateRef<HTMLInputElement>("inputRef");
+const confirmClass = css({
+  colorPalette: "red",
+  '&[data-input="true"]': { colorPalette: "blue" },
+});
 
 watch(
   () => [store.open, store.showInput],
@@ -69,12 +73,8 @@ watch(
             </button>
             <button
               type="button"
-              :class="
-                cx(
-                  button(),
-                  css({ colorPalette: store.showInput ? 'blue' : 'red' }),
-                )
-              "
+              :class="cx(button(), confirmClass)"
+              :data-input="store.showInput"
               @click="store.resolveConfirmAction(true)"
             >
               {{ store.confirmLabel }}

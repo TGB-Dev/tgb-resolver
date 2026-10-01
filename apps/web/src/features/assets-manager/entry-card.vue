@@ -30,7 +30,7 @@ const isImage = computed(
 const rootClass = computed(() =>
   css({
     borderWidth: 2,
-    borderColor: props.isSelected ? "colorPalette.border" : "border",
+    borderColor: "border",
     borderRadius: "md",
     overflow: "hidden",
     cursor: "pointer",
@@ -43,6 +43,7 @@ const rootClass = computed(() =>
     color: "inherit",
     appearance: "none",
     _hover: { shadow: "md" },
+    '&[data-selected="true"]': { borderColor: "colorPalette.border" },
   }),
 );
 
@@ -57,6 +58,7 @@ function formatSize(bytes: number): string {
   <button
     type="button"
     :data-entry-id="entry.id"
+    :data-selected="isSelected"
     draggable="true"
     :class="rootClass"
     @click.stop="emit('click', $event)"

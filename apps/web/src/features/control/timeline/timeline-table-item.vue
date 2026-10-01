@@ -50,6 +50,18 @@ const hoverRevealCss = css({
 
 const isReorderable = computed(() => props.payload.type === TimelineEventType.CUS && !props.isLive);
 
+const grabClass = css({
+  color: "fg.muted",
+  p: 0,
+  cursor: "not-allowed",
+  "&[data-reorderable=\"true\"]": {
+    cursor: "grab",
+    _active: { cursor: "grabbing" },
+  },
+  _hover: { color: "fg" },
+  _disabled: { cursor: "not-allowed", color: "fg.muted" },
+});
+
 const templateColumns = computed(() =>
   props.isLive ? timelineTableGridTemplateColumnsStatic : timelineTableGridTemplateColumns,
 );
@@ -181,20 +193,8 @@ function handleDoubleClick() {
             data-drag-handle
             aria-label="Drag to reorder event"
             :disabled="!isReorderable"
-            :class="
-              cx(
-                button({ variant: 'ghost', size: '2xs' }),
-                iconButton(),
-                css({
-                  color: 'fg.muted',
-                  p: 0,
-                  cursor: isReorderable ? 'grab' : 'not-allowed',
-                  _active: { cursor: isReorderable ? 'grabbing' : 'not-allowed' },
-                  _hover: { color: 'fg' },
-                  _disabled: { cursor: 'not-allowed', color: 'fg.muted' },
-                }),
-              )
-            "
+            :data-reorderable="isReorderable"
+            :class="cx(button({ variant: 'ghost', size: '2xs' }), iconButton(), grabClass)"
           >
             <GripVertical :size="14" aria-hidden />
           </button>

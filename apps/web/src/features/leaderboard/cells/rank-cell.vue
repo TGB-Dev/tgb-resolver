@@ -14,12 +14,12 @@ const cellClass = computed(() =>
     css({
       textAlign: "end",
       fontFamily: "mono",
-      fontSize: isBigScreen.value ? "3xl" : undefined,
+      '&[data-big="true"]': { fontSize: "3xl" },
     }),
   ),
 );
 </script>
 
 <template>
-  <td :class="cellClass">{{ rank }}</td>
+  <td :data-big="isBigScreen" :class="cellClass">{{ rank }}</td>
 </template>

@@ -14,22 +14,19 @@ const { isBigScreen } = storeToRefs(useLeaderboardStore());
 const classes = computed(() =>
   table({ size: isBigScreen.value ? "lg" : "sm", variant: "line", stickyHeader: true }),
 );
+
+const tableClass = css({
+  borderCollapse: "collapse",
+  borderSpacing: 0,
+  "&[data-big=\"true\"]": { fontSize: "2xl", lineHeight: "tall" },
+});
 </script>
 
 <template>
   <div :style="totalSize != null ? { height: `${totalSize}px` } : undefined">
     <table
-      :class="
-        cx(
-          classes.root,
-          css({
-            borderCollapse: 'collapse',
-            borderSpacing: 0,
-            fontSize: isBigScreen ? '2xl' : undefined,
-            lineHeight: isBigScreen ? 'tall' : undefined,
-          }),
-        )
-      "
+      :data-big="isBigScreen"
+      :class="cx(classes.root, tableClass)"
     >
     <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 999 }))">
       <tr :class="classes.row">

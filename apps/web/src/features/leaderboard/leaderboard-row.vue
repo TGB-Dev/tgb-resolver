@@ -38,23 +38,35 @@ function isLatestResolved(problemId: number): boolean {
 // TransitionGroup FLIP on rank swaps and is only enabled via `flip` in the
 // unvirtualized path: in virtual mode the inline virtual translate changes
 // every scroll frame, and a transform transition would make rows trail.
-const rowClass = computed(() =>
-  css({
-    position: "relative",
-    zIndex: props.isCurrentResolved ? 5 : 0,
-    height: leaderboardStore.isBigScreen ? "19" : "11",
-    backgroundColor: props.isCurrentResolved
-      ? { base: "yellow.300", _dark: "yellow.700" }
-      : "bg",
-    transitionProperty: props.flip ? "transform, background-color" : "background-color",
-    transitionDuration: props.flip ? "0.8s, 0.15s" : "0.15s",
-    transitionTimingFunction: "inOutQuad",
-  }),
-);
+const rowClass = css({
+  position: "relative",
+  zIndex: 0,
+  height: "11",
+  backgroundColor: "bg",
+  transitionProperty: "background-color",
+  transitionDuration: "0.15s",
+  transitionTimingFunction: "inOutQuad",
+  '&[data-current="true"]': {
+    zIndex: 5,
+    backgroundColor: "yellow.300",
+    _dark: { backgroundColor: "yellow.700" },
+  },
+  '&[data-big="true"]': { height: "19" },
+  '&[data-flip="true"]': {
+    transitionProperty: "transform, background-color",
+    transitionDuration: "0.8s, 0.15s",
+  },
+});
 </script>
 
 <template>
-  <tr :data-user-id="data.userId" :class="rowClass">
+  <tr
+    :data-user-id="data.userId"
+    :data-current="isCurrentResolved"
+    :data-big="leaderboardStore.isBigScreen"
+    :data-flip="flip"
+    :class="rowClass"
+  >
     <RankCell :rank="data.rank" />
 
     <UsernameCell :real-name="data.realName" :username="data.username" />
