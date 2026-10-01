@@ -1,4 +1,5 @@
 import { devtools } from "@tanstack/devtools-vite";
+import pandacss from "@pandacss/vite";
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import { defineConfig } from "vite";
@@ -22,7 +23,7 @@ export default defineConfig({
     },
   },
   envDir: resolve(import.meta.dirname, "../.."),
-  plugins: [devtools(), vueRouter(), vue(), vueJsx(), vueDevTools()],
+  plugins: [devtools(), pandacss({ transform: true }), vueRouter(), vue(), vueJsx(), vueDevTools()],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

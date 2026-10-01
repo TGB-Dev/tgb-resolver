@@ -3,6 +3,7 @@ import { Tabs } from "@ark-ui/vue";
 import { Images, Info, Lock, Logs, ScanEye, Settings } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { tabs } from "@styled-system/recipes";
+import { useTemplateRef } from "vue";
 
 import { useControlEditMainPanelStore } from "@/features/control/control-edit-main-panel-store";
 import ControlMainAssetsTab from "@/features/control/panels/main/tabs/control-main-assets-tab.vue";
@@ -14,6 +15,14 @@ import ControlMainSettingsTab from "@/features/control/panels/main/tabs/control-
 
 const panelStore = useControlEditMainPanelStore();
 const tabClasses = tabs({ variant: "line", size: "sm" });
+const previewTrigger = useTemplateRef<HTMLElement>("previewTrigger");
+
+function focusDefaultTab(): void {
+  previewTrigger.value?.focus();
+}
+
+defineExpose({ focusDefaultTab });
+const tabContentClass = css({ minH: 0, overflow: "hidden", display: "flex", flexDirection: "column" });
 </script>
 
 <template>
@@ -34,7 +43,7 @@ const tabClasses = tabs({ variant: "line", size: "sm" });
     defaultValue="preview"
   >
     <Tabs.List :class="tabClasses.list">
-      <Tabs.Trigger value="preview" :class="tabClasses.trigger">
+      <Tabs.Trigger value="preview" ref="previewTrigger" :class="tabClasses.trigger">
         <ScanEye :size="16" aria-hidden />
         Preview
       </Tabs.Trigger>
@@ -62,37 +71,37 @@ const tabClasses = tabs({ variant: "line", size: "sm" });
 
     <Tabs.Content
       value="preview"
-      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+      :class="cx(tabClasses.content, tabContentClass)"
     >
       <ControlMainPreviewTab />
     </Tabs.Content>
     <Tabs.Content
       value="assets"
-      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+      :class="cx(tabClasses.content, tabContentClass)"
     >
       <ControlMainAssetsTab />
     </Tabs.Content>
     <Tabs.Content
       value="cue"
-      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+      :class="cx(tabClasses.content, tabContentClass)"
     >
       <ControlMainCueTab />
     </Tabs.Content>
     <Tabs.Content
       value="info"
-      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+      :class="cx(tabClasses.content, tabContentClass)"
     >
       <ControlMainInfoTab />
     </Tabs.Content>
     <Tabs.Content
       value="settings"
-      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+      :class="cx(tabClasses.content, tabContentClass)"
     >
       <ControlMainSettingsTab />
     </Tabs.Content>
     <Tabs.Content
       value="auth"
-      :class="cx(tabClasses.content, css({ minH: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }))"
+      :class="cx(tabClasses.content, tabContentClass)"
     >
       <ControlMainAuthTab />
     </Tabs.Content>

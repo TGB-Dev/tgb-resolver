@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Plus } from "@lucide/vue";
-import { cx } from "@styled-system/css";
+import { css, cx } from "@styled-system/css";
 import { addBtnWrapper, button, iconButton } from "@styled-system/recipes";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 
@@ -15,6 +15,10 @@ const props = defineProps<{
 
 const floatingPanelStore = useFloatingPanelStore();
 const showStore = useShowStore();
+
+// Utility, not recipe: `button()` sets `position: relative` in a later
+// cascade layer, which would beat the wrapper recipe's `absolute`.
+const absoluteClass = css({ position: "absolute" });
 
 function getTimelinePosition(eventId: number, fallback: number) {
   const index = showStore.showOrderedIds.indexOf(eventId);
@@ -36,7 +40,7 @@ function handleCreate(before: boolean) {
     <button
       type="button"
       aria-label="Add event before"
-      :class="cx(button({ variant: 'subtle', size: '2xs' }), iconButton(), addBtnWrapper({ position: 'before' }))"
+      :class="cx(button({ variant: 'subtle', size: '2xs' }), iconButton(), addBtnWrapper({ position: 'before' }), absoluteClass)"
       @click.stop="handleCreate(true)"
     >
       <Plus :size="12" aria-hidden />
@@ -47,7 +51,7 @@ function handleCreate(before: boolean) {
     <button
       type="button"
       aria-label="Add event after"
-      :class="cx(button({ variant: 'subtle', size: '2xs' }), iconButton(), addBtnWrapper({ position: 'after' }))"
+      :class="cx(button({ variant: 'subtle', size: '2xs' }), iconButton(), addBtnWrapper({ position: 'after' }), absoluteClass)"
       @click.stop="handleCreate(false)"
     >
       <Plus :size="12" aria-hidden />

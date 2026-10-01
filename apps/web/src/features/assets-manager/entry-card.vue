@@ -27,24 +27,23 @@ const isImage = computed(
   () => !props.entry.isDirectory && props.entry.contentType?.startsWith("image/"),
 );
 
-const rootClass = computed(() =>
-  css({
-    borderWidth: 2,
-    borderColor: props.isSelected ? "colorPalette.border" : "border",
-    borderRadius: "md",
-    overflow: "hidden",
-    cursor: "pointer",
-    bg: "bg.panel",
-    w: "full",
-    display: "block",
-    p: 0,
-    textAlign: "left",
-    fontFamily: "inherit",
-    color: "inherit",
-    appearance: "none",
-    _hover: { shadow: "md" },
-  }),
-);
+const rootClass = css({
+  borderWidth: 2,
+  borderColor: "border",
+  borderRadius: "md",
+  overflow: "hidden",
+  cursor: "pointer",
+  bg: "bg.panel",
+  w: "full",
+  display: "block",
+  p: 0,
+  textAlign: "left",
+  fontFamily: "inherit",
+  color: "inherit",
+  appearance: "none",
+  _hover: { shadow: "md" },
+  _selected: { borderColor: "colorPalette.border" },
+});
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -57,6 +56,7 @@ function formatSize(bytes: number): string {
   <button
     type="button"
     :data-entry-id="entry.id"
+    :data-selected="isSelected || undefined"
     draggable="true"
     :class="rootClass"
     @click.stop="emit('click', $event)"

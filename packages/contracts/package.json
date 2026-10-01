@@ -19,17 +19,17 @@
     "typecheck": "pnpm run check-types"
   },
   "dependencies": {
-    "@tanstack/vue-query": "^5.103.1",
+    "@tanstack/vue-query": "^5.104.0",
     "ofetch": "^1.5.1",
     "valibot": "^1.5.0"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "bumpp": "^12.3.0",
     "tsdown": "^0.23.0",
     "typescript": "6.0.3",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.3"
   },
   "files": [
     "dist"

@@ -30,6 +30,7 @@ function getConnectionStatusLabel(status: ShowConnectionStatus) {
 }
 
 const labelClass = css({ ml: "1" });
+const indicatorClass = css({ cursor: "default", _hover: { bg: "transparent" } });
 </script>
 
 <template>
@@ -38,7 +39,7 @@ const labelClass = css({ ml: "1" });
          button keeps firing pointer events and the tooltip stays usable. -->
     <button
       type="button"
-      :class="cx(button({ variant: 'ghost' }), css({ cursor: 'default', _hover: { bg: 'transparent' } }))"
+      :class="cx(button({ variant: 'ghost' }), indicatorClass)"
       aria-disabled="true"
     >
       <Wifi v-if="realtimeStore.connectionStatus === ShowConnectionStatus.Connected" :size="16" aria-hidden />

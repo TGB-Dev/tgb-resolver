@@ -3,6 +3,7 @@ import { Tabs } from "@ark-ui/vue";
 import { Lock, Logs } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { tabs } from "@styled-system/recipes";
+import { useTemplateRef } from "vue";
 
 import { useControlEditMainPanelStore } from "@/features/control/control-edit-main-panel-store";
 import ControlMainAuthTab from "@/features/control/panels/main/tabs/control-main-auth-tab.vue";
@@ -10,6 +11,13 @@ import ControlMainCueTab from "@/features/control/panels/main/tabs/control-main-
 
 const panelStore = useControlEditMainPanelStore();
 const tabClasses = tabs({ variant: "line", size: "sm" });
+const cueTrigger = useTemplateRef<HTMLElement>("cueTrigger");
+
+function focusDefaultTab(): void {
+  cueTrigger.value?.focus();
+}
+
+defineExpose({ focusDefaultTab });
 </script>
 
 <template>
@@ -30,7 +38,7 @@ const tabClasses = tabs({ variant: "line", size: "sm" });
     defaultValue="cue"
   >
     <Tabs.List :class="tabClasses.list">
-      <Tabs.Trigger value="cue" :class="tabClasses.trigger">
+      <Tabs.Trigger value="cue" ref="cueTrigger" :class="tabClasses.trigger">
         <Logs :size="16" aria-hidden />
         Cue
       </Tabs.Trigger>

@@ -100,6 +100,8 @@ function onCodePaste(event: ClipboardEvent) {
   event.preventDefault();
   const candidate = sanitizePastedCode(text);
   code.value = candidate;
+  const el = event.target as HTMLInputElement;
+  if (el.value !== candidate) el.value = candidate;
   error.value = null;
   if (candidate.length === JOIN_CODE_LENGTH) {
     void submit(candidate);

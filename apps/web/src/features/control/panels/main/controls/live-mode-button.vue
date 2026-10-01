@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { Pen, Radio } from "@lucide/vue";
-import { css, cx } from "@styled-system/css";
+import { cva, cx } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import { computed } from "vue";
-
 import { useControlCanMutate, useControlIsLive, useToggleLiveModeMutation } from "@/features/control/composables/use-show";
 import Tooltip from "@/features/shared/ui/tooltip.vue";
 
@@ -19,18 +18,23 @@ function handleToggle() {
   if (blocked.value) return;
   toggleLiveMode.mutate();
 }
+
+const buttonClass = cva({
+  base: {
+    w: "48",
+    _disabled: { opacity: 0.5, cursor: "not-allowed", _hover: { bg: "transparent" } },
+  },
+  variants: {
+    live: { true: { colorPalette: "red" } },
+  },
+});
 </script>
 
 <template>
   <Tooltip :content="isLive ? 'Switch to Edit Mode' : 'Switch to Live Mode'">
     <button
       type="button"
-      :class="
-        cx(
-          button({ variant: isLive ? 'solid' : 'outline' }),
-          css({ w: '48', colorPalette: isLive ? 'red' : undefined, _disabled: { opacity: 0.5, cursor: 'not-allowed', _hover: { bg: 'transparent' } } }),
-        )
-      "
+      :class="cx(button({ variant: isLive ? 'solid' : 'outline' }), buttonClass({ live: isLive }))"
       :aria-disabled="blocked || undefined"
       @click="handleToggle"
     >

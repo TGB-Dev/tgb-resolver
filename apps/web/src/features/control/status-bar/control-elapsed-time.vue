@@ -18,6 +18,11 @@ function formatElapsed(ms: number): string {
 }
 
 const isStarted = computed(() => playbackStore.state.startedAt != null);
+const timeClass = css({
+  fontSize: "3xl",
+  opacity: 0.5,
+  '&[data-started="true"]': { opacity: 1 },
+});
 const elapsedText = computed(() => {
   const startedAt = playbackStore.state.startedAt;
   const elapsedMs = startedAt != null ? controlNowStore.now - startedAt : 0;
@@ -26,7 +31,7 @@ const elapsedText = computed(() => {
 </script>
 
 <template>
-  <span :class="cx(monoTextCss, css({ fontSize: '3xl', opacity: isStarted ? 1 : 0.5 }))">
+  <span :data-started="isStarted" :class="cx(monoTextCss, timeClass)">
     T+{{ elapsedText }}
   </span>
 </template>

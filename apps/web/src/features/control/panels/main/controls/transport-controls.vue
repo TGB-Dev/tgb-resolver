@@ -67,6 +67,7 @@ const nextAction = useAction({
 });
 
 const iconButtonClass = cx(button(), iconButton());
+const dividerClass = css({ h: "6", mx: 1 });
 </script>
 
 <template>
@@ -109,5 +110,5 @@ const iconButtonClass = cx(button(), iconButton());
     <ChevronRight :size="16" aria-hidden />
   </button>
 
-  <div :class="[css({ h: '6' }), css({ mx: 1 })]" aria-hidden />
+  <div :class="dividerClass" aria-hidden />
 </template>

@@ -93,6 +93,14 @@ test("pasting a code with a dash fills the normalized code and joins", async () 
   expect(wrapper.text()).toContain("brave-fox");
 });
 
+test("pasting a code updates the visible input value", async () => {
+  const wrapper = mount(JoinScreen);
+  await wrapper.find("input").trigger("paste", {
+    clipboardData: { getData: () => "ab-12" },
+  });
+  expect((wrapper.find("input").element as HTMLInputElement).value).toBe("AB12");
+});
+
 test("successful join waits for Continue before authenticating", async () => {
   window.history.replaceState(null, "", "/?join=ab12cd");
   const wrapper = mount(JoinScreen);

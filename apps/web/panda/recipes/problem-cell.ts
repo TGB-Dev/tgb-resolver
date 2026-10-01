@@ -123,6 +123,9 @@ export const problemCellSlotRecipe = defineSlotRecipe({
         },
       },
     },
+    big: {
+      true: { verdict: { fontSize: "md" } },
+    },
   },
   defaultVariants: { verdict: "pending", blink: "none" },
 });

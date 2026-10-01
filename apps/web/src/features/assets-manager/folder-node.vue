@@ -8,6 +8,7 @@ import { toaster } from "@/features/shared/ui/toaster";
 
 import { INTERNAL_DRAG_MIME, useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
+import { folderNodeClass } from "./folder-node-recipe";
 import type { FsEntry } from "./types";
 
 const props = defineProps<{
@@ -27,26 +28,6 @@ const interactionStore = useAssetsInteractionStore();
 const isExpanded = computed(() => store.expandedFolderIds.has(props.node.id));
 const isSelected = computed(() => store.selectedEntryId === props.node.id);
 const isDropTarget = computed(() => interactionStore.dropTargetId === props.node.id);
-
-const nodeClass = computed(() =>
-  css({
-    display: "flex",
-    alignItems: "center",
-    gap: "2",
-    w: "full",
-    px: "2",
-    py: "1.5",
-    fontSize: "sm",
-    fontWeight: "normal",
-    cursor: "pointer",
-    borderLeftWidth: 3,
-    borderLeftStyle: "solid",
-    borderLeftColor: isDropTarget.value || isSelected.value ? "colorPalette.border" : "transparent",
-    bg: isDropTarget.value || isSelected.value ? "bg.muted" : undefined,
-    color: isSelected.value ? "colorPalette" : undefined,
-    _hover: { bg: isDropTarget.value || isSelected.value ? "bg.muted" : "bg.subtle" },
-  }),
-);
 
 function handleDropError(error: unknown): void {
   toaster.create({
@@ -76,7 +57,7 @@ function handleClick() {
   <div>
     <button
       type="button"
-      :class="nodeClass"
+      :class="folderNodeClass({ selected: isSelected, dropTarget: isDropTarget })"
       draggable="true"
       @click="handleClick"
       @contextmenu.stop.prevent="emit('contextmenu', $event, { id: node.id, name: node.name, isDirectory: true })"

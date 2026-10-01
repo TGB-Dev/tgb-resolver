@@ -16,14 +16,12 @@ const isProd = process.env.NODE_ENV === "production";
 
 export default defineConfig({
   // General config
-  presets: ["@chakra-ui/panda-preset"],
+  presets: ["@pandacss/preset-base", "@pandacss/preset-panda", "@chakra-ui/panda-preset"],
   preflight: true,
   include: ["./src/**/*.{js,jsx,ts,tsx,vue}"],
   jsxFactory: "panda",
   jsxFramework: "vue",
   outdir: "styled-system",
-  lightningcss: true,
-  browserslist: ["baseline widely available", "defaults"],
 
   // Theme
   globalCss: {

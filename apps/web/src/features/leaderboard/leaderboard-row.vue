@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { css } from "@styled-system/css";
+import { cva } from "@styled-system/css";
 import type { LeaderboardEntry } from "@tgb-resolver/realtime";
 import { computed } from "vue";
 
@@ -38,23 +38,40 @@ function isLatestResolved(problemId: number): boolean {
 // TransitionGroup FLIP on rank swaps and is only enabled via `flip` in the
 // unvirtualized path: in virtual mode the inline virtual translate changes
 // every scroll frame, and a transform transition would make rows trail.
-const rowClass = computed(() =>
-  css({
+const rowClass = cva({
+  base: {
     position: "relative",
-    zIndex: props.isCurrentResolved ? 5 : 0,
-    height: leaderboardStore.isBigScreen ? "19" : "11",
-    backgroundColor: props.isCurrentResolved
-      ? { base: "yellow.300", _dark: "yellow.700" }
-      : "bg",
-    transitionProperty: props.flip ? "transform, background-color" : "background-color",
-    transitionDuration: props.flip ? "0.8s, 0.15s" : "0.15s",
+    zIndex: 0,
+    height: "11",
+    backgroundColor: "bg",
+    transitionProperty: "background-color",
+    transitionDuration: "0.15s",
     transitionTimingFunction: "inOutQuad",
-  }),
-);
+  },
+  variants: {
+    current: {
+      true: {
+        zIndex: 5,
+        backgroundColor: "yellow.300",
+        _dark: { backgroundColor: "yellow.700" },
+      },
+    },
+    big: { true: { height: "19" } },
+    flip: {
+      true: {
+        transitionProperty: "transform, background-color",
+        transitionDuration: "0.8s, 0.15s",
+      },
+    },
+  },
+});
 </script>
 
 <template>
-  <tr :data-user-id="data.userId" :class="rowClass">
+  <tr
+    :data-user-id="data.userId"
+    :class="rowClass({ current: isCurrentResolved, big: leaderboardStore.isBigScreen, flip: flip })"
+  >
     <RankCell :rank="data.rank" />
 
     <UsernameCell :real-name="data.realName" :username="data.username" />
