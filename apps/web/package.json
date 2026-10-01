@@ -57,9 +57,9 @@
   },
   "devDependencies": {
     "@pandacss/dev": "^2.0.0",
-    "@pandacss/preset-base": "2.0.0",
-    "@pandacss/preset-panda": "2.0.0",
-    "@pandacss/vite": "2.0.0",
+    "@pandacss/preset-base": "^2.0.0",
+    "@pandacss/preset-panda": "^2.0.0",
+    "@pandacss/vite": "^2.0.0",
     "@playwright/test": "^1.63.0",
     "@tanstack/devtools-vite": "^0.8.5",
     "@tanstack/vue-devtools": "^0.2.27",
