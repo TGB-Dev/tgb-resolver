@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Editable } from "@ark-ui/vue";
-import { css, cx } from "@styled-system/css";
+import { css, cva, cx } from "@styled-system/css";
 import { editable } from "@styled-system/recipes";
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -44,16 +44,24 @@ const editableClasses = editable();
 // column edge (breaks end-alignment vs the header).
 // `minW: 0` lets the flex item shrink below its content width, otherwise a
 // long value overflows the column once the input mounts.
-const areaClass = computed(() =>
-  css({
+const areaClass = cva({
+  base: {
     w: "full",
     flex: "1",
     minW: 0,
     minH: "6",
-    textAlign: props.textAlign,
-    fontFamily: props.fontFamily,
-  }),
-);
+  },
+  variants: {
+    align: {
+      start: { textAlign: "start" },
+      end: { textAlign: "end" },
+    },
+    font: {
+      mono: { fontFamily: "mono" },
+    },
+  },
+  defaultVariants: { align: "start" },
+});
 // Matching `minH` on the input keeps the editing state pinned to the same box
 // as the preview instead of floating vertically centered.
 const fieldClass = css({
@@ -70,6 +78,8 @@ const fieldClass = css({
 // (the text becomes an anonymous flex item pinned to flex-start). Force block
 // so end-alignment applies, matching React's plain-box non-editing state.
 const previewClass = css({ display: "block" });
+const rootClass = css({ w: "full", alignItems: "flex-start" });
+const inputBgClass = css({ bg: "bg.panel" });
 
 function handleValueChange(details: { value: string }) {
   draft.value = details.value;
@@ -90,18 +100,18 @@ function handleValueCommit(details: { value: string }) {
     submit-mode="both"
     :model-value="draft"
     :placeholder="placeholder"
-    :class="cx(editableClasses.root, css({ w: 'full', alignItems: 'flex-start' }))"
+    :class="cx(editableClasses.root, rootClass)"
     @value-change="handleValueChange"
     @value-commit="handleValueCommit"
     @dblclick.stop="() => {
       // stop propagation to the parent
     }"
   >
-    <Editable.Area :class="cx(editableClasses.area, areaClass)">
+    <Editable.Area :class="cx(editableClasses.area, areaClass({ align: textAlign, font: fontFamily === 'mono' ? 'mono' : undefined }))">
       <Editable.Preview :class="cx(editableClasses.preview, fieldClass, previewClass)">
         {{ displayValue ?? value }}
       </Editable.Preview>
-      <Editable.Input :class="cx(editableClasses.input, fieldClass, css({ bg: 'bg.panel' }))" />
+      <Editable.Input :class="cx(editableClasses.input, fieldClass, inputBgClass)" />
     </Editable.Area>
   </Editable.Root>
 </template>

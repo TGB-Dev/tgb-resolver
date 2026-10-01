@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, GripVertical } from "@lucide/vue";
-import { css, cx } from "@styled-system/css";
+import { css, cva, cx } from "@styled-system/css";
 import { button, gridTableRow, iconButton } from "@styled-system/recipes";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
@@ -50,21 +50,27 @@ const hoverRevealCss = css({
 
 const isReorderable = computed(() => props.payload.type === TimelineEventType.CUS && !props.isLive);
 
-const grabClass = css({
-  color: "fg.muted",
-  p: 0,
-  cursor: "not-allowed",
-  "&[data-reorderable=\"true\"]": {
-    cursor: "grab",
-    _active: { cursor: "grabbing" },
+const grabClass = cva({
+  base: {
+    color: { base: "fg.muted", _hover: "fg" },
+    p: 0,
+    cursor: "not-allowed",
+    _disabled: { cursor: "not-allowed", color: "fg.muted" },
   },
-  _hover: { color: "fg" },
-  _disabled: { cursor: "not-allowed", color: "fg.muted" },
+  variants: {
+    reorderable: {
+      true: {
+        cursor: "grab",
+        _active: { cursor: "grabbing" },
+      },
+    },
+  },
 });
 
 const templateColumns = computed(() =>
   props.isLive ? timelineTableGridTemplateColumnsStatic : timelineTableGridTemplateColumns,
 );
+const monoEndClass = css({ textAlign: "end", fontFamily: "mono" });
 
 const type = computed(() =>
   props.payload.type === TimelineEventType.CUS
@@ -108,7 +114,6 @@ function handleDoubleClick() {
       )
     "
     :data-event-id="payload.id"
-    :data-current="isLive || undefined"
     @contextmenu="emit('contextmenu', $event, payload)"
     @dblclick="handleDoubleClick"
   >
@@ -147,21 +152,21 @@ function handleDoubleClick() {
         </template>
       </div>
 
-      <div :class="css({ textAlign: 'end', fontFamily: 'mono' })">
+      <div :class="monoEndClass">
         {{ payload.newTotalScore ?? "" }}
       </div>
 
-      <div :class="css({ textAlign: 'end', fontFamily: 'mono' })">
+      <div :class="monoEndClass">
         {{ payload.newRank ?? "" }}
       </div>
 
       <TimelineNumberEditable v-if="!isLive" :payload="payload" field="durationSeconds" />
-      <div v-else :class="css({ textAlign: 'end', fontFamily: 'mono' })">
+      <div v-else :class="monoEndClass">
         {{ payload.durationSeconds ?? "" }}
       </div>
 
       <TimelineNumberEditable v-if="!isLive" :payload="payload" field="triggerOffsetSeconds" />
-      <div v-else :class="css({ textAlign: 'end', fontFamily: 'mono' })">
+      <div v-else :class="monoEndClass">
         {{
           payload.triggerOffsetSeconds != null && payload.triggerOffsetSeconds > 0
             ? `+${payload.triggerOffsetSeconds}`
@@ -193,8 +198,7 @@ function handleDoubleClick() {
             data-drag-handle
             aria-label="Drag to reorder event"
             :disabled="!isReorderable"
-            :data-reorderable="isReorderable"
-            :class="cx(button({ variant: 'ghost', size: '2xs' }), iconButton(), grabClass)"
+            :class="cx(button({ variant: 'ghost', size: '2xs' }), iconButton(), grabClass({ reorderable: isReorderable }))"
           >
             <GripVertical :size="14" aria-hidden />
           </button>

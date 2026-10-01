@@ -57,7 +57,7 @@ const row = css({
   paddingY: "2.5",
   paddingX: "3",
   borderRadius: "l2",
-  _hover: { bg: "bg.muted" },
+  bg: { _hover: "bg.muted" },
 });
 
 const info = css({ display: "flex", alignItems: "center", gap: "2", minW: 0 });

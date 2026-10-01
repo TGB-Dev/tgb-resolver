@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Dialog } from "@ark-ui/vue";
-import { css, cx } from "@styled-system/css";
+import { css, cva, cx } from "@styled-system/css";
 import { button, dialog, field, input } from "@styled-system/recipes";
 import { nextTick, useTemplateRef, watch } from "vue";
 
@@ -19,9 +19,11 @@ const message = css({ color: "fg.muted", fontSize: "sm" });
 const actions = css({ display: "flex", justifyContent: "flex-end", gap: "3" });
 
 const inputRef = useTemplateRef<HTMLInputElement>("inputRef");
-const confirmClass = css({
-  colorPalette: "red",
-  '&[data-input="true"]': { colorPalette: "blue" },
+const confirmClass = cva({
+  base: { colorPalette: "red" },
+  variants: {
+    input: { true: { colorPalette: "blue" }, false: {} },
+  },
 });
 
 watch(
@@ -73,8 +75,7 @@ watch(
             </button>
             <button
               type="button"
-              :class="cx(button(), confirmClass)"
-              :data-input="store.showInput"
+              :class="cx(button(), confirmClass({ input: store.showInput }))"
               @click="store.resolveConfirmAction(true)"
             >
               {{ store.confirmLabel }}

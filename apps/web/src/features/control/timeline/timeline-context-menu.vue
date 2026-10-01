@@ -38,7 +38,10 @@ const itemClass = cx(
     borderRadius: "none",
   }),
 );
-const deleteItemClass = css({ color: "fg.error", _hover: { bg: "bg.error", color: "fg.error" } });
+const deleteItemClass = css({
+  color: { base: "fg.error", _hover: "fg.error" },
+  bg: { _hover: "bg.error" },
+});
 
 function edit() {
   emit("close");

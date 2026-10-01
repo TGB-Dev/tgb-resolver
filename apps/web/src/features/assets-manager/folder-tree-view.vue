@@ -8,6 +8,7 @@ import { useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import ContextMenuOverlay from "./context-menu-overlay.vue";
 import FolderNode from "./folder-node.vue";
+import { folderNodeClass } from "./folder-node-recipe";
 import { useEntryContextMenu } from "./use-entry-context-menu";
 
 const store = useAssetsManagerStore();
@@ -17,26 +18,6 @@ const contextMenu = useEntryContextMenu();
 const isAllAssetsSelected = computed(() => store.selectedEntryId === null);
 const isAllAssetsDropTarget = computed(
   () => interactionStore.dropTargetId === null && interactionStore.dragState !== null,
-);
-
-const allAssetsClass = computed(() =>
-  css({
-    display: "flex",
-    alignItems: "center",
-    gap: "2",
-    w: "full",
-    px: "2",
-    py: "1.5",
-    fontSize: "sm",
-    fontWeight: "normal",
-    cursor: "pointer",
-    borderLeftWidth: 3,
-    borderLeftStyle: "solid",
-    borderLeftColor: isAllAssetsDropTarget.value || isAllAssetsSelected.value ? "colorPalette.border" : "transparent",
-    bg: isAllAssetsDropTarget.value || isAllAssetsSelected.value ? "bg.muted" : undefined,
-    color: isAllAssetsSelected.value ? "colorPalette" : undefined,
-    _hover: { bg: isAllAssetsDropTarget.value || isAllAssetsSelected.value ? "bg.muted" : "bg.subtle" },
-  }),
 );
 
 function handleContextMenu(
@@ -89,7 +70,7 @@ function handleContextMenu(
         void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
       }"
     >
-      <button type="button" :class="allAssetsClass" @click="() => { store.focusedPanel = 'tree'; store.selectEntry(null); }">
+      <button type="button" :class="folderNodeClass({ selected: isAllAssetsSelected, dropTarget: isAllAssetsDropTarget })" @click="() => { store.focusedPanel = 'tree'; store.selectEntry(null); }">
         <Folder :size="14" aria-hidden />
         <span>All Assets</span>
       </button>

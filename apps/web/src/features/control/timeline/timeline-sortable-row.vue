@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSortable } from "@dnd-kit/vue/sortable";
-import { css, cx } from "@styled-system/css";
+import { css, cva, cx } from "@styled-system/css";
 import { TimelineEventType } from "@tgb-resolver/contracts";
 import type { TimelineTableItem } from "@tgb-resolver/realtime";
 import { computed, useTemplateRef } from "vue";
@@ -42,15 +42,17 @@ const sortable = props.isLive
     });
 
 const wrapperClass = css({ position: "relative", userSelect: "none" });
-const stripeClass = css({ bg: "bg", '&[data-striped="true"]': { bg: "bg.emphasized" } });
+const stripeClass = cva({
+  base: { bg: "bg" },
+  variants: { striped: { true: { bg: "bg.emphasized" } } },
+});
 </script>
 
 <template>
   <div
     ref="row"
     class="group"
-    :class="cx(wrapperClass, stripeClass)"
-    :data-striped="striped"
+    :class="cx(wrapperClass, stripeClass({ striped: striped }))"
     data-timeline-row
     :data-dragging="sortable?.isDragging.value || undefined"
   >

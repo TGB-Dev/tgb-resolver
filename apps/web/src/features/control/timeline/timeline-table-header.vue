@@ -35,13 +35,14 @@ const typeTooltipItems = computed(() => [
 ]);
 
 const rowClasses = cx(gridTableRow(), css({ bg: "bg.subtle", py: "2" }));
+const endClass = css({ textAlign: "end" });
 const listClasses = dataList();
 </script>
 
 <template>
   <div :class="rowClasses" :style="{ gridTemplateColumns: templateColumns }">
     <Tooltip content="Event ID" :openDelay="0">
-      <div :class="css({ textAlign: 'end' })">No.</div>
+      <div :class="endClass">No.</div>
     </Tooltip>
 
     <Tooltip :openDelay="0">
@@ -65,22 +66,22 @@ const listClasses = dataList();
     </Tooltip>
 
     <Tooltip content="New total team score after this resolve event." :openDelay="0">
-      <div :class="css({ textAlign: 'end' })">NScore</div>
+      <div :class="endClass">NScore</div>
     </Tooltip>
 
     <Tooltip content="New rank after this resolve event." :openDelay="0">
-      <div :class="css({ textAlign: 'end' })">NRank</div>
+      <div :class="endClass">NRank</div>
     </Tooltip>
 
     <Tooltip content="Duration in seconds. Cannot be negative." :openDelay="0">
-      <div :class="css({ textAlign: 'end' })">Dur.</div>
+      <div :class="endClass">Dur.</div>
     </Tooltip>
 
     <Tooltip
       content="Trigger offset from the start of previous event in seconds. Can be negative."
       :openDelay="0"
     >
-      <div :class="css({ textAlign: 'end' })">Trig. Off.</div>
+      <div :class="endClass">Trig. Off.</div>
     </Tooltip>
 
     <Tooltip content="Whether this event requires manual interaction to proceed." :openDelay="0">

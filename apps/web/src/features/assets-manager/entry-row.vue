@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { File, Folder } from "@lucide/vue";
-import { css } from "@styled-system/css";
-import { computed } from "vue";
+import { css, cva } from "@styled-system/css";
 
 import type { FsEntry } from "./types";
 
@@ -20,13 +19,11 @@ const emit = defineEmits<{
   drop: [event: DragEvent];
 }>();
 
-const rootClass = computed(() =>
-  css({
+const rootClass = cva({
+  base: {
     display: "grid",
     gridTemplateColumns: "1fr 120px 100px",
     gap: 0,
-    px: 4,
-    py: 1.5,
     fontSize: "sm",
     cursor: "pointer",
     w: "full",
@@ -36,11 +33,18 @@ const rootClass = computed(() =>
     fontFamily: "inherit",
     color: "inherit",
     borderLeftWidth: 3,
-    borderLeftColor: props.isSelected ? "colorPalette.border" : "transparent",
-    bg: props.isSelected ? "bg.muted" : "bg.panel",
-    _hover: { bg: "bg.subtle" },
-  }),
-);
+    borderLeftColor: "transparent",
+    bg: { base: "bg.panel", _hover: "bg.subtle" },
+  },
+  variants: {
+    selected: {
+      true: {
+        borderLeftColor: "colorPalette.border",
+        bg: { base: "bg.muted", _hover: "bg.subtle" },
+      },
+    },
+  },
+});
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -54,7 +58,7 @@ function formatSize(bytes: number): string {
     type="button"
     :data-entry-id="entry.id"
     draggable="true"
-    :class="rootClass"
+    :class="rootClass({ selected: isSelected })"
     @click.stop="emit('click', $event)"
     @dblclick.stop="emit('dblclick')"
     @contextmenu.stop="emit('contextmenu', $event)"

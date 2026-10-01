@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { css, cx } from "@styled-system/css";
+import { css, cva, cx } from "@styled-system/css";
 import { table } from "@styled-system/recipes";
 import type { ProblemDefinition } from "@tgb-resolver/realtime";
 import { storeToRefs } from "pinia";
@@ -15,32 +15,36 @@ const classes = computed(() =>
   table({ size: isBigScreen.value ? "lg" : "sm", variant: "line", stickyHeader: true }),
 );
 
-const tableClass = css({
-  borderCollapse: "collapse",
-  borderSpacing: 0,
-  "&[data-big=\"true\"]": { fontSize: "2xl", lineHeight: "tall" },
+const tableClass = cva({
+  base: { borderCollapse: "collapse", borderSpacing: 0 },
+  variants: { big: { true: { fontSize: "2xl", lineHeight: "tall" } } },
+});
+const headerCellClass = css({ borderBottomWidth: 2, borderBottomColor: "border" });
+const headerCellEndClass = css({
+  textAlign: "end",
+  borderBottomWidth: 2,
+  borderBottomColor: "border",
 });
 </script>
 
 <template>
   <div :style="totalSize != null ? { height: `${totalSize}px` } : undefined">
     <table
-      :data-big="isBigScreen"
-      :class="cx(classes.root, tableClass)"
+      :class="cx(classes.root, tableClass({ big: isBigScreen }))"
     >
     <thead :class="cx(classes.header, css({ position: 'relative', zIndex: 999 }))">
       <tr :class="classes.row">
-        <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
+        <th :class="cx(classes.columnHeader, headerCellEndClass)">
           Rank
         </th>
-        <th :class="cx(classes.columnHeader, css({ borderBottomWidth: 2, borderBottomColor: 'border' }))">
+        <th :class="cx(classes.columnHeader, headerCellClass)">
           User
         </th>
 
         <th
           v-for="problem in problems"
           :key="problem.id"
-          :class="cx(classes.columnHeader, css({ borderBottomWidth: 2, borderBottomColor: 'border' }))"
+          :class="cx(classes.columnHeader, headerCellClass)"
           :style="{ width: isBigScreen ? '14rem' : '8ch', height: '2rem' }"
         >
           <div
@@ -59,13 +63,13 @@ const tableClass = css({
           </div>
         </th>
 
-        <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
+        <th :class="cx(classes.columnHeader, headerCellEndClass)">
           Score
         </th>
-        <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
+        <th :class="cx(classes.columnHeader, headerCellEndClass)">
           Penalty
         </th>
-        <th :class="cx(classes.columnHeader, css({ textAlign: 'end', borderBottomWidth: 2, borderBottomColor: 'border' }))">
+        <th :class="cx(classes.columnHeader, headerCellEndClass)">
           Time
         </th>
       </tr>

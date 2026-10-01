@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { css, cx } from "@styled-system/css";
+import { css, cva, cx } from "@styled-system/css";
 import { button } from "@styled-system/recipes";
 import type { Component } from "vue";
 
@@ -23,13 +23,24 @@ const itemClass = cx(
     borderRadius: "none",
   }),
 );
-const dangerItemClass = css({ color: "fg.error", _hover: { bg: "bg.error", color: "fg.error" } });
+const stateClass = cva({
+  base: {},
+  variants: {
+    danger: {
+      true: {
+        color: { base: "fg.error", _hover: "fg.error" },
+        bg: { _hover: "bg.error" },
+      },
+    },
+    disabled: { true: { opacity: 0.5, cursor: "not-allowed" } },
+  },
+});
 </script>
 
 <template>
   <button
     type="button"
-    :class="[itemClass, danger ? dangerItemClass : '', disabled ? css({ opacity: 0.5, cursor: 'not-allowed' }) : '']"
+    :class="cx(itemClass, stateClass({ danger: danger, disabled: disabled }))"
     :disabled="disabled"
   >
     <component :is="icon" v-if="icon" :size="16" aria-hidden />

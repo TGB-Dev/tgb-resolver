@@ -73,15 +73,15 @@ const classes = computed(() => {
   return problemCell({
     verdict: VERDICT_VARIANT[props.problem.verdict] ?? "pending",
     blink: tone ?? "none",
+    big: isBigScreen.value,
   });
 });
 
 const isUnknown = computed(() => props.problem.verdict === VerdictRunResult.UNKNOWN);
 const score = computed(() => (isUnknown.value ? " " : props.problem.score));
 
-const verdictClass = computed(() =>
-  cx(classes.value.verdict, isBigScreen.value ? css({ fontSize: "md" }) : undefined),
-);
+const scoreLinesCss = css({ lineHeight: "[1.3]", whiteSpaceCollapse: "preserve" });
+const verdictLinesCss = css({ lineHeight: "[1.2]", whiteSpaceCollapse: "preserve" });
 </script>
 
 <template>
@@ -97,10 +97,10 @@ const verdictClass = computed(() =>
     "
   >
     <div :class="classes.root">
-      <div :class="classes.score" :style="{ lineHeight: '1.3', whiteSpaceCollapse: 'preserve' }">
+      <div :class="cx(classes.score, scoreLinesCss)">
         {{ score }}
       </div>
-      <div :class="verdictClass" :style="{ lineHeight: '1.2', whiteSpaceCollapse: 'preserve' }">
+      <div :class="cx(classes.verdict, verdictLinesCss)">
         {{ verdictShortCode(problem.verdict) }}
       </div>
     </div>
