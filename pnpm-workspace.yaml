@@ -3,18 +3,11 @@ packages:
   - "packages/*"
 
 allowBuilds:
-  better-sqlite3: true
-  "@swc/core": true
-  core-js: true
   esbuild: true
-  msgpackr-extract: true
   xxhash-addon: true
   sharp: true
   vue-demi: true
   '@bufbuild/buf': true
 
 blockExoticSubdeps: false
-
-minimumReleaseAgeExclude:
-  - '@tgb-form/core@0.0.5'
-  - '@tgb-form/vue@0.0.5'
+autoDedupe: true
