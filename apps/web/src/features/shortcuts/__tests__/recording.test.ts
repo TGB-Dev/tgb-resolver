@@ -14,8 +14,11 @@ function commandById(id: string) {
 }
 
 function pressKey(key: string, mods: KeyboardEventInit = {}) {
+  // The recorder captures physical chords (`event.code`); a synthetic event
+  // without one is rejected as missing-code, which no browser ever produces.
+  const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;
   document.dispatchEvent(
-    new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...mods }),
+    new KeyboardEvent("keydown", { key, code, bubbles: true, cancelable: true, ...mods }),
   );
 }
 
@@ -74,7 +77,8 @@ describe("shortcuts overlay row recording", () => {
     await wrapper.vm.$nextTick();
 
     expect(store.isCustomized("timeline-jump-top")).toBe(true);
-    expect(store.getSequence("timeline-jump-top")).toEqual(["K", "K"]);
+    // Physical-chord format: the recorder captures by `event.code`.
+    expect(store.getSequence("timeline-jump-top")).toEqual(["[KeyK]", "[KeyK]"]);
   });
 
   it("does not treat the default as customized", () => {
