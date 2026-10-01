@@ -70,6 +70,24 @@ function isSeekable(): boolean {
   return connected && seekable;
 }
 
+// Mirror the mouse transport buttons (`transport-controls.vue` disables both
+// buttons while a seek is pending): key auto-repeat outpaces the playback
+// state update, so without this every repeat re-seeks the same boundary item.
+let seekInFlight = false;
+
+function requestSeek(eventId: number): void {
+  if (seekInFlight) return;
+  const playback = usePlaybackStore();
+  if (!isSeekable()) return;
+  seekInFlight = true;
+  void seekPlayback({
+    client: generatedClient,
+    body: { showVersion: playback.state.showVersion, eventId },
+  }).finally(() => {
+    seekInFlight = false;
+  });
+}
+
 function seekRelative(delta: 1 | -1): void {
   const showStore = useShowStore();
   const playback = usePlaybackStore();
@@ -81,11 +99,7 @@ function seekRelative(delta: 1 | -1): void {
   if (!target) return;
   // Mirror the mouse transport buttons: only seek once the show is playing or
   // paused, never on an idle show.
-  if (!isSeekable()) return;
-  void seekPlayback({
-    client: generatedClient,
-    body: { showVersion: playback.state.showVersion, eventId: target.id },
-  });
+  requestSeek(target.id);
 }
 
 const playToggle: HotkeyCallback = () => {
@@ -156,11 +170,7 @@ function transportSeek(delta: 1 | -1): void {
   if (!target) return;
   // Mirror the mouse transport buttons: only seek once the show is playing or
   // paused, never on an idle show.
-  if (!isSeekable()) return;
-  void seekPlayback({
-    client: generatedClient,
-    body: { showVersion: playback.state.showVersion, eventId: target.id },
-  });
+  requestSeek(target.id);
 }
 
 const transportPrev: HotkeyCallback = () => transportSeek(-1);
