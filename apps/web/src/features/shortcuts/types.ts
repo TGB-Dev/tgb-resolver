@@ -1,9 +1,4 @@
-import type {
-  ConflictBehavior,
-  HotkeyCallback,
-  HotkeySequence,
-  RegisterableHotkey,
-} from "@tanstack/vue-hotkeys";
+import type { ConflictBehavior, HotkeySequence, RegisterableHotkey } from "@tanstack/vue-hotkeys";
 
 /**
  * A named group of commands. Scopes gate whether a command's hotkey is
@@ -50,6 +45,7 @@ export type CommandBinding =
  */
 export type CommandId =
   | "open-shortcuts"
+  | "open-command-palette"
   | "toggle-color-mode"
   | "toggle-fullscreen"
   | "play-toggle"
@@ -89,6 +85,10 @@ export interface CommandDefinition {
   defaultBinding: CommandBinding;
   /** Per-command conflict policy. Defaults to `warn` at registration time. */
   conflictBehavior?: ConflictBehavior;
-  /** The action performed when the binding fires. */
-  handler: HotkeyCallback;
+  /**
+   * The action performed when the binding fires. Takes no arguments so the
+   * command palette can invoke commands directly; none of the registered
+   * handlers use the keyboard event.
+   */
+  handler: () => void;
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CommandPalette from "./command-palette.vue";
 import ShortcutsOverlay from "./shortcuts-overlay.vue";
 import { useRouteScopes } from "./use-route-scopes";
 import { useShortcutsRegistration } from "./use-shortcuts";
@@ -13,4 +14,5 @@ useShortcutsRegistration();
 
 <template>
   <ShortcutsOverlay />
+  <CommandPalette />
 </template>

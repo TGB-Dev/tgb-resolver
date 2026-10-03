@@ -12,7 +12,9 @@ defineProps<{ problems?: ProblemDefinition[]; totalSize?: number }>();
 const { isBigScreen } = storeToRefs(useLeaderboardStore());
 
 const classes = computed(() =>
-  table({ size: isBigScreen.value ? "lg" : "sm", variant: "line", stickyHeader: true }),
+  isBigScreen.value
+    ? table({ size: "lg", variant: "line", stickyHeader: true })
+    : table({ size: "sm", variant: "line", stickyHeader: true }),
 );
 
 const tableClass = cva({

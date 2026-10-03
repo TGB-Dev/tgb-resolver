@@ -1,5 +1,6 @@
 import type { HotkeysProviderOptions } from "@tanstack/vue-hotkeys";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/vue-query";
+import { createPinia } from "pinia";
 
 import { isAuthError, useAuthStore } from "@/stores/auth-store";
 
@@ -8,6 +9,8 @@ function handleCacheError(error: unknown) {
     useAuthStore().markExpired();
   }
 }
+
+export const pinia = createPinia();
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({

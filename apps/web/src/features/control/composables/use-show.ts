@@ -28,7 +28,7 @@ import {
   vImportXmlRequestWritable,
 } from "@tgb-resolver/contracts";
 import { FILE_EXTENSION, type ShowFile, type TimelineTableItem } from "@tgb-resolver/realtime";
-import { Effect, Schedule } from "effect";
+import { Effect } from "effect";
 import * as v from "valibot";
 import { type ComputedRef, computed } from "vue";
 
@@ -86,12 +86,10 @@ function withRetry<T>(queryClient: QueryClient, fn: () => Promise<T>): Promise<T
   );
 
   return Effect.runPromise(
-    Effect.retry(
-      runMutation,
-      Schedule.recurWhile((error: unknown) => is409Error(error)).pipe(
-        Schedule.intersect(Schedule.once),
-      ),
-    ),
+    Effect.retry(runMutation, {
+      while: (error) => is409Error(error),
+      times: 1,
+    }),
   );
 }
 
