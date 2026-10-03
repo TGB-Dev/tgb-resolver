@@ -9,7 +9,7 @@ import { toaster } from "@/features/shared/ui/toaster";
 import { INTERNAL_DRAG_MIME, useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import { folderNodeClass } from "./folder-node-recipe";
-import type { FsEntry } from "./types";
+import { DropEffect, FocusedPanel, type FsEntry } from "./types";
 
 const props = defineProps<{
   node: FsEntry;
@@ -24,6 +24,11 @@ const emit = defineEmits<{
 
 const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
+
+// Template inline handlers cannot reference enum members directly
+// (vue-tsc unwraps them as refs), so alias the members used below.
+const copyEffect = DropEffect.Copy;
+const moveEffect = DropEffect.Move;
 
 const isExpanded = computed(() => store.expandedFolderIds.has(props.node.id));
 const isSelected = computed(() => store.selectedEntryId === props.node.id);
@@ -42,7 +47,7 @@ function handleClick() {
   const isNowExpanded = isExpanded.value;
   const hasChildren = !!(props.node.children && props.node.children.length > 0);
 
-  store.focusedPanel = "tree";
+  store.focusedPanel = FocusedPanel.Tree;
   store.selectEntry(props.node.id);
 
   if (hasChildren) {
@@ -62,7 +67,7 @@ function handleClick() {
       @click="handleClick"
       @contextmenu.stop.prevent="emit('contextmenu', $event, { id: node.id, name: node.name, isDirectory: true })"
       @dragstart="(e) => {
-        const effect = e.altKey ? 'copy' : 'move';
+        const effect = e.altKey ? copyEffect : moveEffect;
         const dragIds = interactionStore.beginDrag(node.id, effect);
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = 'copyMove';
@@ -85,7 +90,7 @@ function handleClick() {
         if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
         interactionStore.setDropTarget(node.id);
         try {
-          await interactionStore.dropInto(node.id, e.altKey ? 'copy' : 'move');
+          await interactionStore.dropInto(node.id, e.altKey ? copyEffect : moveEffect);
         } catch (err) {
           handleDropError(err);
         }

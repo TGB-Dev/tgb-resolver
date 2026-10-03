@@ -8,6 +8,7 @@ import {
 
 import { useAssetsInteractionStore } from "@/features/assets-manager/assets-interaction-store";
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
+import { FocusedPanel } from "@/features/assets-manager/types";
 import { useControlShowRows } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
 import { useControlWorkspaceStore } from "@/features/control/trellis/control-workspace-store";
@@ -182,7 +183,7 @@ const confirmActionStore = () => useConfirmActionStore();
 
 /** Selected entry ids for the currently focused panel. */
 function assetsSelectedIds(store: ReturnType<typeof useAssetsManagerStore>): Set<string> {
-  return store.focusedPanel === "tree"
+  return store.focusedPanel === FocusedPanel.Tree
     ? store.selectedEntryId
       ? new Set([store.selectedEntryId])
       : new Set<string>()

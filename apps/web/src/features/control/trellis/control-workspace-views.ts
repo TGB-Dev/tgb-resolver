@@ -1,4 +1,5 @@
 import { layout as L, type ViewTypes } from "@danfessler/trellis";
+import { Images, Info, Lock, Logs, ScanEye, Settings, Timeline } from "@lucide/vue";
 
 import ControlMainAssetsTab from "@/features/control/panels/main/tabs/control-main-assets-tab.vue";
 import ControlMainAuthTab from "@/features/control/panels/main/tabs/control-main-auth-tab.vue";
@@ -17,44 +18,44 @@ export function buildControlViewTypes(): ViewTypes {
       title: CONTROL_VIEW_TITLES[ControlViewType.Preview],
       singleton: true,
       allow: { stage: false },
-      mount: mountVueView(ControlMainPreviewTab),
+      mount: mountVueView(ControlMainPreviewTab, ScanEye),
     },
     [ControlViewType.Assets]: {
       title: CONTROL_VIEW_TITLES[ControlViewType.Assets],
       singleton: true,
       allow: { stage: false },
-      mount: mountVueView(ControlMainAssetsTab),
+      mount: mountVueView(ControlMainAssetsTab, Images),
     },
     [ControlViewType.Cue]: {
       title: CONTROL_VIEW_TITLES[ControlViewType.Cue],
       singleton: true,
       allow: { stage: false },
-      mount: mountVueView(ControlMainCueTab),
+      mount: mountVueView(ControlMainCueTab, Logs),
     },
     [ControlViewType.Info]: {
       title: CONTROL_VIEW_TITLES[ControlViewType.Info],
       singleton: true,
       allow: { stage: false },
-      mount: mountVueView(ControlMainInfoTab),
+      mount: mountVueView(ControlMainInfoTab, Info),
     },
     [ControlViewType.Settings]: {
       title: CONTROL_VIEW_TITLES[ControlViewType.Settings],
       singleton: true,
       allow: { stage: false },
-      mount: mountVueView(ControlMainSettingsTab),
+      mount: mountVueView(ControlMainSettingsTab, Settings),
     },
     [ControlViewType.Auth]: {
       title: CONTROL_VIEW_TITLES[ControlViewType.Auth],
       singleton: true,
       allow: { stage: false },
-      mount: mountVueView(ControlMainAuthTab),
+      mount: mountVueView(ControlMainAuthTab, Lock),
     },
     [ControlViewType.Timeline]: {
       title: CONTROL_VIEW_TITLES[ControlViewType.Timeline],
       singleton: true,
       closable: false,
       placement: "stage",
-      mount: mountVueView(ControlTimelineView),
+      mount: mountVueView(ControlTimelineView, Timeline),
     },
   };
 }

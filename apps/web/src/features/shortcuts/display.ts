@@ -8,14 +8,22 @@ import {
 
 import { type CommandBinding, CommandBindingKind } from "./types";
 
-export type Platform = "mac" | "windows" | "linux";
+export enum Platform {
+  Mac = "mac",
+  Windows = "windows",
+  Linux = "linux",
+}
 
 /** Detect the current platform, falling back to `windows` for unknown. */
 export function detectCurrentPlatform(): Platform {
-  const detected = detectPlatform();
-  return detected === "mac" || detected === "windows" || detected === "linux"
-    ? detected
-    : "windows";
+  switch (detectPlatform()) {
+    case "mac":
+      return Platform.Mac;
+    case "linux":
+      return Platform.Linux;
+    default:
+      return Platform.Windows;
+  }
 }
 
 /**
@@ -62,7 +70,7 @@ export function formatBinding(
 }
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
-  mac: "macOS",
-  windows: "Windows",
-  linux: "Linux",
+  [Platform.Mac]: "macOS",
+  [Platform.Windows]: "Windows",
+  [Platform.Linux]: "Linux",
 };

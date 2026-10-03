@@ -4,7 +4,7 @@ import { type AnimationPlaybackControls, animate } from "motion";
 import { computed, onMounted, onUnmounted, useTemplateRef, watch, watchEffect } from "vue";
 
 import { usePlaybackStore } from "@/features/control/playback-store";
-import { useColorModeStore } from "@/stores/color-mode-store";
+import { ColorMode, useColorModeStore } from "@/stores/color-mode-store";
 
 const props = defineProps<{
   eventId: number;
@@ -29,7 +29,7 @@ const active = computed(
 watchEffect(() => {
   const rowEl = root.value?.closest<HTMLElement>("[data-event-id]");
   if (!rowEl) return;
-  const activeInLightMode = active.value && colorModeStore.colorMode === "light";
+  const activeInLightMode = active.value && colorModeStore.colorMode === ColorMode.Light;
   rowEl.style.color = activeInLightMode ? "var(--colors-fg-inverted)" : "";
 });
 

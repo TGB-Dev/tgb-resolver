@@ -5,19 +5,24 @@ import { h } from "vue";
 import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { MotionDiv } from "@/lib/motion-factories";
 
-import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
+import {
+  ExtensionType,
+  getExtensionPayload,
+  MediaFit,
+  type WithVueComponentExtension,
+} from "../base/types";
 import { useAssetUrl } from "../base/use-asset-url";
 import { sharedValidatorRegistry } from "../init";
 
 export interface ImageExtensionPayload extends Record<string, unknown> {
   assetId: string;
-  fit?: "cover" | "contain" | "fill";
+  fit?: MediaFit;
 }
 
-const imageClasses: Record<NonNullable<ImageExtensionPayload["fit"]>, string> = {
-  cover: css({ w: "full", h: "full", objectFit: "cover" }),
-  contain: css({ w: "full", h: "full", objectFit: "contain" }),
-  fill: css({ w: "full", h: "full", objectFit: "fill" }),
+const imageClasses: Record<MediaFit, string> = {
+  [MediaFit.Cover]: css({ w: "full", h: "full", objectFit: "cover" }),
+  [MediaFit.Contain]: css({ w: "full", h: "full", objectFit: "contain" }),
+  [MediaFit.Fill]: css({ w: "full", h: "full", objectFit: "fill" }),
 };
 
 const transition = { duration: 0.2, ease: TgbResolverEasings.swiftOut };
@@ -57,14 +62,14 @@ export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = 
         },
         fit: {
           type: FieldDataType.String,
-          defaultValue: "cover",
+          defaultValue: MediaFit.Cover,
           label: "Fit Mode",
           component: "select-input",
           props: {
             options: [
-              { value: "cover", label: "Cover" },
-              { value: "contain", label: "Contain" },
-              { value: "fill", label: "Fill" },
+              { value: MediaFit.Cover, label: "Cover" },
+              { value: MediaFit.Contain, label: "Contain" },
+              { value: MediaFit.Fill, label: "Fill" },
             ],
           },
         },
@@ -81,7 +86,7 @@ export const ImageExtension: WithVueComponentExtension<ImageExtensionPayload> = 
       return () => {
         const payload = props.payload as ImageExtensionPayload;
         const assetId = payload?.assetId ?? "";
-        const fit = payload?.fit ?? "cover";
+        const fit = payload?.fit ?? MediaFit.Cover;
         if (!assetId || urlState.hasError.value) {
           return h(
             MotionDiv,

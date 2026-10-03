@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import "@danfessler/trellis/style.css";
 
+
 import { createWorkspace } from "@danfessler/trellis";
 import { css } from "@styled-system/css";
 import { onMounted, onUnmounted, useTemplateRef, watch } from "vue";
 
 import { useControlIsLive } from "@/features/control/composables/use-show";
 import { useColorMode } from "@/features/shared/ui/color-mode";
+import { ColorMode } from "@/stores/color-mode-store";
 
+import { clampStageShare } from "./clamp-stage-share";
 import { useControlWorkspaceStore } from "./control-workspace-store";
 import {
   CONTROL_VIEW_IDS,
@@ -47,7 +50,7 @@ function syncLiveViews(live: boolean): void {
 onMounted(() => {
   if (!host.value) return;
   const workspace = createWorkspace(host.value, {
-    theme: colorMode.value === "dark" ? "dark" : "light",
+    theme: colorMode.value === ColorMode.Dark ? "dark" : "light",
     navigation: "focus",
     types: buildControlViewTypes(),
     defaultLayout: buildControlDefaultLayout(),
@@ -57,11 +60,23 @@ onMounted(() => {
   store.attach(workspace);
   if (isLive.value) syncLiveViews(true);
 
-  watch(colorMode, (mode) => workspace.update({ theme: mode === "dark" ? "dark" : "light" }));
-  watch(isLive, (live) => syncLiveViews(live));
+  offChange = workspace.on("change", (document) => {
+    const stageWidth = workspace.getLayoutRects().get("stage")?.rect.w ?? 1;
+    const clamped = clampStageShare(document, stageWidth);
+    if (clamped) workspace.setDocument(clamped);
+  });
 });
 
+watch(colorMode, (mode) => {
+  store.workspace?.update({ theme: mode === ColorMode.Dark ? "dark" : "light" });
+});
+watch(isLive, (live) => syncLiveViews(live));
+
+let offChange: (() => void) | null = null;
+
 onUnmounted(() => {
+  offChange?.();
+  offChange = null;
   store.workspace?.destroy();
   store.detach();
 });

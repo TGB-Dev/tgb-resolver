@@ -9,11 +9,18 @@ import { useAssetsManagerStore } from "./assets-manager-store";
 import ContextMenuOverlay from "./context-menu-overlay.vue";
 import FolderNode from "./folder-node.vue";
 import { folderNodeClass } from "./folder-node-recipe";
+import { DropEffect, FocusedPanel } from "./types";
 import { useEntryContextMenu } from "./use-entry-context-menu";
 
 const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
 const contextMenu = useEntryContextMenu();
+
+// Template inline handlers cannot reference enum members directly
+// (vue-tsc unwraps them as refs), so alias the members used below.
+const treePanel = FocusedPanel.Tree;
+const copyEffect = DropEffect.Copy;
+const moveEffect = DropEffect.Move;
 
 const isAllAssetsSelected = computed(() => store.selectedEntryId === null);
 const isAllAssetsDropTarget = computed(
@@ -37,7 +44,7 @@ function handleContextMenu(
 <template>
   <div
     :class="css({ display: 'flex', flexDirection: 'column', minH: '0', overflow: 'hidden', flex: 1 })"
-    @pointerdown="store.focusedPanel = 'tree'"
+    @pointerdown="store.focusedPanel = treePanel"
   >
     <!-- biome-ignore lint/a11y/noStaticElementInteractions: tree toolbar is drop target -->
     <div
@@ -67,10 +74,10 @@ function handleContextMenu(
         if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
         e.preventDefault();
         interactionStore.setDropTarget(null);
-        void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
+        void interactionStore.dropInto(null, e.altKey ? copyEffect : moveEffect);
       }"
     >
-      <button type="button" :class="folderNodeClass({ selected: isAllAssetsSelected, dropTarget: isAllAssetsDropTarget })" @click="() => { store.focusedPanel = 'tree'; store.selectEntry(null); }">
+      <button type="button" :class="folderNodeClass({ selected: isAllAssetsSelected, dropTarget: isAllAssetsDropTarget })" @click="() => { store.focusedPanel = treePanel; store.selectEntry(null); }">
         <Folder :size="14" aria-hidden />
         <span>All Assets</span>
       </button>
@@ -110,7 +117,7 @@ function handleContextMenu(
         if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
         e.preventDefault();
         interactionStore.setDropTarget(null);
-        void interactionStore.dropInto(null, e.altKey ? 'copy' : 'move');
+        void interactionStore.dropInto(null, e.altKey ? copyEffect : moveEffect);
       }"
     >
       <div :class="css({ pl: '4' })">

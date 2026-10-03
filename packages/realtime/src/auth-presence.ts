@@ -4,15 +4,18 @@ import { AuthUpdateSchema } from "./proto/gen/auth/v1/auth_pb.js";
 
 export { AuthUpdateSchema };
 
-export type AuthUpdateKind = "sessions-changed" | "join-code-changed" | undefined;
+export enum AuthUpdateKind {
+  SessionsChanged = "sessions-changed",
+  JoinCodeChanged = "join-code-changed",
+}
 
-export function decodeAuthUpdate(data: ArrayBuffer): AuthUpdateKind {
+export function decodeAuthUpdate(data: ArrayBuffer): AuthUpdateKind | undefined {
   const msg = fromBinary(AuthUpdateSchema, new Uint8Array(data));
   switch (msg.update.case) {
     case "sessionsChanged":
-      return "sessions-changed";
+      return AuthUpdateKind.SessionsChanged;
     case "joinCodeChanged":
-      return "join-code-changed";
+      return AuthUpdateKind.JoinCodeChanged;
     default:
       return undefined;
   }

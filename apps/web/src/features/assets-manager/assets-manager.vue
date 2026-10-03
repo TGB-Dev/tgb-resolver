@@ -12,6 +12,7 @@ import AssetsListView from "./assets-list-view.vue";
 import { useAssetsManagerStore } from "./assets-manager-store";
 import AssetsToolbar from "./assets-toolbar.vue";
 import FolderTreeView from "./folder-tree-view.vue";
+import { ViewMode } from "./types";
 import UploadZone from "./upload-zone.vue";
 
 const store = useAssetsManagerStore();
@@ -76,7 +77,7 @@ function handleFileInputChange(e: Event) {
         >
           <AssetsToolbar />
           <UploadZone :class="css({ flex: 1, minH: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' })">
-            <AssetsListView v-if="store.viewMode === 'list'" />
+            <AssetsListView v-if="store.viewMode === ViewMode.List" />
             <AssetsGridView v-else />
           </UploadZone>
         </div>

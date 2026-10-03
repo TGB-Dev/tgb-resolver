@@ -2,23 +2,23 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
 
-import { formatBinding } from "../display";
+import { formatBinding, Platform } from "../display";
 import { useShortcutsStore } from "../shortcuts-store";
 import { CommandBindingKind } from "../types";
 
 describe("shortcuts display", () => {
   it("renders a portable Mod binding per platform", () => {
-    expect(formatBinding({ kind: CommandBindingKind.Hotkey, hotkey: "Mod+S" }, "windows")).toBe(
-      "Ctrl+S",
-    );
-    expect(formatBinding({ kind: CommandBindingKind.Hotkey, hotkey: "Mod+S" }, "mac")).toContain(
-      "S",
-    );
+    expect(
+      formatBinding({ kind: CommandBindingKind.Hotkey, hotkey: "Mod+S" }, Platform.Windows),
+    ).toBe("Ctrl+S");
+    expect(
+      formatBinding({ kind: CommandBindingKind.Hotkey, hotkey: "Mod+S" }, Platform.Mac),
+    ).toContain("S");
   });
 
   it("renders sequences as space-separated chords", () => {
     expect(
-      formatBinding({ kind: CommandBindingKind.Sequence, sequence: ["G", "G"] }, "windows"),
+      formatBinding({ kind: CommandBindingKind.Sequence, sequence: ["G", "G"] }, Platform.Windows),
     ).toBe("G  G");
   });
 

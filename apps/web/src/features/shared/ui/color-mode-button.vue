@@ -4,6 +4,8 @@ import { Moon, Sun } from "@lucide/vue";
 import { cx } from "@styled-system/css";
 import { button, iconButton } from "@styled-system/recipes";
 
+import { ColorMode } from "@/stores/color-mode-store";
+
 import { useColorMode } from "./color-mode";
 
 const { colorMode, toggleColorMode } = useColorMode();
@@ -17,7 +19,7 @@ const { colorMode, toggleColorMode } = useColorMode();
       :class="cx(button({ variant: 'ghost' }), iconButton())"
       @click="toggleColorMode"
     >
-      <Moon v-if="colorMode === 'dark'" :size="18" aria-hidden />
+      <Moon v-if="colorMode === ColorMode.Dark" :size="18" aria-hidden />
       <Sun v-else :size="18" aria-hidden />
     </button>
   </ClientOnly>

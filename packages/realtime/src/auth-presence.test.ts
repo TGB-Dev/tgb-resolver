@@ -1,7 +1,7 @@
 import { create, toBinary } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
 
-import { decodeAuthUpdate } from "./auth-presence";
+import { AuthUpdateKind, decodeAuthUpdate } from "./auth-presence";
 import {
   AuthUpdateSchema,
   JoinCodeChangedSchema,
@@ -18,14 +18,14 @@ describe("decodeAuthUpdate", () => {
     const frame = encode({
       update: { case: "joinCodeChanged", value: create(JoinCodeChangedSchema, {}) },
     });
-    expect(decodeAuthUpdate(frame)).toBe("join-code-changed");
+    expect(decodeAuthUpdate(frame)).toBe(AuthUpdateKind.JoinCodeChanged);
   });
 
   it("maps sessions-changed frames", () => {
     const frame = encode({
       update: { case: "sessionsChanged", value: create(SessionsChangedSchema, {}) },
     });
-    expect(decodeAuthUpdate(frame)).toBe("sessions-changed");
+    expect(decodeAuthUpdate(frame)).toBe(AuthUpdateKind.SessionsChanged);
   });
 
   it("returns undefined for empty updates", () => {

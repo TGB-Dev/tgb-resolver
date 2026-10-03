@@ -4,6 +4,7 @@ import { css, cx } from "@styled-system/css";
 import { button, dataList, iconButton } from "@styled-system/recipes";
 
 import { useAssetsManagerStore } from "./assets-manager-store";
+import { ViewMode } from "./types";
 
 const store = useAssetsManagerStore();
 const dataListClasses = dataList({ orientation: "horizontal", size: "sm" });
@@ -40,9 +41,9 @@ const dataListClasses = dataList({ orientation: "horizontal", size: "sm" });
         type="button"
         aria-label="List view"
         :class="
-          cx(button({ variant: store.viewMode === 'list' ? 'solid' : 'ghost', size: 'sm' }), iconButton())
+          cx(button({ variant: store.viewMode === ViewMode.List ? 'solid' : 'ghost', size: 'sm' }), iconButton())
         "
-        @click="store.setViewMode('list')"
+        @click="store.setViewMode(ViewMode.List)"
       >
         <LayoutList :size="16" aria-hidden />
       </button>
@@ -50,9 +51,9 @@ const dataListClasses = dataList({ orientation: "horizontal", size: "sm" });
         type="button"
         aria-label="Grid view"
         :class="
-          cx(button({ variant: store.viewMode === 'grid' ? 'solid' : 'ghost', size: 'sm' }), iconButton())
+          cx(button({ variant: store.viewMode === ViewMode.Grid ? 'solid' : 'ghost', size: 'sm' }), iconButton())
         "
-        @click="store.setViewMode('grid')"
+        @click="store.setViewMode(ViewMode.Grid)"
       >
         <Grid :size="16" aria-hidden />
       </button>

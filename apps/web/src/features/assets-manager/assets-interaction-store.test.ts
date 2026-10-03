@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useAssetsInteractionStore } from "./assets-interaction-store";
 import { useAssetsManagerStore } from "./assets-manager-store";
+import { ClipboardMode, DropEffect } from "./types";
 
 describe("assets interaction store", () => {
   beforeEach(() => setActivePinia(createPinia()));
@@ -21,7 +22,7 @@ describe("assets interaction store", () => {
     interaction.copySelection("file");
     await interaction.pasteInto("folder");
     expect(transfer).toHaveBeenCalledWith("file", false, "folder", true);
-    expect(interaction.clipboard?.mode).toBe("copy");
+    expect(interaction.clipboard?.mode).toBe(ClipboardMode.Copy);
   });
 
   it("clears a cut drag after a successful drop", async () => {
@@ -35,8 +36,8 @@ describe("assets interaction store", () => {
     } as never);
     const transfer = vi.spyOn(assets, "transferEntry").mockResolvedValue();
     const interaction = useAssetsInteractionStore();
-    interaction.beginDrag("file", "move");
-    await interaction.dropInto("folder", "move");
+    interaction.beginDrag("file", DropEffect.Move);
+    await interaction.dropInto("folder", DropEffect.Move);
     expect(transfer).toHaveBeenCalledWith("file", false, "folder", false);
     expect(interaction.dragState).toBeNull();
   });

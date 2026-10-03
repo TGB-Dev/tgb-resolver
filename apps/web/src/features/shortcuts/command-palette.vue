@@ -1,82 +1,53 @@
 <script setup lang="ts">
 import { Combobox, Dialog, useListCollection } from "@ark-ui/vue";
 import { css, cx } from "@styled-system/css";
-import { combobox, dialog, kbd } from "@styled-system/recipes";
+import { combobox, dialog, input, kbd } from "@styled-system/recipes";
+import type { RegisterableHotkey } from "@tanstack/vue-hotkeys";
 import { useEventListener } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 
-import { useControlIsLive } from "@/features/control/composables/use-show";
-import { useControlWorkspaceStore } from "@/features/control/trellis/control-workspace-store";
-import {
-  CONTROL_VIEW_IDS,
-  CONTROL_VIEW_TITLES,
-  ControlViewType,
-  EDIT_ONLY_VIEWS,
-} from "@/features/control/trellis/control-workspace-types";
+import { scrollToListItem } from "@/features/leaderboard/utils/scroll";
 
 import { commands, PALETTE_TOGGLE_EVENT } from "./commands";
-import { formatBinding } from "./display";
+import KbdFromHotkeys from "./kbd-from-hotkeys.vue";
 import { useShortcutsStore } from "./shortcuts-store";
+import { CommandBindingKind, type CommandDefinition } from "./types";
 
 interface PaletteItem {
   label: string;
   value: string;
-  group: string;
-  hint: string;
+  keys: RegisterableHotkey[];
   run: () => void;
 }
 
-const VIEW_GROUP = "Views";
-const COMMAND_GROUP = "Commands";
-const GROUP_ORDER: readonly string[] = [VIEW_GROUP, COMMAND_GROUP];
-
 const shortcutStore = useShortcutsStore();
-const workspaceStore = useControlWorkspaceStore();
-const isLive = useControlIsLive();
 const inputValue = ref("");
+const listRef = useTemplateRef<{ $el: HTMLElement }>("paletteList");
 
 const dialogClasses = dialog({ placement: "top", size: "md" });
-const comboClasses = combobox();
+const comboClasses = combobox({ size: "lg" });
 
-const viewItems = computed<PaletteItem[]>(() => {
-  const workspace = workspaceStore.workspace;
-  if (!workspaceStore.ready || !workspace) return [];
-  const live = isLive.value;
-  return (Object.values(ControlViewType) as ControlViewType[])
-    .filter((type) => !(live && (EDIT_ONLY_VIEWS as readonly ControlViewType[]).includes(type)))
-    .map((type) => ({
-      label: CONTROL_VIEW_TITLES[type],
-      value: `view:${type}`,
-      group: VIEW_GROUP,
-      hint: workspace.view(CONTROL_VIEW_IDS[type]) == null ? "Closed" : "Open",
-      run: () => workspaceStore.focusView(type),
-    }));
-});
-
-const commandItems = computed<PaletteItem[]>(() =>
+const allItems = computed<PaletteItem[]>(() =>
   commands.map((command) => ({
     label: command.title,
     value: `command:${command.id}`,
-    group: COMMAND_GROUP,
-    hint: formatBinding(shortcutStore.getBinding(command.id)),
+    keys: bindingKeys(command),
     run: () => command.handler(),
   })),
 );
 
-const allItems = computed<PaletteItem[]>(() => [...viewItems.value, ...commandItems.value]);
+function bindingKeys(command: CommandDefinition): RegisterableHotkey[] {
+  const binding = shortcutStore.getBinding(command.id);
+  if (binding.kind === CommandBindingKind.Hotkey) return [binding.hotkey];
+  if (binding.kind === CommandBindingKind.Sequence) return [...binding.sequence];
+  return [];
+}
 
 const { collection, set, filter } = useListCollection<PaletteItem>({
   initialItems: [],
   filter: (itemText, filterText) =>
     itemText.toLowerCase().includes(filterText.trim().toLowerCase()),
 });
-
-const grouped = computed(() =>
-  GROUP_ORDER.map((group) => ({
-    group,
-    items: collection.value.items.filter((item) => item.group === group),
-  })).filter((entry) => entry.items.length > 0),
-);
 
 function resetList(): void {
   set(allItems.value);
@@ -100,11 +71,33 @@ function onInputValue(value: string): void {
   filter(value);
 }
 
-function onSelect(details: { itemValue: string }): void {
-  const item = allItems.value.find((entry) => entry.value === details.itemValue);
+function runItem(itemValue: string): void {
+  const item = allItems.value.find((entry) => entry.value === itemValue);
   shortcutStore.closePalette();
-  if (details.itemValue === "command:open-command-palette") return;
+  if (itemValue === "command:open-command-palette") return;
   item?.run();
+}
+
+// Ark's Vue binding never forwards zag's `onSelect` into the machine (only
+// `onValueChange` and friends reach it), so selection is driven from there.
+function onValueChange(details: { value: string[] }): void {
+  const selected = details.value[details.value.length - 1];
+  if (selected) runItem(selected);
+}
+
+function onHighlightChange(details: { highlightedValue: string | null }): void {
+  const container = listRef.value?.$el;
+  if (!details.highlightedValue || !container) return;
+  const selector = `[data-palette-value="${CSS.escape(details.highlightedValue)}"]`;
+  const element = container.querySelector<HTMLElement>(selector);
+  if (!element) return;
+  const containerRect = container.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+  if (elementRect.bottom > containerRect.bottom) {
+    scrollToListItem({ container, selector, align: "end" });
+  } else if (elementRect.top < containerRect.top) {
+    scrollToListItem({ container, selector, align: "start" });
+  }
 }
 
 useEventListener(window, PALETTE_TOGGLE_EVENT, () => shortcutStore.togglePalette());
@@ -119,17 +112,16 @@ const inputRow = css({
 });
 const list = cx(
   comboClasses.list,
-  css({ maxHeight: "50vh", overflowY: "auto", px: "3", py: "2", gap: "0" }),
+  css({
+    maxHeight: "50vh",
+    overflowY: "auto",
+    px: "3",
+    py: "3",
+    gap: "1",
+    "--combobox-item-padding-x": "spacing.4",
+    "--combobox-item-padding-y": "spacing.3",
+  }),
 );
-const groupLabel = css({
-  fontSize: "xs",
-  fontWeight: "semibold",
-  textTransform: "uppercase",
-  letterSpacing: "wide",
-  color: "fg.muted",
-  px: "2",
-  py: "1",
-});
 const row = css({
   display: "flex",
   alignItems: "center",
@@ -137,7 +129,7 @@ const row = css({
   gap: "3",
   width: "full",
 });
-const hint = css({ color: "fg.muted", fontSize: "xs", whiteSpace: "nowrap" });
+const hint = css({ display: "inline-flex", alignItems: "center", gap: "1" });
 const empty = css({ color: "fg.muted", fontSize: "sm", textAlign: "center", p: "6" });
 const footer = css({
   display: "flex",
@@ -170,32 +162,37 @@ const footer = css({
           input-behavior="autohighlight"
           auto-focus
           @update:input-value="onInputValue"
-          @select="onSelect"
+          @value-change="onValueChange"
+          @highlight-change="onHighlightChange"
         >
           <div :class="inputRow">
             <Combobox.Control :class="comboClasses.control">
               <Combobox.Input
-                :class="comboClasses.input"
-                placeholder="Type a command or view…"
+                :class="input({ size: 'lg' })"
+                placeholder="Type a command…"
                 aria-label="Command palette"
               />
             </Combobox.Control>
           </div>
-          <Combobox.List :class="list">
-            <Combobox.ItemGroup v-for="entry in grouped" :key="entry.group">
-              <Combobox.ItemGroupLabel :class="groupLabel">{{ entry.group }}</Combobox.ItemGroupLabel>
-              <Combobox.Item
-                v-for="item in entry.items"
-                :key="item.value"
-                :item="item"
-                :class="comboClasses.item"
-              >
-                <span :class="row">
-                  <Combobox.ItemText>{{ item.label }}</Combobox.ItemText>
-                  <span :class="hint">{{ item.hint }}</span>
+          <Combobox.List ref="paletteList" :class="list">
+            <Combobox.Item
+              v-for="item in collection.items"
+              :key="item.value"
+              :item="item"
+              :data-palette-value="item.value"
+              :class="comboClasses.item"
+            >
+              <span :class="row">
+                <Combobox.ItemText>{{ item.label }}</Combobox.ItemText>
+                <span v-if="item.keys.length" :class="hint">
+                  <KbdFromHotkeys
+                    v-for="(hotkey, index) in item.keys"
+                    :key="index"
+                    :hotkey="hotkey"
+                  />
                 </span>
-              </Combobox.Item>
-            </Combobox.ItemGroup>
+              </span>
+            </Combobox.Item>
             <Combobox.Empty :class="empty">No matches.</Combobox.Empty>
           </Combobox.List>
         </Combobox.Root>

@@ -8,6 +8,11 @@ export enum FloatingPanelType {
   CreateEvent = "create-event",
 }
 
+export enum FloatingPanelCloseReason {
+  Close = "close",
+  Replace = "replace",
+}
+
 export interface FloatingPanelHandle {
   readonly id: string;
   readonly type: FloatingPanelType;
@@ -19,7 +24,7 @@ export interface FloatingPanelHandle {
   setTitle(title: string): void;
   setDirty(dirty: boolean): void;
   setSaving(saving: boolean): void;
-  requestClose(reason?: "close" | "replace"): Promise<boolean>;
+  requestClose(reason?: FloatingPanelCloseReason): Promise<boolean>;
   close(accepted: boolean): void;
 }
 

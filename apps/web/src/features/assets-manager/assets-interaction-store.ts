@@ -2,17 +2,18 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 import { useAssetsManagerStore } from "./assets-manager-store";
+import { ClipboardMode, DropEffect } from "./types";
 
 export const INTERNAL_DRAG_MIME = "application/x-tgb-assets-drag";
 
 export const useAssetsInteractionStore = defineStore("assets-interaction", () => {
   const assets = useAssetsManagerStore();
   const clipboard = ref<{
-    mode: "copy" | "cut";
+    mode: ClipboardMode;
     entryIds: string[];
     sourceFolderId: string | null;
   } | null>(null);
-  const dragState = ref<{ entryIds: string[]; dropEffect: "copy" | "move" } | null>(null);
+  const dragState = ref<{ entryIds: string[]; dropEffect: DropEffect } | null>(null);
   const dropTargetId = ref<string | null>(null);
 
   function isInternalDragData(dataTransfer: DataTransfer | null): boolean {
@@ -20,7 +21,7 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
     return dataTransfer.types.includes(INTERNAL_DRAG_MIME);
   }
 
-  function setDragEffect(effect: "copy" | "move") {
+  function setDragEffect(effect: DropEffect) {
     if (dragState.value) {
       dragState.value.dropEffect = effect;
     }
@@ -34,13 +35,21 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
   function copySelection(primaryId?: string) {
     const entryIds = resolveIds(primaryId);
     if (entryIds.length)
-      clipboard.value = { mode: "copy", entryIds, sourceFolderId: assets.selectedEntryId };
+      clipboard.value = {
+        mode: ClipboardMode.Copy,
+        entryIds,
+        sourceFolderId: assets.selectedEntryId,
+      };
   }
 
   function cutSelection(primaryId?: string) {
     const entryIds = resolveIds(primaryId);
     if (entryIds.length)
-      clipboard.value = { mode: "cut", entryIds, sourceFolderId: assets.selectedEntryId };
+      clipboard.value = {
+        mode: ClipboardMode.Cut,
+        entryIds,
+        sourceFolderId: assets.selectedEntryId,
+      };
   }
 
   function clearClipboard() {
@@ -63,31 +72,47 @@ export const useAssetsInteractionStore = defineStore("assets-interaction", () =>
 
   async function pasteInto(targetFolderId: string | null) {
     const state = clipboard.value;
-    if (!state || !canTransferToFolder(state.entryIds, targetFolderId, state.mode === "copy"))
+    if (
+      !state ||
+      !canTransferToFolder(state.entryIds, targetFolderId, state.mode === ClipboardMode.Copy)
+    )
       return false;
     for (const id of state.entryIds) {
       const entry = assets.findEntry(id);
       if (entry)
-        await assets.transferEntry(id, entry.isDirectory, targetFolderId, state.mode === "copy");
+        await assets.transferEntry(
+          id,
+          entry.isDirectory,
+          targetFolderId,
+          state.mode === ClipboardMode.Copy,
+        );
     }
-    if (state.mode === "cut") clearClipboard();
+    if (state.mode === ClipboardMode.Cut) clearClipboard();
     return true;
   }
 
-  async function dropInto(targetFolderId: string | null, dropEffect: "copy" | "move") {
+  async function dropInto(targetFolderId: string | null, dropEffect: DropEffect) {
     const state = dragState.value;
-    if (!state || !canTransferToFolder(state.entryIds, targetFolderId, dropEffect === "copy"))
+    if (
+      !state ||
+      !canTransferToFolder(state.entryIds, targetFolderId, dropEffect === DropEffect.Copy)
+    )
       return false;
     for (const id of state.entryIds) {
       const entry = assets.findEntry(id);
       if (entry)
-        await assets.transferEntry(id, entry.isDirectory, targetFolderId, dropEffect === "copy");
+        await assets.transferEntry(
+          id,
+          entry.isDirectory,
+          targetFolderId,
+          dropEffect === DropEffect.Copy,
+        );
     }
     clearDrag();
     return true;
   }
 
-  function beginDrag(primaryId: string, dropEffect: "copy" | "move") {
+  function beginDrag(primaryId: string, dropEffect: DropEffect) {
     const entryIds = resolveIds(primaryId);
     dragState.value = { entryIds, dropEffect };
     return entryIds;
