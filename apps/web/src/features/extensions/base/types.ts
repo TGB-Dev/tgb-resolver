@@ -14,6 +14,11 @@ export enum ExtensionType {
   ScriptOnly,
   WithVueComponent,
 }
+export enum MediaFit {
+  Cover = "cover",
+  Contain = "contain",
+  Fill = "fill",
+}
 export interface WithVueComponentExtension<_TPayload = unknown> extends BaseExtension {
   readonly type: ExtensionType.WithVueComponent;
   component: Component;

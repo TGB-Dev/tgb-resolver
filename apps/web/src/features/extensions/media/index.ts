@@ -6,7 +6,12 @@ import { TgbResolverEasings } from "@/features/shared/anim/easings";
 import { MotionDiv } from "@/lib/motion-factories";
 import { soundEngine } from "@/lib/sound-engine";
 
-import { ExtensionType, getExtensionPayload, type WithVueComponentExtension } from "../base/types";
+import {
+  ExtensionType,
+  getExtensionPayload,
+  MediaFit,
+  type WithVueComponentExtension,
+} from "../base/types";
 import { useAssetUrl } from "../base/use-asset-url";
 import { sharedValidatorRegistry } from "../init";
 import { assetContentType } from "./duration";
@@ -14,7 +19,7 @@ import { assetContentType } from "./duration";
 export interface MediaExtensionPayload extends Record<string, unknown> {
   assetId?: string;
   audioAssetId?: string;
-  fit?: "cover" | "contain" | "fill";
+  fit?: MediaFit;
   loop?: boolean;
   volume?: number;
 }
@@ -55,14 +60,14 @@ export const MediaExtension: WithVueComponentExtension<MediaExtensionPayload> = 
         },
         fit: {
           type: FieldDataType.String,
-          defaultValue: "cover",
+          defaultValue: MediaFit.Cover,
           label: "Fit Mode",
           component: "select-input",
           props: {
             options: [
-              { value: "cover", label: "Cover" },
-              { value: "contain", label: "Contain" },
-              { value: "fill", label: "Fill" },
+              { value: MediaFit.Cover, label: "Cover" },
+              { value: MediaFit.Contain, label: "Contain" },
+              { value: MediaFit.Fill, label: "Fill" },
             ],
           },
         },
@@ -132,7 +137,7 @@ export const MediaExtension: WithVueComponentExtension<MediaExtensionPayload> = 
         const audioAssetId = payload?.audioAssetId ?? "";
         if (!visualAssetId && !audioAssetId) return null;
 
-        const fit = payload?.fit ?? "cover";
+        const fit = payload?.fit ?? MediaFit.Cover;
         const loop = payload?.loop ?? true;
         const contentType = visualAssetId ? assetContentType(visualAssetId) : undefined;
         const isVideo = contentType?.startsWith("video/") ?? false;

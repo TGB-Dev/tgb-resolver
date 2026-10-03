@@ -1,4 +1,3 @@
-import type { HotkeyCallback } from "@tanstack/vue-hotkeys";
 import {
   generatedClient,
   PlaybackStatus,
@@ -9,12 +8,11 @@ import {
 
 import { useAssetsInteractionStore } from "@/features/assets-manager/assets-interaction-store";
 import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-store";
+import { FocusedPanel } from "@/features/assets-manager/types";
 import { useControlShowRows } from "@/features/control/composables/use-show";
-import {
-  ControlEditMainPanelTab,
-  useControlEditMainPanelStore,
-} from "@/features/control/control-edit-main-panel-store";
 import { usePlaybackStore } from "@/features/control/playback-store";
+import { useControlWorkspaceStore } from "@/features/control/trellis/control-workspace-store";
+import { ControlViewType } from "@/features/control/trellis/control-workspace-types";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";
@@ -26,6 +24,7 @@ import { useShowStore } from "@/stores/show-store";
 import { CommandBindingKind, type CommandDefinition, type CommandId, CommandScope } from "./types";
 
 const SHORTCUTS_OPEN_EVENT = "tgb:shortcuts:open";
+export const PALETTE_TOGGLE_EVENT = "tgb:palette:toggle";
 
 /**
  * Returns true when a text-entry element currently holds focus. Used so the
@@ -44,16 +43,20 @@ function isEditableTargetFocused(): boolean {
   );
 }
 
-const openShortcutsCommand: HotkeyCallback = () => {
+const openShortcutsCommand: () => void = () => {
   if (isEditableTargetFocused()) return;
   window.dispatchEvent(new CustomEvent(SHORTCUTS_OPEN_EVENT));
 };
 
-const toggleColorMode: HotkeyCallback = () => {
+const togglePaletteCommand: () => void = () => {
+  window.dispatchEvent(new CustomEvent(PALETTE_TOGGLE_EVENT));
+};
+
+const toggleColorMode: () => void = () => {
   useColorModeStore().toggleColorMode();
 };
 
-const toggleFullscreen: HotkeyCallback = () => {
+const toggleFullscreen: () => void = () => {
   const target = document.documentElement;
   if (document.fullscreenElement) {
     void document.exitFullscreen();
@@ -102,7 +105,7 @@ function seekRelative(delta: 1 | -1): void {
   requestSeek(target.id);
 }
 
-const playToggle: HotkeyCallback = () => {
+const playToggle: () => void = () => {
   const playback = usePlaybackStore();
   void startPlayback({
     client: generatedClient,
@@ -110,10 +113,10 @@ const playToggle: HotkeyCallback = () => {
   });
 };
 
-const cueNext: HotkeyCallback = () => seekRelative(1);
-const cuePrev: HotkeyCallback = () => seekRelative(-1);
+const cueNext: () => void = () => seekRelative(1);
+const cuePrev: () => void = () => seekRelative(-1);
 
-const resetPlaybackCommand: HotkeyCallback = () => {
+const resetPlaybackCommand: () => void = () => {
   const playback = usePlaybackStore();
   void resetPlayback({
     client: generatedClient,
@@ -134,27 +137,21 @@ function scrollTimelineTo(edge: "top" | "bottom"): void {
   });
 }
 
-const timelineJumpTop: HotkeyCallback = () => scrollTimelineTo("top");
-const timelineJumpBottom: HotkeyCallback = () => scrollTimelineTo("bottom");
+const timelineJumpTop: () => void = () => scrollTimelineTo("top");
+const timelineJumpBottom: () => void = () => scrollTimelineTo("bottom");
 
 /* ------------------------------------------------------------------ */
 /* Control: main panel tab switching                                   */
 /* ------------------------------------------------------------------ */
 
-const controlEditMainPanelStore = () => useControlEditMainPanelStore();
+const controlWorkspace = () => useControlWorkspaceStore();
 
-const controlTabPreview: HotkeyCallback = () =>
-  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Preview);
-const controlTabAssets: HotkeyCallback = () =>
-  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Assets);
-const controlTabCue: HotkeyCallback = () =>
-  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Cue);
-const controlTabInfo: HotkeyCallback = () =>
-  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Info);
-const controlTabSettings: HotkeyCallback = () =>
-  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Settings);
-const controlTabAuth: HotkeyCallback = () =>
-  controlEditMainPanelStore().setActiveTab(ControlEditMainPanelTab.Auth);
+const controlTabPreview: () => void = () => controlWorkspace().focusView(ControlViewType.Preview);
+const controlTabAssets: () => void = () => controlWorkspace().focusView(ControlViewType.Assets);
+const controlTabCue: () => void = () => controlWorkspace().focusView(ControlViewType.Cue);
+const controlTabInfo: () => void = () => controlWorkspace().focusView(ControlViewType.Info);
+const controlTabSettings: () => void = () => controlWorkspace().focusView(ControlViewType.Settings);
+const controlTabAuth: () => void = () => controlWorkspace().focusView(ControlViewType.Auth);
 
 /* ------------------------------------------------------------------ */
 /* Control: transport prev/next                                        */
@@ -173,8 +170,8 @@ function transportSeek(delta: 1 | -1): void {
   requestSeek(target.id);
 }
 
-const transportPrev: HotkeyCallback = () => transportSeek(-1);
-const transportNext: HotkeyCallback = () => transportSeek(1);
+const transportPrev: () => void = () => transportSeek(-1);
+const transportNext: () => void = () => transportSeek(1);
 
 /* ------------------------------------------------------------------ */
 /* Assets manager                                                      */
@@ -186,7 +183,7 @@ const confirmActionStore = () => useConfirmActionStore();
 
 /** Selected entry ids for the currently focused panel. */
 function assetsSelectedIds(store: ReturnType<typeof useAssetsManagerStore>): Set<string> {
-  return store.focusedPanel === "tree"
+  return store.focusedPanel === FocusedPanel.Tree
     ? store.selectedEntryId
       ? new Set([store.selectedEntryId])
       : new Set<string>()
@@ -199,7 +196,7 @@ function assetsHandleError(e: unknown, label: string): void {
   toaster.create({ title: label, description: msg, type: "error" });
 }
 
-const assetsDelete: HotkeyCallback = () => {
+const assetsDelete: () => void = () => {
   if (isEditableTargetFocused()) return;
   const store = assetsManagerStore();
   const ids = assetsSelectedIds(store);
@@ -224,7 +221,7 @@ const assetsDelete: HotkeyCallback = () => {
   }
 };
 
-const assetsRename: HotkeyCallback = () => {
+const assetsRename: () => void = () => {
   if (isEditableTargetFocused()) return;
   const store = assetsManagerStore();
   const ids = assetsSelectedIds(store);
@@ -249,22 +246,22 @@ const assetsRename: HotkeyCallback = () => {
     });
 };
 
-const assetsUpload: HotkeyCallback = () => {
+const assetsUpload: () => void = () => {
   if (isEditableTargetFocused()) return;
   assetsManagerStore().openFilePicker();
 };
 
-const assetsCopy: HotkeyCallback = () => {
+const assetsCopy: () => void = () => {
   if (isEditableTargetFocused()) return;
   assetsInteractionStore().copySelection();
 };
 
-const assetsCut: HotkeyCallback = () => {
+const assetsCut: () => void = () => {
   if (isEditableTargetFocused()) return;
   assetsInteractionStore().cutSelection();
 };
 
-const assetsPaste: HotkeyCallback = () => {
+const assetsPaste: () => void = () => {
   if (isEditableTargetFocused()) return;
   const store = assetsManagerStore();
   const targetFolderId = store.selectedEntryId;
@@ -273,7 +270,7 @@ const assetsPaste: HotkeyCallback = () => {
     .catch((e) => assetsHandleError(e, "Paste"));
 };
 
-const assetsCreateFolder: HotkeyCallback = () => {
+const assetsCreateFolder: () => void = () => {
   if (isEditableTargetFocused()) return;
   const store = assetsManagerStore();
   const folderId = store.selectedEntryId;
@@ -307,6 +304,15 @@ export const commands: readonly CommandDefinition[] = [
     category: "General",
     defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: { key: "/", shift: true } },
     handler: openShortcutsCommand,
+  },
+  {
+    id: "open-command-palette",
+    title: "Command palette",
+    description: "Run commands and reopen closed views (this panel)",
+    scope: CommandScope.Global,
+    category: "General",
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+K" },
+    handler: togglePaletteCommand,
   },
   {
     id: "toggle-color-mode",
@@ -515,7 +521,7 @@ export const commands: readonly CommandDefinition[] = [
     description: "Create a folder (or subfolder of the selection)",
     scope: CommandScope.Assets,
     category: "Assets",
-    defaultBinding: { kind: CommandBindingKind.Sequence, sequence: ["Mod+K", "Mod+F"] },
+    defaultBinding: { kind: CommandBindingKind.Hotkey, hotkey: "Mod+Alt+F" },
     handler: assetsCreateFolder,
   },
 ];

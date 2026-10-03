@@ -1,6 +1,7 @@
 import { VerdictRunResult } from "@tgb-resolver/contracts";
 
 import { useColorMode } from "@/features/shared/ui/color-mode";
+import { ColorMode } from "@/stores/color-mode-store";
 
 type SemanticToken =
   | ""
@@ -108,7 +109,7 @@ export function useVerdictColor(
     };
   }
 
-  if (colorMode.value === "dark") {
+  if (colorMode.value === ColorMode.Dark) {
     return {
       fg: colorDef.fg.dark,
       border: colorDef.border.dark,

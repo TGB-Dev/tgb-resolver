@@ -4,7 +4,11 @@ import { computed, ref, shallowRef } from "vue";
 
 import { useConfirmActionStore } from "@/stores/confirm-action-store";
 
-import type { FloatingPanelHandle, FloatingPanelType } from "./floating-panel-types";
+import {
+  FloatingPanelCloseReason,
+  type FloatingPanelHandle,
+  type FloatingPanelType,
+} from "./floating-panel-types";
 
 export const useFloatingPanelStore = defineStore("floating-panel", () => {
   const panels = shallowRef<FloatingPanelHandle[]>([]);
@@ -43,13 +47,13 @@ export const useFloatingPanelStore = defineStore("floating-panel", () => {
       setSaving(saving) {
         isSaving.value = saving;
       },
-      async requestClose(reason = "close") {
+      async requestClose(reason: FloatingPanelCloseReason = FloatingPanelCloseReason.Close) {
         if (isDirty.value) {
           const confirm = confirmQueue.then(() =>
             useConfirmActionStore().confirmAction({
               title: "Discard changes?",
               message:
-                reason === "replace"
+                reason === FloatingPanelCloseReason.Replace
                   ? "Discard this panel and open another one?"
                   : "Discard this panel?",
               confirmLabel: "Discard",
@@ -84,7 +88,7 @@ export const useFloatingPanelStore = defineStore("floating-panel", () => {
 
   function requestFloatingPanelClose(
     handle: FloatingPanelHandle,
-    reason: "close" | "replace" = "close",
+    reason: FloatingPanelCloseReason = FloatingPanelCloseReason.Close,
   ) {
     return handle.requestClose(reason);
   }

@@ -1,13 +1,16 @@
 import { useColorMode } from "@vueuse/core";
 import { defineStore } from "pinia";
 
-export type ColorMode = "light" | "dark";
+export enum ColorMode {
+  Light = "light",
+  Dark = "dark",
+}
 
 export const useColorModeStore = defineStore("color-mode", () => {
   const mode = useColorMode({
     storageKey: "color-mode",
     attribute: "class",
-    initialValue: "dark",
+    initialValue: ColorMode.Dark,
     disableTransition: true,
   });
 
@@ -16,7 +19,7 @@ export const useColorModeStore = defineStore("color-mode", () => {
   }
 
   function toggleColorMode() {
-    mode.value = mode.value === "dark" ? "light" : "dark";
+    mode.value = mode.value === ColorMode.Dark ? ColorMode.Light : ColorMode.Dark;
   }
 
   return {

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/vue-query";
-import { type AuthUpdateKind, decodeAuthUpdate } from "@tgb-resolver/realtime";
+import { AuthUpdateKind, decodeAuthUpdate } from "@tgb-resolver/realtime";
 import { onUnmounted } from "vue";
 
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
@@ -26,7 +26,7 @@ export function useAuthPresence() {
 
   function handleMessage(event: MessageEvent) {
     if (!(event.data instanceof ArrayBuffer)) return;
-    let kind: AuthUpdateKind;
+    let kind: AuthUpdateKind | undefined;
     try {
       kind = decodeAuthUpdate(event.data);
     } catch (e) {
@@ -37,9 +37,9 @@ export function useAuthPresence() {
       });
       return;
     }
-    if (kind === "sessions-changed") {
+    if (kind === AuthUpdateKind.SessionsChanged) {
       void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
-    } else if (kind === "join-code-changed") {
+    } else if (kind === AuthUpdateKind.JoinCodeChanged) {
       void queryClient.invalidateQueries({ queryKey: ["auth", "join-code"] });
       void queryClient.invalidateQueries({ queryKey: ["auth", "sessions"] });
     }

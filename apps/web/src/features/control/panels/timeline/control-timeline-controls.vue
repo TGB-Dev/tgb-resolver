@@ -41,7 +41,7 @@ async function handleClearShow() {
     <button
       v-if="props.onJumpToCurrent !== undefined"
       type="button"
-      :class="button({ variant: 'solid' })"
+      :class="button({ variant: 'solid', size: 'sm' })"
       @click="props.onJumpToCurrent"
     >
       <Crosshair :size="16" aria-hidden />
@@ -51,7 +51,7 @@ async function handleClearShow() {
     <template v-if="!isLive">
       <button
         type="button"
-        :class="button({ variant: 'solid' })"
+        :class="button({ variant: 'solid', size: 'sm' })"
         :disabled="!canMutate"
         @click="exportCurrentShow"
       >
@@ -61,7 +61,7 @@ async function handleClearShow() {
 
       <button
         type="button"
-        :class="button({ variant: 'solid' })"
+        :class="button({ variant: 'solid', size: 'sm' })"
         :disabled="!canMutate"
         @click="floatingPanelStore.openFloatingPanel(FloatingPanelType.ImportShow, 'Import show')"
       >
@@ -69,9 +69,11 @@ async function handleClearShow() {
         <span>Load</span>
       </button>
 
+      <div :class="css({ flex: 1 })" />
+
       <button
         type="button"
-        :class="cx(button({ variant: 'outline' }), css({ colorPalette: 'red' }))"
+        :class="cx(button({ variant: 'outline', size: 'sm' }), css({ colorPalette: 'red' }))"
         :disabled="!canMutate"
         @click="handleClearShow"
       >

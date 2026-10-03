@@ -53,6 +53,7 @@ function bindingSignature(binding: CommandBinding): string | null {
 export const useShortcutsStore = defineStore("shortcuts", () => {
   const bindings = ref<Record<CommandId, CommandBinding>>(loadBindings());
   const overlayOpen = ref(false);
+  const paletteOpen = ref(false);
   // Scopes currently active based on the route. `Global` is always implied;
   // a command only fires when its scope is present here (or is Global).
   const activeScopes = ref<Set<CommandScope>>(new Set([CommandScope.Global]));
@@ -129,6 +130,18 @@ export const useShortcutsStore = defineStore("shortcuts", () => {
     overlayOpen.value = !overlayOpen.value;
   }
 
+  function openPalette(): void {
+    paletteOpen.value = true;
+  }
+
+  function closePalette(): void {
+    paletteOpen.value = false;
+  }
+
+  function togglePalette(): void {
+    paletteOpen.value = !paletteOpen.value;
+  }
+
   watch(
     bindings,
     (value) => {
@@ -144,6 +157,7 @@ export const useShortcutsStore = defineStore("shortcuts", () => {
   return {
     bindings,
     overlayOpen,
+    paletteOpen,
     activeScopes,
     isScopeActive,
     setActiveScopes,
@@ -160,5 +174,8 @@ export const useShortcutsStore = defineStore("shortcuts", () => {
     openOverlay,
     closeOverlay,
     toggleOverlay,
+    openPalette,
+    closePalette,
+    togglePalette,
   };
 });

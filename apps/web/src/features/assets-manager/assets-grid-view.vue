@@ -10,7 +10,7 @@ import { INTERNAL_DRAG_MIME, useAssetsInteractionStore } from "./assets-interact
 import { useAssetsManagerStore } from "./assets-manager-store";
 import ContextMenuOverlay from "./context-menu-overlay.vue";
 import EntryCard from "./entry-card.vue";
-import type { FsEntry } from "./types";
+import { DropEffect, FocusedPanel, type FsEntry } from "./types";
 import { useEntryContextMenu } from "./use-entry-context-menu";
 import { useRubberBandSelect } from "./use-rubber-band-select";
 
@@ -18,6 +18,12 @@ const store = useAssetsManagerStore();
 const interactionStore = useAssetsInteractionStore();
 const contextMenu = useEntryContextMenu();
 const containerRef = useTemplateRef<HTMLElement>("containerRef");
+
+// Template inline handlers cannot reference enum members directly
+// (vue-tsc unwraps them as refs), so alias the members used below.
+const contentPanel = FocusedPanel.Content;
+const copyEffect = DropEffect.Copy;
+const moveEffect = DropEffect.Move;
 
 import { assetUrl } from "@/lib/asset-url";
 
@@ -104,7 +110,7 @@ function handleDropError(error: unknown): void {
       (e) => {
         const target = e.target as HTMLElement;
         if (target.closest('[data-context-menu]')) return;
-        store.focusedPanel = 'content';
+        store.focusedPanel = contentPanel;
         containerRef?.focus({ preventScroll: true });
         containerHandlers.onPointerDown(e);
       }
@@ -125,7 +131,7 @@ function handleDropError(error: unknown): void {
       (e) => {
         if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
         e.preventDefault();
-        const effect = e.altKey ? 'copy' : 'move';
+        const effect = e.altKey ? copyEffect : moveEffect;
         interactionStore.setDragEffect(effect);
         if (e.dataTransfer) e.dataTransfer.dropEffect = effect;
       }
@@ -134,7 +140,7 @@ function handleDropError(error: unknown): void {
       async (e) => {
         if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
         e.preventDefault();
-        const effect = e.altKey ? 'copy' : 'move';
+        const effect = e.altKey ? copyEffect : moveEffect;
         try {
           await interactionStore.dropInto(store.selectedEntryId, effect);
         } catch (err) {
@@ -182,7 +188,7 @@ function handleDropError(error: unknown): void {
         "
         @dragstart="
           (e) => {
-            const effect = e.altKey ? 'copy' : 'move';
+            const effect = e.altKey ? copyEffect : moveEffect;
             const dragIds = interactionStore.beginDrag(entry.id, effect);
             if (e.dataTransfer) {
               e.dataTransfer.effectAllowed = 'copyMove';
@@ -195,7 +201,7 @@ function handleDropError(error: unknown): void {
           (e) => {
             if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
             e.preventDefault();
-            const effect = e.altKey ? 'copy' : 'move';
+            const effect = e.altKey ? copyEffect : moveEffect;
             interactionStore.setDragEffect(effect);
             if (e.dataTransfer) e.dataTransfer.dropEffect = effect;
           }
@@ -205,7 +211,7 @@ function handleDropError(error: unknown): void {
             if (!interactionStore.isInternalDragData(e.dataTransfer)) return;
             e.preventDefault();
             e.stopPropagation();
-            const effect = e.altKey ? 'copy' : 'move';
+            const effect = e.altKey ? copyEffect : moveEffect;
             try {
               await interactionStore.dropInto(entry.id, effect);
             } catch (err) {

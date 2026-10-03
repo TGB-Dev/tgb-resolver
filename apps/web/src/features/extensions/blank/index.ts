@@ -8,13 +8,19 @@ import { ExtensionType, type WithVueComponentExtension } from "../base/types";
 import { sharedValidatorRegistry } from "../init";
 
 export interface BlankExtensionPayload extends Record<string, unknown> {
-  color?: "bg" | "black" | "white";
+  color?: BlankColor;
 }
 
-const colorValue: Record<NonNullable<BlankExtensionPayload["color"]>, string> = {
-  bg: "bg",
-  black: "black",
-  white: "white",
+export enum BlankColor {
+  Background = "bg",
+  Black = "black",
+  White = "white",
+}
+
+const colorValue: Record<BlankColor, string> = {
+  [BlankColor.Background]: "bg",
+  [BlankColor.Black]: "black",
+  [BlankColor.White]: "white",
 };
 
 export const BlankExtension: WithVueComponentExtension<BlankExtensionPayload> = {
@@ -27,15 +33,15 @@ export const BlankExtension: WithVueComponentExtension<BlankExtensionPayload> = 
       fields: {
         color: {
           type: FieldDataType.String,
-          defaultValue: "bg",
+          defaultValue: BlankColor.Background,
           label: "Color",
           description: "Background color of the blank overlay.",
           component: "select-input",
           props: {
             options: [
-              { value: "bg", label: "Theme background" },
-              { value: "black", label: "Black" },
-              { value: "white", label: "White" },
+              { value: BlankColor.Background, label: "Theme background" },
+              { value: BlankColor.Black, label: "Black" },
+              { value: BlankColor.White, label: "White" },
             ],
           },
         },
@@ -48,7 +54,7 @@ export const BlankExtension: WithVueComponentExtension<BlankExtensionPayload> = 
     props: { payload: { type: Object, required: true } },
     setup: (props) => () => {
       const payload = props.payload as BlankExtensionPayload;
-      const color = payload?.color ?? "bg";
+      const color = payload?.color ?? BlankColor.Background;
       return h(MotionDiv, {
         initial: { opacity: 0 },
         animate: { opacity: 1 },

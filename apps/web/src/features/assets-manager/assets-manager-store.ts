@@ -10,7 +10,7 @@ import type { ShowFile } from "@tgb-resolver/realtime";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
-import type { FsEntry, ViewMode } from "./types";
+import { FocusedPanel, type FsEntry, ViewMode } from "./types";
 
 export const useAssetsManagerStore = defineStore("assets-manager", () => {
   const folderTree = ref<FsEntry[]>([]);
@@ -18,9 +18,9 @@ export const useAssetsManagerStore = defineStore("assets-manager", () => {
   const selectedEntryId = ref<string | null>(null);
   const selectedIds = ref(new Set<string>());
   const lastClickedIndex = ref<number | null>(null);
-  const viewMode = ref<ViewMode>("grid");
+  const viewMode = ref<ViewMode>(ViewMode.Grid);
   const expandedFolderIds = ref(new Set<string>());
-  const focusedPanel = ref<"tree" | "content">("content");
+  const focusedPanel = ref<FocusedPanel>(FocusedPanel.Content);
   const showVersion = ref(0);
   // Hidden file input used by the upload hotkey/command; the component binds
   // its <input type="file"> element here so the command can open the picker.
