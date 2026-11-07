@@ -28,6 +28,16 @@ export const CONTROL_VIEW_TITLES: Record<ControlViewType, string> = {
   [ControlViewType.Timeline]: "Timeline",
 };
 
+/** Tab order for the main panel, shared by the default layout and reorders. */
+export const CONTROL_VIEW_ORDER: readonly ControlViewType[] = [
+  ControlViewType.Preview,
+  ControlViewType.Assets,
+  ControlViewType.Cue,
+  ControlViewType.Info,
+  ControlViewType.Settings,
+  ControlViewType.Auth,
+];
+
 export const EDIT_ONLY_VIEWS: readonly ControlViewType[] = [
   ControlViewType.Preview,
   ControlViewType.Assets,
@@ -35,5 +45,16 @@ export const EDIT_ONLY_VIEWS: readonly ControlViewType[] = [
   ControlViewType.Settings,
 ];
 
-export const CONTROL_WORKSPACE_STORAGE_KEY = "tgb-control-workspace";
-export const CONTROL_WORKSPACE_VERSION = 1;
+export const CONTROL_VIEW_BY_ID: Record<string, ControlViewType> = Object.fromEntries(
+  Object.values(ControlViewType).map((type) => [CONTROL_VIEW_IDS[type], type]),
+);
+
+/** The timeline starts with this share of the workspace width (45/55 split). */
+export const INITIAL_STAGE_SHARE = 0.55;
+
+/** The timeline keeps at least this share of the workspace width. */
+export const MIN_STAGE_SHARE = 0.4;
+
+export function stageMinimumWidth(totalWidth: number): number {
+  return Math.round(totalWidth * MIN_STAGE_SHARE);
+}

@@ -3,13 +3,13 @@ import { css, cx } from "@styled-system/css";
 import { kbd } from "@styled-system/recipes";
 import {
   formatForDisplay,
-  type RegisterableHotkey,
+  type RegisterableHotkeyChord,
 } from "@tanstack/vue-hotkeys";
 import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    hotkey: RegisterableHotkey;
+    hotkey: RegisterableHotkeyChord;
     /** When false, render nothing (mirrors the reference's `!isModHeld` skip). */
     show?: boolean;
   }>(),

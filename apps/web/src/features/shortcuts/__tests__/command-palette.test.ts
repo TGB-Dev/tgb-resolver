@@ -108,6 +108,18 @@ describe("command palette", () => {
     color.setColorMode(ColorMode.Dark);
   });
 
+  it("matches commands by subsequence", async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const { wrapper } = await openPalette(pinia);
+    const input = document.body.querySelector("input") as HTMLInputElement;
+    input.value = "jmptstrt";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(document.body.textContent).toContain("Jump to start");
+    wrapper.unmount();
+  });
+
   it("Enter runs the highlighted command after filtering", async () => {
     const pinia = createPinia();
     setActivePinia(pinia);

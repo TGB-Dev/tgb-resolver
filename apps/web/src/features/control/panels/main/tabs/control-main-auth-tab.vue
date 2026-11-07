@@ -141,7 +141,7 @@ async function kick(session: AuthSessionSnapshot) {
 </script>
 
 <template>
-  <div :class="css({ display: 'flex', flexDirection: 'column', gap: 4, p: 4, overflowY: 'auto' })">
+  <div :class="css({ display: 'flex', flexDirection: 'column', gap: 4, p: 4, h: 'full', overflowY: 'auto' })">
     <div :class="css({ display: 'flex', alignItems: 'center', gap: 4 })">
       <QrCode.Root v-if="magicLink" :value="magicLink" :class="qrClasses.root">
         <QrCode.Frame :class="qrClasses.frame">

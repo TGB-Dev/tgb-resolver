@@ -21,14 +21,14 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
-    "@types/node": "^26.6.4",
+    "@biomejs/biome": "2.6.6",
+    "@types/node": "^26.6.6",
     "husky": "^9.1.7",
-    "knip": "^6.39.0",
+    "knip": "^6.44.1",
     "syncpack": "^15.3.3",
-    "turbo": "^2.11.6",
+    "turbo": "^2.11.10",
     "typescript": "6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=24.15.0",

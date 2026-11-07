@@ -11,8 +11,8 @@ import { useAssetsManagerStore } from "@/features/assets-manager/assets-manager-
 import { FocusedPanel } from "@/features/assets-manager/types";
 import { useControlShowRows } from "@/features/control/composables/use-show";
 import { usePlaybackStore } from "@/features/control/playback-store";
-import { useControlWorkspaceStore } from "@/features/control/trellis/control-workspace-store";
-import { ControlViewType } from "@/features/control/trellis/control-workspace-types";
+import { useControlWorkspaceStore } from "@/features/control/workspace/control-workspace-store";
+import { ControlViewType } from "@/features/control/workspace/control-workspace-types";
 import { animateScrollIntoView } from "@/features/leaderboard/utils/scroll";
 import { parseErrorMessage } from "@/features/shared/ui/error-message";
 import { toaster } from "@/features/shared/ui/toaster";

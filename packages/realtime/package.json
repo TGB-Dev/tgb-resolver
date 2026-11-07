@@ -18,14 +18,14 @@
     "typecheck": "pnpm run check-types"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.16.0",
+    "@bufbuild/protobuf": "^2.17.0",
     "@tgb-resolver/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
-    "tsdown": "^0.23.0",
+    "@types/node": "^26.6.6",
+    "tsdown": "^0.23.7",
     "typescript": "6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.1.0"
   },
   "files": [
     "dist"

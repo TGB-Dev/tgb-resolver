@@ -2,7 +2,7 @@
 import { Keyboard, RotateCcw } from "@lucide/vue";
 import { css, cx } from "@styled-system/css";
 import { button, iconButton } from "@styled-system/recipes";
-import type { RegisterableHotkey } from "@tanstack/vue-hotkeys";
+import type { RegisterableHotkeyChord } from "@tanstack/vue-hotkeys";
 import { computed, watch } from "vue";
 
 import { commandsById } from "./commands";
@@ -37,7 +37,7 @@ const conflicts = computed(() =>
 );
 
 // Keycaps to render: the live recording preview, or the saved binding.
-const keycaps = computed<RegisterableHotkey[]>(() => {
+const keycaps = computed<readonly RegisterableHotkeyChord[]>(() => {
   if (isRecording.value) {
     if (single?.recordedHotkey.value) return [single.recordedHotkey.value];
     if (sequence?.steps.value.length) return sequence.steps.value;

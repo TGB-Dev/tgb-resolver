@@ -7,7 +7,7 @@ import { useControlNowStore } from "@/features/control/control-now-store";
 import FloatingPanelHost from "@/features/control/floating-panel-host.vue";
 import ControlMainControls from "@/features/control/panels/main/control-main-controls.vue";
 import ControlStatusBar from "@/features/control/status-bar/control-status-bar.vue";
-import ControlWorkspaceHost from "@/features/control/trellis/control-workspace-host.vue";
+import ControlWorkspaceHost from "@/features/control/workspace/control-workspace-host.vue";
 import { getServerNow } from "@/lib/realtime-client";
 
 const controlNowStore = useControlNowStore();

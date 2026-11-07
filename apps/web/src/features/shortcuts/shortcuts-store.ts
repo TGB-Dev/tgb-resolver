@@ -1,7 +1,7 @@
 import {
   type HotkeySequence,
-  normalizeRegisterableHotkey,
-  type RegisterableHotkey,
+  normalizeHotkey,
+  type RegisterableHotkeyChord,
 } from "@tanstack/vue-hotkeys";
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
@@ -45,9 +45,8 @@ function loadBindings(): Record<CommandId, CommandBinding> {
 /** A stable string for a binding, used to detect duplicates. */
 function bindingSignature(binding: CommandBinding): string | null {
   if (binding.kind === CommandBindingKind.None) return null;
-  if (binding.kind === CommandBindingKind.Hotkey)
-    return normalizeRegisterableHotkey(binding.hotkey);
-  return binding.sequence.map((step) => normalizeRegisterableHotkey(step)).join(" ");
+  if (binding.kind === CommandBindingKind.Hotkey) return normalizeHotkey(binding.hotkey);
+  return binding.sequence.map((step) => normalizeHotkey(step)).join(" ");
 }
 
 export const useShortcutsStore = defineStore("shortcuts", () => {
@@ -75,7 +74,7 @@ export const useShortcutsStore = defineStore("shortcuts", () => {
   }
 
   /** Current hotkey, or the default when unassigned (keeps the registration valid). */
-  function getHotkey(id: CommandId): RegisterableHotkey {
+  function getHotkey(id: CommandId): RegisterableHotkeyChord {
     const binding = bindings.value[id];
     if (binding.kind === CommandBindingKind.Hotkey) return binding.hotkey;
     const fallback = commandsById[id].defaultBinding;

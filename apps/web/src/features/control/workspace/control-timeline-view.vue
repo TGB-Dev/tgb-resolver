@@ -16,6 +16,7 @@ const timelineTableRef = useTemplateRef<InstanceType<typeof ControlTimelineTable
         gridTemplateRows: '1fr auto',
         h: 'full',
         minH: 0,
+        bg: 'bg',
       })
     "
   >

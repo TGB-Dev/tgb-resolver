@@ -1,8 +1,8 @@
 import { HotkeysProvider } from "@tanstack/vue-hotkeys";
 import { PlaybackStatus, ShowMode } from "@tgb-resolver/contracts";
 import {
-  type ShowFile,
   ShowConnectionStatus,
+  type ShowFile,
   ShowSource,
   type TimelineEvent,
   TimelineEventType,

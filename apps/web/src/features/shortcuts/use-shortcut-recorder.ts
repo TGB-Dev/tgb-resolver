@@ -1,8 +1,4 @@
-import {
-  type HotkeySequence,
-  useHotkeyRecorder,
-  useHotkeySequenceRecorder,
-} from "@tanstack/vue-hotkeys";
+import { type HotkeySequence, useHotkeyRecorder } from "@tanstack/vue-hotkeys";
 
 /**
  * Records a single-chord binding. The captured chord lives in `recordedHotkey`;
@@ -22,9 +18,10 @@ export function useSingleRecorder() {
  * to cancel. `onCommit` receives the captured sequence of chords.
  */
 export function useSequenceRecorder(onCommit: (sequence: HotkeySequence) => void) {
-  return useHotkeySequenceRecorder({
+  return useHotkeyRecorder({
+    maxSteps: Infinity,
     ignoreInputs: false,
     commitKeys: "enter",
-    onRecord: (sequence) => onCommit(sequence),
+    onRecord: (sequence) => onCommit(Array.isArray(sequence) ? sequence : [sequence]),
   });
 }

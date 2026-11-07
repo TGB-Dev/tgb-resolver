@@ -2,8 +2,8 @@ import {
   detectPlatform,
   formatForDisplay,
   type HotkeySequence,
-  normalizeRegisterableHotkey,
-  type RegisterableHotkey,
+  normalizeHotkey,
+  type RegisterableHotkeyChord,
 } from "@tanstack/vue-hotkeys";
 
 import { type CommandBinding, CommandBindingKind } from "./types";
@@ -39,10 +39,10 @@ function withOverride(normalized: string, rendered: string): string {
 }
 
 function formatHotkeyDisplay(
-  hotkey: RegisterableHotkey,
+  hotkey: RegisterableHotkeyChord,
   platform: Platform = detectCurrentPlatform(),
 ): string {
-  const normalized = normalizeRegisterableHotkey(hotkey);
+  const normalized = normalizeHotkey(hotkey);
   return withOverride(normalized, formatForDisplay(hotkey, { platform }));
 }
 
@@ -52,7 +52,7 @@ function formatSequenceDisplay(
 ): string {
   return sequence
     .map((step) => {
-      const normalized = normalizeRegisterableHotkey(step);
+      const normalized = normalizeHotkey(step);
       return withOverride(normalized, formatForDisplay(step, { platform }));
     })
     .join("  ");

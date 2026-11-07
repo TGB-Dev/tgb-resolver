@@ -1,4 +1,4 @@
-import { useHotkey, useHotkeySequence } from "@tanstack/vue-hotkeys";
+import { useHotkey } from "@tanstack/vue-hotkeys";
 
 import { commands } from "./commands";
 import { useShortcutsStore } from "./shortcuts-store";
@@ -36,7 +36,11 @@ export function useShortcutsRegistration(): void {
     });
 
     if (isSequence) {
-      useHotkeySequence(() => store.getSequence(command.id), command.handler, options);
+      useHotkey(
+        () => store.getSequence(command.id),
+        command.handler,
+        () => ({ ...options(), timeout: 1500 }),
+      );
     } else {
       useHotkey(() => store.getHotkey(command.id), command.handler, options);
     }

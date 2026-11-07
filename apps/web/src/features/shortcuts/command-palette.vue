@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { Combobox, Dialog, useListCollection } from "@ark-ui/vue";
+import { Combobox, createListCollection, Dialog } from "@ark-ui/vue";
 import { css, cx } from "@styled-system/css";
-import { combobox, dialog, input, kbd } from "@styled-system/recipes";
-import type { RegisterableHotkey } from "@tanstack/vue-hotkeys";
+import { command, dialog, kbd } from "@styled-system/recipes";
+import { formatForDisplay, type RegisterableHotkeyChord } from "@tanstack/vue-hotkeys";
 import { useEventListener } from "@vueuse/core";
 import { computed, ref, useTemplateRef, watch } from "vue";
 
 import { scrollToListItem } from "@/features/leaderboard/utils/scroll";
 
 import { commands, PALETTE_TOGGLE_EVENT } from "./commands";
-import KbdFromHotkeys from "./kbd-from-hotkeys.vue";
 import { useShortcutsStore } from "./shortcuts-store";
 import { CommandBindingKind, type CommandDefinition } from "./types";
 
 interface PaletteItem {
   label: string;
   value: string;
-  keys: RegisterableHotkey[];
+  keys: RegisterableHotkeyChord[];
   run: () => void;
 }
 
@@ -25,7 +24,7 @@ const inputValue = ref("");
 const listRef = useTemplateRef<{ $el: HTMLElement }>("paletteList");
 
 const dialogClasses = dialog({ placement: "top", size: "md" });
-const comboClasses = combobox({ size: "lg" });
+const commandClasses = command({ size: "lg" });
 
 const allItems = computed<PaletteItem[]>(() =>
   commands.map((command) => ({
@@ -36,40 +35,31 @@ const allItems = computed<PaletteItem[]>(() =>
   })),
 );
 
-function bindingKeys(command: CommandDefinition): RegisterableHotkey[] {
+function bindingKeys(command: CommandDefinition): RegisterableHotkeyChord[] {
   const binding = shortcutStore.getBinding(command.id);
   if (binding.kind === CommandBindingKind.Hotkey) return [binding.hotkey];
   if (binding.kind === CommandBindingKind.Sequence) return [...binding.sequence];
   return [];
 }
 
-const { collection, set, filter } = useListCollection<PaletteItem>({
-  initialItems: [],
-  filter: (itemText, filterText) =>
-    itemText.toLowerCase().includes(filterText.trim().toLowerCase()),
+const collection = computed(() => {
+  const query = inputValue.value.trim().toLowerCase();
+  const items = allItems.value.map((item) => {
+    const text = item.label.toLowerCase();
+    const match = text.indexOf(query);
+    if (match >= 0) return { item, score: match === 0 ? 2 : 1 };
+    let index = 0;
+    for (const character of text) if (character === query[index]) index++;
+    return { item, score: index === query.length ? 0.5 : 0 };
+  });
+  return createListCollection({
+    items: items.filter(({ score }) => score > 0).sort((a, b) => b.score - a.score).map(({ item }) => item),
+  });
 });
 
-function resetList(): void {
-  set(allItems.value);
-  filter(inputValue.value);
-}
-
-watch(allItems, resetList, { immediate: true });
-
-watch(
-  () => shortcutStore.paletteOpen,
-  (open) => {
-    if (!open) return;
-    inputValue.value = "";
-    set(allItems.value);
-    filter("");
-  },
-);
-
-function onInputValue(value: string): void {
-  inputValue.value = value;
-  filter(value);
-}
+watch(() => shortcutStore.paletteOpen, (open) => {
+  if (open) inputValue.value = "";
+});
 
 function runItem(itemValue: string): void {
   const item = allItems.value.find((entry) => entry.value === itemValue);
@@ -78,11 +68,8 @@ function runItem(itemValue: string): void {
   item?.run();
 }
 
-// Ark's Vue binding never forwards zag's `onSelect` into the machine (only
-// `onValueChange` and friends reach it), so selection is driven from there.
-function onValueChange(details: { value: string[] }): void {
-  const selected = details.value[details.value.length - 1];
-  if (selected) runItem(selected);
+function onSelect(details: { itemValue: string }): void {
+  runItem(details.itemValue);
 }
 
 function onHighlightChange(details: { highlightedValue: string | null }): void {
@@ -103,25 +90,7 @@ function onHighlightChange(details: { highlightedValue: string | null }): void {
 useEventListener(window, PALETTE_TOGGLE_EVENT, () => shortcutStore.togglePalette());
 
 const content = cx(dialogClasses.content, css({ overflow: "hidden" }));
-const inputRow = css({
-  px: "6",
-  pt: "4",
-  pb: "3",
-  borderBottomWidth: "1px",
-  borderColor: "border",
-});
-const list = cx(
-  comboClasses.list,
-  css({
-    maxHeight: "50vh",
-    overflowY: "auto",
-    px: "3",
-    py: "3",
-    gap: "1",
-    "--combobox-item-padding-x": "spacing.4",
-    "--combobox-item-padding-y": "spacing.3",
-  }),
-);
+const list = cx(commandClasses.list, css({ maxHeight: "50vh" }));
 const row = css({
   display: "flex",
   alignItems: "center",
@@ -130,18 +99,8 @@ const row = css({
   width: "full",
 });
 const hint = css({ display: "inline-flex", alignItems: "center", gap: "1" });
-const empty = css({ color: "fg.muted", fontSize: "sm", textAlign: "center", p: "6" });
-const footer = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "3",
-  px: "6",
-  py: "2",
-  borderTopWidth: "1px",
-  borderColor: "border",
-  color: "fg.muted",
-  fontSize: "xs",
-});
+const shortcut = cx(commandClasses.itemCommand, css({ fontFamily: "body", "& + &": { marginInlineStart: "0" } }));
+
 </script>
 
 <template>
@@ -155,52 +114,49 @@ const footer = css({
       <Dialog.Content :class="content">
         <Dialog.Title :class="css({ srOnly: true })">Command palette</Dialog.Title>
         <Combobox.Root
+          :class="commandClasses.root"
           :collection="collection"
           :input-value="inputValue"
           :open="true"
-          selection-behavior="clear"
+          selection-behavior="preserve"
+          :model-value="[]"
+          :disable-layer="true"
           input-behavior="autohighlight"
           auto-focus
-          @update:input-value="onInputValue"
-          @value-change="onValueChange"
+          @update:input-value="inputValue = $event"
+          @select="onSelect"
           @highlight-change="onHighlightChange"
         >
-          <div :class="inputRow">
-            <Combobox.Control :class="comboClasses.control">
+            <Combobox.Control :class="commandClasses.control">
               <Combobox.Input
-                :class="input({ size: 'lg' })"
+                :class="commandClasses.input"
                 placeholder="Type a command…"
                 aria-label="Command palette"
               />
             </Combobox.Control>
-          </div>
           <Combobox.List ref="paletteList" :class="list">
             <Combobox.Item
               v-for="item in collection.items"
               :key="item.value"
               :item="item"
               :data-palette-value="item.value"
-              :class="comboClasses.item"
+              :class="commandClasses.item"
             >
               <span :class="row">
-                <Combobox.ItemText>{{ item.label }}</Combobox.ItemText>
+                <Combobox.ItemText :class="commandClasses.itemText">{{ item.label }}</Combobox.ItemText>
                 <span v-if="item.keys.length" :class="hint">
-                  <KbdFromHotkeys
-                    v-for="(hotkey, index) in item.keys"
-                    :key="index"
-                    :hotkey="hotkey"
-                  />
+                  <kbd v-for="(hotkey, index) in item.keys" :key="index" :class="shortcut">{{ formatForDisplay(hotkey) }}</kbd>
                 </span>
               </span>
             </Combobox.Item>
-            <Combobox.Empty :class="empty">No matches.</Combobox.Empty>
+            <Combobox.Empty :class="commandClasses.empty">No matches.</Combobox.Empty>
           </Combobox.List>
-        </Combobox.Root>
-        <div :class="footer">
+        <div :class="commandClasses.footer">
           <span><kbd :class="kbd({ size: 'sm' })">↑↓</kbd> to navigate</span>
           <span><kbd :class="kbd({ size: 'sm' })">Enter</kbd> to run</span>
           <span><kbd :class="kbd({ size: 'sm' })">Esc</kbd> to close</span>
         </div>
+        </Combobox.Root>
       </Dialog.Content>
     </Dialog.Positioner>
   </Dialog.Root>

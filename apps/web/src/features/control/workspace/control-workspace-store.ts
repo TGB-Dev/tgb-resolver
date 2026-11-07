@@ -1,18 +1,16 @@
-import type { WorkspaceHandle } from "@danfessler/trellis";
+import type { DockviewApi } from "dockview-vue";
 import { defineStore } from "pinia";
 import { computed, ref, shallowRef } from "vue";
 
-import {
-  CONTROL_VIEW_IDS,
-  type ControlViewType,
-} from "@/features/control/trellis/control-workspace-types";
+import type { ControlViewType } from "@/features/control/workspace/control-workspace-types";
+import { focusControlView } from "@/features/control/workspace/control-workspace-views";
 
 export const useControlWorkspaceStore = defineStore("control-workspace", () => {
-  const handle = shallowRef<WorkspaceHandle | null>(null);
+  const handle = shallowRef<DockviewApi | null>(null);
   const ready = ref(false);
   const workspace = computed(() => handle.value);
 
-  function attach(next: WorkspaceHandle): void {
+  function attach(next: DockviewApi): void {
     handle.value = next;
     ready.value = true;
   }
@@ -24,10 +22,7 @@ export const useControlWorkspaceStore = defineStore("control-workspace", () => {
 
   function focusView(type: ControlViewType): void {
     const current = handle.value;
-    if (!current) return;
-    const id = CONTROL_VIEW_IDS[type];
-    if (current.view(id)) current.focus(id);
-    else current.open(type, { id, focus: true });
+    if (current) focusControlView(current, type);
   }
 
   return { handle, ready, workspace, attach, detach, focusView };

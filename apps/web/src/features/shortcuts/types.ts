@@ -1,4 +1,8 @@
-import type { ConflictBehavior, HotkeySequence, RegisterableHotkey } from "@tanstack/vue-hotkeys";
+import type {
+  ConflictBehavior,
+  HotkeySequence,
+  RegisterableHotkeyChord,
+} from "@tanstack/vue-hotkeys";
 
 /**
  * A named group of commands. Scopes gate whether a command's hotkey is
@@ -34,7 +38,7 @@ export enum CommandBindingKind {
  * - `None`    — unassigned (the command stays listed but inert)
  */
 export type CommandBinding =
-  | { kind: CommandBindingKind.Hotkey; hotkey: RegisterableHotkey }
+  | { kind: CommandBindingKind.Hotkey; hotkey: RegisterableHotkeyChord }
   | { kind: CommandBindingKind.Sequence; sequence: HotkeySequence }
   | { kind: CommandBindingKind.None };
 

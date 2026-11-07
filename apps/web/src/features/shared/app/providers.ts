@@ -30,5 +30,4 @@ export const queryClient = new QueryClient({
 
 export const hotkeysDefaultOptions: HotkeysProviderOptions = {
   hotkey: { preventDefault: true },
-  hotkeySequence: { timeout: 1500, preventDefault: true },
 };
